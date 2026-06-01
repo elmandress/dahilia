@@ -1,0 +1,53 @@
+<!-- @dsCard group="Brand" -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Instagram post — 1080×1080</title>
+<link rel="stylesheet" href="_print.css">
+<style>
+  .sheet {
+    width: 1080px; height: 1080px;
+    background: #fff;
+    display: grid; grid-template-columns: 1fr 1fr;
+  }
+  .photo { position: relative; overflow: hidden;}
+  .photo img { width: 100%; height: 100%; object-fit: cover; display: block;}
+  .copy {
+    background: var(--cream-100);
+    padding: 96px 88px 80px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .mark { display: flex; align-items: center; gap: 14px;}
+  .mark img { width: 56px; height: 56px;}
+  .mark .wordmark { font-family: var(--font-display); font-weight: 300; font-size: 32px; letter-spacing: 0.18em; color: var(--ink-900);}
+  .center { display: flex; flex-direction: column; gap: 28px;}
+  .eyebrow { font-family: var(--font-sans); font-size: 14px; font-weight: 400; letter-spacing: 0.32em; text-transform: uppercase; color: var(--wine-600);}
+  h1 { font-family: var(--font-display); font-weight: 300; font-size: 78px; line-height: 0.98; letter-spacing: -0.02em; color: var(--ink-900); margin: 0;}
+  h1 em { font-style: italic; color: var(--wine-700);}
+  .footer { font-family: var(--font-sans); font-size: 14px; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-700); display: flex; justify-content: space-between;}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="photo"><img src="../assets/photos/bolero-marron.png" alt=""></div>
+  <div class="copy">
+    <div class="mark">
+      <img src="../assets/isotype-color.png" alt="">
+      <span class="wordmark">DAHILA</span>
+    </div>
+    <div class="center">
+      <div class="eyebrow">Pieza nueva</div>
+      <h1>Bolero<br/><em>Pétalo.</em></h1>
+      <p style="font-family: var(--font-serif); font-style: italic; font-weight: 300; font-size: 22px; line-height: 1.45; color: var(--ink-700); margin: 0; max-width: 360px;">
+        Crochet con lurex en tono cobre. A medida — escribime para el tuyo.
+      </p>
+    </div>
+    <div class="footer">
+      <span>@dahila.crochet</span>
+      <span>UYU 4.890</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

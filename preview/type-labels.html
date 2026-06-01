@@ -1,0 +1,33 @@
+<!-- @dsCard group="Type" -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="_card.css">
+<style>
+  body { padding: 28px 32px; display:grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items:center; }
+  .lbl { font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--wine-600); margin-bottom: 12px;}
+  .stack { display:flex; flex-direction:column; gap: 10px; }
+  .tag { display:inline-flex; align-items:center; gap:8px; font-family: var(--font-sans); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--wine-700); }
+  .tag::before { content:""; width:18px; height:1px; background: var(--wine-600); }
+  .caption { font-family: var(--font-sans); font-size: 13px; color: var(--ink-500); }
+</style>
+</head>
+<body>
+  <div>
+    <div class="lbl">Eyebrow · Label</div>
+    <div class="stack">
+      <span class="tag">Lanzamiento de otoño</span>
+      <span class="tag">Edición limitada</span>
+      <span class="tag">Hecho a mano · Uruguay</span>
+    </div>
+  </div>
+  <div>
+    <div class="lbl">Caption</div>
+    <div class="stack">
+      <div class="caption">Cardigan Margarita en lana merino, talle único.</div>
+      <div class="caption">Foto: Camila V. — atelier de Pocitos, mayo 2026.</div>
+    </div>
+  </div>
+</body>
+</html>

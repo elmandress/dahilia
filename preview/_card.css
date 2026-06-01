@@ -1,0 +1,45 @@
+/* Shared card chrome for preview tiles. Cards themselves should
+   show specimens with minimal framing — this file just sets the
+   page background and a few small utilities. */
+
+@import url('../colors_and_type.css');
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+}
+body {
+  padding: 20px 24px;
+  box-sizing: border-box;
+}
+.card-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.card-grid {
+  display: grid;
+  gap: 12px;
+}
+.swatch {
+  border-radius: var(--radius-md);
+  height: 88px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-xs);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--ink-700);
+}
+.swatch .name { font-weight: 500; font-size: 12px; color: inherit; }
+.swatch .hex  { font-family: ui-monospace, "SF Mono", Menlo, monospace; opacity: 0.7; }
+.mono {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  color: var(--ink-500);
+}

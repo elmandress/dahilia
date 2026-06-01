@@ -1,0 +1,45 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="_card.css">
+<style>
+  body { padding: 30px 24px; background: #fff; display:flex; align-items:center; justify-content:center; gap: 14px; flex-wrap: wrap;}
+  .btn {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 14px 26px;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 160ms cubic-bezier(0.22,0.61,0.36,1);
+  }
+  .primary {
+    background: var(--ink-900); color: #fff;
+  }
+  .primary:hover { background: var(--wine-700);}
+  .secondary {
+    background: transparent; color: var(--ink-900);
+    border-color: var(--ink-900);
+  }
+  .secondary:hover { background: var(--ink-900); color: #fff;}
+  .cream {
+    background: var(--cream-100); color: var(--ink-900);
+  }
+  .cream:hover { background: var(--cream-200);}
+  .ghost { background: transparent; color: var(--ink-900); padding: 12px 14px; letter-spacing: 0.04em; text-transform: none; font-weight: 300;}
+  .ghost::after { content: " →"; }
+  .ghost:hover { color: var(--wine-600);}
+</style>
+</head>
+<body>
+  <button class="btn primary">Añadir al carrito</button>
+  <button class="btn secondary">Elegir talle</button>
+  <button class="btn cream">Encargos a medida</button>
+  <button class="btn ghost">Ver más</button>
+</body>
+</html>

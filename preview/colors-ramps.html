@@ -1,0 +1,45 @@
+<!-- @dsCard group="Colors" -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="_card.css">
+<style>
+  body { padding: 22px 24px; }
+  .ramp { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 14px; }
+  .ramp:last-child { margin-bottom: 0; }
+  .sw {
+    height: 64px;
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    font-size: 10px; font-family: ui-monospace, Menlo, monospace;
+    letter-spacing: 0.02em;
+  }
+  .sw b { font-family: var(--font-sans); font-size: 11px; font-weight: 500; letter-spacing: 0; }
+</style>
+</head>
+<body>
+  <div class="ramp">
+    <div class="sw" style="background:#FFFBF2;color:#8F3B53"><b>cream-50</b>#FFFBF2</div>
+    <div class="sw" style="background:#FFF7EA;color:#8F3B53"><b>cream-100</b>#FFF7EA</div>
+    <div class="sw" style="background:#FBEFDC;color:#8F3B53"><b>cream-200</b>#FBEFDC</div>
+    <div class="sw" style="background:#F1E3C8;color:#8F3B53"><b>cream-300</b>#F1E3C8</div>
+    <div class="sw" style="background:#EDE5E6;color:#5A4248"><b>ink-100</b>#EDE5E6</div>
+  </div>
+  <div class="ramp">
+    <div class="sw" style="background:#FBEEF0;color:#8F3B53"><b>rose-50</b>#FBEEF0</div>
+    <div class="sw" style="background:#F6DDE3;color:#8F3B53"><b>rose-100</b>#F6DDE3</div>
+    <div class="sw" style="background:#ECC0CB;color:#6E2B40"><b>rose-200</b>#ECC0CB</div>
+    <div class="sw" style="background:#E693A7;color:#4D1D2C"><b>rose-300</b>#E693A7</div>
+    <div class="sw" style="background:#D26A87;color:#FFFBF2"><b>rose-400</b>#D26A87</div>
+  </div>
+  <div class="ramp">
+    <div class="sw" style="background:#B05E74;color:#FFFBF2"><b>wine-500</b>#B05E74</div>
+    <div class="sw" style="background:#8F3B53;color:#FFFBF2"><b>wine-600</b>#8F3B53</div>
+    <div class="sw" style="background:#6E2B40;color:#FFFBF2"><b>wine-700</b>#6E2B40</div>
+    <div class="sw" style="background:#4D1D2C;color:#FFFBF2"><b>wine-800</b>#4D1D2C</div>
+    <div class="sw" style="background:#2A1A1E;color:#FFFBF2"><b>ink-900</b>#2A1A1E</div>
+  </div>
+</body>
+</html>

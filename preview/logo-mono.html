@@ -1,0 +1,39 @@
+<!-- @dsCard group="Brand" -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="_card.css">
+<style>
+  body { padding: 0; background: #fff; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0;}
+  .cell { padding: 22px 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 220px; box-sizing: border-box;}
+  .cell + .cell { border-left: 1px solid var(--border);}
+  .cell img { height: 96px; width: auto; object-fit: contain;}
+  .lbl { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-500); font-weight: 400; text-align: center;}
+  .info { font-family: var(--font-sans); font-size: 12px; font-weight: 300; color: var(--ink-700); text-align: center; line-height: 1.5; max-width: 220px;}
+  .white { background: #fff;}
+  .cream { background: var(--cream-100);}
+  .ink   { background: var(--ink-900);}
+  .ink img { filter: invert(1);}
+  .ink .info { color: var(--cream-100);}
+  .ink .lbl  { color: var(--cream-100); opacity: 0.7;}
+</style>
+</head>
+<body>
+  <div class="cell white">
+    <img src="../assets/isotype-black.png" alt="">
+    <span class="lbl">Versión negra</span>
+    <span class="info">Para impresión a un solo color: sellos, hang-tags, recibos, packaging básico.</span>
+  </div>
+  <div class="cell cream">
+    <img src="../assets/isotype-black.png" alt="">
+    <span class="lbl">Sobre crema</span>
+    <span class="info">Combinación recomendada para etiquetas de prenda y papel kraft.</span>
+  </div>
+  <div class="cell ink">
+    <img src="../assets/isotype-black.png" alt="">
+    <span class="lbl">Invertido sobre tinta</span>
+    <span class="info">Versión en blanco — se obtiene aplicando filtro invert al PNG negro.</span>
+  </div>
+</body>
+</html>

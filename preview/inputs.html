@@ -1,0 +1,39 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="_card.css">
+<style>
+  body { padding: 24px 28px; background: #fff; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch;}
+  .field { display: flex; flex-direction: column; gap: 6px;}
+  label { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-500); font-weight: 400;}
+  input, textarea, select {
+    font-family: var(--font-sans); font-size: 14px; font-weight: 300; color: var(--ink-900);
+    background: #fff;
+    border: none;
+    border-bottom: 1px solid var(--border-strong);
+    padding: 10px 0 8px;
+    outline: none;
+    transition: all 160ms cubic-bezier(0.22,0.61,0.36,1);
+  }
+  input:focus { border-bottom-color: var(--ink-900);}
+  .helper { font-family: var(--font-sans); font-size: 12px; font-weight: 300; color: var(--ink-500);}
+</style>
+</head>
+<body>
+  <div class="field">
+    <label>Nombre</label>
+    <input placeholder="¿Cómo te llamás?" value="Anush">
+  </div>
+  <div class="field">
+    <label>Talle</label>
+    <select><option>S — busto 86–90 cm</option><option>M — busto 90–94 cm</option></select>
+  </div>
+  <div class="field" style="grid-column: 1 / -1;">
+    <label>Contame de tu prenda</label>
+    <textarea rows="2" placeholder="¿Para qué la querés, qué colores te gustan, en qué lana…?"></textarea>
+    <div class="helper">Mientras más detalles, más cerca quedamos de la prenda perfecta.</div>
+  </div>
+</body>
+</html>

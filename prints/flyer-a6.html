@@ -1,0 +1,71 @@
+<!-- @dsCard group="Brand" -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Flyer A6 — handout</title>
+<link rel="stylesheet" href="_print.css">
+<style>
+  @page { size: A6 portrait; margin: 0; }
+  body { gap: 30px; flex-direction: column;}
+  .sheet {
+    width: 105mm; height: 148mm;
+    background: #fff;
+    box-sizing: border-box;
+    padding: 12mm 11mm;
+    display: flex; flex-direction: column; gap: 8mm;
+    position: relative;
+  }
+  .mark { display: flex; align-items: center; gap: 3mm;}
+  .mark img { width: 12mm; height: 12mm;}
+  .mark .wordmark { font-family: var(--font-display); font-weight: 300; font-size: 16pt; letter-spacing: 0.18em; color: var(--ink-900);}
+  h1 {
+    font-family: var(--font-display); font-weight: 300; font-size: 30pt;
+    line-height: 0.98; letter-spacing: -0.02em; color: var(--ink-900); margin: 0;
+  }
+  h1 em { font-style: italic; color: var(--wine-700);}
+  p.lede {
+    font-family: var(--font-serif); font-style: italic; font-weight: 300;
+    font-size: 11pt; line-height: 1.45; color: var(--ink-700); margin: 0;
+  }
+  .stub {
+    margin-top: auto;
+    border-top: 1px dashed var(--border-strong);
+    padding-top: 6mm;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4mm;
+  }
+  .stub .field { font-family: var(--font-sans);}
+  .stub .label { font-size: 7pt; letter-spacing: 0.32em; text-transform: uppercase; color: var(--ink-500); margin-bottom: 1mm;}
+  .stub .val { font-size: 11pt; font-weight: 400; color: var(--ink-900);}
+  .small-photo {
+    width: 100%; aspect-ratio: 16/10; object-fit: cover; border-radius: 2mm;
+  }
+  .pair { display: flex; gap: 2mm; }
+  .pair img { flex: 1; width: 50%; aspect-ratio: 1/1; object-fit: cover; border-radius: 2mm;}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="mark">
+    <img src="../assets/isotype-color.png" alt="">
+    <span class="wordmark">DAHILA</span>
+  </div>
+  <h1>Tejido<br/>con <em>tiempo.</em></h1>
+  <p class="lede">Prendas a crochet, hechas a mano, a tu medida.</p>
+  <div class="pair">
+    <img src="../assets/photos/top-blanco.png" alt="">
+    <img src="../assets/photos/chaleco-marron.jpg" alt="">
+  </div>
+  <div class="stub">
+    <div class="field">
+      <div class="label">Instagram</div>
+      <div class="val">@dahila.crochet</div>
+    </div>
+    <div class="field">
+      <div class="label">WhatsApp</div>
+      <div class="val">+598 94 605 015</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

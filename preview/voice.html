@@ -1,0 +1,33 @@
+<!-- @dsCard group="Brand" -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="_card.css">
+<style>
+  body { padding: 22px 26px; background: #fff;}
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px;}
+  .col { display: flex; flex-direction: column; gap: 8px;}
+  .lbl { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;}
+  .yes .lbl { color: #6B8E5A;}
+  .no  .lbl { color: var(--danger);}
+  .quote { font-family: var(--font-serif); font-style: italic; font-weight: 300; font-size: 16px; line-height: 1.45; color: var(--ink-900); }
+  .meta  { font-family: var(--font-sans); font-size: 12px; font-weight: 300; color: var(--ink-500); line-height: 1.5;}
+  .strike { text-decoration: line-through; text-decoration-color: rgba(182,49,74,0.5);}
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col yes">
+      <span class="lbl">✓ Suena a Dahila</span>
+      <div class="quote">"Cada prenda lleva su tiempo — la tuya empieza cuando vos confirmás."</div>
+      <div class="meta">Primera persona, voseo, sin urgencia comercial, una sola exclamación.</div>
+    </div>
+    <div class="col no">
+      <span class="lbl">✕ No es Dahila</span>
+      <div class="quote strike">"¡¡Descubrí nuestra nueva colección premium!! 30% OFF solo hoy 🔥"</div>
+      <div class="meta">Mayúsculas, anglicismos, emoji-bullets, urgencia — opuesto al atelier.</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!-- @dsCard group="Brand" -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Poster A4 — Hero</title>
+<link rel="stylesheet" href="_print.css">
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  .sheet {
+    width: 210mm; height: 297mm;
+    display: grid; grid-template-rows: 60% 40%;
+  }
+  .photo {
+    position: relative; overflow: hidden;
+    background: #fff;
+  }
+  .photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; display: block;}
+  .isotype-watermark {
+    position: absolute; top: 18mm; right: 18mm; width: 24mm; height: 24mm; object-fit: contain;
+    background: rgba(255,255,255,0.85);
+    border-radius: 50%;
+    padding: 4mm;
+  }
+  .copy {
+    padding: 20mm 22mm 16mm;
+    display: grid; grid-template-columns: 1fr auto; gap: 14mm;
+    align-content: space-between;
+  }
+  .eyebrow { font-family: var(--font-sans); font-size: 9pt; font-weight: 400; letter-spacing: 0.32em; text-transform: uppercase; color: var(--ink-500); margin-bottom: 8mm;}
+  h1 { font-family: var(--font-display); font-weight: 300; font-size: 64pt; line-height: 0.98; letter-spacing: -0.02em; color: var(--ink-900); margin: 0;}
+  h1 em { font-style: italic; color: var(--wine-600); font-weight: 300;}
+  .footline { display: flex; flex-direction: column; gap: 5mm; align-items: flex-end; justify-self: end;}
+  .footline span { font-family: var(--font-sans); font-size: 9.5pt; font-weight: 400; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-900);}
+  .footline .small { font-family: var(--font-serif); font-style: italic; font-weight: 300; font-size: 14pt; letter-spacing: 0; text-transform: none; color: var(--ink-700); text-align: right; line-height: 1.3; max-width: 60mm;}
+  .strip {
+    grid-column: 1 / -1;
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid var(--border-strong);
+    padding-top: 6mm;
+    font-family: var(--font-sans); font-size: 9pt; color: var(--ink-700); letter-spacing: 0.12em; text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="photo">
+    <img src="../assets/photos/top-lace-parque.png" alt="">
+    <img src="../assets/isotype-color.png" class="isotype-watermark" alt="">
+  </div>
+  <div class="copy">
+    <div>
+      <div class="eyebrow">Encargos a medida · otoño 2026</div>
+      <h1>Tejido<br/>con <em>tiempo.</em></h1>
+    </div>
+    <div class="footline">
+      <span>DAHILA</span>
+      <div class="small">Atelier de crochet artesanal · Montevideo</div>
+    </div>
+    <div class="strip">
+      <span>@dahila.crochet</span>
+      <span>+598 94 605 015</span>
+      <span>dahila.uy</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

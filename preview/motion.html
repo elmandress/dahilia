@@ -1,0 +1,27 @@
+<!-- @dsCard group="Brand" -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="_card.css">
+<style>
+  body { padding: 22px 26px; }
+  .lbl { font-family: var(--font-sans); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--wine-600); margin-bottom: 12px;}
+  table { width: 100%; border-collapse: collapse;}
+  td { padding: 7px 0; vertical-align: middle; font-family: var(--font-sans); font-size: 13px; color: var(--ink-700); }
+  td.key { color: var(--wine-700); font-weight: 500; width: 200px;}
+  td.val { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--ink-500);}
+  tr + tr td { border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+  <div class="lbl">Motion principles</div>
+  <table>
+    <tr><td class="key">Ease — default</td><td>cubic-bezier(0.22, 0.61, 0.36, 1)</td><td class="val">out-soft, no overshoot</td></tr>
+    <tr><td class="key">Duration — hover</td><td>140 ms</td><td class="val">--dur-fast</td></tr>
+    <tr><td class="key">Duration — transition</td><td>260 ms</td><td class="val">--dur-base</td></tr>
+    <tr><td class="key">Section reveal</td><td>fade + ↑16 px · 520 ms</td><td class="val">stagger 60 ms</td></tr>
+    <tr><td class="key">Never</td><td>bounces, springs, color flashes</td><td class="val">—</td></tr>
+  </table>
+</body>
+</html>
