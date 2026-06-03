@@ -113,11 +113,16 @@ export function formatPrice(price: number): string {
   return `UYU ${price.toLocaleString('es-UY')}`;
 }
 
+// Neutral placeholder for products without media. Beats reusing a real
+// photo from another product as a fallback (which is misleading) and lives
+// in /public so next/image can serve it normally.
+export const PHOTO_PLACEHOLDER = '/placeholder-product.svg';
+
 // Helper: get primary photo URL
 export function getPrimaryPhoto(product: Product): string {
   if (!product.media || product.media.length === 0) {
-    return '/photos/top-lace-parque.png'; // fallback
+    return PHOTO_PLACEHOLDER;
   }
   const primary = product.media.find(m => m.is_primary && m.type === 'image');
-  return primary?.url || product.media[0].url;
+  return primary?.url || product.media[0].url || PHOTO_PLACEHOLDER;
 }

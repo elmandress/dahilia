@@ -1,99 +1,81 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-const DEFAULT_SETTINGS = {
-  hero_title: 'Tejido artesanal y a medida.',
-  hero_subtitle: 'Diseñado y confeccionado a mano en Uruguay.',
-  hero_cta: 'Ver Colección',
-  contact_whatsapp: '+598 99 123 456',
-  contact_instagram: 'dahila.crochet',
-  contact_email: 'hola@dahila.uy',
-  atelier_address: 'Montevideo, Uruguay',
-  lead_time_notice: 'Las prendas a medida demoran entre 2 y 6 semanas según la complejidad.'
+const DEFAULT_SETTINGS: Record<string, string> = {
+  hero_title: '',
+  hero_subtitle: '',
+  hero_cta: '',
+  contact_whatsapp: '',
+  contact_instagram: '',
+  contact_email: '',
+  atelier_address: '',
+  lead_time_notice: '',
 }
 
 export default function ConfiguracionAdminPage() {
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS)
+  const [settings, setSettings] = useState<Record<string, string>>(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
+    setError(null)
     try {
       const supabase = createClient()
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('*')
-      
-      if (error) throw error
+      const { data, error: err } = await supabase.from('site_settings').select('*')
+      if (err) throw err
 
-      if (data && data.length > 0) {
-        const loaded: any = {}
-        data.forEach(item => {
-          loaded[item.key] = item.value
-        })
-        setSettings({ ...DEFAULT_SETTINGS, ...loaded })
-      } else {
-        const local = localStorage.getItem('dahila_admin_settings')
-        if (local) {
-          setSettings(JSON.parse(local))
-        } else {
-          setSettings(DEFAULT_SETTINGS)
-          localStorage.setItem('dahila_admin_settings', JSON.stringify(DEFAULT_SETTINGS))
-        }
-      }
+      const loaded: Record<string, string> = {}
+      ;(data ?? []).forEach((item) => {
+        if (item?.key) loaded[item.key as string] = String(item.value ?? '')
+      })
+      setSettings({ ...DEFAULT_SETTINGS, ...loaded })
     } catch (e) {
-      console.warn('Supabase fetch failed, using local configuration settings fallback', e)
-      const local = localStorage.getItem('dahila_admin_settings')
-      if (local) {
-        setSettings(JSON.parse(local))
-      } else {
-        setSettings(DEFAULT_SETTINGS)
-        localStorage.setItem('dahila_admin_settings', JSON.stringify(DEFAULT_SETTINGS))
-      }
+      console.error('Error cargando configuración', e)
+      setError('No se pudo cargar la configuración desde la base de datos.')
     } finally {
       setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    loadSettings()
   }, [])
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadSettings()
+  }, [loadSettings])
+
   const handleChange = (key: string, value: string) => {
-    setSettings(prev => ({ ...prev, [key]: value }))
+    setSettings((prev) => ({ ...prev, [key]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
     setSuccess(false)
+    setError(null)
 
     try {
       const supabase = createClient()
-      
-      // UPSERT settings in Supabase site_settings table
       const updates = Object.entries(settings).map(([key, value]) => ({
         key,
         value,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       }))
 
-      const { error } = await supabase
+      const { error: err } = await supabase
         .from('site_settings')
         .upsert(updates, { onConflict: 'key' })
 
-      if (error) throw error
+      if (err) throw err
       setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
     } catch (e) {
-      console.warn('Supabase update failed, saving locally', e)
-      localStorage.setItem('dahila_admin_settings', JSON.stringify(settings))
-      setSuccess(true)
+      console.error('Error guardando configuración', e)
+      setError('No se pudieron guardar los cambios. Intentá de nuevo.')
     } finally {
       setSaving(false)
-      setTimeout(() => setSuccess(false), 3000)
     }
   }
 
@@ -115,12 +97,26 @@ export default function ConfiguracionAdminPage() {
       </div>
 
       {success && (
-        <div style={{ 
-          background: '#e8f5e9', color: '#2e7d32', padding: '1rem', 
+        <div style={{
+          background: '#e8f5e9', color: '#2e7d32', padding: '1rem',
           borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.9rem',
-          display: 'flex', alignItems: 'center', gap: '8px'
+          display: 'flex', alignItems: 'center', gap: '8px',
         }}>
           <span>✓</span> ¡Configuración guardada correctamente!
+        </div>
+      )}
+
+      {error && (
+        <div role="alert" style={{
+          background: 'rgba(182,49,74,0.06)',
+          border: '1px solid rgba(182,49,74,0.24)',
+          color: '#7a1e2f',
+          padding: '12px 14px',
+          borderRadius: 8,
+          marginBottom: 18,
+          fontSize: 13,
+        }}>
+          {error}
         </div>
       )}
 

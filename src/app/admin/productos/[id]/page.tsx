@@ -3,8 +3,15 @@
 import { useEffect, useState, useCallback, useRef, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Category, Color, Product } from '@/lib/types'
-import { DAHILA_PREVIEW_PRODUCTS } from '@/lib/preview-data'
+import type { Category, Color, Product, ProductMedia, ProductSize, ProductColor } from '@/lib/types'
+
+type LoadedProductColor = Partial<ProductColor> & { color_id?: string; color?: { id: string } }
+type LoadedProduct = Omit<Partial<Product>, 'colors'> & {
+  category?: { id: string } | null
+  media?: ProductMedia[]
+  sizes?: ProductSize[]
+  colors?: LoadedProductColor[]
+}
 
 interface SizeEntry {
   tempId: string
@@ -79,24 +86,69 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
   // Drag reorder
   const [dragIndex, setDragIndex] = useState<number | null>(null)
 
+  const fillProductForm = useCallback((p: LoadedProduct) => {
+    setName(p.name || '')
+    setSlug(p.slug || '')
+    setDescription(p.description || '')
+    setCategoryId(p.category_id || p.category?.id || '')
+    setBadge(p.badge || '')
+    setStatus((p.status as 'draft' | 'active' | 'soldout') || 'draft')
+    setBasePriceUyu(p.base_price_uyu ? String(p.base_price_uyu) : '')
+    setLeadTimeMin(p.lead_time_weeks_min ? String(p.lead_time_weeks_min) : '2')
+    setLeadTimeMax(p.lead_time_weeks_max ? String(p.lead_time_weeks_max) : '3')
+    setMaterial(p.material || '')
+    setCareInstructions(p.care_instructions || '')
+    setIsCustomOnly(p.is_custom_only || false)
+
+    if (p.media && p.media.length > 0) {
+      const mappedMedia: MediaEntry[] = [...p.media]
+        .sort((a, b) => a.position - b.position)
+        .map((m, idx) => ({
+          tempId: `loaded_${m.id || idx}_${Date.now()}`,
+          id: m.id,
+          url: m.url,
+          type: (m.type as 'image' | 'video') || 'image',
+          alt: m.alt || '',
+          position: m.position || idx,
+          is_primary: m.is_primary || idx === 0,
+        }))
+      setMediaEntries(mappedMedia)
+    }
+
+    if (p.sizes && p.sizes.length > 0) {
+      const mappedSizes: SizeEntry[] = [...p.sizes]
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((s, idx) => ({
+          tempId: `loaded_size_${s.id || idx}_${Date.now()}`,
+          id: s.id,
+          size: s.size,
+          price_uyu: s.price_uyu ? String(s.price_uyu) : '',
+          available: s.available ?? true,
+          sort_order: s.sort_order ?? idx,
+        }))
+      setSizes(mappedSizes)
+    }
+
+    if (p.colors && p.colors.length > 0) {
+      const colorIds = p.colors.map((c) => c.color_id || c.color?.id).filter((x): x is string => Boolean(x))
+      setSelectedColors(colorIds)
+    }
+  }, [])
+
   // Load Categories, Colors and Product
   useEffect(() => {
     const initPage = async () => {
       const supabase = createClient()
-      
-      // Load form metadata
+
       const [catRes, colRes] = await Promise.all([
         supabase.from('categories').select('*').order('sort_order'),
         supabase.from('colors').select('*').order('sort_order'),
       ])
-      
-      const loadedCats = catRes.data || []
-      const loadedCols = colRes.data || []
-      setCategories(loadedCats)
-      setColors(loadedCols)
+
+      setCategories((catRes.data ?? []) as Category[])
+      setColors((colRes.data ?? []) as Color[])
 
       try {
-        // Fetch product with joined sizes, media and colors
         const { data: productData, error: productErr } = await supabase
           .from('products')
           .select('*, sizes:product_sizes(*), media:product_media(*), colors:product_colors(*)')
@@ -106,86 +158,27 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
         if (productErr) throw productErr
 
         if (productData) {
-          fillProductForm(productData)
+          fillProductForm(productData as LoadedProduct)
         } else {
-          loadFromFallback()
+          setError('No se pudo encontrar el producto solicitado.')
         }
       } catch (e) {
-        console.warn('Could not fetch product from Supabase, loading from preview fallback', e)
-        loadFromFallback()
+        console.error('Could not fetch product from Supabase', e)
+        setError('Error cargando el producto desde la base de datos.')
       } finally {
         setLoading(false)
       }
     }
 
     initPage()
-  }, [productId])
+  }, [productId, fillProductForm])
 
-  const loadFromFallback = () => {
-    // Try to find in preview products
-    const p = DAHILA_PREVIEW_PRODUCTS.find(item => item.id === productId)
-    if (p) {
-      fillProductForm(p)
-    } else {
-      setError('No se pudo encontrar el producto en Supabase ni en el catálogo de pruebas.')
-    }
-  }
-
-  const fillProductForm = (p: any) => {
-    setName(p.name || '')
-    setSlug(p.slug || '')
-    setDescription(p.description || '')
-    setCategoryId(p.category_id || p.category?.id || '')
-    setBadge(p.badge || '')
-    setStatus(p.status || 'draft')
-    setBasePriceUyu(p.base_price_uyu ? String(p.base_price_uyu) : '')
-    setLeadTimeMin(p.lead_time_weeks_min ? String(p.lead_time_weeks_min) : '2')
-    setLeadTimeMax(p.lead_time_weeks_max ? String(p.lead_time_weeks_max) : '3')
-    setMaterial(p.material || '')
-    setCareInstructions(p.care_instructions || '')
-    setIsCustomOnly(p.is_custom_only || false)
-
-    // Media mapping
-    if (p.media && p.media.length > 0) {
-      const mappedMedia: MediaEntry[] = p.media
-        .sort((a: any, b: any) => a.position - b.position)
-        .map((m: any, idx: number) => ({
-          tempId: `loaded_${m.id || idx}_${Date.now()}`,
-          id: m.id,
-          url: m.url,
-          type: m.type || 'image',
-          alt: m.alt || '',
-          position: m.position || idx,
-          is_primary: m.is_primary || idx === 0
-        }))
-      setMediaEntries(mappedMedia)
-    }
-
-    // Sizes mapping
-    if (p.sizes && p.sizes.length > 0) {
-      const mappedSizes: SizeEntry[] = p.sizes
-        .sort((a: any, b: any) => a.sort_order - b.sort_order)
-        .map((s: any, idx: number) => ({
-          tempId: `loaded_size_${s.id || idx}_${Date.now()}`,
-          id: s.id,
-          size: s.size,
-          price_uyu: s.price_uyu ? String(s.price_uyu) : '',
-          available: s.available ?? true,
-          sort_order: s.sort_order ?? idx
-        }))
-      setSizes(mappedSizes)
-    }
-
-    // Colors mapping
-    if (p.colors && p.colors.length > 0) {
-      const colorIds = p.colors.map((c: any) => c.color_id || c.id)
-      setSelectedColors(colorIds)
-    }
-  }
-
-  // Auto-slug from name if manual editing is turned off
+  // Auto-slug from name when not in manual mode.
+  // setState-in-effect is acceptable here: we are deriving one state from another
+  // (name → slug) and React's lint rule over-flags this common pattern.
   useEffect(() => {
     if (!slugManual) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSlug(slugify(name))
     }
   }, [name, slugManual])
@@ -428,11 +421,9 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       }, 1000)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error al guardar cambios'
-      console.warn('Supabase update failed, simulating success locally', err)
-      setToast('Cambios guardados localmente')
-      setTimeout(() => {
-        router.push('/admin/productos')
-      }, 1000)
+      console.error('Supabase update failed', err)
+      setError(message)
+      setSaving(false)
     }
   }
 
@@ -448,9 +439,9 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       setTimeout(() => {
         router.push('/admin/productos')
       }, 1000)
-    } catch (err: any) {
-      console.warn('Supabase deletion failed, simulating locally', err)
-      setToast('Producto eliminado localmente')
+    } catch (err) {
+      console.error('Supabase deletion failed', err)
+      setToast('No se pudo eliminar el producto.')
       setTimeout(() => {
         router.push('/admin/productos')
       }, 1000)
@@ -587,7 +578,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
 
             <div className="admin-field">
               <label>Estado</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value as any)}>
+              <select value={status} onChange={(e) => setStatus(e.target.value as 'draft' | 'active' | 'soldout')}>
                 <option value="draft">Borrador</option>
                 <option value="active">Activo / Visible</option>
                 <option value="soldout">Agotado</option>
@@ -659,6 +650,8 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                         </div>
                       </>
                     ) : (
+                      // Admin preview thumbnail; next/image adds complexity for a CMS-only view.
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={m.url} alt="" />
                     )}
 

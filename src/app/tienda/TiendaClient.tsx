@@ -1,34 +1,27 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Product, Category } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
 import { dahila, Eyebrow, Chip, Icon } from '@/components/ui/Primitives'
 
-export function TiendaClient({ 
-  initialProducts, 
-  categories, 
+export function TiendaClient({
+  initialProducts,
+  categories,
   initialFilter,
-  initialSearch
-}: { 
-  initialProducts: Product[], 
-  categories: Category[], 
-  initialFilter: string,
+  initialSearch,
+}: {
+  initialProducts: Product[]
+  categories: Category[]
+  initialFilter: string
   initialSearch?: string
 }) {
   const router = useRouter()
+  // Re-mount when URL params change (key prop on parent) — keeps state and URL in sync
+  // without the anti-pattern of setState-in-effect.
   const [filter, setFilter] = useState(initialFilter || 'todo')
   const [search, setSearch] = useState(initialSearch || '')
-
-  // Keep search and filter state in sync with initial props when navigated
-  useEffect(() => {
-    setFilter(initialFilter || 'todo')
-  }, [initialFilter])
-
-  useEffect(() => {
-    setSearch(initialSearch || '')
-  }, [initialSearch])
 
   const filtered = initialProducts.filter((p) => {
     const matchesCat = filter === 'todo' || p.category?.slug === filter
@@ -98,7 +91,7 @@ export function TiendaClient({
           display: 'flex', gap: 12, alignItems: 'center', marginBottom: 24,
           fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink700
         }}>
-          <span>Búsqueda: <strong>"{search}"</strong> ({filtered.length} {filtered.length === 1 ? 'resultado' : 'resultados'})</span>
+          <span>Búsqueda: <strong>&ldquo;{search}&rdquo;</strong> ({filtered.length} {filtered.length === 1 ? 'resultado' : 'resultados'})</span>
           <button 
             onClick={() => {
               setSearch('')
@@ -116,8 +109,28 @@ export function TiendaClient({
       )}
 
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 24px', fontFamily: dahila.fontSans, color: dahila.ink500 }}>
-          No se encontraron prendas que coincidan con tu búsqueda.
+        <div style={{
+          textAlign: 'center', padding: '80px 24px',
+          background: dahila.cream100, borderRadius: 16,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+        }}>
+          <Eyebrow>Próximamente</Eyebrow>
+          <h3 style={{
+            fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24,
+            color: dahila.ink900, margin: 0,
+          }}>
+            {initialProducts.length === 0
+              ? 'No hay colecciones activas por ahora.'
+              : 'No se encontraron prendas que coincidan con tu búsqueda.'}
+          </h3>
+          <p style={{
+            fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300,
+            color: dahila.ink700, margin: 0, maxWidth: 460, lineHeight: 1.7,
+          }}>
+            {initialProducts.length === 0
+              ? 'Estoy preparando la próxima edición. Mientras tanto, podés encargar tu prenda a medida.'
+              : 'Probá con otras palabras o cambiá de categoría.'}
+          </p>
         </div>
       ) : (
         <div className="tienda-grid" style={{
@@ -129,11 +142,6 @@ export function TiendaClient({
         </div>
       )}
 
-      <style>{`
-        @media (max-width: 720px) {
-          .tienda-grid { grid-template-columns: 1fr 1fr !important; gap: 14px !important; row-gap: 32px !important; }
-        }
-      `}</style>
     </main>
   )
 }

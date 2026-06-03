@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Design kits and reference snippets are not part of the Next.js app build
+    "ui_kits/**",
+    "preview/**",
+    "prints/**",
   ]),
 ]);
 

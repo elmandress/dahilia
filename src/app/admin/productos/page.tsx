@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Product, Category } from '@/lib/types'
@@ -14,11 +14,7 @@ export default function ProductosPage() {
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const supabase = createClient()
 
     const [productsRes, categoriesRes] = await Promise.all([
@@ -34,25 +30,15 @@ export default function ProductosPage() {
       supabase.from('categories').select('*').order('sort_order'),
     ])
 
-    let loadedProducts = productsRes.data || []
-    
-    // FALLBACK PREVIEW MODE
-    if (loadedProducts.length === 0) {
-      loadedProducts = [
-        { id: '1', name: 'Top Lourdes', category: { name: 'tops' }, slug: 'top-lourdes', base_price_uyu: 3450, status: 'active', badge: 'Nuevo', media: [{ url: '/photos/top-lace-parque.png' }] },
-        { id: '2', name: 'Bolero Pétalo', category: { name: 'cardigans' }, slug: 'bolero-petalo', base_price_uyu: 4890, status: 'active', badge: 'A medida', media: [{ url: '/photos/bolero-marron.png' }] },
-        { id: '3', name: 'Bufanda Frutilla', category: { name: 'accesorios' }, slug: 'bufanda-frutilla', base_price_uyu: 1890, status: 'soldout', badge: null, media: [{ url: '/photos/bufanda-rosa.jpg' }] },
-        { id: '4', name: 'Wrap Negro', category: { name: 'tops' }, slug: 'wrap-negro', base_price_uyu: 5200, status: 'active', badge: null, media: [{ url: '/photos/wrap-negro.png' }] },
-        { id: '5', name: 'Set Cobre', category: { name: 'sets' }, slug: 'set-cobre', base_price_uyu: 7890, status: 'draft', badge: 'Edición Limitada', media: [{ url: '/photos/set-marron.jpg' }] },
-      ] as any
-    }
-
-    setProducts(loadedProducts as any)
-    setCategories(categoriesRes.data || [
-      { id: '1', name: 'Tops' }, { id: '2', name: 'Cardigans' }, { id: '3', name: 'Accesorios' }, { id: '4', name: 'Sets' }
-    ] as any)
+    setProducts((productsRes.data ?? []) as Product[])
+    setCategories((categoriesRes.data ?? []) as Category[])
     setLoading(false)
-  }
+  }, [])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData()
+  }, [loadData])
 
   const handleDelete = async (id: string) => {
     const supabase = createClient()

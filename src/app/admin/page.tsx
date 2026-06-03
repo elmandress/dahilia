@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Product, CustomOrder } from '@/lib/types'
@@ -15,46 +15,32 @@ export default function AdminDashboardPage() {
   const [recentOrders, setRecentOrders] = useState<CustomOrder[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadDashboard()
-  }, [])
-
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     const supabase = createClient()
 
-    const [productsRes, ordersRes] = await Promise.all([
+    const [productsRes, ordersRes, countRes] = await Promise.all([
       supabase.from('products').select('id, status'),
       supabase.from('custom_orders').select('*').order('created_at', { ascending: false }).limit(5),
+      supabase.from('custom_orders').select('*', { count: 'exact', head: true }),
     ])
 
-    let products = (productsRes.data || []) as Pick<Product, 'id' | 'status'>[]
-    let orders = (ordersRes.data || []) as CustomOrder[]
-
-    // Get total orders count
-    let totalOrdersCount = (await supabase
-      .from('custom_orders')
-      .select('*', { count: 'exact', head: true })).count
-
-    // FALLBACK PREVIEW MODE: If no real products, use mock data to show a "populated" professional dashboard
-    if (products.length === 0) {
-      products = Array(12).fill({ id: 'mock', status: 'active' }).concat(Array(3).fill({ id: 'mock2', status: 'soldout' }))
-      orders = [
-        { id: '1', customer_name: 'Analia Perez', customer_email: 'analia@gmail.com', garment_type: 'Top', status: 'new', created_at: new Date().toISOString() },
-        { id: '2', customer_name: 'Sofia Martinez', customer_email: 'sofi.m@outlook.com', garment_type: 'Cardigan', status: 'replied', created_at: new Date(Date.now() - 86400000).toISOString() },
-        { id: '3', customer_name: 'Camila Silva', customer_email: 'camila123@yahoo.com', garment_type: 'Set', status: 'in_progress', created_at: new Date(Date.now() - 86400000*3).toISOString() }
-      ] as CustomOrder[]
-      totalOrdersCount = 28
-    }
+    const products = (productsRes.data ?? []) as Pick<Product, 'id' | 'status'>[]
+    const orders = (ordersRes.data ?? []) as CustomOrder[]
 
     setStats({
       totalProducts: products.length,
-      activeProducts: products.filter(p => p.status === 'active').length,
-      pendingOrders: orders.filter(o => o.status === 'new' || o.status === 'replied').length,
-      totalOrders: totalOrdersCount || orders.length,
+      activeProducts: products.filter((p) => p.status === 'active').length,
+      pendingOrders: orders.filter((o) => o.status === 'new' || o.status === 'replied').length,
+      totalOrders: countRes.count ?? orders.length,
     })
     setRecentOrders(orders)
     setLoading(false)
-  }
+  }, [])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadDashboard()
+  }, [loadDashboard])
 
   if (loading) {
     return (

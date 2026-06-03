@@ -1,80 +1,144 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import type { Metadata, ResolvingMetadata } from 'next'
+import type { Metadata } from 'next'
 import type { Product } from '@/lib/types'
 import { getPrimaryPhoto } from '@/lib/types'
 import { ProductDetailsClient } from './ProductDetailsClient'
 import Link from 'next/link'
-import { DAHILA_PREVIEW_PRODUCTS } from '@/lib/preview-data'
+import { SITE_URL } from '@/lib/env'
 
 export const revalidate = 3600
 
-// Generate dynamic OpenGraph metadata for each product
 export async function generateMetadata(
-  { params }: { params: Promise<{ slug: string }> },
-  parent: ResolvingMetadata
+  { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
   const { slug } = await params
   const supabase = await createClient()
-  
+
   const { data } = await supabase
     .from('products')
     .select('*, media:product_media(*)')
     .eq('slug', slug)
-    .single()
-    
-  let product = data as Product
+    .maybeSingle()
+
+  const product = data as Product | null
+
   if (!product) {
-    product = DAHILA_PREVIEW_PRODUCTS.find(p => p.slug === slug) as Product
+    return {
+      title: 'Producto no encontrado',
+      robots: { index: false, follow: false },
+    }
   }
-  
-  if (!product) return { title: 'Producto no encontrado' }
+
   const photo = getPrimaryPhoto(product)
-  
+  const description = product.description || `Comprar ${product.name} a medida en Dahila Crochet.`
+
   return {
     title: product.name,
-    description: product.description || `Comprar ${product.name} a medida en Dahila Crochet.`,
+    description,
+    alternates: {
+      canonical: `/tienda/${product.slug}`,
+    },
     openGraph: {
+      type: 'website',
       title: `${product.name} | Dahila Crochet`,
-      description: product.description || `Prenda de crochet hecha a mano en Uruguay.`,
-      images: [photo]
-    }
+      description,
+      url: `${SITE_URL}/tienda/${product.slug}`,
+      images: [photo],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${product.name} | Dahila Crochet`,
+      description,
+      images: [photo],
+    },
   }
 }
 
 export default async function ProductPage({
-  params
+  params,
 }: {
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
   const supabase = await createClient()
-  
+
   const { data } = await supabase
     .from('products')
     .select(`
-      *, 
-      category:categories(*), 
-      media:product_media(*), 
-      sizes:product_sizes(*), 
+      *,
+      category:categories(*),
+      media:product_media(*),
+      sizes:product_sizes(*),
       colors:product_colors(*, color:colors(*))
     `)
     .eq('slug', slug)
-    .single()
-    
-  let product = data as Product
-  if (!product) {
-    product = DAHILA_PREVIEW_PRODUCTS.find(p => p.slug === slug) as Product
-  }
-  
+    .maybeSingle()
+
+  const product = data as Product | null
+
   if (!product) {
     notFound()
   }
-  
+
+  const photo = getPrimaryPhoto(product)
+  // Schema.org requires absolute image URLs.
+  const absolutePhoto = photo.startsWith('http') ? photo : `${SITE_URL}${photo}`
+  const price = product.base_price_uyu ?? 0
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    ...(product.description ? { description: product.description } : {}),
+    image: [absolutePhoto],
+    sku: product.id,
+    brand: {
+      '@type': 'Brand',
+      name: 'Dahila Crochet',
+    },
+    ...(product.material ? { material: product.material } : {}),
+    offers: {
+      '@type': 'Offer',
+      url: `${SITE_URL}/tienda/${product.slug}`,
+      price: price.toFixed(2),
+      priceCurrency: 'UYU',
+      availability:
+        product.status === 'active'
+          ? 'https://schema.org/InStock'
+          : product.status === 'soldout'
+            ? 'https://schema.org/OutOfStock'
+            : 'https://schema.org/PreOrder',
+      itemCondition: 'https://schema.org/NewCondition',
+    },
+  }
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Tienda', item: `${SITE_URL}/tienda` },
+      ...(product.category
+        ? [{
+            '@type': 'ListItem',
+            position: 3,
+            name: product.category.name,
+            item: `${SITE_URL}/tienda?cat=${product.category.slug}`,
+          }]
+        : []),
+      {
+        '@type': 'ListItem',
+        position: product.category ? 4 : 3,
+        name: product.name,
+        item: `${SITE_URL}/tienda/${product.slug}`,
+      },
+    ],
+  }
+
   return (
     <div className="container" style={{ paddingBottom: '4rem' }}>
       {/* Breadcrumbs */}
-      <nav className="breadcrumbs hide-mobile">
+      <nav className="breadcrumbs hide-mobile" aria-label="Migas de pan">
         <Link href="/">Inicio</Link>
         <span className="breadcrumbs__sep">/</span>
         <Link href="/tienda">Tienda</Link>
@@ -88,24 +152,13 @@ export default async function ProductPage({
         <span style={{ color: 'var(--fg)' }}>{product.name}</span>
       </nav>
 
-      {/* Structured Data for Google SEO */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Product',
-            name: product.name,
-            description: product.description || '',
-            image: getPrimaryPhoto(product),
-            offers: {
-              '@type': 'Offer',
-              price: product.base_price_uyu || 0,
-              priceCurrency: 'UYU',
-              availability: product.status === 'active' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-            }
-          })
-        }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       <ProductDetailsClient product={product} />

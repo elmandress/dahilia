@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { CustomOrder } from '@/lib/types'
 
@@ -9,32 +9,21 @@ export default function EncargosPage() {
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState<string>('all')
 
-  useEffect(() => {
-    loadOrders()
-  }, [])
-
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     const supabase = createClient()
     const { data } = await supabase
       .from('custom_orders')
       .select('*')
       .order('created_at', { ascending: false })
-    
-    let loadedOrders = data || []
-    
-    // FALLBACK PREVIEW MODE
-    if (loadedOrders.length === 0) {
-      loadedOrders = [
-        { id: '1', customer_name: 'Analia Perez', customer_email: 'analia@gmail.com', whatsapp: '+59899123456', garment_type: 'Top', size: 'M', message: 'Lo quiero para un casamiento.', color_preference: 'Blanco', status: 'new', created_at: new Date().toISOString() },
-        { id: '2', customer_name: 'Sofia Martinez', customer_email: 'sofi.m@outlook.com', whatsapp: '+59899321456', garment_type: 'Cardigan', size: 'L', message: 'Tengo un modelo visto de pinterest.', color_preference: 'Rosa', status: 'replied', created_at: new Date(Date.now() - 86400000).toISOString() },
-        { id: '3', customer_name: 'Camila Silva', customer_email: 'camila123@yahoo.com', whatsapp: '+59898121212', garment_type: 'Set', size: 'XS', message: '', color_preference: 'Beige', status: 'in_progress', created_at: new Date(Date.now() - 86400000*3).toISOString() },
-        { id: '4', customer_name: 'Lucia Gimenez', customer_email: 'lu.gimenez@gmail.com', whatsapp: '+59892111111', garment_type: 'Otro', size: 'A medida', message: 'Bufanda extra larga', color_preference: 'Verde', status: 'done', created_at: new Date(Date.now() - 86400000*12).toISOString() }
-      ]
-    }
-    
-    setOrders(loadedOrders as CustomOrder[])
+
+    setOrders((data ?? []) as CustomOrder[])
     setLoading(false)
-  }
+  }, [])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadOrders()
+  }, [loadOrders])
 
   const updateStatus = async (id: string, newStatus: CustomOrder['status']) => {
     const supabase = createClient()
@@ -60,9 +49,27 @@ export default function EncargosPage() {
     }
   }
 
-  const filteredOrders = filterStatus === 'all' 
-    ? orders 
+  const filteredOrders = filterStatus === 'all'
+    ? orders
     : orders.filter(o => o.status === filterStatus)
+
+  const statusCounts: Record<string, number> = {
+    all: orders.length,
+    new: orders.filter((o) => o.status === 'new').length,
+    replied: orders.filter((o) => o.status === 'replied').length,
+    in_progress: orders.filter((o) => o.status === 'in_progress').length,
+    done: orders.filter((o) => o.status === 'done').length,
+    cancelled: orders.filter((o) => o.status === 'cancelled').length,
+  }
+
+  const STATUS_TABS: Array<{ key: string; label: string }> = [
+    { key: 'all',         label: 'Todos' },
+    { key: 'new',         label: 'Nuevos' },
+    { key: 'replied',     label: 'Respondidos' },
+    { key: 'in_progress', label: 'En proceso' },
+    { key: 'done',        label: 'Completados' },
+    { key: 'cancelled',   label: 'Cancelados' },
+  ]
 
   if (loading) return <div className="admin-loading"><div className="admin-spinner" /></div>
 
@@ -75,15 +82,55 @@ export default function EncargosPage() {
         </div>
       </div>
 
-      <div className="admin-filters">
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-          <option value="all">Todos los estados</option>
-          <option value="new">Nuevos</option>
-          <option value="replied">Respondidos</option>
-          <option value="in_progress">En proceso</option>
-          <option value="done">Completados</option>
-          <option value="cancelled">Cancelados</option>
-        </select>
+      <div
+        role="tablist"
+        aria-label="Filtrar encargos por estado"
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 8,
+          marginBottom: 20,
+        }}
+      >
+        {STATUS_TABS.map((tab) => {
+          const active = filterStatus === tab.key
+          const count = statusCounts[tab.key] || 0
+          return (
+            <button
+              key={tab.key}
+              role="tab"
+              aria-selected={active}
+              onClick={() => setFilterStatus(tab.key)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 14px',
+                borderRadius: 999,
+                fontFamily: 'var(--font-sans)',
+                fontSize: 12,
+                fontWeight: 500,
+                letterSpacing: '0.04em',
+                background: active ? '#1F1A1B' : '#fff',
+                color: active ? '#fff' : '#4A4143',
+                border: `1px solid ${active ? '#1F1A1B' : 'rgba(31,26,27,0.18)'}`,
+                cursor: 'pointer',
+              }}
+            >
+              {tab.label}
+              <span
+                style={{
+                  fontSize: 10,
+                  padding: '2px 8px',
+                  borderRadius: 999,
+                  background: active ? 'rgba(255,255,255,0.18)' : 'rgba(31,26,27,0.08)',
+                }}
+              >
+                {count}
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       <div className="admin-card">

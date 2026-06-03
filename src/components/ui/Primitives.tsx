@@ -176,8 +176,27 @@ export function TextInput({ placeholder, value, onChange, type = 'text' }: { pla
 }
 
 // --- Icon (Phosphor) ------------------------------------------
+// Phosphor v2 web requires the weight class (`ph-light`, `ph-regular`, ...) plus
+// the icon class (`ph-shopping-bag`). We reserve square space via inline width
+// to avoid layout shift while the CDN stylesheet loads.
 export function Icon({ name, size = 18, color, weight = 'light' }: { name: string, size?: number, color?: string, weight?: string }) {
-  return <i className={`ph-${weight} ph-${name}`} style={{ fontSize: size, color: color || 'currentColor', lineHeight: 1 }}/>
+  return (
+    <i
+      aria-hidden="true"
+      className={`ph-${weight} ph-${name}`}
+      style={{
+        fontSize: size,
+        width: size,
+        height: size,
+        color: color || 'currentColor',
+        lineHeight: 1,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flex: '0 0 auto',
+      }}
+    />
+  )
 }
 
 export { dahila }

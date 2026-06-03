@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useCart } from '@/components/CartProvider'
 import type { Product } from '@/lib/types'
 import { getEffectivePrice, formatPrice, getPrimaryPhoto } from '@/lib/types'
@@ -45,21 +46,28 @@ export function ProductDetailsClient({ product }: { product: Product }) {
         {/* Image stack */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{
+            position: 'relative',
             aspectRatio: '4/5', borderRadius: 12, overflow: 'hidden',
             background: dahila.cream50,
           }}>
-            <img src={photo1} alt={product.name} style={{
-              width: '100%', height: '100%', objectFit: 'cover',
-            }}/>
+            <Image
+              src={photo1}
+              alt={product.name}
+              fill
+              priority
+              sizes="(max-width: 720px) 100vw, 640px"
+              style={{ objectFit: 'cover' }}
+            />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
             {[photo1, photo2, photo3].map((p, i) => (
               <div key={i} style={{
+                position: 'relative',
                 aspectRatio: '1/1', borderRadius: 8, overflow: 'hidden',
                 background: dahila.cream50,
                 border: i === 0 ? `1px solid ${dahila.ink900}` : `1px solid ${dahila.border}`,
               }}>
-                <img src={p} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+                <Image src={p} alt="" fill sizes="(max-width: 720px) 33vw, 200px" style={{ objectFit: 'cover' }} />
               </div>
             ))}
           </div>
@@ -147,29 +155,76 @@ export function ProductDetailsClient({ product }: { product: Product }) {
             display: 'flex', flexDirection: 'column', gap: 8,
             borderTop: `1px solid ${dahila.border}`, paddingTop: 16,
           }}>
-            {[
-              ['ruler',       product.material || '90% algodón pima · 10% lurex'],
-              ['flower',      'Tejido a mano en Montevideo'],
-              ['package',     'Envío a todo Uruguay'],
-              ['arrow-clockwise', `Encargos a medida (consultar plazos)`],
-            ].map(([icon, txt]) => (
-              <li key={txt} style={{
+            {product.material && (
+              <li style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink700,
               }}>
-                <Icon name={icon} size={16} color={dahila.ink500}/> {txt}
+                <Icon name="ruler" size={16} color={dahila.ink500}/> {product.material}
               </li>
-            ))}
+            )}
+            <li style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink700,
+            }}>
+              <Icon name="flower" size={16} color={dahila.ink500}/> Tejido a mano en Montevideo
+            </li>
+            <li style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink700,
+            }}>
+              <Icon name="package" size={16} color={dahila.ink500}/> Envío a todo Uruguay
+            </li>
+            {(product.lead_time_weeks_min || product.lead_time_weeks_max) && (
+              <li style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink700,
+              }}>
+                <Icon name="arrow-clockwise" size={16} color={dahila.ink500}/>
+                Encargos a medida: {product.lead_time_weeks_min || 2}–{product.lead_time_weeks_max || 6} semanas
+              </li>
+            )}
           </ul>
+
+          {product.care_instructions && (
+            <CareInstructions text={product.care_instructions} />
+          )}
         </div>
       </div>
 
-      <style>{`
-        @media (max-width: 720px) {
-          .producto-split { grid-template-columns: 1fr !important; gap: 24px !important;}
-          .producto-detail { position: static !important; }
-        }
-      `}</style>
     </main>
+  )
+}
+
+function CareInstructions({ text }: { text: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div style={{ borderTop: `1px solid ${dahila.border}`, paddingTop: 14 }}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-controls="care-panel"
+        style={{
+          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 0',
+          fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 500,
+          letterSpacing: '0.08em', textTransform: 'uppercase',
+          color: dahila.ink900,
+        }}
+      >
+        <span>Cuidados</span>
+        <Icon name={open ? 'minus' : 'plus'} size={14} color={dahila.ink500} />
+      </button>
+      <div
+        id="care-panel"
+        hidden={!open}
+        style={{
+          fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, lineHeight: 1.7,
+          color: dahila.ink700, padding: '8px 0 4px', whiteSpace: 'pre-line',
+        }}
+      >
+        {text}
+      </div>
+    </div>
   )
 }

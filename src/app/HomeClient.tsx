@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { ProductCard } from '@/components/ProductCard'
 import type { Product } from '@/lib/types'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
@@ -38,7 +37,42 @@ function FAQ({ items }: { items: [string, string][] }) {
   )
 }
 
-export function HomeClient({ products, settings }: { products: Product[], settings: any }) {
+function EmptyCollectionState({ onCta }: { onCta: () => void }) {
+  return (
+    <div style={{
+      gridColumn: '1 / -1',
+      background: dahila.cream100,
+      borderRadius: 16,
+      padding: '56px 32px',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 14,
+    }}>
+      <Eyebrow>Próximamente</Eyebrow>
+      <h3 style={{
+        fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24,
+        color: dahila.ink900, margin: 0,
+      }}>
+        No hay colecciones activas por ahora.
+      </h3>
+      <p style={{
+        fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, lineHeight: 1.7,
+        color: dahila.ink700, margin: 0, maxWidth: 460,
+      }}>
+        Estoy preparando la próxima edición. Mientras tanto, podés encargar tu prenda a medida y la tejo para vos.
+      </p>
+      <div style={{ marginTop: 10 }}>
+        <Button variant="primary" onClick={onCta}>Encargar a medida</Button>
+      </div>
+    </div>
+  )
+}
+
+interface HomeSettings {
+  hero_subtitle?: string
+  hero_title?: string
+  hero_cta?: string
+}
+
+export function HomeClient({ products, settings }: { products: Product[], settings: HomeSettings }) {
   const router = useRouter()
   const featured = products.slice(0, 4)
   const accesorios = products.filter(p => p.category?.slug === 'accesorios').slice(0, 4)
@@ -46,23 +80,24 @@ export function HomeClient({ products, settings }: { products: Product[], settin
   return (
     <main>
       {/* HERO — full-bleed photo, minimal text */}
-      <section style={{ position: 'relative', background: '#fff' }}>
-        <div style={{
-          position: 'relative', overflow: 'hidden',
-          aspectRatio: '16 / 8',
-          maxHeight: 640,
-        }}>
-          <img
+      <section className="hero" style={{ position: 'relative', background: '#fff' }}>
+        <div className="hero-frame" style={{ position: 'relative', overflow: 'hidden' }}>
+          <Image
             src="/photos/top-lace-parque.png"
             alt="Top de crochet — Dahila"
-            style={{
-              position: 'absolute', inset: 0, width: '100%', height: '100%',
-              objectFit: 'cover', objectPosition: 'center 30%',
-            }}
+            fill
+            priority
+            sizes="100vw"
+            style={{ objectFit: 'cover', objectPosition: 'center 30%' }}
           />
-          <div style={{
+          {/* Readability scrim: stronger on the left where copy sits, fades right */}
+          <div aria-hidden style={{
             position: 'absolute', inset: 0,
-            background: 'linear-gradient(to right, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 50%)',
+            background: 'linear-gradient(to right, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.45) 35%, rgba(255,255,255,0) 65%)',
+          }}/>
+          <div aria-hidden style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(to bottom, rgba(255,255,255,0) 60%, rgba(255,255,255,0.35) 100%)',
           }}/>
           <div className="hero-content" style={{
             position: 'absolute', inset: 0,
@@ -70,13 +105,19 @@ export function HomeClient({ products, settings }: { products: Product[], settin
             padding: '0 32px',
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
           }}>
-            <div style={{ maxWidth: 460 }}>
-              <Eyebrow style={{ color: dahila.ink900 }}>{settings?.hero_subtitle || 'Otoño 2026 — Edición a medida'}</Eyebrow>
+            <div style={{ maxWidth: 480 }}>
+              <Eyebrow style={{
+                color: dahila.ink900,
+                textShadow: '0 1px 14px rgba(255,255,255,0.7)',
+              }}>
+                {settings?.hero_subtitle || 'Otoño 2026 — Edición a medida'}
+              </Eyebrow>
               <h1 style={{
                 fontFamily: dahila.fontDisplay, fontWeight: 300,
-                fontSize: 'clamp(40px, 6vw, 76px)', lineHeight: 1.02,
+                fontSize: 'clamp(36px, 5.5vw, 68px)', lineHeight: 1.02,
                 letterSpacing: '-0.02em', color: dahila.ink900,
                 margin: '14px 0 22px',
+                textShadow: '0 2px 20px rgba(255,255,255,0.55)',
               }}>
                 {settings?.hero_title || 'Tejido con tiempo.'}
               </h1>
@@ -89,7 +130,7 @@ export function HomeClient({ products, settings }: { products: Product[], settin
       </section>
 
       {/* NEW IN */}
-      <section style={{ maxWidth: 1280, margin: '0 auto', padding: '72px 24px 0' }}>
+      <section style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 24px 0' }}>
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
           marginBottom: 32, paddingBottom: 12,
@@ -110,9 +151,9 @@ export function HomeClient({ products, settings }: { products: Product[], settin
         <div className="product-grid" style={{
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22,
         }}>
-          {featured.map(product => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {featured.length > 0
+            ? featured.map(product => <ProductCard key={product.id} product={product} />)
+            : <EmptyCollectionState onCta={() => router.push('/encargo')} />}
         </div>
       </section>
 
@@ -167,9 +208,15 @@ export function HomeClient({ products, settings }: { products: Product[], settin
         <div className="split" style={{
           display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 56, alignItems: 'center',
         }}>
-          <img src="/photos/atelier-escritorio.png" alt="Atelier" style={{
-            width: '100%', borderRadius: 16, aspectRatio: '4/5', objectFit: 'cover',
-          }}/>
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden' }}>
+            <Image
+              src="/photos/atelier-escritorio.png"
+              alt="Atelier de Dahila"
+              fill
+              sizes="(max-width: 720px) 100vw, 640px"
+              style={{ objectFit: 'cover' }}
+            />
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             <Eyebrow>El atelier</Eyebrow>
             <h2 style={{
@@ -204,15 +251,6 @@ export function HomeClient({ products, settings }: { products: Product[], settin
         ]}/>
       </section>
 
-      {/* Mobile-first responsive overrides */}
-      <style>{`
-        @media (max-width: 720px) {
-          .product-grid { grid-template-columns: 1fr 1fr !important; gap: 14px !important; }
-          .process     { grid-template-columns: 1fr !important; padding: 32px 28px !important; gap: 24px !important;}
-          .split       { grid-template-columns: 1fr !important; gap: 28px !important;}
-          .hero-content { padding: 0 24px !important; }
-        }
-      `}</style>
     </main>
   )
 }

@@ -1,6 +1,17 @@
-'use client'
-
+import type { Metadata } from 'next'
+import Image from 'next/image'
 import { dahila, Eyebrow } from '@/components/ui/Primitives'
+
+export const metadata: Metadata = {
+  title: 'Atelier',
+  description: 'Conocé el atelier de Dahila Crochet en Montevideo: tejido a mano, lana natural y prendas únicas a medida.',
+  alternates: { canonical: '/atelier' },
+  openGraph: {
+    title: 'Atelier | Dahila Crochet',
+    description: 'Conocé el atelier de Dahila Crochet en Montevideo: tejido a mano, lana natural y prendas únicas a medida.',
+    url: '/atelier',
+  },
+}
 
 export default function AtelierPage() {
   return (
@@ -8,9 +19,15 @@ export default function AtelierPage() {
       <div className="atelier-split" style={{
         display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: 64, alignItems: 'center',
       }}>
-        <img src="/photos/atelier-tejiendo.png" alt="Dahila en su atelier" style={{
-          width: '100%', borderRadius: 16, aspectRatio: '4/5', objectFit: 'cover',
-        }}/>
+        <div style={{ position: 'relative', width: '100%', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden' }}>
+          <Image
+            src="/photos/atelier-tejiendo.png"
+            alt="Dahila en su atelier"
+            fill
+            sizes="(max-width: 720px) 100vw, 600px"
+            style={{ objectFit: 'cover' }}
+          />
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <Eyebrow>El atelier</Eyebrow>
           <h1 style={{
@@ -52,20 +69,18 @@ export default function AtelierPage() {
       <section style={{ marginTop: 64 }}>
         <div className="photo-strip" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
           {['detalle-tejido.jpg', 'atelier-escritorio.png', 'bufanda-verde.png'].map((p) => (
-            <img key={p} src={`/photos/${p}`} alt="" style={{
-              width: '100%', aspectRatio: '3/4', objectFit: 'cover', borderRadius: 12,
-            }}/>
+            <div key={p} style={{ position: 'relative', width: '100%', aspectRatio: '3/4', borderRadius: 12, overflow: 'hidden' }}>
+              <Image
+                src={`/photos/${p}`}
+                alt=""
+                fill
+                sizes="(max-width: 720px) 50vw, 33vw"
+                style={{ objectFit: 'cover' }}
+              />
+            </div>
           ))}
         </div>
       </section>
-
-      <style>{`
-        @media (max-width: 720px) {
-          .atelier-split { grid-template-columns: 1fr !important; gap: 28px !important;}
-          .numbers       { grid-template-columns: 1fr !important; gap: 0 !important;}
-          .photo-strip   { grid-template-columns: 1fr 1fr !important; }
-        }
-      `}</style>
     </main>
   )
 }

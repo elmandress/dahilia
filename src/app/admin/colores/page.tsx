@@ -1,103 +1,71 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Color } from '@/lib/types'
 
-const DEFAULT_COLORS: Color[] = [
-  { id: '1', name: 'Blanco Crudo', hex: '#FAF9F6', sort_order: 1 },
-  { id: '2', name: 'Negro Profundo', hex: '#111111', sort_order: 2 },
-  { id: '3', name: 'Verde Musgo', hex: '#6A8456', sort_order: 3 },
-  { id: '4', name: 'Rosa Pétalo', hex: '#ECC0CB', sort_order: 4 },
-  { id: '5', name: 'Cobre Sparkle', hex: '#A37B53', sort_order: 5 },
-]
+const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 
 export default function ColoresAdminPage() {
   const [colors, setColors] = useState<Color[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [hex, setHex] = useState('#8F3B53')
   const [sortOrder, setSortOrder] = useState('1')
-  
-  // Editing state
+
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editHex, setEditHex] = useState('#8F3B53')
   const [editSortOrder, setEditSortOrder] = useState('1')
 
-  const loadColors = async () => {
+  const loadColors = useCallback(async () => {
+    setError(null)
     try {
       const supabase = createClient()
-      const { data, error } = await supabase
+      const { data, error: err } = await supabase
         .from('colors')
         .select('*')
         .order('sort_order', { ascending: true })
-      
-      if (error) throw error
 
-      if (data && data.length > 0) {
-        setColors(data as Color[])
-      } else {
-        const local = localStorage.getItem('dahila_admin_colors')
-        if (local) {
-          setColors(JSON.parse(local))
-        } else {
-          setColors(DEFAULT_COLORS)
-          localStorage.setItem('dahila_admin_colors', JSON.stringify(DEFAULT_COLORS))
-        }
-      }
+      if (err) throw err
+      setColors((data ?? []) as Color[])
     } catch (e) {
-      console.warn('Supabase fetch failed, using local colors fallback', e)
-      const local = localStorage.getItem('dahila_admin_colors')
-      if (local) {
-        setColors(JSON.parse(local))
-      } else {
-        setColors(DEFAULT_COLORS)
-        localStorage.setItem('dahila_admin_colors', JSON.stringify(DEFAULT_COLORS))
-      }
+      console.error('Error cargando colores', e)
+      setError('No se pudieron cargar los colores desde la base de datos.')
     } finally {
       setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    loadColors()
   }, [])
 
-  const saveLocal = (newColors: Color[]) => {
-    setColors(newColors)
-    localStorage.setItem('dahila_admin_colors', JSON.stringify(newColors))
-  }
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadColors()
+  }, [loadColors])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !hex) return
-
-    const newColor: Color = {
-      id: Math.random().toString(36).substr(2, 9), // temp random ID
-      name,
-      hex,
-      sort_order: parseInt(sortOrder) || 1
+    if (!name || !HEX_RE.test(hex)) {
+      setError('Verificá el nombre y que el hex tenga formato #RRGGBB.')
+      return
     }
-
+    setError(null)
     try {
       const supabase = createClient()
-      const { error } = await supabase.from('colors').insert([{
+      const { error: err } = await supabase.from('colors').insert([{
         name,
         hex,
-        sort_order: newColor.sort_order
+        sort_order: parseInt(sortOrder) || 1,
       }])
-      if (error) throw error
+      if (err) throw err
       await loadColors()
+      setName('')
+      setHex('#8F3B53')
+      setSortOrder(String(colors.length + 2))
     } catch (e) {
-      console.warn('Creating in Supabase failed, saving locally', e)
-      const updated = [...colors, newColor].sort((a,b) => a.sort_order - b.sort_order)
-      saveLocal(updated)
+      console.error('Error creando color', e)
+      setError('No se pudo crear el color.')
     }
-
-    setName('')
-    setHex('#8F3B53')
-    setSortOrder(String(colors.length + 2))
   }
 
   const handleStartEdit = (col: Color) => {
@@ -108,66 +76,61 @@ export default function ColoresAdminPage() {
   }
 
   const handleSaveEdit = async (id: string) => {
-    if (!editName || !editHex) return
-
-    const updatedColor = {
-      name: editName,
-      hex: editHex,
-      sort_order: parseInt(editSortOrder) || 1
+    if (!editName || !HEX_RE.test(editHex)) {
+      setError('Verificá el nombre y que el hex tenga formato #RRGGBB.')
+      return
     }
-
+    setError(null)
     try {
       const supabase = createClient()
-      const { error } = await supabase.from('colors').update(updatedColor).eq('id', id)
-      if (error) throw error
+      const { error: err } = await supabase
+        .from('colors')
+        .update({
+          name: editName,
+          hex: editHex,
+          sort_order: parseInt(editSortOrder) || 1,
+        })
+        .eq('id', id)
+      if (err) throw err
       await loadColors()
+      setEditingId(null)
     } catch (e) {
-      console.warn('Updating in Supabase failed, updating locally', e)
-      const updated = colors.map(c => c.id === id ? { ...c, ...updatedColor } : c).sort((a,b) => a.sort_order - b.sort_order)
-      saveLocal(updated)
+      console.error('Error guardando color', e)
+      setError('No se pudieron guardar los cambios.')
     }
-    setEditingId(null)
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm('¿Estás seguro de eliminar este color? Las prendas vinculadas ya no tendrán este swatch.')) return
-
+    setError(null)
     try {
       const supabase = createClient()
-      const { error } = await supabase.from('colors').delete().eq('id', id)
-      if (error) throw error
+      const { error: err } = await supabase.from('colors').delete().eq('id', id)
+      if (err) throw err
       await loadColors()
     } catch (e) {
-      console.warn('Deleting in Supabase failed, deleting locally', e)
-      const updated = colors.filter(c => c.id !== id)
-      saveLocal(updated)
+      console.error('Error eliminando color', e)
+      setError('No se pudo eliminar el color.')
     }
   }
 
   const moveOrder = async (index: number, direction: 'up' | 'down') => {
-    const updated = [...colors]
     const targetIndex = direction === 'up' ? index - 1 : index + 1
-    if (targetIndex < 0 || targetIndex >= updated.length) return
-
-    // Swap sort_order values
-    const tempOrder = updated[index].sort_order
-    updated[index].sort_order = updated[targetIndex].sort_order
-    updated[targetIndex].sort_order = tempOrder
-
-    // Swap indices in array
-    const temp = updated[index]
-    updated[index] = updated[targetIndex]
-    updated[targetIndex] = temp
-
-    saveLocal(updated)
-
-    // Attempt to update Supabase
+    if (targetIndex < 0 || targetIndex >= colors.length) return
+    const a = colors[index]
+    const b = colors[targetIndex]
+    setError(null)
     try {
       const supabase = createClient()
-      await supabase.from('colors').update({ sort_order: updated[index].sort_order }).eq('id', updated[index].id)
-      await supabase.from('colors').update({ sort_order: updated[targetIndex].sort_order }).eq('id', updated[targetIndex].id)
+      const [r1, r2] = await Promise.all([
+        supabase.from('colors').update({ sort_order: b.sort_order }).eq('id', a.id),
+        supabase.from('colors').update({ sort_order: a.sort_order }).eq('id', b.id),
+      ])
+      if (r1.error || r2.error) throw r1.error ?? r2.error
+      await loadColors()
     } catch (e) {
-      console.warn('Reorder in Supabase failed, saved locally', e)
+      console.error('Error reordenando colores', e)
+      setError('No se pudo reordenar.')
     }
   }
 
@@ -187,6 +150,20 @@ export default function ColoresAdminPage() {
           <p>Configura la paleta de colores para las colecciones</p>
         </div>
       </div>
+
+      {error && (
+        <div role="alert" style={{
+          background: 'rgba(182,49,74,0.06)',
+          border: '1px solid rgba(182,49,74,0.24)',
+          color: '#7a1e2f',
+          padding: '12px 14px',
+          borderRadius: 8,
+          marginBottom: 18,
+          fontSize: 13,
+        }}>
+          {error}
+        </div>
+      )}
 
       <div className="admin-form-grid" style={{ alignItems: 'start' }}>
         {/* Create Form */}

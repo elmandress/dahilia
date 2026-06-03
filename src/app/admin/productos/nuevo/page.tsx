@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Category, Color, ProductMedia } from '@/lib/types'
+import type { Category, Color } from '@/lib/types'
 
 interface SizeEntry {
   tempId: string
@@ -72,23 +72,25 @@ export default function NuevoProductoPage() {
   // Drag reorder
   const [dragIndex, setDragIndex] = useState<number | null>(null)
 
-  useEffect(() => {
-    loadFormData()
-  }, [])
-
-  const loadFormData = async () => {
+  const loadFormData = useCallback(async () => {
     const supabase = createClient()
     const [catRes, colRes] = await Promise.all([
       supabase.from('categories').select('*').order('sort_order'),
       supabase.from('colors').select('*').order('sort_order'),
     ])
-    setCategories(catRes.data || [])
-    setColors(colRes.data || [])
-  }
+    setCategories((catRes.data ?? []) as Category[])
+    setColors((colRes.data ?? []) as Color[])
+  }, [])
 
-  // Auto-slug from name
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadFormData()
+  }, [loadFormData])
+
+  // Auto-slug from name when user hasn't manually overridden the slug.
   useEffect(() => {
     if (!slugManual) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSlug(slugify(name))
     }
   }, [name, slugManual])

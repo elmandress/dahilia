@@ -1,83 +1,193 @@
-# 🪡 Dahila Crochet — Boutique E-Commerce & Admin Platform
+# Dahila Crochet — Boutique E-Commerce
 
-> Un e-commerce boutique y panel de control a medida para una marca premium de moda artesanal en Uruguay. Diseñado con una experiencia visual de alta gama y arquitectura de software moderna.
+A production e-commerce platform built end-to-end for **[Dahila Crochet](https://www.instagram.com/dahila.crochet/)**, a Uruguayan artisan brand that hand-knits crochet garments to measure.
 
-Este proyecto representa la transición completa de una marca física y artesanal hacia el comercio electrónico moderno. No se trata simplemente de un catálogo estático; es una plataforma integrada que aborda el desafío de la venta de **prendas personalizadas y hechas a medida**, combinando la flexibilidad de la compra rápida con un embudo de personalización de talle, colores y especificaciones de costura.
-
----
-
-## 💡 El Porqué y El Qué (Propuesta de Valor)
-
-### El Desafío
-La indumentaria artesanal premium tejida a mano (crochet) se produce bajo demanda, con plazos de confección variables (2 a 6 semanas) y requiere medidas antropométricas precisas (busto, cintura, largo) si el cliente opta por un pedido personalizado. Un carrito de compras tradicional no puede procesar esta complejidad de forma nativa.
-
-### La Solución
-**Dahila Crochet** unifica dos flujos de negocio en una sola interfaz:
-1. **Flujo E-Commerce Estándar:** Para prendas de stock inmediato o talles fijos (XS a XL), integrando un carrito dinámico interactivo.
-2. **Flujo Bespoke (A Medida):** Un asistente de encargos integrado que recopila talles antropométricos y preferencias de color, dirigiéndolos a un CRM administrativo integrado.
+🌐 **Live:** [dahila-crochet.netlify.app](https://dahila-crochet.netlify.app)
+📐 **Built by:** [SIAR](https://siaruy.netlify.app) — design & development studio · [@siar.uy](https://www.instagram.com/siar.uy/)
 
 ---
 
-## 🛠️ Stack Tecnológico
+## Why it exists
 
-El proyecto está construido bajo los principios de rendimiento, seguridad y experiencia del usuario:
+Most off-the-shelf e-commerce templates assume two things that don't hold for a slow-fashion artisan brand:
 
-* **Framework Principal:** **Next.js 15** (App Router y compilación ultrarrápida con **Turbopack**).
-* **Renderizado:** **Hybrid Server/Client Rendering** (SSR en páginas de productos para indexación SEO inmediata y renderizado dinámico en el área de administración).
-* **Base de Datos & Backend:** **Supabase (PostgreSQL)**, operando bajo directivas criptográficas a nivel de base de datos.
-* **Almacenamiento:** **Supabase Storage** (Buckets públicos optimizados para la carga masiva de archivos multimedia).
-* **Seguridad:** **Row Level Security (RLS)** y políticas estrictas de control de acceso JWT.
-* **Diseño e Interfaz:** CSS Primitives con variables CSS personalizadas (Tokens de diseño) enfocados en una estética minimalista premium ("White-led space").
-* **Iconografía:** Hojas de estilo estructuradas independientes de **Phosphor Icons CDN** en pesos `light`, `regular`, `bold` y `fill`.
+1. **Inventory exists.** Dahila tejes prendas *después* de que las pidas. There is no warehouse — every order has a 2-to-6-week lead time and gets made for one specific person.
+2. **The customer fits standard sizes.** Half the orders are *bespoke*: the customer sends measurements (busto, cintura, largo) and chooses yarn colors. A normal cart can't model that.
 
----
+This site bridges both flows on one surface:
 
-## ✨ Características Principales
-
-### 🛍️ Área Pública (Cliente)
-* **Buscador Dinámico e Interactivo:** Una barra de búsqueda de ancho completo que se despliega elegantemente al presionar la lupa en el menú, permitiendo búsquedas inmediatas en el cliente y servidor.
-* **Filtros Combinados:** Búsqueda textual y filtrado por chips de categorías que conviven armónicamente en tiempo real.
-* **Carrito de Compras Resiliente:** Un gestor de estado (`CartProvider`) con **persistencia local fallback (`localStorage`)**. Si la base de datos se encuentra offline, el carrito sigue operando sin interrupción, garantizando cero pérdida de experiencia del usuario.
-* **Detalle de Producto Premium:** Galería fotográfica con thumbnails, selector de talle adaptativo y desglose de materiales y plazos de entrega.
-
-### 💼 Panel de Control (Back-Office CRM)
-* **Módulo CRM de Encargos (`/admin/encargos`):** Una bandeja de entrada interactiva donde el administrador gestiona solicitudes a medida, edita notas de control interno y puede contactar al cliente directo a su número vía **WhatsApp API Link**.
-* **Creador de Productos Avanzado (`/admin/productos/nuevo`):** 
-  * Creador de talles dinámicos con precio incremental por talle.
-  * Selector inteligente de gama de colores.
-  * Generador de URL amigable (Slug) automatizado.
-* **Media Upload con Drag & Drop Nativo:** Un gestor multimedia construido sobre la API de arrastrar y soltar de HTML5 que permite subir fotos y videos directamente a Supabase Storage y reordenar su posición visual con transiciones suaves.
-* **Gestor de Categorías y Colores:** Paneles especializados con reordenamiento inmediato de prioridad visual de cara al catálogo público.
+- **Catálogo + carrito clásico** for stock-fit pieces (XS-XL).
+- **Encargo a medida** funnel that captures measurements and routes them into a CRM inbox the owner reads on her phone.
+- **Admin panel** to add products, upload photos, edit categories/colors and respond to custom orders.
 
 ---
 
-## 🛡️ Seguridad & Cybersec
-* **Defensa Cross-Site Scripting (XSS) & Clickjacking:** Cabeceras y políticas configuradas en Next.js para impedir inyección de scripts maliciosos.
-* **Row Level Security (RLS) Estricto:** Políticas de base de datos PostgreSQL que impiden que usuarios no autenticados realicen modificaciones o lecturas de encargos de clientes ajenos.
-* **Bypass de Testeo Seguro:** Un middleware que intercepta y permite el bypass seguro durante el desarrollo para demostraciones rápidas de la interfaz administrativa sin forzar el logueo de Supabase Auth.
+## Tech
+
+| Layer | Choice | Why |
+|---|---|---|
+| Framework | **Next.js 16** (App Router + Turbopack) | Server components for SSR'd product pages → instant SEO indexing of new arrivals. |
+| UI | **React 19**, TypeScript strict | Concurrent features, type-safe DB shape end-to-end. |
+| Backend | **Supabase** (PostgreSQL + Auth + Storage) | One BaaS for tables, image bucket, JWT auth and Row-Level Security. |
+| Auth | **Supabase Auth** | Magic-link/password for the owner. No custom auth code. |
+| Hosting | **Netlify** with the Next.js runtime | One-click deploy, edge functions, automatic preview branches. |
+| Type / Fonts | **next/font** (Fraunces + Inter) | Self-hosted, subsetted, zero render-blocking. |
+| Icons | **Phosphor Icons** via CDN | Light weight (light/regular/bold/fill variants) with preconnect. |
+| Images | **next/image** end-to-end | AVIF/WebP, responsive sizes, lazy-loaded. |
+| OG | **next/og** | Per-product OpenGraph images generated on demand. |
 
 ---
 
-## 📊 Arquitectura de Datos (Supabase Schema)
+## What I actually built (and why each part matters)
 
-La base de datos PostgreSQL está estructurada bajo relaciones estrictas e índices para alta performance de consulta:
+### A cart that doesn't lie to the user
 
-```mermaid
-erDiagram
-    PRODUCTS ||--o{ PRODUCT_MEDIA : "has"
-    PRODUCTS ||--o{ PRODUCT_SIZES : "defines"
-    PRODUCTS }|--|| CATEGORIES : "belongs to"
-    PRODUCTS ||--o{ PRODUCT_COLORS : "has"
-    COLORS ||--o{ PRODUCT_COLORS : "defines"
-    CUSTOM_ORDERS {
-        uuid id PK
-        string customer_name
-        string customer_email
-        string whatsapp
-        string garment_type
-        string size
-        jsonb measurements
-        string status
-    }
+The first cart attempt persisted in `localStorage` with a comment that read *"resilient fallback when the database is offline."* The reality: it silently masked failed writes so the user thought they had things in the cart that the server didn't know about.
+
+The current implementation is **server-as-source-of-truth**:
+
+- `POST/PATCH/DELETE /api/cart` (Next.js Route Handler) writes directly to Supabase.
+- A `dahila_cart_id` **HttpOnly cookie** binds an anonymous cart to a session — set by the server, never exposed to JS.
+- The client refetches on **mount, tab focus, and via `storage` event** so two tabs stay in sync.
+- Initial fetch is deferred with `requestIdleCallback` so it doesn't compete with the first paint.
+- The badge is gated by a `hasMounted` flag → **no hydration mismatch, no CLS**.
+
+### A hero that doesn't get clipped on phones
+
+The hero photo is a real product shot, but `aspect-ratio: 16/8` looked truncated on landscape mobile. Rewrote to `clamp(420px, 72vh, 720px)` with breakpoint adjustments, layered a two-direction gradient scrim so the headline keeps contrast on any image, and used `next/image priority` + `text-shadow` for AA contrast over photography. Tested down to 480px and up to 1920px.
+
+### SEO that actually indexes
+
+- `metadataBase` + per-page canonicals.
+- `Product` and `BreadcrumbList` JSON-LD with absolute image URLs (Schema.org requires absolute).
+- `Organization` JSON-LD in root with `sameAs` linking Instagram.
+- Dynamic `sitemap.xml` that queries Supabase for active products and includes `<image:image>` entries.
+- Per-product **OpenGraph image** generated by `next/og` showing photo + name + price.
+- `robots.ts` blocks `/admin`, `/api/`, `/carrito`.
+- Branded 404 at `/not-found.tsx` and `/tienda/[slug]/not-found.tsx`.
+
+### Security I would defend at a code review
+
+The original code shipped with:
+
+- A `hola/hola` backdoor in `/admin/login` that bypassed Supabase entirely.
+- A `dahila_admin_test=true` cookie checked in middleware as auth.
+- Localstorage fallbacks in every admin page that silently faked "saved successfully" when the DB call failed.
+
+All three are gone. What replaced them:
+
+- **No auth code outside Supabase.** The proxy (`src/proxy.ts`) only refreshes sessions; the admin layout is a server component with `metadata.robots = noindex`.
+- **CSP without `unsafe-eval`** in production (kept in dev so Turbopack HMR works).
+- **HSTS** in prod, `X-Frame-Options: DENY`, `Permissions-Policy` locking down cam/mic/geo.
+- **Server Action** for the encargo form with whitelisted enums, strict regex email, control-char stripping, length caps, and **per-IP+email rate limiting** to stop honest duplicate submits.
+- **Env var validation at import time** (`src/lib/env.ts`) — the app refuses to start with a clear error if `NEXT_PUBLIC_SUPABASE_URL` is missing, instead of failing with `Invalid URL` deep in a request.
+
+### Admin that's pleasant to use on a phone
+
+The owner runs this from her phone between commissions:
+
+- Sidebar slides in over an overlay; never causes layout shift.
+- Floating logout button top-right on mobile (no need to open the drawer to sign out).
+- Encargos page has tab chips with **live status counters** (`Nuevos · 3 · En proceso · 2 · …`).
+- All write failures surface as inline alerts — no more silent "saved locally" lies.
+- `noindex` on the entire `/admin` tree.
+
+### Performance budget
+
+- Fonts: self-hosted via `next/font`, no `@import` to Google Fonts.
+- Images: `next/image` everywhere with explicit `sizes`, including the hero with `priority`.
+- Skeletons (`sk-shimmer`) on `/`, `/tienda`, `/carrito` for instant perceived feedback.
+- Cart fetch deferred to idle.
+- CSS consolidated — removed all `<style>{...}` blocks from JSX and moved to `globals.css` for cacheability.
+
+---
+
+## Architecture at a glance
+
 ```
-*Las políticas completas de RLS y creación de buckets se encuentran documentadas en el script [`database/schema.sql`](./database/schema.sql).*
+src/
+├── app/                                # Next.js App Router
+│   ├── (public)
+│   │   ├── page.tsx              + HomeClient.tsx     # SSR home (fetches Supabase)
+│   │   ├── tienda/                                    # Catálogo SSR
+│   │   │   ├── page.tsx          + TiendaClient.tsx
+│   │   │   └── [slug]/
+│   │   │       ├── page.tsx                           # Product detail (JSON-LD)
+│   │   │       ├── opengraph-image.tsx                # Dynamic OG via next/og
+│   │   │       └── not-found.tsx                      # Branded 404
+│   │   ├── encargo/
+│   │   │   ├── page.tsx          + EncargoForm.tsx
+│   │   │   └── actions.ts                             # Server Action + rate limit
+│   │   ├── carrito/              + CarritoClient.tsx
+│   │   ├── atelier/, contacto/
+│   │   ├── sitemap.ts, robots.ts, loading.tsx, not-found.tsx
+│   │   └── api/cart/route.ts                          # GET/POST/PATCH/DELETE
+│   └── admin/
+│       ├── layout.tsx (server, robots.noindex) + AdminChrome.tsx (client)
+│       ├── login/, categorias/, colores/, configuracion/
+│       ├── encargos/             # CRM with status chips
+│       └── productos/{[id], nuevo}/  # Drag&drop media upload
+├── components/
+│   ├── CartProvider.tsx          # Server-state + cross-tab sync
+│   ├── Header.tsx                # Sticky, blur, badge sans CLS
+│   ├── Footer.tsx                # Real links + SIAR credit
+│   ├── ProductCard.tsx
+│   └── ui/Primitives.tsx         # Button, Chip, Eyebrow, Icon, Badge…
+├── lib/
+│   ├── env.ts                    # Import-time env validation
+│   ├── types.ts                  # Domain types + price helpers
+│   └── supabase/{client, server, middleware}.ts
+├── proxy.ts                      # Was middleware.ts (Next 16 rename)
+└── database/schema.sql           # Tables + RLS + storage bucket
+```
+
+---
+
+## Run locally
+
+```bash
+git clone https://github.com/elmandress/dahilia.git
+cd dahilia
+npm install
+cp .env.example .env.local        # fill SUPABASE_URL + ANON_KEY
+npm run dev                       # http://localhost:3000
+```
+
+For the database, run [`database/schema.sql`](./database/schema.sql) in the Supabase SQL Editor. It creates the tables, RLS policies and the public `media` storage bucket.
+
+To grant admin access, create a user in Supabase Auth (Authentication → Users → Add user). Any authenticated user has admin rights per the current RLS.
+
+### Environment variables
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+NEXT_PUBLIC_SITE_URL=https://dahila-crochet.netlify.app    # optional
+```
+
+---
+
+## What I'd add next
+
+Things I deliberately scoped out for v1:
+
+- **Mercado Pago / Stripe checkout.** Right now "Proceder al pago" is a placeholder.
+- **Inventory tracking per size.** The schema supports it (`product_sizes.available`); the UI doesn't surface it on the catalog yet.
+- **Email notifications** to the owner on new encargo via a Supabase Edge Function.
+- **Per-product reviews** with `aggregateRating` in the JSON-LD.
+- **Realtime cart sync** via Supabase channels (cross-tab works via `storage`; cross-device would need this).
+
+---
+
+## Credits
+
+**Product:** [Dahila Crochet](https://www.instagram.com/dahila.crochet/) — Montevideo, Uruguay
+**Owner contact:** [WhatsApp +598 94 605 015](https://wa.me/59894605015) · [hola@dahila.uy](mailto:hola@dahila.uy)
+
+**Design & development:** [SIAR](https://siaruy.netlify.app) · [@siar.uy](https://www.instagram.com/siar.uy/)
+
+---
+
+## License
+
+This repository is the work of SIAR for Dahila Crochet. The codebase is provided for reference and portfolio purposes; the brand assets (photos, logo, product copy) remain the property of Dahila Crochet. If you're a brand or studio interested in something similar, [get in touch](https://www.instagram.com/siar.uy/).

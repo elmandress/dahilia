@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCart } from './CartProvider'
 import { dahila, Icon } from './ui/Primitives'
@@ -10,16 +11,13 @@ export function Header() {
   const [open, setOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [searchVal, setSearchVal] = useState('')
-  const { cartCount } = useCart()
+  const { cartCount, hasMounted } = useCart()
+  const showBadge = hasMounted && cartCount > 0
   const pathname = usePathname()
   const router = useRouter()
 
+  // Admin uses its own layout/chrome — never render the public header there.
   if (pathname.startsWith('/admin')) return null
-
-  useEffect(() => {
-    setOpen(false)
-    setShowSearch(false)
-  }, [pathname])
 
   const items = [
     { id: '/tienda',  label: 'Tienda' },
@@ -90,10 +88,18 @@ export function Header() {
                 )
               })}
             </nav>
-            <button onClick={() => setOpen(!open)} className="nav-mobile" aria-label="Menú" style={{
-              background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink900, padding: 0,
-            }}>
-              <Icon name="list" size={22}/>
+            <button
+              onClick={() => setOpen(!open)}
+              className="nav-mobile"
+              aria-label="Menú"
+              aria-expanded={open}
+              aria-controls="mobile-menu"
+              style={{
+                background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink900,
+                padding: 0, width: 24, height: 24, alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <Icon name={open ? 'x' : 'list'} size={22}/>
             </button>
 
             {/* Center: brand */}
@@ -102,7 +108,7 @@ export function Header() {
               background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
               justifySelf: 'center',
             }}>
-              <img src="/isotype-color.png" alt="" style={{ width: 40, height: 40, objectFit: 'contain' }}/>
+              <Image src="/isotype-color.png" alt="" width={40} height={40} priority style={{ objectFit: 'contain' }} />
               <span style={{
                 fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 22,
                 color: dahila.ink900, letterSpacing: '0.18em',
@@ -111,18 +117,20 @@ export function Header() {
 
             {/* Right: icons */}
             <div style={{ display: 'flex', gap: 18, alignItems: 'center', color: dahila.ink900, justifySelf: 'end' }}>
-              <button onClick={() => setShowSearch(true)} style={iconBtn} aria-label="Buscar"><Icon name="magnifying-glass" size={18}/></button>
-              <button style={iconBtn} aria-label="Lista"><Icon name="heart" size={18}/></button>
-              <button onClick={() => router.push('/carrito')} style={{ ...iconBtn, position: 'relative' }} aria-label="Carrito">
-                <Icon name="shopping-bag" size={18}/>
-                {cartCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: -4, right: -8,
-                    minWidth: 16, height: 16, borderRadius: 999,
-                    background: dahila.ink900, color: '#fff',
-                    fontFamily: dahila.fontSans, fontSize: 9.5, fontWeight: 500,
+              <button onClick={() => setShowSearch(true)} style={{ ...iconBtn, width: 22, height: 22, justifyContent: 'center' }} aria-label="Buscar"><Icon name="magnifying-glass" size={20}/></button>
+              <button style={{ ...iconBtn, width: 22, height: 22, justifyContent: 'center' }} aria-label="Lista de deseos"><Icon name="heart" size={20}/></button>
+              <button onClick={() => router.push('/carrito')} style={{ ...iconBtn, position: 'relative', width: 22, height: 22, justifyContent: 'center' }} aria-label={`Carrito${showBadge ? ` (${cartCount})` : ''}`}>
+                <Icon name="shopping-bag" size={20}/>
+                {showBadge && (
+                  <span aria-hidden="true" style={{
+                    position: 'absolute', top: -5, right: -7,
+                    minWidth: 17, height: 17, borderRadius: 999,
+                    background: '#B6314A', color: '#fff',
+                    fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 500,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '0 4px',
+                    padding: '0 5px',
+                    lineHeight: 1,
+                    boxShadow: '0 0 0 2px #fff',
                   }}>{cartCount}</span>
                 )}
               </button>
@@ -131,30 +139,32 @@ export function Header() {
         )}
       </div>
 
-      {/* Mobile menu drawer */}
-      {open && (
-        <div style={{
-          background: '#fff', borderTop: `1px solid ${dahila.border}`,
-          padding: '14px 24px', display: 'flex', flexDirection: 'column', gap: 4,
-        }}>
+      {/* Mobile menu drawer — animated height + opacity to avoid CLS */}
+      <div
+        id="mobile-menu"
+        aria-hidden={!open}
+        style={{
+          overflow: 'hidden',
+          maxHeight: open ? 320 : 0,
+          opacity: open ? 1 : 0,
+          transition: `max-height 260ms ${dahila.ease}, opacity 200ms ${dahila.ease}`,
+          background: '#fff',
+          borderTop: open ? `1px solid ${dahila.border}` : '1px solid transparent',
+        }}
+      >
+        <div style={{ padding: '8px 24px 14px', display: 'flex', flexDirection: 'column' }}>
           {items.map((it) => (
             <Link key={it.id} href={it.id} onClick={() => setOpen(false)} style={{
               background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'none',
               fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300,
-              color: dahila.ink900, textAlign: 'left', padding: '10px 0',
+              color: dahila.ink900, textAlign: 'left', padding: '12px 0',
               letterSpacing: '0.04em',
+              borderBottom: `1px solid ${dahila.border}`,
             }}>{it.label}</Link>
           ))}
         </div>
-      )}
+      </div>
 
-      <style>{`
-        .nav-mobile { display: none; }
-        @media (max-width: 720px) {
-          .nav-desktop { display: none !important; }
-          .nav-mobile { display: inline-flex !important; }
-        }
-      `}</style>
     </header>
   )
 }

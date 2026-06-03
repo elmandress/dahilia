@@ -18,32 +18,38 @@ export default function AdminLoginPage() {
     setError('')
     setLoading(true)
 
+    // Tiny client-side throttle so accidental double-submits don't hammer
+    // Supabase auth. Supabase itself rate-limits on the server, this is
+    // additive UX, not security.
+    const lastTry = Number(sessionStorage.getItem('dahila_admin_last_try') || 0)
+    const since = Date.now() - lastTry
+    if (lastTry && since < 1200) {
+      await new Promise((r) => setTimeout(r, 1200 - since))
+    }
+    sessionStorage.setItem('dahila_admin_last_try', String(Date.now()))
+
     try {
       const supabase = createClient()
-      const formattedEmail = email.includes('@') ? email : `${email}@dahila.uy`
-      
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
+      const formattedEmail = email.includes('@') ? email.trim() : `${email.trim()}@dahila.uy`
+
+      const { error: authError } = await supabase.auth.signInWithPassword({
         email: formattedEmail,
-        password: password,
+        password,
       })
 
       if (authError) {
-        // Fallback to test mode if Supabase credentials fail (helps local testing before DB config)
-        if ((email === 'hola' || email === 'hola@dahila.uy') && password === 'hola') {
-          document.cookie = "dahila_admin_test=true; path=/; max-age=86400"
-          router.push('/admin')
-          router.refresh()
-          return
-        }
         throw authError
       }
 
-      // Successful auth
-      document.cookie = "dahila_admin_test=true; path=/; max-age=86400"
-      router.push('/admin')
+      // replace() prevents back-button returning to login. refresh() forces
+      // server components to re-evaluate the now-authenticated session.
+      router.replace('/admin')
       router.refresh()
-    } catch (err: any) {
-      setError(err.message || 'Credenciales incorrectas (usa: hola / hola para testear)')
+      // Keep the spinner up until the navigation actually swaps the page —
+      // there's no callback for "router finished", so we leave loading=true.
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Credenciales incorrectas.'
+      setError(msg)
       setLoading(false)
     }
   }
@@ -72,9 +78,10 @@ export default function AdminLoginPage() {
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Ej: hola"
+              placeholder="usuario o email"
               required
               autoFocus
+              autoComplete="username"
               style={{
                 border: '1px solid var(--border-strong)', padding: '12px 14px', borderRadius: 8, fontSize: 14, outline: 'none'
               }}
@@ -88,8 +95,9 @@ export default function AdminLoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Ej: hola"
+              placeholder="••••••••"
               required
+              autoComplete="current-password"
               style={{
                 border: '1px solid var(--border-strong)', padding: '12px 14px', borderRadius: 8, fontSize: 14, outline: 'none'
               }}

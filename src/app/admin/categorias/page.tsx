@@ -1,24 +1,27 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Category } from '@/lib/types'
 
-const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'tops', slug: 'tops', name: 'Tops', description: 'Tops y chalecos tejidos a mano', sort_order: 1, created_at: new Date().toISOString() },
-  { id: 'accesorios', slug: 'accesorios', name: 'Accesorios', description: 'Bufandas, bolsos y más', sort_order: 2, created_at: new Date().toISOString() },
-  { id: 'cardigans', slug: 'cardigans', name: 'Cardigans', description: 'Sacos y prendas de abrigo', sort_order: 3, created_at: new Date().toISOString() },
-  { id: 'sets', slug: 'sets', name: 'Sets', description: 'Conjuntos combinados de edición limitada', sort_order: 4, created_at: new Date().toISOString() },
-]
+function slugify(s: string) {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}
 
 export default function CategoriasAdminPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [description, setDescription] = useState('')
   const [sortOrder, setSortOrder] = useState('1')
-  
+
   // Editing state
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
@@ -26,90 +29,56 @@ export default function CategoriasAdminPage() {
   const [editDescription, setEditDescription] = useState('')
   const [editSortOrder, setEditSortOrder] = useState('1')
 
-  useEffect(() => {
-    // Auto-generate slug from name
-    setSlug(name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''))
-  }, [name])
-
-  useEffect(() => {
-    // Auto-generate slug for edit form
-    setEditSlug(editName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''))
-  }, [editName])
-
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
+    setError(null)
     try {
       const supabase = createClient()
-      const { data, error } = await supabase
+      const { data, error: err } = await supabase
         .from('categories')
         .select('*')
         .order('sort_order', { ascending: true })
-      
-      if (error) throw error
 
-      if (data && data.length > 0) {
-        setCategories(data as Category[])
-      } else {
-        // Fallback or localStorage check
-        const local = localStorage.getItem('dahila_admin_categories')
-        if (local) {
-          setCategories(JSON.parse(local))
-        } else {
-          setCategories(DEFAULT_CATEGORIES)
-          localStorage.setItem('dahila_admin_categories', JSON.stringify(DEFAULT_CATEGORIES))
-        }
-      }
+      if (err) throw err
+      setCategories((data ?? []) as Category[])
     } catch (e) {
-      console.warn('Supabase fetch failed, using local categories fallback', e)
-      const local = localStorage.getItem('dahila_admin_categories')
-      if (local) {
-        setCategories(JSON.parse(local))
-      } else {
-        setCategories(DEFAULT_CATEGORIES)
-        localStorage.setItem('dahila_admin_categories', JSON.stringify(DEFAULT_CATEGORIES))
-      }
+      console.error('Error cargando categorías', e)
+      setError('No se pudieron cargar las categorías desde la base de datos.')
     } finally {
       setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    loadCategories()
   }, [])
 
-  const saveLocal = (newCats: Category[]) => {
-    setCategories(newCats)
-    localStorage.setItem('dahila_admin_categories', JSON.stringify(newCats))
-  }
+  useEffect(() => {
+    // Initial fetch on mount; setState happens inside the async helper, which
+    // is the standard load-once pattern and acceptable here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadCategories()
+  }, [loadCategories])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !slug) return
+    const finalSlug = slug || slugify(name)
+    if (!name || !finalSlug) return
 
-    const newCategory: Category = {
-      id: slug, // or dynamic id
-      name,
-      slug,
-      description: description || null,
-      sort_order: parseInt(sortOrder) || 1,
-      created_at: new Date().toISOString()
-    }
-
+    setError(null)
     try {
       const supabase = createClient()
-      const { error } = await supabase.from('categories').insert([newCategory])
-      if (error) throw error
+      const { error: err } = await supabase.from('categories').insert([{
+        name,
+        slug: finalSlug,
+        description: description || null,
+        sort_order: parseInt(sortOrder) || 1,
+      }])
+      if (err) throw err
       await loadCategories()
+      setName('')
+      setSlug('')
+      setDescription('')
+      setSortOrder(String(categories.length + 2))
     } catch (e) {
-      console.warn('Creating in Supabase failed, saving locally', e)
-      const updated = [...categories, newCategory].sort((a,b) => a.sort_order - b.sort_order)
-      saveLocal(updated)
+      console.error('Error creando categoría', e)
+      setError('No se pudo crear la categoría. Verificá que el slug no esté repetido.')
     }
-
-    // Reset form
-    setName('')
-    setSlug('')
-    setDescription('')
-    setSortOrder(String(categories.length + 2))
   }
 
   const handleStartEdit = (cat: Category) => {
@@ -121,67 +90,64 @@ export default function CategoriasAdminPage() {
   }
 
   const handleSaveEdit = async (id: string) => {
-    if (!editName || !editSlug) return
+    const finalSlug = editSlug || slugify(editName)
+    if (!editName || !finalSlug) return
 
-    const updatedCat = {
-      name: editName,
-      slug: editSlug,
-      description: editDescription || null,
-      sort_order: parseInt(editSortOrder) || 1
-    }
-
+    setError(null)
     try {
       const supabase = createClient()
-      const { error } = await supabase.from('categories').update(updatedCat).eq('id', id)
-      if (error) throw error
+      const { error: err } = await supabase
+        .from('categories')
+        .update({
+          name: editName,
+          slug: finalSlug,
+          description: editDescription || null,
+          sort_order: parseInt(editSortOrder) || 1,
+        })
+        .eq('id', id)
+      if (err) throw err
       await loadCategories()
+      setEditingId(null)
     } catch (e) {
-      console.warn('Updating in Supabase failed, updating locally', e)
-      const updated = categories.map(c => c.id === id ? { ...c, ...updatedCat } : c).sort((a,b) => a.sort_order - b.sort_order)
-      saveLocal(updated)
+      console.error('Error guardando categoría', e)
+      setError('No se pudieron guardar los cambios.')
     }
-    setEditingId(null)
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm('¿Estás seguro de eliminar esta categoría? Las prendas vinculadas quedarán sin categoría.')) return
 
+    setError(null)
     try {
       const supabase = createClient()
-      const { error } = await supabase.from('categories').delete().eq('id', id)
-      if (error) throw error
+      const { error: err } = await supabase.from('categories').delete().eq('id', id)
+      if (err) throw err
       await loadCategories()
     } catch (e) {
-      console.warn('Deleting in Supabase failed, deleting locally', e)
-      const updated = categories.filter(c => c.id !== id)
-      saveLocal(updated)
+      console.error('Error eliminando categoría', e)
+      setError('No se pudo eliminar la categoría.')
     }
   }
 
   const moveOrder = async (index: number, direction: 'up' | 'down') => {
-    const updated = [...categories]
     const targetIndex = direction === 'up' ? index - 1 : index + 1
-    if (targetIndex < 0 || targetIndex >= updated.length) return
+    if (targetIndex < 0 || targetIndex >= categories.length) return
 
-    // Swap sort_order values
-    const tempOrder = updated[index].sort_order
-    updated[index].sort_order = updated[targetIndex].sort_order
-    updated[targetIndex].sort_order = tempOrder
+    const a = categories[index]
+    const b = categories[targetIndex]
 
-    // Swap indices in array
-    const temp = updated[index]
-    updated[index] = updated[targetIndex]
-    updated[targetIndex] = temp
-
-    saveLocal(updated)
-
-    // Attempt to update Supabase
+    setError(null)
     try {
       const supabase = createClient()
-      await supabase.from('categories').update({ sort_order: updated[index].sort_order }).eq('id', updated[index].id)
-      await supabase.from('categories').update({ sort_order: updated[targetIndex].sort_order }).eq('id', updated[targetIndex].id)
+      const [r1, r2] = await Promise.all([
+        supabase.from('categories').update({ sort_order: b.sort_order }).eq('id', a.id),
+        supabase.from('categories').update({ sort_order: a.sort_order }).eq('id', b.id),
+      ])
+      if (r1.error || r2.error) throw r1.error ?? r2.error
+      await loadCategories()
     } catch (e) {
-      console.warn('Reorder in Supabase failed, saved locally', e)
+      console.error('Error reordenando categorías', e)
+      setError('No se pudo reordenar.')
     }
   }
 
@@ -202,6 +168,20 @@ export default function CategoriasAdminPage() {
         </div>
       </div>
 
+      {error && (
+        <div role="alert" style={{
+          background: 'rgba(182,49,74,0.06)',
+          border: '1px solid rgba(182,49,74,0.24)',
+          color: '#7a1e2f',
+          padding: '12px 14px',
+          borderRadius: 8,
+          marginBottom: 18,
+          fontSize: 13,
+        }}>
+          {error}
+        </div>
+      )}
+
       <div className="admin-form-grid" style={{ alignItems: 'start' }}>
         {/* Create Form */}
         <div className="admin-card">
@@ -209,23 +189,27 @@ export default function CategoriasAdminPage() {
           <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div className="admin-field">
               <label>Nombre</label>
-              <input 
-                type="text" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                placeholder="Ej. Sacos y Cardigans" 
-                required 
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setName(v)
+                  setSlug(slugify(v))
+                }}
+                placeholder="Ej. Sacos y Cardigans"
+                required
               />
             </div>
-            
+
             <div className="admin-field">
               <label>Slug (automático)</label>
-              <input 
-                type="text" 
-                value={slug} 
-                onChange={(e) => setSlug(e.target.value)} 
-                placeholder="Ej. sacos-y-cardigans" 
-                required 
+              <input
+                type="text"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder="Ej. sacos-y-cardigans"
+                required
               />
             </div>
 
@@ -304,12 +288,16 @@ export default function CategoriasAdminPage() {
                       <td>
                         {editingId === cat.id ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <input 
-                              type="text" 
-                              value={editName} 
-                              onChange={(e) => setEditName(e.target.value)} 
-                              style={{ padding: '4px 8px', fontSize: '0.85rem' }} 
-                              required 
+                            <input
+                              type="text"
+                              value={editName}
+                              onChange={(e) => {
+                                const v = e.target.value
+                                setEditName(v)
+                                setEditSlug(slugify(v))
+                              }}
+                              style={{ padding: '4px 8px', fontSize: '0.85rem' }}
+                              required
                             />
                             <input 
                               type="text" 

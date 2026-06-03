@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import type { Product } from '@/lib/types'
 import { getEffectivePrice, formatPrice, getPrimaryPhoto } from '@/lib/types'
 import { useCart } from './CartProvider'
@@ -43,12 +44,17 @@ export function ProductCard({ product }: { product: Product }) {
         borderRadius: 12, overflow: 'hidden',
         background: dahila.cream50,
       }}>
-        <img src={photo} alt={product.name} style={{
-          position: 'absolute', inset: 0,
-          width: '100%', height: '100%', objectFit: 'cover',
-          transition: `transform 600ms ${dahila.ease}`,
-          transform: hover ? 'scale(1.02)' : 'scale(1)',
-        }}/>
+        <Image
+          src={photo}
+          alt={product.name}
+          fill
+          sizes="(max-width: 720px) 50vw, (max-width: 1280px) 25vw, 280px"
+          style={{
+            objectFit: 'cover',
+            transition: `transform 600ms ${dahila.ease}`,
+            transform: hover ? 'scale(1.02)' : 'scale(1)',
+          }}
+        />
         
         {product.status === 'soldout' ? (
           <span style={{ position: 'absolute', top: 10, left: 10 }}><Badge tone="sold">Agotado</Badge></span>

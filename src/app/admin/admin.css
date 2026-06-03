@@ -167,6 +167,23 @@
   justify-content: center;
 }
 
+.admin-mobile-logout {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 50;
+  background: #fff;
+  color: #1F1A1B;
+  border: 1px solid rgba(31,26,27,0.12);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
 .admin-sidebar-overlay {
   display: none;
   position: fixed;
@@ -176,7 +193,8 @@
 }
 
 @media (max-width: 768px) {
-  .admin-mobile-toggle {
+  .admin-mobile-toggle,
+  .admin-mobile-logout {
     display: flex;
   }
 
@@ -643,18 +661,18 @@
   color: #fff;
 }
 
-.upload-progress {
+.admin-layout .upload-progress {
   margin-top: 0.5rem;
 }
 
-.upload-progress-bar {
+.admin-layout .upload-progress-bar {
   height: 4px;
   background: #eee;
   border-radius: 2px;
   overflow: hidden;
 }
 
-.upload-progress-bar-fill {
+.admin-layout .upload-progress-bar-fill {
   height: 100%;
   background: #8F3B53;
   transition: width 0.3s ease;

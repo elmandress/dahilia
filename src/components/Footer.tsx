@@ -1,10 +1,14 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { dahila } from './ui/Primitives'
+import { STUDIO_INSTAGRAM, STUDIO_URL } from '@/lib/env'
 
-function FooterCol({ title, items }: { title: string, items: string[] }) {
+interface NavItem { label: string; href: string }
+
+function FooterCol({ title, items }: { title: string; items: NavItem[] }) {
   return (
     <div>
       <div style={{
@@ -12,11 +16,25 @@ function FooterCol({ title, items }: { title: string, items: string[] }) {
         textTransform: 'uppercase', color: dahila.ink500, marginBottom: 14,
       }}>{title}</div>
       <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9 }}>
-        {items.map((it) => (
-          <li key={it} style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink700 }}>
-            <Link href="/" style={{ color: 'inherit', textDecoration: 'none' }}>{it}</Link>
-          </li>
-        ))}
+        {items.map((it) => {
+          const external = it.href.startsWith('http') || it.href.startsWith('mailto:')
+          return (
+            <li key={it.label} style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink700 }}>
+              {external ? (
+                <a
+                  href={it.href}
+                  target={it.href.startsWith('http') ? '_blank' : undefined}
+                  rel={it.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  style={{ color: 'inherit', textDecoration: 'none' }}
+                >
+                  {it.label}
+                </a>
+              ) : (
+                <Link href={it.href} style={{ color: 'inherit', textDecoration: 'none' }}>{it.label}</Link>
+              )}
+            </li>
+          )
+        })}
       </ul>
     </div>
   )
@@ -41,7 +59,7 @@ export function Footer() {
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <img src="/isotype-color.png" alt="" style={{ width: 36, height: 36, objectFit: 'contain' }}/>
+              <Image src="/isotype-color.png" alt="" width={36} height={36} style={{ objectFit: 'contain' }} />
               <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, letterSpacing: '0.18em', color: dahila.ink900 }}>DAHILA</span>
             </div>
             <p style={{ fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300, fontSize: 16, lineHeight: 1.55, color: dahila.ink700, maxWidth: 320, margin: 0 }}>
@@ -49,11 +67,34 @@ export function Footer() {
             </p>
           </div>
 
-          <FooterCol title="Tienda" items={['Novedades', 'Tops', 'Accesorios', 'A medida']}/>
-          <FooterCol title="Info" items={['Cómo encargar', 'Tabla de talles', 'Cuidados', 'Envíos']}/>
-          <FooterCol title="Contacto" items={['hola@dahila.uy', '@dahila.crochet', 'Montevideo, UY']}/>
+          <FooterCol
+            title="Tienda"
+            items={[
+              { label: 'Novedades',  href: '/tienda' },
+              { label: 'Tops',       href: '/tienda?cat=tops' },
+              { label: 'Accesorios', href: '/tienda?cat=accesorios' },
+              { label: 'A medida',   href: '/encargo' },
+            ]}
+          />
+          <FooterCol
+            title="Info"
+            items={[
+              { label: 'Cómo encargar', href: '/encargo' },
+              { label: 'Atelier',       href: '/atelier' },
+              { label: 'Contacto',      href: '/contacto' },
+            ]}
+          />
+          <FooterCol
+            title="Contacto"
+            items={[
+              { label: 'hola@dahila.uy',          href: 'mailto:hola@dahila.uy' },
+              { label: '@dahila.crochet',         href: 'https://www.instagram.com/dahila.crochet/' },
+              { label: 'WhatsApp · 94 605 015',   href: 'https://wa.me/59894605015' },
+            ]}
+          />
         </div>
 
+        {/* Copyright row */}
         <div style={{
           marginTop: 56, paddingTop: 22,
           borderTop: `1px solid ${dahila.border}`,
@@ -61,16 +102,48 @@ export function Footer() {
           fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 400, color: dahila.ink500,
           letterSpacing: '0.06em',
         }}>
-          <span>© {new Date().getFullYear()} Dahila Crochet — hecho a mano en Uruguay 🪡</span>
-          <span>Diseño & sistema · DAHILA Atelier</span>
+          <span>© {new Date().getFullYear()} Dahila Crochet — hecho a mano en Uruguay</span>
+          <span>Montevideo · Uruguay</span>
+        </div>
+
+        {/* "Desarrollado por" row — centred, secondary credit */}
+        <div style={{
+          marginTop: 18,
+          display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8,
+          fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 300,
+          color: dahila.ink500, letterSpacing: '0.06em',
+        }}>
+          <span>Desarrollado por</span>
+          <a
+            href={STUDIO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="SIAR — sitio web"
+            style={{
+              color: dahila.ink700,
+              fontWeight: 500,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+              borderBottom: `1px solid ${dahila.borderStrong}`,
+              paddingBottom: 1,
+            }}
+          >
+            SIAR
+          </a>
+          <span aria-hidden="true" style={{ color: dahila.ink300 }}>·</span>
+          <a
+            href={STUDIO_INSTAGRAM}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="SIAR en Instagram"
+            style={{ color: dahila.ink500, textDecoration: 'none' }}
+          >
+            @siar.uy
+          </a>
         </div>
       </div>
 
-      <style>{`
-        @media (max-width: 720px) {
-          .footer-grid { grid-template-columns: 1fr 1fr !important; }
-        }
-      `}</style>
     </footer>
   )
 }

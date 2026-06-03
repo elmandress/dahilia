@@ -36,3 +36,16 @@ yarn-error.log*
 # Vercel / Netlify
 .vercel
 .netlify
+
+# Design assets (kept locally, not part of the Next.js build).
+# Move source images here to keep the repo light.
+uploads/
+preview/
+prints/
+ui_kits/
+assets/
+*.psd
+*.ai
+*.sketch
+*.fig
+
