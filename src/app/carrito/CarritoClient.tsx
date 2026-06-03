@@ -64,19 +64,19 @@ export default function CarritoClient() {
           const photo = getPrimaryPhoto(item.product)
           const price = getEffectivePrice(item.product, item.size)
           return (
-            <div key={item.id} style={{
+            <div key={item.id} className="cart-row" style={{
               display: 'flex', gap: 24, paddingBottom: 24,
               borderBottom: `1px solid ${dahila.border}`,
               alignItems: 'center'
             }}>
               <div style={{
-                width: 100, height: 120, borderRadius: 8, overflow: 'hidden',
+                width: 90, height: 108, borderRadius: 8, overflow: 'hidden',
                 background: dahila.cream50, position: 'relative', flexShrink: 0
               }}>
-                <Image src={photo} alt={item.product.name} fill style={{ objectFit: 'cover' }} />
+                <Image src={photo} alt={item.product.name} fill sizes="90px" style={{ objectFit: 'cover' }} />
               </div>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <div style={{ fontFamily: dahila.fontDisplay, fontSize: 20, color: dahila.ink900 }}>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ fontFamily: dahila.fontDisplay, fontSize: 18, color: dahila.ink900, lineHeight: 1.2 }}>
                   {item.product.name}
                 </div>
                 <div style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700 }}>
@@ -86,23 +86,26 @@ export default function CarritoClient() {
                   {formatPrice(price)}
                 </div>
               </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ 
+
+              <div className="cart-row-controls" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{
                   display: 'flex', alignItems: 'center', gap: 12,
-                  border: `1px solid ${dahila.borderStrong}`, borderRadius: 999, padding: '4px 12px'
+                  border: `1px solid ${dahila.borderStrong}`, borderRadius: 999, padding: '6px 12px'
                 }}>
-                  <button onClick={() => updateQty(item.id, item.qty - 1)} style={{
-                    background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink900, padding: 0
+                  <button onClick={() => updateQty(item.id, item.qty - 1)} aria-label="Restar" style={{
+                    background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink900, padding: 0,
+                    width: 22, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   }}><Icon name="minus" size={12} /></button>
-                  <span style={{ fontFamily: dahila.fontSans, fontSize: 13 }}>{item.qty}</span>
-                  <button onClick={() => updateQty(item.id, item.qty + 1)} style={{
-                    background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink900, padding: 0
+                  <span style={{ fontFamily: dahila.fontSans, fontSize: 14, minWidth: 14, textAlign: 'center' }}>{item.qty}</span>
+                  <button onClick={() => updateQty(item.id, item.qty + 1)} aria-label="Sumar" style={{
+                    background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink900, padding: 0,
+                    width: 22, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   }}><Icon name="plus" size={12} /></button>
                 </div>
-                
+
                 <button onClick={() => removeFromCart(item.id)} style={{
-                  background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink500, padding: 8
+                  background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink500, padding: 8,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 }} aria-label="Eliminar">
                   <Icon name="x" size={18} />
                 </button>
@@ -112,7 +115,7 @@ export default function CarritoClient() {
         })}
       </div>
 
-      <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 20 }}>
+      <div className="cart-subtotal" style={{ marginTop: 40, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 20 }}>
         <div style={{ display: 'flex', gap: 48, alignItems: 'baseline' }}>
           <span style={{ fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Subtotal</span>
           <span style={{ fontFamily: dahila.fontDisplay, fontSize: 24, color: dahila.ink900 }}>{formatPrice(total)}</span>

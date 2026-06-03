@@ -185,7 +185,7 @@ export default function CategoriasAdminPage() {
       <div className="admin-form-grid" style={{ alignItems: 'start' }}>
         {/* Create Form */}
         <div className="admin-card">
-          <h3 style={{ margin: '0 0 1.25rem 0', fontWeight: 400, fontFamily: 'var(--font-display)' }}>Nueva Categoría</h3>
+          <h3 style={{ margin: '0 0 1.25rem 0', fontWeight: 400, fontFamily: 'var(--font-display)' }}>Nueva categoría</h3>
           <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div className="admin-field">
               <label>Nombre</label>
@@ -241,7 +241,7 @@ export default function CategoriasAdminPage() {
 
         {/* Categories List */}
         <div className="admin-card">
-          <h3 style={{ margin: '0 0 1.25rem 0', fontWeight: 400, fontFamily: 'var(--font-display)' }}>Categorías Registradas</h3>
+          <h3 style={{ margin: '0 0 1.25rem 0', fontWeight: 400, fontFamily: 'var(--font-display)' }}>Categorías</h3>
           
           {categories.length === 0 ? (
             <div className="admin-empty">

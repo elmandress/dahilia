@@ -364,8 +364,13 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       await supabase.from('product_media').delete().eq('product_id', productId)
       
       if (mediaEntries.length > 0) {
+        const stillUploading = mediaEntries.filter((m) => m.uploading)
+        if (stillUploading.length > 0) {
+          throw new Error(`Esperá a que terminen de subirse ${stillUploading.length} foto(s).`)
+        }
+
         const mediaInserts = mediaEntries
-          .filter(m => !m.uploading)
+          .filter((m) => !m.uploading && m.url && !m.url.startsWith('blob:'))
           .map((m, i) => ({
             product_id: productId,
             url: m.url,
@@ -377,7 +382,9 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
 
         if (mediaInserts.length > 0) {
           const { error: mediaError } = await supabase.from('product_media').insert(mediaInserts)
-          if (mediaError) console.error('Media update error:', mediaError)
+          if (mediaError) {
+            throw new Error(`No se guardaron las fotos: ${mediaError.message}. Ejecutá database/schema-extra.sql en Supabase.`)
+          }
         }
       }
 
@@ -398,21 +405,20 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
 
         if (sizeInserts.length > 0) {
           const { error: sizeError } = await supabase.from('product_sizes').insert(sizeInserts)
-          if (sizeError) console.error('Size update error:', sizeError)
+          if (sizeError) throw new Error(`No se guardaron los talles: ${sizeError.message}`)
         }
       }
 
       // Replace colors
-      // Delete old colors first
       await supabase.from('product_colors').delete().eq('product_id', productId)
 
       if (selectedColors.length > 0) {
-        const colorInserts = selectedColors.map(colorId => ({
+        const colorInserts = selectedColors.map((colorId) => ({
           product_id: productId,
           color_id: colorId,
         }))
         const { error: colorError } = await supabase.from('product_colors').insert(colorInserts)
-        if (colorError) console.error('Color update error:', colorError)
+        if (colorError) throw new Error(`No se guardaron los colores: ${colorError.message}`)
       }
 
       setToast('Producto actualizado exitosamente')
@@ -463,12 +469,12 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           <h2>Editar producto</h2>
           <p>Modificá los datos del producto o eliminalo</p>
         </div>
-        <div className="admin-actions" style={{ display: 'flex', gap: '8px' }}>
+        <div className="admin-actions admin-actions-desktop" style={{ display: 'flex', gap: '8px' }}>
           <button
             className="admin-btn admin-btn-danger"
             onClick={handleDelete}
           >
-            Eliminar Producto
+            Eliminar
           </button>
           <button
             className="admin-btn admin-btn-secondary"
@@ -481,7 +487,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
             onClick={handleSave}
             disabled={saving}
           >
-            {saving ? 'Guardando...' : 'Guardar Cambios'}
+            {saving ? 'Guardando...' : 'Guardar cambios'}
           </button>
         </div>
       </div>
@@ -501,7 +507,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       <div className="admin-form-grid">
         {/* Left Side: Main Details */}
         <div className="admin-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <h3 style={{ margin: '0 0 0.5rem 0', fontWeight: 400, fontFamily: 'var(--font-display)' }}>Información General</h3>
+          <h3 style={{ margin: '0 0 0.5rem 0', fontWeight: 400, fontFamily: 'var(--font-display)' }}>Información general</h3>
           
           <div className="admin-field">
             <label>Nombre del producto</label>
@@ -683,7 +689,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           {!isCustomOnly && (
             <div className="admin-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ margin: 0, fontWeight: 400, fontFamily: 'var(--font-display)' }}>Talles y Precios</h3>
+                <h3 style={{ margin: 0, fontWeight: 400, fontFamily: 'var(--font-display)' }}>Talles y precios</h3>
                 <button className="admin-btn admin-btn-secondary admin-btn-sm" onClick={addSize}>
                   + Agregar Talle
                 </button>
@@ -799,6 +805,26 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Sticky save bar — mobile-only */}
+      <div className="admin-mobile-save-bar">
+        <button
+          className="admin-btn admin-btn-danger admin-btn-sm"
+          onClick={handleDelete}
+          aria-label="Eliminar producto"
+          style={{ minWidth: 44 }}
+        >
+          ×
+        </button>
+        <button
+          className="admin-btn admin-btn-primary"
+          onClick={handleSave}
+          disabled={saving}
+          style={{ flex: 1 }}
+        >
+          {saving ? 'Guardando...' : 'Guardar cambios'}
+        </button>
       </div>
     </>
   )

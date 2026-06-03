@@ -89,7 +89,7 @@ export function ProductDetailsClient({ product }: { product: Product }) {
           </div>
 
           <p style={{ fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: 0 }}>
-            {product.description || 'Tejida a mano en mi atelier. Empieza cuando vos confirmás colores y medida — entre dos y seis semanas según el modelo.'}
+            {product.description || 'Tejida a mano. Empieza cuando vos confirmás colores y medida.'}
           </p>
 
           {!isSoldOut && !product.is_custom_only && (
@@ -181,7 +181,9 @@ export function ProductDetailsClient({ product }: { product: Product }) {
                 fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink700,
               }}>
                 <Icon name="arrow-clockwise" size={16} color={dahila.ink500}/>
-                Encargos a medida: {product.lead_time_weeks_min || 2}–{product.lead_time_weeks_max || 6} semanas
+                {product.lead_time_weeks_min && product.lead_time_weeks_max
+                  ? `Plazo: ${product.lead_time_weeks_min}–${product.lead_time_weeks_max} semanas`
+                  : 'Plazo a coordinar'}
               </li>
             )}
           </ul>

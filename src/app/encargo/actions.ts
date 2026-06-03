@@ -40,6 +40,7 @@ function checkRateLimit(key: string): boolean {
 const MAX = {
   name: 80,
   email: 120,
+  whatsapp: 40,
   tipo: 40,
   talle: 8,
   message: 1500,
@@ -60,6 +61,7 @@ function clean(s: unknown, max: number): string {
 export async function submitEncargo(form: FormData): Promise<EncargoSubmission> {
   const name = clean(form.get('name'), MAX.name)
   const email = clean(form.get('email'), MAX.email)
+  const whatsapp = clean(form.get('whatsapp'), MAX.whatsapp)
   const tipo = clean(form.get('tipo'), MAX.tipo)
   const talle = clean(form.get('talle'), MAX.talle)
   const message = clean(form.get('message'), MAX.message)
@@ -84,6 +86,7 @@ export async function submitEncargo(form: FormData): Promise<EncargoSubmission> 
     const { error } = await supabase.from('custom_orders').insert({
       customer_name: name,
       customer_email: email,
+      whatsapp: whatsapp || null,
       garment_type: tipo,
       size: talle || null,
       message: message || null,

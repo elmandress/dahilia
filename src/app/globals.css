@@ -200,6 +200,8 @@ a.prose-link:hover {
 /* ============================================================
    Shared responsive grid overrides (formerly inline <style> blocks)
    ============================================================ */
+
+/* Tablet ≤ 720px */
 @media (max-width: 720px) {
   .product-grid     { grid-template-columns: 1fr 1fr !important; gap: 14px !important; }
   .tienda-grid      { grid-template-columns: 1fr 1fr !important; gap: 14px !important; row-gap: 32px !important; }
@@ -208,7 +210,7 @@ a.prose-link:hover {
   .hero-content     { padding: 0 24px !important; }
   .producto-split   { grid-template-columns: 1fr !important; gap: 24px !important; }
   .producto-detail  { position: static !important; }
-  .footer-grid      { grid-template-columns: 1fr 1fr !important; }
+  .footer-grid      { grid-template-columns: 1fr 1fr !important; gap: 32px !important; }
   .contact-grid     { grid-template-columns: 1fr !important; }
   .encargo-grid-4   { grid-template-columns: 1fr 1fr !important; }
   .encargo-grid-2   { grid-template-columns: 1fr !important; }
@@ -219,6 +221,24 @@ a.prose-link:hover {
   .photo-strip      { grid-template-columns: 1fr 1fr !important; }
   .producto-thumbs  { grid-template-columns: 1fr 1fr 1fr !important; }
 }
+
+/* iPhone 13 mini and smaller (~ 375-480px) — tighten paddings & type */
+@media (max-width: 480px) {
+  .hero-content       { padding: 0 18px !important; }
+  .process            { padding: 28px 20px !important; }
+  .footer-grid        { grid-template-columns: 1fr !important; gap: 28px !important; }
+  .numbers            { gap: 0 !important; }
+  /* Cart row: stack image+info above qty controls */
+  .cart-row           { flex-wrap: wrap !important; gap: 16px !important; }
+  .cart-row-controls  { width: 100% !important; justify-content: space-between !important; }
+  .cart-subtotal      { align-items: flex-start !important; text-align: left !important; }
+  /* Header: tighter padding, smaller wordmark */
+  .site-header-inner  { padding: 12px 14px !important; gap: 12px !important; }
+  .brand-wordmark     { font-size: 18px !important; letter-spacing: 0.16em !important; }
+  .brand-mark         { width: 30px !important; height: 30px !important; }
+  .header-actions     { gap: 14px !important; }
+}
+
 .nav-mobile { display: none; }
 
 /* Hero: viewport-aware height */
@@ -233,7 +253,17 @@ a.prose-link:hover {
   .hero-frame { height: clamp(440px, 78vh, 620px); }
 }
 @media (max-width: 480px) {
-  .hero-frame { height: clamp(420px, 82vh, 560px); }
+  .hero-frame { height: clamp(380px, 75vh, 520px); }
+}
+
+/* ============================================================
+   Touch targets — iOS HIG recommends min 44px for tap targets.
+   Apply to icon buttons in header/admin chrome.
+   ============================================================ */
+@media (hover: none) and (pointer: coarse) {
+  button, a[role="button"], .icon-button {
+    min-height: 36px;
+  }
 }
 
 /* Shimmer skeleton */

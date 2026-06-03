@@ -276,10 +276,16 @@ export default function NuevoProductoPage() {
 
       if (productError) throw productError
 
-      // Insert media
+      // Insert media — fail loudly if it doesn't work, otherwise the owner
+      // thinks photos are saved and the product page renders blank.
       if (mediaEntries.length > 0) {
+        const stillUploading = mediaEntries.filter(m => m.uploading)
+        if (stillUploading.length > 0) {
+          throw new Error(`Esperá a que terminen de subirse ${stillUploading.length} foto(s).`)
+        }
+
         const mediaInserts = mediaEntries
-          .filter(m => !m.uploading)
+          .filter((m) => !m.uploading && m.url && !m.url.startsWith('blob:'))
           .map((m, i) => ({
             product_id: product.id,
             url: m.url,
@@ -291,7 +297,9 @@ export default function NuevoProductoPage() {
 
         if (mediaInserts.length > 0) {
           const { error: mediaError } = await supabase.from('product_media').insert(mediaInserts)
-          if (mediaError) console.error('Media insert error:', mediaError)
+          if (mediaError) {
+            throw new Error(`No se guardaron las fotos: ${mediaError.message}. Revisá que el bucket "media" exista en Supabase Storage.`)
+          }
         }
       }
 
@@ -309,18 +317,18 @@ export default function NuevoProductoPage() {
 
         if (sizeInserts.length > 0) {
           const { error: sizeError } = await supabase.from('product_sizes').insert(sizeInserts)
-          if (sizeError) console.error('Size insert error:', sizeError)
+          if (sizeError) throw new Error(`No se guardaron los talles: ${sizeError.message}`)
         }
       }
 
       // Insert colors
       if (selectedColors.length > 0) {
-        const colorInserts = selectedColors.map(colorId => ({
+        const colorInserts = selectedColors.map((colorId) => ({
           product_id: product.id,
           color_id: colorId,
         }))
         const { error: colorError } = await supabase.from('product_colors').insert(colorInserts)
-        if (colorError) console.error('Color insert error:', colorError)
+        if (colorError) throw new Error(`No se guardaron los colores: ${colorError.message}`)
       }
 
       setToast('Producto creado exitosamente')
@@ -339,9 +347,9 @@ export default function NuevoProductoPage() {
       <div className="admin-page-header">
         <div>
           <h2>Nuevo producto</h2>
-          <p>Completá los datos del producto</p>
+          <p>Completá los datos del producto.</p>
         </div>
-        <div className="admin-actions">
+        <div className="admin-actions admin-actions-desktop">
           <button
             className="admin-btn admin-btn-secondary"
             onClick={() => router.push('/admin/productos')}
@@ -364,7 +372,7 @@ export default function NuevoProductoPage() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '1.5rem', alignItems: 'start' }}>
+      <div className="admin-form-split" style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '1.5rem', alignItems: 'start' }}>
         {/* Left column — main fields */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Basic info */}
@@ -478,7 +486,7 @@ export default function NuevoProductoPage() {
           {/* Sizes */}
           <div className="admin-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 500 }}>Tallas</h3>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 500 }}>Talles</h3>
               <button className="admin-btn admin-btn-secondary admin-btn-sm" onClick={addSize}>
                 + Agregar talla
               </button>
@@ -664,6 +672,24 @@ export default function NuevoProductoPage() {
       {toast && (
         <div className="admin-toast success">{toast}</div>
       )}
+
+      {/* Sticky save bar — mobile-only */}
+      <div className="admin-mobile-save-bar">
+        <button
+          className="admin-btn admin-btn-secondary"
+          onClick={() => router.push('/admin/productos')}
+        >
+          Cancelar
+        </button>
+        <button
+          className="admin-btn admin-btn-primary"
+          onClick={handleSave}
+          disabled={saving}
+          style={{ flex: 1 }}
+        >
+          {saving ? 'Guardando...' : 'Guardar'}
+        </button>
+      </div>
     </>
   )
 }

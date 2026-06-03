@@ -20,9 +20,9 @@ export function Header() {
   if (pathname.startsWith('/admin')) return null
 
   const items = [
-    { id: '/tienda',  label: 'Tienda' },
-    { id: '/encargo', label: 'Encargos' },
-    { id: '/atelier', label: 'Atelier' },
+    { id: '/tienda',   label: 'Tienda' },
+    { id: '/encargo',  label: 'A medida' },
+    { id: '/atelier',  label: 'Sobre Dahila' },
     { id: '/contacto', label: 'Contacto' },
   ]
 
@@ -32,14 +32,14 @@ export function Header() {
   }
 
   return (
-    <header style={{
+    <header className="site-header" style={{
       position: 'sticky', top: 0, zIndex: 50,
       background: 'rgba(255,255,255,0.92)',
       backdropFilter: 'blur(14px)',
       WebkitBackdropFilter: 'blur(14px)',
       borderBottom: `1px solid ${dahila.border}`,
     }}>
-      <div style={{
+      <div className="site-header-inner" style={{
         maxWidth: 1280, margin: '0 auto',
         padding: '14px 24px',
         display: showSearch ? 'flex' : 'grid',
@@ -103,23 +103,22 @@ export function Header() {
             </button>
 
             {/* Center: brand */}
-            <Link href="/" style={{
+            <Link href="/" className="brand-link" style={{
               display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none',
               background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
               justifySelf: 'center',
             }}>
-              <Image src="/isotype-color.png" alt="" width={40} height={40} priority style={{ objectFit: 'contain' }} />
-              <span style={{
+              <Image src="/isotype-color.png" alt="" width={36} height={36} priority style={{ objectFit: 'contain' }} className="brand-mark" />
+              <span className="brand-wordmark" style={{
                 fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 22,
                 color: dahila.ink900, letterSpacing: '0.18em',
               }}>DAHILA</span>
             </Link>
 
             {/* Right: icons */}
-            <div style={{ display: 'flex', gap: 18, alignItems: 'center', color: dahila.ink900, justifySelf: 'end' }}>
-              <button onClick={() => setShowSearch(true)} style={{ ...iconBtn, width: 22, height: 22, justifyContent: 'center' }} aria-label="Buscar"><Icon name="magnifying-glass" size={20}/></button>
-              <button style={{ ...iconBtn, width: 22, height: 22, justifyContent: 'center' }} aria-label="Lista de deseos"><Icon name="heart" size={20}/></button>
-              <button onClick={() => router.push('/carrito')} style={{ ...iconBtn, position: 'relative', width: 22, height: 22, justifyContent: 'center' }} aria-label={`Carrito${showBadge ? ` (${cartCount})` : ''}`}>
+            <div className="header-actions" style={{ display: 'flex', gap: 18, alignItems: 'center', color: dahila.ink900, justifySelf: 'end' }}>
+              <button onClick={() => setShowSearch(true)} style={{ ...iconBtn, width: 28, height: 28, justifyContent: 'center' }} aria-label="Buscar"><Icon name="magnifying-glass" size={20}/></button>
+              <button onClick={() => router.push('/carrito')} style={{ ...iconBtn, position: 'relative', width: 28, height: 28, justifyContent: 'center' }} aria-label={`Carrito${showBadge ? ` (${cartCount})` : ''}`}>
                 <Icon name="shopping-bag" size={20}/>
                 {showBadge && (
                   <span aria-hidden="true" style={{

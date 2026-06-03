@@ -80,14 +80,13 @@ export function Footer() {
             title="Info"
             items={[
               { label: 'Cómo encargar', href: '/encargo' },
-              { label: 'Atelier',       href: '/atelier' },
+              { label: 'Sobre Dahila',  href: '/atelier' },
               { label: 'Contacto',      href: '/contacto' },
             ]}
           />
           <FooterCol
             title="Contacto"
             items={[
-              { label: 'hola@dahila.uy',          href: 'mailto:hola@dahila.uy' },
               { label: '@dahila.crochet',         href: 'https://www.instagram.com/dahila.crochet/' },
               { label: 'WhatsApp · 94 605 015',   href: 'https://wa.me/59894605015' },
             ]}

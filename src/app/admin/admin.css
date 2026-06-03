@@ -192,11 +192,32 @@
   z-index: 39;
 }
 
+/* Mobile-only sticky bottom save bar used inside productos forms. */
+.admin-mobile-save-bar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 35;
+  padding: 10px 14px calc(env(safe-area-inset-bottom, 0px) + 10px);
+  background: #fff;
+  border-top: 1px solid rgba(31,26,27,0.12);
+  gap: 8px;
+  box-shadow: 0 -8px 20px -12px rgba(31,26,27,0.18);
+}
+
 @media (max-width: 768px) {
   .admin-mobile-toggle,
   .admin-mobile-logout {
     display: flex;
   }
+
+  .admin-mobile-save-bar { display: flex; align-items: center; }
+  .admin-actions-desktop { display: none !important; }
+
+  /* Add bottom padding so the sticky bar doesn't cover the last card. */
+  .admin-content { padding-bottom: 90px !important; }
 
   .admin-sidebar {
     transform: translateX(-100%);
@@ -215,6 +236,57 @@
     padding: 1rem;
     padding-top: 4rem;
   }
+
+  /* Page headers: stack title + actions */
+  .admin-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .admin-page-header h2 {
+    font-size: 1.5rem;
+  }
+
+  /* Stats: single column instead of 4-up */
+  .admin-stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .admin-stat-card .stat-value {
+    font-size: 1.6rem !important;
+  }
+
+  /* Table cells: tighter padding + smaller font */
+  .admin-table th, .admin-table td { padding: 0.6rem 0.75rem; font-size: 0.85rem; }
+  .admin-table .product-thumb { width: 38px; height: 38px; }
+
+  /* Cards: full-bleed feel */
+  .admin-card { padding: 1rem !important; border-radius: 12px; }
+
+  /* Buttons: a tap-friendly minimum */
+  .admin-btn { padding: 0.7rem 1rem; min-height: 40px; }
+  .admin-btn-sm { padding: 0.5rem 0.8rem; min-height: 34px; }
+}
+
+/* iPhone 13 mini and friends */
+@media (max-width: 420px) {
+  .admin-content { padding: 0.75rem; padding-top: 4rem; }
+  .admin-stats-grid { grid-template-columns: 1fr !important; }
+  .admin-form-grid  { grid-template-columns: 1fr !important; }
+  .admin-quick-actions { grid-template-columns: 1fr 1fr !important; gap: 0.5rem !important; }
+  .admin-card { padding: 0.85rem !important; }
+  .admin-table th, .admin-table td { padding: 0.5rem 0.6rem; font-size: 0.8rem; }
+  /* status filter chips: horizontal scroll instead of wrapping */
+  .admin-status-tabs {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  .admin-status-tabs > button { flex: 0 0 auto; }
 }
 
 /* ---------- Page headers ---------- */
@@ -435,6 +507,9 @@
 @media (max-width: 768px) {
   .admin-form-grid {
     grid-template-columns: 1fr;
+  }
+  .admin-form-split {
+    grid-template-columns: 1fr !important;
   }
 }
 

@@ -11,6 +11,7 @@ export default function EncargoForm() {
   const [talle, setTalle] = useState('M')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [whatsapp, setWhatsapp] = useState('')
   const [message, setMessage] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -26,7 +27,7 @@ export default function EncargoForm() {
           color: dahila.ink900, margin: '14px 0 16px',
         }}>Gracias 🪡</h1>
         <p style={{ fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300, fontSize: 18, color: dahila.ink700, marginBottom: 28 }}>
-          Te escribo en las próximas 48hs con un boceto y presupuesto.
+          Te escribo cuanto antes con opciones y presupuesto.
         </p>
         <Button variant="secondary" onClick={() => router.push('/')}>Volver al inicio</Button>
       </main>
@@ -39,6 +40,7 @@ export default function EncargoForm() {
     const fd = new FormData()
     fd.set('name', name)
     fd.set('email', email)
+    fd.set('whatsapp', whatsapp)
     fd.set('tipo', tipo)
     fd.set('talle', talle)
     fd.set('message', message)
@@ -61,7 +63,7 @@ export default function EncargoForm() {
           lineHeight: 1.05, letterSpacing: '-0.02em', color: dahila.ink900, margin: 0,
         }}>Contame qué tenés en mente</h1>
         <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: 0 }}>
-          Te respondo por mail en 48hs con un boceto, los materiales que tengo y el presupuesto.
+          Te respondo cuanto antes con un boceto, los materiales que tengo y el presupuesto.
         </p>
       </div>
 
@@ -91,6 +93,10 @@ export default function EncargoForm() {
             <TextInput placeholder="vos@correo.uy" type="email" value={email} onChange={setEmail} />
           </Field>
         </div>
+
+        <Field label="WhatsApp" helper="Opcional. Te respondo más rápido por acá.">
+          <TextInput placeholder="+598 ..." value={whatsapp} onChange={setWhatsapp} />
+        </Field>
 
         <Field label="Talle aproximado">
           <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>

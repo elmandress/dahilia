@@ -1,21 +1,159 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-const DEFAULT_SETTINGS: Record<string, string> = {
-  hero_title: '',
-  hero_subtitle: '',
-  hero_cta: '',
-  contact_whatsapp: '',
-  contact_instagram: '',
-  contact_email: '',
-  atelier_address: '',
-  lead_time_notice: '',
+// All keys the CMS surfaces. The DB may contain extras (e.g. legacy)
+// — we preserve them on save by passing through whatever loaded.
+const SECTIONS = [
+  {
+    title: 'Portada (Hero)',
+    description: 'Lo primero que ve quien entra al sitio.',
+    fields: [
+      { key: 'hero_subtitle', label: 'Antetítulo (eyebrow)', type: 'text' },
+      { key: 'hero_title',    label: 'Título principal',     type: 'text' },
+      { key: 'hero_cta',      label: 'Texto del botón',      type: 'text' },
+      { key: 'hero_image_url', label: 'Foto del hero',       type: 'image' },
+    ],
+  },
+  {
+    title: 'Tira de proceso',
+    description: 'Las 3 columnas que aparecen abajo de "New in".',
+    fields: [
+      { key: 'process_1_title', label: 'Col 1 — Título', type: 'text' },
+      { key: 'process_1_body',  label: 'Col 1 — Texto',  type: 'textarea' },
+      { key: 'process_2_title', label: 'Col 2 — Título', type: 'text' },
+      { key: 'process_2_body',  label: 'Col 2 — Texto',  type: 'textarea' },
+      { key: 'process_3_title', label: 'Col 3 — Título', type: 'text' },
+      { key: 'process_3_body',  label: 'Col 3 — Texto',  type: 'textarea' },
+    ],
+  },
+  {
+    title: 'Sobre Dahila',
+    description: 'La sección split con foto + texto en el home.',
+    fields: [
+      { key: 'about_eyebrow', label: 'Antetítulo',           type: 'text' },
+      { key: 'about_title',   label: 'Título (línea 1)',     type: 'text' },
+      { key: 'about_title_em', label: 'Título (línea 2 en cursiva)', type: 'text' },
+      { key: 'about_body',    label: 'Texto',                type: 'textarea' },
+      { key: 'about_image_url', label: 'Foto',               type: 'image' },
+      { key: 'about_cta',     label: 'Texto del botón',      type: 'text' },
+    ],
+  },
+  {
+    title: 'Preguntas frecuentes',
+    description: 'Las 4 preguntas que aparecen al final del home.',
+    fields: [
+      { key: 'faq_1_q', label: 'Pregunta 1', type: 'text' },
+      { key: 'faq_1_a', label: 'Respuesta 1', type: 'textarea' },
+      { key: 'faq_2_q', label: 'Pregunta 2', type: 'text' },
+      { key: 'faq_2_a', label: 'Respuesta 2', type: 'textarea' },
+      { key: 'faq_3_q', label: 'Pregunta 3', type: 'text' },
+      { key: 'faq_3_a', label: 'Respuesta 3', type: 'textarea' },
+      { key: 'faq_4_q', label: 'Pregunta 4', type: 'text' },
+      { key: 'faq_4_a', label: 'Respuesta 4', type: 'textarea' },
+    ],
+  },
+  {
+    title: 'Contacto',
+    description: 'Cómo te encuentran los clientes. Visible en footer y página de contacto.',
+    fields: [
+      { key: 'contact_whatsapp',     label: 'WhatsApp (visible)',         type: 'text', placeholder: '+598 94 605 015' },
+      { key: 'contact_whatsapp_url', label: 'WhatsApp link (wa.me/...)',  type: 'text', placeholder: 'https://wa.me/59894605015' },
+      { key: 'contact_instagram',    label: 'Instagram (visible)',        type: 'text', placeholder: '@dahila.crochet' },
+      { key: 'contact_instagram_url', label: 'Instagram link',            type: 'text', placeholder: 'https://www.instagram.com/dahila.crochet/' },
+      { key: 'contact_location',     label: 'Ubicación',                  type: 'text' },
+      { key: 'brand_short_intro',    label: 'Frase corta de marca (footer)', type: 'textarea' },
+    ],
+  },
+] as const
+
+type FieldType = 'text' | 'textarea' | 'image'
+
+function ImageUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const fileInput = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleFile = async (file: File) => {
+    setError(null)
+    setUploading(true)
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop() || 'jpg'
+      const path = `site/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+      const { error: upErr } = await supabase.storage
+        .from('media')
+        .upload(path, file, { cacheControl: '3600', upsert: false })
+      if (upErr) throw upErr
+      const { data: pub } = supabase.storage.from('media').getPublicUrl(path)
+      onChange(pub.publicUrl)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Error al subir'
+      setError(msg)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {value && (
+        <div style={{
+          position: 'relative', width: '100%', maxWidth: 320, aspectRatio: '4/5',
+          borderRadius: 8, overflow: 'hidden', background: '#FAF1DF',
+        }}>
+          {/* SVG/external URLs work via plain <img> here — admin preview only */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={value} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      )}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const f = e.target.files?.[0]
+            if (f) handleFile(f)
+            e.target.value = ''
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => fileInput.current?.click()}
+          disabled={uploading}
+          className="admin-btn admin-btn-secondary admin-btn-sm"
+        >
+          {uploading ? 'Subiendo...' : value ? 'Cambiar foto' : 'Subir foto'}
+        </button>
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            className="admin-btn admin-btn-secondary admin-btn-sm"
+          >
+            Quitar
+          </button>
+        )}
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="o pegá una URL"
+          style={{ flex: '1 1 200px', minWidth: 0 }}
+        />
+      </div>
+      {error && (
+        <div role="alert" style={{ color: '#7a1e2f', fontSize: 12 }}>{error}</div>
+      )}
+    </div>
+  )
 }
 
 export default function ConfiguracionAdminPage() {
-  const [settings, setSettings] = useState<Record<string, string>>(DEFAULT_SETTINGS)
+  const [settings, setSettings] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -32,10 +170,10 @@ export default function ConfiguracionAdminPage() {
       ;(data ?? []).forEach((item) => {
         if (item?.key) loaded[item.key as string] = String(item.value ?? '')
       })
-      setSettings({ ...DEFAULT_SETTINGS, ...loaded })
+      setSettings(loaded)
     } catch (e) {
       console.error('Error cargando configuración', e)
-      setError('No se pudo cargar la configuración desde la base de datos.')
+      setError('No se pudo cargar la configuración. Ejecutá database/schema-extra.sql en Supabase si todavía no lo hiciste.')
     } finally {
       setLoading(false)
     }
@@ -46,7 +184,7 @@ export default function ConfiguracionAdminPage() {
     loadSettings()
   }, [loadSettings])
 
-  const handleChange = (key: string, value: string) => {
+  const update = (key: string, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }))
   }
 
@@ -58,11 +196,13 @@ export default function ConfiguracionAdminPage() {
 
     try {
       const supabase = createClient()
-      const updates = Object.entries(settings).map(([key, value]) => ({
-        key,
-        value,
-        updated_at: new Date().toISOString(),
-      }))
+      const updates = Object.entries(settings)
+        .filter(([, v]) => v !== undefined && v !== null)
+        .map(([key, value]) => ({
+          key,
+          value: value ?? '',
+          updated_at: new Date().toISOString(),
+        }))
 
       const { error: err } = await supabase
         .from('site_settings')
@@ -73,7 +213,8 @@ export default function ConfiguracionAdminPage() {
       setTimeout(() => setSuccess(false), 3000)
     } catch (e) {
       console.error('Error guardando configuración', e)
-      setError('No se pudieron guardar los cambios. Intentá de nuevo.')
+      const msg = e instanceof Error ? e.message : 'No se pudieron guardar los cambios.'
+      setError(msg)
     } finally {
       setSaving(false)
     }
@@ -88,21 +229,21 @@ export default function ConfiguracionAdminPage() {
   }
 
   return (
-    <div style={{ maxWidth: '800px' }}>
+    <div style={{ maxWidth: 880 }}>
       <div className="admin-page-header">
         <div>
-          <h2>Configuración del Sitio</h2>
-          <p>Edita textos generales, banner principal e información de contacto</p>
+          <h2>Configuración del sitio</h2>
+          <p>Editá textos, fotos e información de contacto. Los cambios se ven en vivo en el sitio.</p>
         </div>
       </div>
 
       {success && (
         <div style={{
-          background: '#e8f5e9', color: '#2e7d32', padding: '1rem',
-          borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.9rem',
-          display: 'flex', alignItems: 'center', gap: '8px',
+          background: '#e8f5e9', color: '#2e7d32', padding: '12px 14px',
+          borderRadius: 8, marginBottom: 18, fontSize: 13,
+          display: 'flex', alignItems: 'center', gap: 8, position: 'sticky', top: 14, zIndex: 5,
         }}>
-          <span>✓</span> ¡Configuración guardada correctamente!
+          <span aria-hidden>✓</span> Guardado.
         </div>
       )}
 
@@ -120,106 +261,71 @@ export default function ConfiguracionAdminPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="admin-card" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        
-        {/* Hero Banner Section */}
-        <div>
-          <h3 style={{ margin: '0 0 1rem 0', fontWeight: 400, fontFamily: 'var(--font-display)', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>Banner de Portada (Hero)</h3>
-          <div className="admin-form-grid">
-            <div className="admin-field full-width">
-              <label>Título Principal</label>
-              <input 
-                type="text" 
-                value={settings.hero_title} 
-                onChange={(e) => handleChange('hero_title', e.target.value)} 
-                required 
-              />
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+        {SECTIONS.map((section) => (
+          <section key={section.title} className="admin-card">
+            <div style={{ marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #eee' }}>
+              <h3 style={{ margin: 0, fontWeight: 400, fontSize: '1.1rem', fontFamily: 'var(--font-display)' }}>
+                {section.title}
+              </h3>
+              <p style={{ margin: '4px 0 0', fontSize: 12, color: '#8C8285' }}>{section.description}</p>
             </div>
-            <div className="admin-field full-width">
-              <label>Subtítulo</label>
-              <input 
-                type="text" 
-                value={settings.hero_subtitle} 
-                onChange={(e) => handleChange('hero_subtitle', e.target.value)} 
-                required 
-              />
-            </div>
-            <div className="admin-field">
-              <label>Texto Botón CTA</label>
-              <input 
-                type="text" 
-                value={settings.hero_cta} 
-                onChange={(e) => handleChange('hero_cta', e.target.value)} 
-                required 
-              />
-            </div>
-          </div>
-        </div>
 
-        {/* Contact info Section */}
-        <div>
-          <h3 style={{ margin: '0 0 1rem 0', fontWeight: 400, fontFamily: 'var(--font-display)', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>Información de Contacto</h3>
-          <div className="admin-form-grid">
-            <div className="admin-field">
-              <label>WhatsApp</label>
-              <input 
-                type="text" 
-                value={settings.contact_whatsapp} 
-                onChange={(e) => handleChange('contact_whatsapp', e.target.value)} 
-                required 
-              />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {section.fields.map((field) => {
+                const value = settings[field.key] ?? ''
+                const fieldType: FieldType = field.type
+                return (
+                  <div key={field.key} className="admin-field">
+                    <label htmlFor={field.key} style={{ display: 'block', marginBottom: 6 }}>
+                      {field.label}
+                    </label>
+                    {fieldType === 'text' && (
+                      <input
+                        id={field.key}
+                        type="text"
+                        value={value}
+                        placeholder={'placeholder' in field ? field.placeholder : ''}
+                        onChange={(e) => update(field.key, e.target.value)}
+                      />
+                    )}
+                    {fieldType === 'textarea' && (
+                      <textarea
+                        id={field.key}
+                        value={value}
+                        rows={3}
+                        onChange={(e) => update(field.key, e.target.value)}
+                      />
+                    )}
+                    {fieldType === 'image' && (
+                      <ImageUploader value={value} onChange={(v) => update(field.key, v)} />
+                    )}
+                  </div>
+                )
+              })}
             </div>
-            <div className="admin-field">
-              <label>Usuario Instagram (@)</label>
-              <input 
-                type="text" 
-                value={settings.contact_instagram} 
-                onChange={(e) => handleChange('contact_instagram', e.target.value)} 
-                required 
-              />
-            </div>
-            <div className="admin-field full-width">
-              <label>Email de contacto</label>
-              <input 
-                type="email" 
-                value={settings.contact_email} 
-                onChange={(e) => handleChange('contact_email', e.target.value)} 
-                required 
-              />
-            </div>
-            <div className="admin-field full-width">
-              <label>Dirección física / Ubicación</label>
-              <input 
-                type="text" 
-                value={settings.atelier_address} 
-                onChange={(e) => handleChange('atelier_address', e.target.value)} 
-                required 
-              />
-            </div>
-          </div>
-        </div>
+          </section>
+        ))}
 
-        {/* Lead times and alerts */}
-        <div>
-          <h3 style={{ margin: '0 0 1rem 0', fontWeight: 400, fontFamily: 'var(--font-display)', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>Plazos y Avisos</h3>
-          <div className="admin-field">
-            <label>Aviso de Plazos de Entrega</label>
-            <textarea 
-              value={settings.lead_time_notice} 
-              onChange={(e) => handleChange('lead_time_notice', e.target.value)} 
-              required 
-            />
-            <span className="field-hint">Se muestra en la sección de pedidos a medida y formularios de encargo.</span>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', borderTop: '1px solid #eee', paddingTop: '1.5rem' }}>
-          <button 
-            type="submit" 
-            className="admin-btn admin-btn-primary" 
+        <div
+          style={{
+            position: 'sticky',
+            bottom: 0,
+            background: '#fff',
+            padding: '14px 0',
+            borderTop: '1px solid #eee',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 12,
+          }}
+        >
+          <button
+            type="submit"
+            className="admin-btn admin-btn-primary"
             disabled={saving}
+            style={{ minWidth: 200 }}
           >
-            {saving ? 'Guardando...' : 'Guardar Configuración'}
+            {saving ? 'Guardando...' : 'Guardar cambios'}
           </button>
         </div>
       </form>
