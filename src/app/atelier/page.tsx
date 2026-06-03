@@ -6,12 +6,12 @@ import { dahila, Eyebrow } from '@/components/ui/Primitives'
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'Sobre Dahila',
-  description: 'Quién está detrás de Dahila Crochet. Tejido a mano en Uruguay, lana natural, prendas únicas.',
+  title: 'Sobre Anush',
+  description: 'Quién está detrás de Dahila Crochet. Anush teje a mano en Uruguay, con lana natural y prendas únicas.',
   alternates: { canonical: '/atelier' },
   openGraph: {
-    title: 'Sobre Dahila | Dahila Crochet',
-    description: 'Quién está detrás de Dahila Crochet. Tejido a mano en Uruguay, lana natural, prendas únicas.',
+    title: 'Sobre Anush | Dahila Crochet',
+    description: 'Quién está detrás de Dahila Crochet. Anush teje a mano en Uruguay, con lana natural y prendas únicas.',
     url: '/atelier',
   },
 }
@@ -30,7 +30,7 @@ export default async function AtelierPage() {
 
   const heroImage = settings.about_image_url || '/photos/atelier-tejiendo.png'
   const body = settings.about_body ||
-    'Soy Dahila. Tejo a crochet desde chica y hago prendas únicas, pensadas con vos. Trabajo con lanas y algodones naturales, sin prisa, paso a paso. Cada pieza la pienso con la persona que la va a usar: conversamos, vemos colores, ajustamos medidas, y tejo.'
+    'Soy Anush. Tejo a crochet desde chica y hago prendas únicas, pensadas con vos. Trabajo con lanas y algodones naturales, sin prisa, paso a paso. Cada pieza la pienso con la persona que la va a usar: conversamos, vemos colores, ajustamos medidas, y tejo.'
 
   return (
     <main style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
@@ -40,14 +40,14 @@ export default async function AtelierPage() {
         <div style={{ position: 'relative', width: '100%', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden' }}>
           <Image
             src={heroImage}
-            alt="Dahila tejiendo"
+            alt="Anush tejiendo"
             fill
             sizes="(max-width: 720px) 100vw, 600px"
             style={{ objectFit: 'cover' }}
           />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <Eyebrow>{settings.about_eyebrow || 'Sobre Dahila'}</Eyebrow>
+          <Eyebrow>{settings.about_eyebrow || 'Sobre Anush'}</Eyebrow>
           <h1 style={{
             fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(32px, 5vw, 56px)',
             lineHeight: 1.05, letterSpacing: '-0.02em', color: dahila.ink900, margin: 0,

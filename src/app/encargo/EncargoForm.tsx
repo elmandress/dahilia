@@ -25,7 +25,7 @@ export default function EncargoForm() {
           fontFamily: dahila.fontDisplay, fontWeight: 300,
           fontSize: 'clamp(32px, 5vw, 48px)', lineHeight: 1.1, letterSpacing: '-0.02em',
           color: dahila.ink900, margin: '14px 0 16px',
-        }}>Gracias 🪡</h1>
+        }}>Gracias.</h1>
         <p style={{ fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300, fontSize: 18, color: dahila.ink700, marginBottom: 28 }}>
           Te escribo cuanto antes con opciones y presupuesto.
         </p>

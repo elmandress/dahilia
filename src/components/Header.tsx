@@ -22,7 +22,7 @@ export function Header() {
   const items = [
     { id: '/tienda',   label: 'Tienda' },
     { id: '/encargo',  label: 'A medida' },
-    { id: '/atelier',  label: 'Sobre Dahila' },
+    { id: '/atelier',  label: 'Sobre Anush' },
     { id: '/contacto', label: 'Contacto' },
   ]
 

@@ -136,18 +136,13 @@ export function ProductDetailsClient({ product }: { product: Product }) {
           )}
 
           {!isSoldOut && !product.is_custom_only && (
-            <div style={{ display: 'flex', gap: 10 }}>
-              <Button variant="primary" size="lg" full onClick={async () => { 
-                setAdded(true); 
-                await addToCart(product, talle, 1);
-                setTimeout(() => setAdded(false), 2200); 
-              }} style={{ flex: 1 }}>
-                {added ? '✓ Añadido' : 'Añadir al carrito'}
-              </Button>
-              <Button variant="secondary" size="lg" onClick={() => {}}>
-                <Icon name="heart" size={16}/>
-              </Button>
-            </div>
+            <Button variant="primary" size="lg" full onClick={async () => {
+              setAdded(true)
+              await addToCart(product, talle, 1)
+              setTimeout(() => setAdded(false), 2200)
+            }}>
+              {added ? '✓ Añadido' : 'Añadir al carrito'}
+            </Button>
           )}
 
           <ul style={{

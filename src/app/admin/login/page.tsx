@@ -30,10 +30,8 @@ export default function AdminLoginPage() {
 
     try {
       const supabase = createClient()
-      const formattedEmail = email.includes('@') ? email.trim() : `${email.trim()}@dahila.uy`
-
       const { error: authError } = await supabase.auth.signInWithPassword({
-        email: formattedEmail,
+        email: email.trim(),
         password,
       })
 
@@ -72,16 +70,16 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div className="admin-field" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label htmlFor="email" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-700)' }}>Usuario</label>
+            <label htmlFor="email" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-700)' }}>Email</label>
             <input
               id="email"
-              type="text"
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="usuario o email"
+              placeholder="anush@..."
               required
               autoFocus
-              autoComplete="username"
+              autoComplete="email"
               style={{
                 border: '1px solid var(--border-strong)', padding: '12px 14px', borderRadius: 8, fontSize: 14, outline: 'none'
               }}

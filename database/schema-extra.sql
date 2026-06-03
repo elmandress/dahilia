@@ -89,10 +89,10 @@ INSERT INTO site_settings (key, value) VALUES
   ('process_3_body',     'A todo Uruguay. Internacionales bajo consulta, con tracking.'),
 
   -- About section (split)
-  ('about_eyebrow',      'Sobre Dahila'),
+  ('about_eyebrow',      'Sobre Anush'),
   ('about_title',        'Detrás de cada hilo'),
   ('about_title_em',     'está mi mesa.'),
-  ('about_body',         'Soy Dahila. Tejo a crochet desde chica y hago prendas únicas, sin apuro y con vos.'),
+  ('about_body',         'Soy Anush. Tejo a crochet desde chica y hago prendas únicas, sin apuro y con vos.'),
   ('about_image_url',    '/photos/atelier-escritorio.png'),
   ('about_cta',          'Conocé el espacio'),
 

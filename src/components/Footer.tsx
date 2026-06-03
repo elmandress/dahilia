@@ -80,7 +80,7 @@ export function Footer() {
             title="Info"
             items={[
               { label: 'Cómo encargar', href: '/encargo' },
-              { label: 'Sobre Dahila',  href: '/atelier' },
+              { label: 'Sobre Anush',   href: '/atelier' },
               { label: 'Contacto',      href: '/contacto' },
             ]}
           />

@@ -38,7 +38,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [...staticRoutes, ...productRoutes]
   } catch (e) {
-    console.error('sitemap supabase fetch failed', e)
+    // Next emits a DYNAMIC_SERVER_USAGE pseudo-error at build time when a
+    // route uses cookies — that's expected here (Supabase client reads them)
+    // and the route is correctly marked ƒ dynamic. Only log unexpected errors.
+    const message = e instanceof Error ? e.message : String(e)
+    if (!message.includes('Dynamic server usage')) {
+      console.error('sitemap supabase fetch failed', e)
+    }
     return staticRoutes
   }
 }

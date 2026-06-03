@@ -246,14 +246,14 @@ export function HomeClient({ products, settings }: { products: Product[]; settin
           <div style={{ position: 'relative', width: '100%', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden' }}>
             <Image
               src={aboutImage}
-              alt="Dahila tejiendo"
+              alt="Anush tejiendo"
               fill
               sizes="(max-width: 720px) 100vw, 640px"
               style={{ objectFit: 'cover' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <Eyebrow>{val(settings, 'about_eyebrow', 'Sobre Dahila')}</Eyebrow>
+            <Eyebrow>{val(settings, 'about_eyebrow', 'Sobre Anush')}</Eyebrow>
             <h2 style={{
               fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 38,
               lineHeight: 1.1, letterSpacing: '-0.01em', color: dahila.ink900, margin: 0,
@@ -269,7 +269,7 @@ export function HomeClient({ products, settings }: { products: Product[]; settin
               )}
             </h2>
             <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: 0, maxWidth: 460 }}>
-              {val(settings, 'about_body', 'Soy Dahila. Tejo a crochet desde chica y hago prendas únicas, sin apuro y con vos.')}
+              {val(settings, 'about_body', 'Soy Anush. Tejo a crochet desde chica y hago prendas únicas, sin apuro y con vos.')}
             </p>
             <div style={{ marginTop: 6 }}>
               <Button variant="secondary" onClick={() => router.push('/atelier')}>

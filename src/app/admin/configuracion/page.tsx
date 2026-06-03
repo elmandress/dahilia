@@ -29,7 +29,7 @@ const SECTIONS = [
     ],
   },
   {
-    title: 'Sobre Dahila',
+    title: 'Sobre Anush',
     description: 'La sección split con foto + texto en el home.',
     fields: [
       { key: 'about_eyebrow', label: 'Antetítulo',           type: 'text' },
