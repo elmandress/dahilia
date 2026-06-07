@@ -212,7 +212,7 @@ export function Header() {
           className="mega-menu"
           onMouseEnter={() => setMegaOpen(true)}
           onMouseLeave={() => setMegaOpen(false)}
-          aria-hidden={!megaOpen}
+          inert={!megaOpen}
           style={{
             position: 'absolute', left: 0, right: 0, top: '100%',
             background: '#fff',
@@ -288,7 +288,7 @@ export function Header() {
         {/* Mobile menu drawer */}
         <div
           id="mobile-menu"
-          aria-hidden={!open}
+          inert={!open}
           style={{
             overflow: 'hidden',
             maxHeight: open ? 420 : 0,

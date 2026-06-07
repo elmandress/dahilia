@@ -85,18 +85,21 @@ export default function EncargoForm() {
           </div>
         </Field>
 
+        <Field label="Tu nombre">
+          <TextInput placeholder="¿Cómo te llamás?" value={name} onChange={setName} />
+        </Field>
+
         <div className="encargo-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-          <Field label="Tu nombre">
-            <TextInput placeholder="¿Cómo te llamás?" value={name} onChange={setName} />
+          <Field label="WhatsApp" helper="Te respondo más rápido por acá.">
+            <TextInput placeholder="+598 ..." value={whatsapp} onChange={setWhatsapp} />
           </Field>
-          <Field label="Mail">
+          <Field label="Mail" helper="Si preferís, dejá tu mail.">
             <TextInput placeholder="vos@correo.uy" type="email" value={email} onChange={setEmail} />
           </Field>
         </div>
-
-        <Field label="WhatsApp" helper="Opcional. Te respondo más rápido por acá.">
-          <TextInput placeholder="+598 ..." value={whatsapp} onChange={setWhatsapp} />
-        </Field>
+        <p style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, margin: '-14px 0 0' }}>
+          Con uno de los dos alcanza.
+        </p>
 
         <Field label="Talle aproximado">
           <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>

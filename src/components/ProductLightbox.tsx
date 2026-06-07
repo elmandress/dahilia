@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
+import { useScrollLock } from '@/lib/scroll-lock'
 import { dahila, Icon } from './ui/Primitives'
 
 export interface GalleryImage {
@@ -33,19 +34,16 @@ export default function ProductLightbox({
   const [origin, setOrigin] = useState({ x: 50, y: 50 })
   const stageRef = useRef<HTMLDivElement>(null)
 
+  useScrollLock(true)
+
   useEffect(() => {
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
       else if (e.key === 'ArrowRight') onNav(1)
       else if (e.key === 'ArrowLeft') onNav(-1)
     }
     window.addEventListener('keydown', onKey)
-    return () => {
-      document.body.style.overflow = prevOverflow
-      window.removeEventListener('keydown', onKey)
-    }
+    return () => window.removeEventListener('keydown', onKey)
   }, [onClose, onNav])
 
   const current = images[index]

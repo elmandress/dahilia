@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useCart } from './CartProvider'
+import { useScrollLock } from '@/lib/scroll-lock'
 import { dahila, Icon } from './ui/Primitives'
 import {
   getPrimaryPhoto, getEffectivePrice, getFinalPrice, formatPrice, BLUR_DATA_URL,
@@ -25,17 +26,15 @@ export function CartDrawer() {
   // Never over the admin, and close on route change.
   useEffect(() => { closeDrawer() }, [pathname, closeDrawer])
 
-  // Lock scroll + Esc while open.
+  // Shared, ref-counted scroll lock (coexists safely with other overlays).
+  useScrollLock(drawerOpen)
+
+  // Esc closes.
   useEffect(() => {
     if (!drawerOpen) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeDrawer() }
     window.addEventListener('keydown', onKey)
-    return () => {
-      document.body.style.overflow = prev
-      window.removeEventListener('keydown', onKey)
-    }
+    return () => window.removeEventListener('keydown', onKey)
   }, [drawerOpen, closeDrawer])
 
   if (pathname.startsWith('/admin')) return null
@@ -57,13 +56,15 @@ export function CartDrawer() {
         }}
       />
 
-      {/* Panel */}
+      {/* Panel. `inert` when closed removes its buttons/links from the tab order
+          and the a11y tree — without it, keyboard users would tab into the
+          off-screen (translated) cart controls. */}
       <aside
         className="cart-drawer"
         role="dialog"
         aria-modal="true"
         aria-label="Tu carrito"
-        aria-hidden={!drawerOpen}
+        inert={!drawerOpen}
         style={{
           position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 91,
           width: 'min(420px, 100vw)',

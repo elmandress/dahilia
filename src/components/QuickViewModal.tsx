@@ -9,6 +9,7 @@ import {
   getPrimaryPhoto, BLUR_DATA_URL,
 } from '@/lib/types'
 import { useCart } from './CartProvider'
+import { useScrollLock } from '@/lib/scroll-lock'
 import { dahila, Button, Icon } from './ui/Primitives'
 
 /**
@@ -28,7 +29,6 @@ export function QuickViewModal({
   const router = useRouter()
   const { addToCart } = useCart()
   const [talle, setTalle] = useState<string>(product.sizes?.[0]?.size || 'Único')
-  const [added, setAdded] = useState(false)
 
   const photo = getPrimaryPhoto(product)
   const listPrice = getEffectivePrice(product, talle)
@@ -38,22 +38,20 @@ export function QuickViewModal({
   const isSoldOut = product.status === 'soldout'
   const canBuy = !isSoldOut && !product.is_custom_only
 
-  // Lock scroll + Esc to close.
+  useScrollLock(true)
+
+  // Esc to close.
   useEffect(() => {
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
-    return () => {
-      document.body.style.overflow = prev
-      window.removeEventListener('keydown', onKey)
-    }
+    return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
   const handleAdd = async () => {
-    setAdded(true)
     await addToCart(product, talle, 1)
-    setTimeout(() => setAdded(false), 1800)
+    // addToCart opens the mini-cart drawer; close this modal so we don't stack
+    // two dialogs on top of each other.
+    onClose()
   }
 
   return (
@@ -179,7 +177,7 @@ export function QuickViewModal({
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
             {canBuy ? (
               <Button variant="primary" size="lg" full onClick={handleAdd}>
-                {added ? '✓ Añadido' : 'Añadir al carrito'}
+                Añadir al carrito
               </Button>
             ) : product.is_custom_only ? (
               <Button variant="primary" size="lg" full onClick={() => router.push('/encargo')}>

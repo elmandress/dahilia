@@ -67,7 +67,16 @@ export async function submitEncargo(form: FormData): Promise<EncargoSubmission> 
   const message = clean(form.get('message'), MAX.message)
 
   if (name.length < 2) return { ok: false, error: 'El nombre es requerido.' }
-  if (!EMAIL_RE.test(email)) return { ok: false, error: 'El email no es válido.' }
+  // Contact: email OR WhatsApp (at least one). Many clients only use WhatsApp,
+  // so don't force an email. Validate email format only when one is given.
+  const hasWhatsapp = whatsapp.replace(/\D/g, '').length >= 6
+  const hasEmail = email.length > 0
+  if (!hasEmail && !hasWhatsapp) {
+    return { ok: false, error: 'Dejanos un mail o un WhatsApp para responderte.' }
+  }
+  if (hasEmail && !EMAIL_RE.test(email)) {
+    return { ok: false, error: 'El email no es válido.' }
+  }
   if (!tipo) return { ok: false, error: 'Elegí qué querés tejer.' }
 
   const TIPOS = new Set(['Cardigan', 'Top', 'Set', 'Otro'])
@@ -77,7 +86,7 @@ export async function submitEncargo(form: FormData): Promise<EncargoSubmission> 
 
   const h = await headers()
   const ip = getClientIp(h)
-  if (!checkRateLimit(`${ip}|${email}`)) {
+  if (!checkRateLimit(`${ip}|${email || whatsapp || 'anon'}`)) {
     return { ok: false, error: 'Demasiados envíos seguidos. Esperá un minuto y volvé a intentar.' }
   }
 
