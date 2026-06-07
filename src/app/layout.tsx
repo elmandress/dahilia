@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Fraunces, Inter } from 'next/font/google'
 import { CartProvider } from '@/components/CartProvider'
 import { CartDrawer } from '@/components/CartDrawer'
+import { BackToTop } from '@/components/BackToTop'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { SITE_URL } from '@/lib/env'
@@ -108,6 +109,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <CartDrawer />
+          <BackToTop />
         </CartProvider>
       </body>
     </html>

@@ -18,18 +18,63 @@ export default function EncargoForm() {
   const [isPending, startTransition] = useTransition()
 
   if (submitted) {
+    const waText = encodeURIComponent(
+      `Hola! Acabo de mandar un encargo desde la web${name ? ` (soy ${name})` : ''}. Quería sumar algo más.`
+    )
     return (
-      <main style={{ maxWidth: 560, margin: '0 auto', padding: '120px 24px', textAlign: 'center' }}>
+      <main style={{ maxWidth: 560, margin: '0 auto', padding: '96px 24px', textAlign: 'center' }}>
         <Eyebrow>Encargo recibido</Eyebrow>
         <h1 style={{
           fontFamily: dahila.fontDisplay, fontWeight: 300,
           fontSize: 'clamp(32px, 5vw, 48px)', lineHeight: 1.1, letterSpacing: '-0.02em',
           color: dahila.ink900, margin: '14px 0 16px',
         }}>Gracias.</h1>
-        <p style={{ fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300, fontSize: 18, color: dahila.ink700, marginBottom: 28 }}>
-          Te escribo cuanto antes con opciones y presupuesto.
+        <p style={{ fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300, fontSize: 18, color: dahila.ink700, marginBottom: 24 }}>
+          Te escribimos cuanto antes con opciones y presupuesto.
         </p>
-        <Button variant="secondary" onClick={() => router.push('/')}>Volver al inicio</Button>
+
+        {/* What happens next — sets expectations, calms anxiety */}
+        <ol style={{
+          listStyle: 'none', padding: 0, margin: '0 auto 32px', maxWidth: 420,
+          display: 'flex', flexDirection: 'column', gap: 14, textAlign: 'left',
+        }}>
+          {[
+            ['1', 'Leemos tu pedido', 'Vemos el modelo, los colores y la medida que nos contaste.'],
+            ['2', 'Te respondemos', 'Con opciones, materiales y el presupuesto.'],
+            ['3', 'Tejemos tu pieza', 'Cuando confirmás, empezamos. Te avisamos cuando está lista.'],
+          ].map(([n, t, b]) => (
+            <li key={n} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <span style={{
+                flexShrink: 0, width: 26, height: 26, borderRadius: 999,
+                background: dahila.cream100, color: dahila.wine700,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 600,
+              }}>{n}</span>
+              <div>
+                <div style={{ fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 500, color: dahila.ink900 }}>{t}</div>
+                <div style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink700, lineHeight: 1.5 }}>{b}</div>
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <a
+            href={`https://wa.me/59894605015?text=${waText}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: '#25D366', color: '#fff', textDecoration: 'none',
+              borderRadius: 10, padding: '13px 22px',
+              fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 500,
+              letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}
+          >
+            Seguir por WhatsApp
+          </a>
+          <Button variant="secondary" onClick={() => router.push('/tienda')}>Ver la tienda</Button>
+        </div>
       </main>
     )
   }

@@ -15,7 +15,7 @@ export type IconName =
   | 'magnifying-glass' | 'magnifying-glass-plus' | 'shopping-bag' | 'x' | 'list'
   | 'minus' | 'plus' | 'caret-left' | 'caret-right' | 'sliders-horizontal'
   | 'ruler' | 'flower' | 'package' | 'arrow-clockwise' | 'truck' | 'leaf'
-  | 'hand-heart' | 'heart' | 'chat-circle' | 'check' | 'share-network'
+  | 'hand-heart' | 'heart' | 'chat-circle' | 'check' | 'share-network' | 'caret-up'
   | 'instagram-logo' | 'whatsapp-logo' | 'envelope-simple'
 
 export const ICON_PATHS: Record<string, React.ReactNode> = {
@@ -66,6 +66,9 @@ export const ICON_PATHS: Record<string, React.ReactNode> = {
   ),
   'caret-right': (
     <polyline points="96 48 176 128 96 208" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+  ),
+  'caret-up': (
+    <polyline points="48 160 128 80 208 160" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
   ),
   'sliders-horizontal': (
     <>

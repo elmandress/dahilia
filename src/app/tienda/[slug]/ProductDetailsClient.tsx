@@ -27,8 +27,15 @@ export function ProductDetailsClient({
 }) {
   const router = useRouter()
   const { addToCart } = useCart()
-  const [talle, setTalle] = useState<string>(product.sizes?.[0]?.size || 'Único')
+  // Default to the first AVAILABLE size, not just the first one.
+  const firstAvailable = product.sizes?.find((s) => s.available)?.size
+  const [talle, setTalle] = useState<string>(firstAvailable || product.sizes?.[0]?.size || 'Único')
   const [added, setAdded] = useState(false)
+
+  // Is the currently selected size in stock? (Products with no size rows are
+  // treated as available — they're single-size pieces.)
+  const selectedSizeRow = product.sizes?.find((s) => s.size === talle)
+  const sizeAvailable = !selectedSizeRow || selectedSizeRow.available
 
   const galleryImages = (product.media && product.media.length > 0
     ? [...product.media]
@@ -44,6 +51,7 @@ export function ProductDetailsClient({
   const canBuy = !isSoldOut && !product.is_custom_only
 
   const handleAdd = async () => {
+    if (!sizeAvailable) return
     setAdded(true)
     await addToCart(product, talle, 1)
     setTimeout(() => setAdded(false), 2200)
@@ -176,9 +184,22 @@ export function ProductDetailsClient({
           )}
 
           {canBuy && (
-            <Button variant="primary" size="lg" full onClick={handleAdd}>
-              {added ? '✓ Añadido' : 'Añadir al carrito'}
-            </Button>
+            sizeAvailable ? (
+              <Button variant="primary" size="lg" full onClick={handleAdd}>
+                {added ? '✓ Añadido' : 'Añadir al carrito'}
+              </Button>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <Button variant="secondary" size="lg" full disabled>Sin stock en el talle {talle}</Button>
+                <button onClick={() => router.push('/encargo')} style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600,
+                  textDecoration: 'underline', padding: 0,
+                }}>
+                  ¿Lo querés en este talle? Pedilo a medida →
+                </button>
+              </div>
+            )
           )}
 
           {/* Trust strip — reduces purchase anxiety near the CTA */}
@@ -254,15 +275,18 @@ export function ProductDetailsClient({
           </div>
           <button
             onClick={handleAdd}
+            disabled={!sizeAvailable}
             style={{
               flex: 1, marginLeft: 16,
-              background: dahila.ink900, color: '#fff', border: 'none',
-              borderRadius: 10, padding: '14px 18px', cursor: 'pointer',
+              background: sizeAvailable ? dahila.ink900 : dahila.ink300,
+              color: '#fff', border: 'none',
+              borderRadius: 10, padding: '14px 18px',
+              cursor: sizeAvailable ? 'pointer' : 'not-allowed',
               fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
               letterSpacing: '0.06em', textTransform: 'uppercase',
             }}
           >
-            {added ? '✓ Añadido' : 'Añadir'}
+            {!sizeAvailable ? 'Sin stock' : added ? '✓ Añadido' : 'Añadir'}
           </button>
         </div>
       )}

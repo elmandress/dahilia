@@ -73,6 +73,11 @@ export function ProductCard({
           }}
         />
 
+        {/* Sold-out scrim so it reads as unavailable at a glance */}
+        {product.status === 'soldout' && (
+          <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.45)' }} />
+        )}
+
         {/* Badge stack — discount wins, then soldout/badge/custom */}
         {hasDiscount && product.status !== 'soldout' ? (
           <span style={{ position: 'absolute', top: 10, left: 10 }}>

@@ -56,6 +56,18 @@ export default function ProductLightbox({
     setOrigin({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) })
   }
 
+  // On touch, zoom centres on the tapped point so phones get a real
+  // tap-to-zoom-here (closest practical thing to pinch without a gesture lib).
+  const handleStageTap = (e: React.MouseEvent) => {
+    if (!zoomed && stageRef.current) {
+      const rect = stageRef.current.getBoundingClientRect()
+      const x = ((e.clientX - rect.left) / rect.width) * 100
+      const y = ((e.clientY - rect.top) / rect.height) * 100
+      setOrigin({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) })
+    }
+    setZoomed((z) => !z)
+  }
+
   return (
     <div
       role="dialog"
@@ -89,12 +101,13 @@ export default function ProductLightbox({
 
       <div
         ref={stageRef}
-        onClick={() => setZoomed((z) => !z)}
+        onClick={handleStageTap}
         onMouseMove={handleMove}
         style={{
           flex: 1, position: 'relative', overflow: 'hidden',
           cursor: zoomed ? 'zoom-out' : 'zoom-in',
           margin: '0 8px',
+          touchAction: 'manipulation',
         }}
       >
         <Image
@@ -110,6 +123,19 @@ export default function ProductLightbox({
             transition: zoomed ? 'none' : `transform 220ms ${dahila.ease}`,
           }}
         />
+        {/* Zoom hint — small, fades; tells touch users it's interactive. */}
+        <span
+          aria-hidden
+          style={{
+            position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)',
+            background: 'rgba(20,16,17,0.55)', color: '#fff',
+            fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.04em',
+            padding: '5px 12px', borderRadius: 999, pointerEvents: 'none',
+            opacity: zoomed ? 0 : 0.85, transition: 'opacity 200ms ease',
+          }}
+        >
+          {zoomed ? '' : 'Tocá para ampliar'}
+        </span>
       </div>
 
       {images.length > 1 && (
