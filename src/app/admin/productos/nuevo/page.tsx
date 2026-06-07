@@ -54,6 +54,8 @@ export default function NuevoProductoPage() {
   const [badge, setBadge] = useState('')
   const [status, setStatus] = useState<'draft' | 'active' | 'soldout'>('draft')
   const [basePriceUyu, setBasePriceUyu] = useState('')
+  const [discountPercent, setDiscountPercent] = useState('')
+  const [discountActive, setDiscountActive] = useState(false)
   const [leadTimeMin, setLeadTimeMin] = useState('2')
   const [leadTimeMax, setLeadTimeMax] = useState('3')
   const [material, setMaterial] = useState('')
@@ -264,6 +266,8 @@ export default function NuevoProductoPage() {
           badge: badge.trim() || null,
           status,
           base_price_uyu: basePriceUyu ? parseInt(basePriceUyu) : null,
+          discount_percent: Math.max(0, Math.min(90, parseInt(discountPercent) || 0)),
+          discount_active: discountActive,
           lead_time_weeks_min: parseInt(leadTimeMin) || 2,
           lead_time_weeks_max: parseInt(leadTimeMax) || 3,
           material: material.trim() || null,
@@ -565,6 +569,26 @@ export default function NuevoProductoPage() {
                 onChange={(e) => setBasePriceUyu(e.target.value)}
                 placeholder="2500"
               />
+            </div>
+            <div className="admin-field" style={{ marginTop: '1rem' }}>
+              <label>Descuento (%)</label>
+              <input
+                type="number"
+                min={0}
+                max={90}
+                value={discountPercent}
+                onChange={(e) => setDiscountPercent(e.target.value)}
+                placeholder="0"
+              />
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.6rem', fontSize: '0.85rem', color: '#555', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={discountActive}
+                  onChange={(e) => setDiscountActive(e.target.checked)}
+                />
+                Descuento activo
+              </label>
+              <span className="field-hint">Mostrará el precio tachado y un porcentaje en la tienda.</span>
             </div>
           </div>
 

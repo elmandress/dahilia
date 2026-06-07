@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Button, Icon } from '@/components/ui/Primitives'
-import { getPrimaryPhoto, formatPrice, getEffectivePrice } from '@/lib/types'
+import { getPrimaryPhoto, formatPrice, getEffectivePrice, getFinalPrice } from '@/lib/types'
 import Image from 'next/image'
 import { SITE_URL } from '@/lib/env'
 
@@ -24,12 +24,17 @@ function buildWhatsAppMessage(
   items
     .filter((i) => !!i.product)
     .forEach((item, idx) => {
-      const unit = getEffectivePrice(item.product, item.size)
+      const list = getEffectivePrice(item.product, item.size)
+      const unit = getFinalPrice(item.product, item.size)
       const subtotal = unit * item.qty
       const slug = item.product.slug
+      const discounted = unit < list
       lines.push(`${idx + 1}. ${item.product.name}`)
       lines.push(`   • Talle: ${item.size}`)
       lines.push(`   • Cantidad: ${item.qty}`)
+      if (discounted) {
+        lines.push(`   • Precio unitario: ${formatPrice(unit)} (antes ${formatPrice(list)})`)
+      }
       lines.push(`   • Subtotal: ${formatPrice(subtotal)}`)
       lines.push(`   ${SITE_URL}/tienda/${slug}`)
       lines.push('')
@@ -47,7 +52,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
   const router = useRouter()
 
   const total = items.reduce(
-    (acc, item) => acc + (getEffectivePrice(item.product, item.size) * item.qty),
+    (acc, item) => acc + (getFinalPrice(item.product, item.size) * item.qty),
     0
   )
 
@@ -111,7 +116,9 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         {items.filter((i) => !!i.product).map((item) => {
           const photo = getPrimaryPhoto(item.product)
-          const price = getEffectivePrice(item.product, item.size)
+          const listPrice = getEffectivePrice(item.product, item.size)
+          const price = getFinalPrice(item.product, item.size)
+          const discounted = price < listPrice
           return (
             <div key={item.id} className="cart-row" style={{
               display: 'flex', gap: 24, paddingBottom: 24,
@@ -131,8 +138,15 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
                 <div style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700 }}>
                   Talle: {item.size}
                 </div>
-                <div style={{ fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink900, marginTop: 4 }}>
-                  {formatPrice(price)}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                  <span style={{ fontFamily: dahila.fontSans, fontSize: 14, color: discounted ? '#B6314A' : dahila.ink900, fontWeight: discounted ? 500 : 400 }}>
+                    {formatPrice(price)}
+                  </span>
+                  {discounted && (
+                    <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, textDecoration: 'line-through' }}>
+                      {formatPrice(listPrice)}
+                    </span>
+                  )}
                 </div>
               </div>
 

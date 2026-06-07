@@ -153,7 +153,11 @@ cp .env.example .env.local        # fill SUPABASE_URL + ANON_KEY
 npm run dev                       # http://localhost:3000
 ```
 
-For the database, run [`database/schema.sql`](./database/schema.sql) in the Supabase SQL Editor. It creates the tables, RLS policies and the public `media` storage bucket.
+For the database, run these SQL files **in order** in the Supabase SQL Editor (all idempotent — safe to re-run):
+
+1. [`database/schema.sql`](./database/schema.sql) — core tables, RLS, `media` storage bucket.
+2. [`database/schema-extra.sql`](./database/schema-extra.sql) — CMS `site_settings` keys, `homepage_media`, storage policy fix.
+3. [`database/schema-discounts.sql`](./database/schema-discounts.sql) — `discounts` table + per-product discount columns.
 
 To grant admin access, create a user in Supabase Auth (Authentication → Users → Add user). Any authenticated user has admin rights per the current RLS.
 

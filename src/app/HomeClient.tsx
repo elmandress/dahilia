@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { ProductCard } from '@/components/ProductCard'
-import type { Product } from '@/lib/types'
+import type { Product, Discount } from '@/lib/types'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 import { useRouter } from 'next/navigation'
 
@@ -89,7 +89,7 @@ function val<K extends keyof HomeSettings>(s: HomeSettings, key: K, fallback: st
   return v && v.trim() !== '' ? v : fallback
 }
 
-export function HomeClient({ products, settings }: { products: Product[]; settings: HomeSettings }) {
+export function HomeClient({ products, settings, discounts = [] }: { products: Product[]; settings: HomeSettings; discounts?: Discount[] }) {
   const router = useRouter()
   const featured = products.slice(0, 4)
   const accesorios = products.filter((p) => p.category?.slug === 'accesorios').slice(0, 4)
@@ -191,7 +191,7 @@ export function HomeClient({ products, settings }: { products: Product[]; settin
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22,
         }}>
           {featured.length > 0
-            ? featured.map((product) => <ProductCard key={product.id} product={product} />)
+            ? featured.map((product) => <ProductCard key={product.id} product={product} discounts={discounts} />)
             : <EmptyCollectionState onCta={() => router.push('/encargo')} />}
         </div>
       </section>

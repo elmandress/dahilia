@@ -21,6 +21,15 @@ const cspHeader = `
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
+    // Allowlisted quality levels (Next 16 requires this when using the
+    // `quality` prop). We use 90 for hero/detail, 82 for cards.
+    qualities: [82, 90, 100],
+    // Prefer modern formats; AVIF first, WebP fallback.
+    formats: ['image/avif', 'image/webp'],
+    // Match the breakpoints we actually render at, so the optimizer doesn't
+    // ship oversized variants.
+    deviceSizes: [375, 420, 640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [90, 160, 200, 256, 384],
     remotePatterns: [
       {
         protocol: 'https',

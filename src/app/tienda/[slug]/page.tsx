@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import type { Product } from '@/lib/types'
-import { getPrimaryPhoto } from '@/lib/types'
+import type { Product, Discount } from '@/lib/types'
+import { getPrimaryPhoto, getFinalPrice, resolveDiscountPercent } from '@/lib/types'
 import { ProductDetailsClient } from './ProductDetailsClient'
 import Link from 'next/link'
 import { SITE_URL } from '@/lib/env'
@@ -63,19 +63,23 @@ export default async function ProductPage({
   const { slug } = await params
   const supabase = await createClient()
 
-  const { data } = await supabase
-    .from('products')
-    .select(`
-      *,
-      category:categories(*),
-      media:product_media(*),
-      sizes:product_sizes(*),
-      colors:product_colors(*, color:colors(*))
-    `)
-    .eq('slug', slug)
-    .maybeSingle()
+  const [{ data }, { data: discountData }] = await Promise.all([
+    supabase
+      .from('products')
+      .select(`
+        *,
+        category:categories(*),
+        media:product_media(*),
+        sizes:product_sizes(*),
+        colors:product_colors(*, color:colors(*))
+      `)
+      .eq('slug', slug)
+      .maybeSingle(),
+    supabase.from('discounts').select('*').eq('active', true),
+  ])
 
   const product = data as Product | null
+  const discounts = (discountData ?? []) as Discount[]
 
   if (!product) {
     notFound()
@@ -84,7 +88,8 @@ export default async function ProductPage({
   const photo = getPrimaryPhoto(product)
   // Schema.org requires absolute image URLs.
   const absolutePhoto = photo.startsWith('http') ? photo : `${SITE_URL}${photo}`
-  const price = product.base_price_uyu ?? 0
+  // Use the discounted price in structured data so Google shows the real price.
+  const finalPrice = getFinalPrice(product, undefined, discounts)
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -100,7 +105,7 @@ export default async function ProductPage({
     offers: {
       '@type': 'Offer',
       url: `${SITE_URL}/tienda/${product.slug}`,
-      price: price.toFixed(2),
+      price: finalPrice.toFixed(2),
       priceCurrency: 'UYU',
       availability:
         product.status === 'active'
@@ -161,7 +166,7 @@ export default async function ProductPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
-      <ProductDetailsClient product={product} />
+      <ProductDetailsClient product={product} discountPercent={resolveDiscountPercent(product, discounts)} />
     </div>
   )
 }

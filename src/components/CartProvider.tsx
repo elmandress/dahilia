@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import type { CartItem, Product } from '@/lib/types'
-import { getEffectivePrice } from '@/lib/types'
+import { getFinalPrice } from '@/lib/types'
 
 type CartItemWithProduct = CartItem & { product: Product }
 
@@ -156,9 +156,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const cartCount = items.reduce((sum, item) => sum + item.qty, 0)
+  // Cart total uses the per-product discount baked into the joined product row.
+  // Batch/category discounts aren't applied here (they're a storefront concern);
+  // final pricing is reconfirmed with the customer over WhatsApp anyway.
   const cartTotal = items.reduce((sum, item) => {
     if (!item.product) return sum
-    return sum + (getEffectivePrice(item.product, item.size) * item.qty)
+    return sum + (getFinalPrice(item.product, item.size) * item.qty)
   }, 0)
 
   return (

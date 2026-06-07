@@ -1,10 +1,15 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Fraunces, Inter } from 'next/font/google'
 import { CartProvider } from '@/components/CartProvider'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { SITE_URL } from '@/lib/env'
 import './globals.css'
+
+export const viewport: Viewport = {
+  themeColor: '#FFFFFF',
+  colorScheme: 'light',
+}
 
 const fraunces = Fraunces({ 
   subsets: ['latin'],

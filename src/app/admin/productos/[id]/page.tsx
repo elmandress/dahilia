@@ -68,6 +68,8 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
   const [badge, setBadge] = useState('')
   const [status, setStatus] = useState<'draft' | 'active' | 'soldout'>('draft')
   const [basePriceUyu, setBasePriceUyu] = useState('')
+  const [discountPercent, setDiscountPercent] = useState('')
+  const [discountActive, setDiscountActive] = useState(false)
   const [leadTimeMin, setLeadTimeMin] = useState('2')
   const [leadTimeMax, setLeadTimeMax] = useState('3')
   const [material, setMaterial] = useState('')
@@ -94,6 +96,8 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
     setBadge(p.badge || '')
     setStatus((p.status as 'draft' | 'active' | 'soldout') || 'draft')
     setBasePriceUyu(p.base_price_uyu ? String(p.base_price_uyu) : '')
+    setDiscountPercent(p.discount_percent ? String(p.discount_percent) : '')
+    setDiscountActive(!!p.discount_active)
     setLeadTimeMin(p.lead_time_weeks_min ? String(p.lead_time_weeks_min) : '2')
     setLeadTimeMax(p.lead_time_weeks_max ? String(p.lead_time_weeks_max) : '3')
     setMaterial(p.material || '')
@@ -348,6 +352,8 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           badge: badge.trim() || null,
           status,
           base_price_uyu: basePriceUyu ? parseInt(basePriceUyu) : null,
+          discount_percent: Math.max(0, Math.min(90, parseInt(discountPercent) || 0)),
+          discount_active: discountActive,
           lead_time_weeks_min: parseInt(leadTimeMin) || 2,
           lead_time_weeks_max: parseInt(leadTimeMax) || 3,
           material: material.trim() || null,
@@ -589,6 +595,33 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                 <option value="active">Activo / Visible</option>
                 <option value="soldout">Agotado</option>
               </select>
+            </div>
+          </div>
+
+          <div className="admin-form-grid">
+            <div className="admin-field">
+              <label>Descuento (%)</label>
+              <input
+                type="number"
+                min={0}
+                max={90}
+                value={discountPercent}
+                onChange={(e) => setDiscountPercent(e.target.value)}
+                placeholder="0"
+              />
+              <span className="field-hint">Entre 0 y 90.</span>
+            </div>
+            <div className="admin-field">
+              <label>Descuento activo</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                <input
+                  type="checkbox"
+                  checked={discountActive}
+                  onChange={(e) => setDiscountActive(e.target.checked)}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: '0.85rem', color: '#555' }}>Mostrar precio rebajado en la tienda</span>
+              </div>
             </div>
           </div>
 
