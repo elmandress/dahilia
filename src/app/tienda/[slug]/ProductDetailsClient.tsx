@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/CartProvider'
 import { ProductGallery } from '@/components/ProductGallery'
 import { ProductCard } from '@/components/ProductCard'
+import { RecentlyViewed } from '@/components/RecentlyViewed'
 import type { Product, Discount } from '@/lib/types'
-import { getEffectivePrice, formatPrice } from '@/lib/types'
+import { getEffectivePrice, formatPrice, getPrimaryPhoto } from '@/lib/types'
 import { dahila, Button, Eyebrow, Field, Icon } from '@/components/ui/Primitives'
 
 export function ProductDetailsClient({
@@ -271,6 +272,15 @@ export function ProductDetailsClient({
           </div>
         </section>
       )}
+
+      <RecentlyViewed
+        current={{
+          slug: product.slug,
+          name: product.name,
+          photo: getPrimaryPhoto(product),
+          price: finalPrice,
+        }}
+      />
 
     </main>
   )

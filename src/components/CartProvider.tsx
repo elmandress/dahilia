@@ -12,6 +12,9 @@ interface CartContextType {
   cartTotal: number
   hasMounted: boolean
   isLoading: boolean
+  drawerOpen: boolean
+  openDrawer: () => void
+  closeDrawer: () => void
   refresh: () => Promise<void>
   addToCart: (product: Product, size: string, qty: number) => Promise<void>
   updateQty: (itemId: string, qty: number) => Promise<void>
@@ -48,7 +51,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Avoid hydration mismatch: the badge depends on the cart, which is only known
   // after the client has called the API. Until then, render as if empty.
   const [hasMounted, setHasMounted] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const hasFetchedRef = useRef(false)
+
+  const openDrawer = useCallback(() => setDrawerOpen(true), [])
+  const closeDrawer = useCallback(() => setDrawerOpen(false), [])
 
   const fetchCart = useCallback(async () => {
     try {
@@ -120,6 +127,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const data = await jsonOrThrow(res)
       setItems(data.items || [])
       pingOtherTabs()
+      // Immediate feedback: slide the mini-cart open so the shopper sees the
+      // item landed (the highest-impact add-to-cart UX pattern).
+      setDrawerOpen(true)
     } catch (e) {
       console.error('addToCart failed', e)
     }
@@ -166,7 +176,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <CartContext.Provider value={{
-      items, cartCount, cartTotal, hasMounted, isLoading, refresh,
+      items, cartCount, cartTotal, hasMounted, isLoading,
+      drawerOpen, openDrawer, closeDrawer, refresh,
       addToCart, updateQty, removeFromCart,
     }}>
       {children}

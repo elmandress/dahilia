@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Fraunces, Inter } from 'next/font/google'
 import { CartProvider } from '@/components/CartProvider'
+import { CartDrawer } from '@/components/CartDrawer'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { SITE_URL } from '@/lib/env'
@@ -106,6 +107,7 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
+          <CartDrawer />
         </CartProvider>
       </body>
     </html>

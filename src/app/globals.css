@@ -358,6 +358,15 @@ a.prose-link:hover {
   main:has(.pdp-sticky-bar) { padding-bottom: 84px; }
 }
 
+/* Cart badge "pop" — a single subtle bounce when the count changes (the badge
+   is remounted via a React key, which restarts this animation). */
+@keyframes cart-badge-pop {
+  0%   { transform: scale(0.6); }
+  55%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.cart-badge-pop { animation: cart-badge-pop 320ms cubic-bezier(0.22,0.61,0.36,1); }
+
 /* Lightbox arrows */
 .lightbox-arrow {
   position: absolute;

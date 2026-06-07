@@ -30,7 +30,7 @@ export function Header() {
   const [showSearch, setShowSearch] = useState(false)
   const [searchVal, setSearchVal] = useState('')
   const [megaOpen, setMegaOpen] = useState(false)
-  const { cartCount, hasMounted } = useCart()
+  const { cartCount, hasMounted, openDrawer } = useCart()
   const showBadge = hasMounted && cartCount > 0
   const pathname = usePathname()
   const router = useRouter()
@@ -182,21 +182,26 @@ export function Header() {
             )}
 
             <button
-              onClick={() => router.push('/carrito')}
+              onClick={openDrawer}
               style={{ ...iconBtn, position: 'relative', width: 26, height: 26 }}
-              aria-label={`Carrito${showBadge ? ` (${cartCount})` : ''}`}
+              aria-label={`Abrir carrito${showBadge ? ` (${cartCount})` : ''}`}
             >
               <Icon name="shopping-bag" size={20}/>
               {showBadge && (
-                <span aria-hidden="true" style={{
-                  position: 'absolute', top: -5, right: -7,
-                  minWidth: 17, height: 17, borderRadius: 999,
-                  background: '#B6314A', color: '#fff',
-                  fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 500,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  padding: '0 5px', lineHeight: 1,
-                  boxShadow: '0 0 0 2px #fff',
-                }}>{cartCount}</span>
+                <span
+                  key={cartCount}
+                  aria-hidden="true"
+                  className="cart-badge-pop"
+                  style={{
+                    position: 'absolute', top: -5, right: -7,
+                    minWidth: 17, height: 17, borderRadius: 999,
+                    background: '#B6314A', color: '#fff',
+                    fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 500,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 5px', lineHeight: 1,
+                    boxShadow: '0 0 0 2px #fff',
+                  }}
+                >{cartCount}</span>
               )}
             </button>
           </div>
