@@ -90,12 +90,20 @@ INSERT INTO site_settings (key, value) VALUES
   ('process_3_body',     'A todo Uruguay. Internacionales bajo consulta, con tracking.'),
 
   -- About section (split)
-  ('about_eyebrow',      'Sobre Anush'),
+  ('about_eyebrow',      'Sobre nosotros'),
   ('about_title',        'Detrás de cada hilo'),
-  ('about_title_em',     'está mi mesa.'),
-  ('about_body',         'Soy Anush. Tejo a crochet desde chica y hago prendas únicas, sin apuro y con vos.'),
+  ('about_title_em',     'está nuestra mesa.'),
+  ('about_body',         'En Dahila tejemos a crochet prendas únicas, sin apuro y con vos.'),
+  ('about_body_2',       ''),
+  ('about_quote',        ''),
   ('about_image_url',    '/photos/atelier-escritorio.png'),
-  ('about_cta',          'Conocé el espacio'),
+  ('about_cta',          'Conocé más'),
+  ('about_value_1_title','Hecho a mano'),
+  ('about_value_1_body', 'Cada prenda se teje pieza por pieza, sin máquinas.'),
+  ('about_value_2_title','A tu medida'),
+  ('about_value_2_body', 'Ajustamos talle y colores a lo que vos querés.'),
+  ('about_value_3_title','Materiales nobles'),
+  ('about_value_3_body', 'Lana y algodón natural, elegidos con cuidado.'),
 
   -- FAQ (4 Q/A pairs, plain text — kept as separate keys for simple editing)
   ('faq_1_q',            '¿Cuánto tarda un encargo?'),
@@ -115,7 +123,15 @@ INSERT INTO site_settings (key, value) VALUES
   ('contact_location',   'Montevideo, Uruguay'),
 
   -- Brand voice toggles
-  ('brand_short_intro',  'Prendas tejidas a mano, a tu medida, desde Montevideo.')
+  ('brand_short_intro',  'Prendas tejidas a mano, a tu medida, desde Montevideo.'),
+
+  -- Size guide note + Información page blocks (all editable from the admin)
+  ('size_guide_note',    ''),
+  ('info_shipping',      ''),
+  ('info_returns',       ''),
+  ('info_care',          ''),
+  ('info_custom',        ''),
+  ('info_payment',       '')
 ON CONFLICT (key) DO NOTHING;
 
 -- ============================================================

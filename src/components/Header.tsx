@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { id: '/tienda',   label: 'Tienda', mega: true },
   { id: '/ofertas',  label: 'Ofertas', accent: true },
   { id: '/encargo',  label: 'A medida' },
-  { id: '/atelier',  label: 'Sobre Anush' },
+  { id: '/atelier',  label: 'Sobre nosotros' },
   { id: '/contacto', label: 'Contacto' },
 ]
 
@@ -259,7 +259,7 @@ export function Header() {
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <li><Link href="/ofertas" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: '#B6314A' }}>Ofertas</Link></li>
                 <li><Link href="/encargo" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>Encargo a medida</Link></li>
-                <li><Link href="/atelier" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>Sobre Anush</Link></li>
+                <li><Link href="/atelier" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>Sobre nosotros</Link></li>
               </ul>
             </div>
 

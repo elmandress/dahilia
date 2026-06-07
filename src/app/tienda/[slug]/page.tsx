@@ -63,7 +63,7 @@ export default async function ProductPage({
   const { slug } = await params
   const supabase = await createClient()
 
-  const [{ data }, { data: discountData }] = await Promise.all([
+  const [{ data }, { data: discountData }, { data: settingsData }] = await Promise.all([
     supabase
       .from('products')
       .select(`
@@ -76,10 +76,12 @@ export default async function ProductPage({
       .eq('slug', slug)
       .maybeSingle(),
     supabase.from('discounts').select('*').eq('active', true),
+    supabase.from('site_settings').select('key, value').eq('key', 'size_guide_note'),
   ])
 
   const product = data as Product | null
   const discounts = (discountData ?? []) as Discount[]
+  const sizeGuideNote = (settingsData ?? []).find((r) => r.key === 'size_guide_note')?.value as string | undefined
 
   if (!product) {
     notFound()
@@ -185,6 +187,7 @@ export default async function ProductPage({
         discountPercent={resolveDiscountPercent(product, discounts)}
         related={related}
         discounts={discounts}
+        sizeGuideNote={sizeGuideNote}
       />
     </div>
   )

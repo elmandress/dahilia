@@ -80,9 +80,10 @@ export function Footer() {
           <FooterCol
             title="Info"
             items={[
-              { label: 'Cómo encargar', href: '/encargo' },
-              { label: 'Sobre Anush',   href: '/atelier' },
-              { label: 'Contacto',      href: '/contacto' },
+              { label: 'Cómo encargar',  href: '/encargo' },
+              { label: 'Envíos y cambios', href: '/info' },
+              { label: 'Sobre nosotros', href: '/atelier' },
+              { label: 'Contacto',       href: '/contacto' },
             ]}
           />
           <FooterCol

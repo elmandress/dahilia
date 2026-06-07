@@ -6,12 +6,12 @@ import { dahila, Eyebrow } from '@/components/ui/Primitives'
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'Sobre Anush',
-  description: 'Quién está detrás de Dahila Crochet. Anush teje a mano en Uruguay, con lana natural y prendas únicas.',
+  title: 'Sobre nosotros',
+  description: 'Quiénes estamos detrás de Dahila Crochet. Tejido a mano en Uruguay, con lana natural y prendas únicas a medida.',
   alternates: { canonical: '/atelier' },
   openGraph: {
-    title: 'Sobre Anush | Dahila Crochet',
-    description: 'Quién está detrás de Dahila Crochet. Anush teje a mano en Uruguay, con lana natural y prendas únicas.',
+    title: 'Sobre nosotros | Dahila Crochet',
+    description: 'Quiénes estamos detrás de Dahila Crochet. Tejido a mano en Uruguay, con lana natural y prendas únicas a medida.',
     url: '/atelier',
   },
 }
@@ -21,16 +21,31 @@ export default async function AtelierPage() {
   const { data } = await supabase
     .from('site_settings')
     .select('*')
-    .in('key', ['about_image_url', 'about_body', 'about_title', 'about_eyebrow'])
+    .in('key', [
+      'about_image_url', 'about_body', 'about_body_2', 'about_title', 'about_eyebrow',
+      'about_quote',
+      'about_value_1_title', 'about_value_1_body',
+      'about_value_2_title', 'about_value_2_body',
+      'about_value_3_title', 'about_value_3_body',
+    ])
 
-  const settings = (data ?? []).reduce<Record<string, string>>(
+  const s = (data ?? []).reduce<Record<string, string>>(
     (acc, curr) => ({ ...acc, [curr.key]: String(curr.value ?? '') }),
     {}
   )
+  const val = (key: string, fallback: string) => (s[key]?.trim() ? s[key] : fallback)
 
-  const heroImage = settings.about_image_url || '/photos/atelier-tejiendo.png'
-  const body = settings.about_body ||
-    'Soy Anush. Tejo a crochet desde chica y hago prendas únicas, pensadas con vos. Trabajo con lanas y algodones naturales, sin prisa, paso a paso. Cada pieza la pienso con la persona que la va a usar: conversamos, vemos colores, ajustamos medidas, y tejo.'
+  const heroImage = val('about_image_url', '/photos/atelier-tejiendo.png')
+  const body = val('about_body',
+    'En Dahila tejemos a crochet desde hace años. Hacemos prendas únicas, pensadas con vos: trabajamos con lanas y algodones naturales, sin prisa, paso a paso. Cada pieza la pensamos con la persona que la va a usar — conversamos, vemos colores, ajustamos medidas, y tejemos.')
+  const body2 = s.about_body_2?.trim()
+  const quote = s.about_quote?.trim()
+
+  const values = [
+    { t: val('about_value_1_title', 'Hecho a mano'), b: val('about_value_1_body', 'Cada prenda se teje pieza por pieza, sin máquinas.') },
+    { t: val('about_value_2_title', 'A tu medida'),   b: val('about_value_2_body', 'Ajustamos talle y colores a lo que vos querés.') },
+    { t: val('about_value_3_title', 'Materiales nobles'), b: val('about_value_3_body', 'Lana y algodón natural, elegidos con cuidado.') },
+  ]
 
   return (
     <main style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
@@ -40,19 +55,19 @@ export default async function AtelierPage() {
         <div style={{ position: 'relative', width: '100%', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden' }}>
           <Image
             src={heroImage}
-            alt="Anush tejiendo"
+            alt="Tejiendo en Dahila"
             fill
             sizes="(max-width: 720px) 100vw, 600px"
             style={{ objectFit: 'cover' }}
           />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <Eyebrow>{settings.about_eyebrow || 'Sobre Anush'}</Eyebrow>
+          <Eyebrow>{val('about_eyebrow', 'Sobre nosotros')}</Eyebrow>
           <h1 style={{
             fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(32px, 5vw, 56px)',
             lineHeight: 1.05, letterSpacing: '-0.02em', color: dahila.ink900, margin: 0,
           }}>
-            {settings.about_title || 'Quién está detrás de cada pieza.'}
+            {val('about_title', 'Quiénes estamos detrás de cada pieza.')}
           </h1>
           <p style={{
             fontFamily: dahila.fontSans, fontSize: 16, fontWeight: 300, lineHeight: 1.75,
@@ -60,23 +75,40 @@ export default async function AtelierPage() {
           }}>
             {body}
           </p>
+          {body2 && (
+            <p style={{
+              fontFamily: dahila.fontSans, fontSize: 16, fontWeight: 300, lineHeight: 1.75,
+              color: dahila.ink700, margin: 0, maxWidth: 540, whiteSpace: 'pre-line',
+            }}>
+              {body2}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Numbers strip */}
-      <section style={{ marginTop: 96 }}>
-        <div className="numbers" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }}>
-          {[
-            { stat: 'Natural',     l: 'lana y algodón' },
-            { stat: 'A mano',      l: 'sin máquinas' },
-            { stat: 'Montevideo',  l: 'desde Uruguay' },
-          ].map((s) => (
-            <div key={s.l} style={{ padding: '28px 0', borderTop: `1px solid ${dahila.border}` }}>
+      {/* Editable pull-quote */}
+      {quote && (
+        <section style={{ marginTop: 80, textAlign: 'center', maxWidth: 760, margin: '80px auto 0' }}>
+          <blockquote style={{
+            fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300,
+            fontSize: 'clamp(22px, 3.2vw, 32px)', lineHeight: 1.4,
+            color: dahila.ink900, margin: 0,
+          }}>
+            “{quote}”
+          </blockquote>
+        </section>
+      )}
+
+      {/* Values — editable */}
+      <section style={{ marginTop: 88 }}>
+        <div className="numbers" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 40 }}>
+          {values.map((v) => (
+            <div key={v.t} style={{ padding: '28px 0', borderTop: `1px solid ${dahila.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{
-                fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(28px, 4vw, 48px)',
-                color: dahila.ink900, letterSpacing: '-0.02em', lineHeight: 1,
-              }}>{s.stat}</div>
-              <div style={{ fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300, fontSize: 16, color: dahila.ink700, marginTop: 6 }}>{s.l}</div>
+                fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 22,
+                color: dahila.ink900, letterSpacing: '-0.01em', lineHeight: 1.1,
+              }}>{v.t}</div>
+              <div style={{ fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, lineHeight: 1.65, color: dahila.ink700 }}>{v.b}</div>
             </div>
           ))}
         </div>

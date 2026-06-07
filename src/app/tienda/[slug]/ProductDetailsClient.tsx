@@ -6,20 +6,23 @@ import { useCart } from '@/components/CartProvider'
 import { ProductGallery } from '@/components/ProductGallery'
 import { ProductCard } from '@/components/ProductCard'
 import { RecentlyViewed } from '@/components/RecentlyViewed'
+import { SizeGuide } from '@/components/SizeGuide'
 import type { Product, Discount } from '@/lib/types'
 import { getEffectivePrice, formatPrice, getPrimaryPhoto } from '@/lib/types'
-import { dahila, Button, Eyebrow, Field, Icon } from '@/components/ui/Primitives'
+import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 
 export function ProductDetailsClient({
   product,
   discountPercent = 0,
   related = [],
   discounts = [],
+  sizeGuideNote,
 }: {
   product: Product
   discountPercent?: number
   related?: Product[]
   discounts?: Discount[]
+  sizeGuideNote?: string
 }) {
   const router = useRouter()
   const { addToCart } = useCart()
@@ -117,8 +120,15 @@ export function ProductDetailsClient({
           </p>
 
           {!isSoldOut && !product.is_custom_only && (
-            <Field label="Talle">
-              <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{
+                  fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
+                  textTransform: 'uppercase', color: dahila.ink500, fontWeight: 400,
+                }}>Talle</span>
+                <SizeGuide note={sizeGuideNote} />
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {product.sizes && product.sizes.length > 0 ? product.sizes.map((s) => (
                   <button key={s.id} onClick={() => setTalle(s.size)} disabled={!s.available} style={{
                     minWidth: 44, height: 44, padding: '0 12px', borderRadius: 8,
@@ -150,7 +160,7 @@ export function ProductDetailsClient({
                   <Icon name="ruler" size={14}/> A medida
                 </button>
               </div>
-            </Field>
+            </div>
           )}
 
           {product.is_custom_only && (

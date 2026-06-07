@@ -286,7 +286,7 @@ export function HomeClient({ products, settings, discounts = [] }: { products: P
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <Eyebrow>{val(settings, 'about_eyebrow', 'Sobre Anush')}</Eyebrow>
+            <Eyebrow>{val(settings, 'about_eyebrow', 'Sobre nosotros')}</Eyebrow>
             <h2 style={{
               fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 38,
               lineHeight: 1.1, letterSpacing: '-0.01em', color: dahila.ink900, margin: 0,
@@ -302,11 +302,11 @@ export function HomeClient({ products, settings, discounts = [] }: { products: P
               )}
             </h2>
             <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: 0, maxWidth: 460 }}>
-              {val(settings, 'about_body', 'Soy Anush. Tejo a crochet desde chica y hago prendas únicas, sin apuro y con vos.')}
+              {val(settings, 'about_body', 'En Dahila tejemos a crochet prendas únicas, sin apuro y con vos.')}
             </p>
             <div style={{ marginTop: 6 }}>
               <Button variant="secondary" onClick={() => router.push('/atelier')}>
-                {val(settings, 'about_cta', 'Conocé el espacio')}
+                {val(settings, 'about_cta', 'Conocé más')}
               </Button>
             </div>
           </div>
