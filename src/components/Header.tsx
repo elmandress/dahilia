@@ -108,7 +108,7 @@ export function Header() {
               background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
               justifySelf: 'center',
             }}>
-              <Image src="/isotype-color.png" alt="" width={36} height={36} priority style={{ objectFit: 'contain' }} className="brand-mark" />
+              <Image src="/isotype-color.png" alt="" width={36} height={36} fetchPriority="high" style={{ objectFit: 'contain' }} className="brand-mark" />
               <span className="brand-wordmark" style={{
                 fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 22,
                 color: dahila.ink900, letterSpacing: '0.18em',

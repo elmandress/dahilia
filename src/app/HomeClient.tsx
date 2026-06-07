@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { ProductCard } from '@/components/ProductCard'
 import type { Product, Discount } from '@/lib/types'
+import { BLUR_DATA_URL } from '@/lib/types'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 import { useRouter } from 'next/navigation'
 
@@ -126,7 +127,12 @@ export function HomeClient({ products, settings, discounts = [] }: { products: P
             src={heroImage}
             alt="Prenda de crochet — Dahila"
             fill
-            priority
+            // Hero is the home LCP element (Next 16: fetchPriority replaces priority).
+            fetchPriority="high"
+            loading="eager"
+            quality={90}
+            placeholder="blur"
+            blurDataURL={BLUR_DATA_URL}
             sizes="100vw"
             style={{ objectFit: 'cover', objectPosition: 'center 30%' }}
           />
@@ -165,6 +171,30 @@ export function HomeClient({ products, settings, discounts = [] }: { products: P
               </Button>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* TRUST BAR — directly under the hero (F-pattern, top of viewport).
+          Reassures before the catalogue: the artisan/fair-trade selling points. */}
+      <section aria-label="Por qué Dahila" style={{ borderBottom: `1px solid ${dahila.border}` }}>
+        <div className="trust-bar" style={{
+          maxWidth: 1280, margin: '0 auto', padding: '20px 24px',
+          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 18,
+        }}>
+          {[
+            ['hand-heart', 'Hecho a mano', 'Tejido pieza por pieza'],
+            ['ruler', 'A tu medida', 'Ajustado a vos'],
+            ['leaf', 'Lana natural', 'Materiales nobles'],
+            ['truck', 'Envío a todo el país', 'Coordinás por WhatsApp'],
+          ].map(([icon, title, sub]) => (
+            <div key={title} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Icon name={icon} size={22} color={dahila.wine600} />
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+                <span style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500, color: dahila.ink900 }}>{title}</span>
+                <span style={{ fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 300, color: dahila.ink500 }}>{sub}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 

@@ -4,16 +4,21 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/CartProvider'
 import { ProductGallery } from '@/components/ProductGallery'
-import type { Product } from '@/lib/types'
+import { ProductCard } from '@/components/ProductCard'
+import type { Product, Discount } from '@/lib/types'
 import { getEffectivePrice, formatPrice } from '@/lib/types'
 import { dahila, Button, Eyebrow, Field, Icon } from '@/components/ui/Primitives'
 
 export function ProductDetailsClient({
   product,
   discountPercent = 0,
+  related = [],
+  discounts = [],
 }: {
   product: Product
   discountPercent?: number
+  related?: Product[]
+  discounts?: Discount[]
 }) {
   const router = useRouter()
   const { addToCart } = useCart()
@@ -244,6 +249,27 @@ export function ProductDetailsClient({
             {added ? '✓ Añadido' : 'Añadir'}
           </button>
         </div>
+      )}
+
+      {/* Related products — cross-sell */}
+      {related.length > 0 && (
+        <section style={{ marginTop: 88 }}>
+          <h2 style={{
+            fontFamily: dahila.fontDisplay, fontWeight: 300,
+            fontSize: 22, letterSpacing: '0.08em', textTransform: 'uppercase',
+            color: dahila.ink900, margin: '0 0 28px', paddingBottom: 12,
+            borderBottom: `1px solid ${dahila.border}`,
+          }}>
+            También te puede gustar
+          </h2>
+          <div className="tienda-grid" style={{
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22, rowGap: 44,
+          }}>
+            {related.map((p) => (
+              <ProductCard key={p.id} product={p} discounts={discounts} />
+            ))}
+          </div>
+        </section>
       )}
 
     </main>

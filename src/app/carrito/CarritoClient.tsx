@@ -178,10 +178,30 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
         })}
       </div>
 
+      {/* Reassurance strip */}
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', gap: 18,
+        marginTop: 28, paddingTop: 20, borderTop: `1px solid ${dahila.border}`,
+        justifyContent: 'center',
+      }}>
+        {[
+          ['truck', 'Envío a todo Uruguay'],
+          ['hand-heart', 'Hecho a mano'],
+          ['chat-circle', 'Atención personal por WhatsApp'],
+        ].map(([icon, txt]) => (
+          <span key={txt} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500,
+          }}>
+            <Icon name={icon} size={15} color={dahila.ink500} /> {txt}
+          </span>
+        ))}
+      </div>
+
       <div
         className="cart-subtotal"
         style={{
-          marginTop: 40,
+          marginTop: 28,
           display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 14,
         }}
       >

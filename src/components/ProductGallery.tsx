@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { dahila, Icon } from './ui/Primitives'
+import { BLUR_DATA_URL } from '@/lib/types'
 
 interface GalleryImage {
   url: string
@@ -48,8 +49,13 @@ export function ProductGallery({ images, productName }: { images: GalleryImage[]
           src={current.url}
           alt={current.alt || productName}
           fill
-          priority
+          // PDP main image is the LCP element. Next 16 deprecated `priority`;
+          // fetchPriority="high" + eager loading is the recommended replacement.
+          fetchPriority="high"
+          loading="eager"
           quality={90}
+          placeholder="blur"
+          blurDataURL={BLUR_DATA_URL}
           sizes="(max-width: 720px) 100vw, 640px"
           style={{ objectFit: 'cover' }}
         />

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import type { Product, Discount } from '@/lib/types'
-import { getEffectivePrice, getFinalPrice, resolveDiscountPercent, formatPrice, getPrimaryPhoto } from '@/lib/types'
+import { getEffectivePrice, getFinalPrice, resolveDiscountPercent, formatPrice, getPrimaryPhoto, BLUR_DATA_URL } from '@/lib/types'
 import { useCart } from './CartProvider'
 import { dahila, Badge } from './ui/Primitives'
 
@@ -52,6 +52,8 @@ export function ProductCard({ product, discounts }: { product: Product; discount
           alt={product.name}
           fill
           quality={82}
+          placeholder="blur"
+          blurDataURL={BLUR_DATA_URL}
           sizes="(max-width: 480px) 50vw, (max-width: 720px) 50vw, (max-width: 1280px) 25vw, 280px"
           style={{
             objectFit: 'cover',

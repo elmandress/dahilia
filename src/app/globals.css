@@ -205,6 +205,7 @@ a.prose-link:hover {
 @media (max-width: 720px) {
   .product-grid     { grid-template-columns: 1fr 1fr !important; gap: 14px !important; }
   .tienda-grid      { grid-template-columns: 1fr 1fr !important; gap: 14px !important; row-gap: 32px !important; }
+  .trust-bar        { grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
   .process          { grid-template-columns: 1fr !important; padding: 32px 28px !important; gap: 24px !important; }
   .split            { grid-template-columns: 1fr !important; gap: 28px !important; }
   .hero-content     { padding: 0 24px !important; }

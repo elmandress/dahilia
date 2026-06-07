@@ -159,6 +159,15 @@ export function formatPrice(price: number): string {
 // in /public so next/image can serve it normally.
 export const PHOTO_PLACEHOLDER = '/placeholder-product.svg';
 
+// Tiny cream-tone blur placeholder for next/image `placeholder="blur"`.
+// A single solid colour keeps the data URL small (good for LCP) while
+// avoiding the harsh empty→image pop. Cream = #FAF1DF.
+export const BLUR_DATA_URL =
+  'data:image/svg+xml;base64,' +
+  (typeof btoa !== 'undefined'
+    ? btoa('<svg xmlns="http://www.w3.org/2000/svg" width="4" height="5"><rect width="4" height="5" fill="#FAF1DF"/></svg>')
+    : Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="4" height="5"><rect width="4" height="5" fill="#FAF1DF"/></svg>').toString('base64'));
+
 // Helper: get primary photo URL
 export function getPrimaryPhoto(product: Product): string {
   if (!product.media || product.media.length === 0) {

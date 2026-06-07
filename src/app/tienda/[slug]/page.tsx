@@ -85,6 +85,20 @@ export default async function ProductPage({
     notFound()
   }
 
+  // Related products: same category first, fall back to any active product.
+  // Fetched after we know the product so we can filter by its category.
+  const { data: relatedData } = await supabase
+    .from('products')
+    .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*)')
+    .eq('status', 'active')
+    .neq('id', product.id)
+    .order('sort_order', { ascending: true })
+    .limit(8)
+
+  const relatedAll = (relatedData ?? []) as Product[]
+  const sameCategory = relatedAll.filter((p) => p.category_id && p.category_id === product.category_id)
+  const related = (sameCategory.length >= 2 ? sameCategory : relatedAll).slice(0, 4)
+
   const photo = getPrimaryPhoto(product)
   // Schema.org requires absolute image URLs.
   const absolutePhoto = photo.startsWith('http') ? photo : `${SITE_URL}${photo}`
@@ -166,7 +180,12 @@ export default async function ProductPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
-      <ProductDetailsClient product={product} discountPercent={resolveDiscountPercent(product, discounts)} />
+      <ProductDetailsClient
+        product={product}
+        discountPercent={resolveDiscountPercent(product, discounts)}
+        related={related}
+        discounts={discounts}
+      />
     </div>
   )
 }
