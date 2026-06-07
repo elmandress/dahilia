@@ -58,6 +58,19 @@ export default function ProductosPage() {
     setDeleteId(null)
   }
 
+  // Quick publish/unpublish toggle straight from the list (active ⇄ draft).
+  const toggleStatus = async (p: Product) => {
+    const next = p.status === 'active' ? 'draft' : 'active'
+    const supabase = createClient()
+    // Optimistic update.
+    setProducts((curr) => curr.map((x) => (x.id === p.id ? { ...x, status: next } : x)))
+    const { error } = await supabase.from('products').update({ status: next }).eq('id', p.id)
+    if (error) {
+      // Revert on failure.
+      setProducts((curr) => curr.map((x) => (x.id === p.id ? { ...x, status: p.status } : x)))
+    }
+  }
+
   const filteredProducts = products.filter(p => {
     if (filterStatus !== 'all' && p.status !== filterStatus) return false
     if (filterCategory !== 'all' && p.category_id !== filterCategory) return false
@@ -146,17 +159,34 @@ export default function ProductosPage() {
                           {product.badge}
                         </span>
                       )}
+                      {product.discount_active && (product.discount_percent ?? 0) > 0 && (
+                        <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', background: '#B6314A', padding: '0.1rem 0.4rem', borderRadius: '4px', color: '#fff', fontWeight: 600 }}>
+                          −{product.discount_percent}%
+                        </span>
+                      )}
                       <br />
                       <span style={{ fontSize: '0.8rem', color: '#999' }}>/{product.slug}</span>
                     </td>
                     <td>{product.category?.name || '—'}</td>
                     <td>{product.base_price_uyu ? formatPrice(product.base_price_uyu) : '—'}</td>
                     <td>
-                      <span className={`admin-badge ${product.status}`}>
-                        {product.status === 'active' && 'Activo'}
-                        {product.status === 'draft' && 'Borrador'}
-                        {product.status === 'soldout' && 'Agotado'}
-                      </span>
+                      {product.status === 'soldout' ? (
+                        <span className="admin-badge soldout">Agotado</span>
+                      ) : (
+                        <button
+                          onClick={() => toggleStatus(product)}
+                          title={product.status === 'active' ? 'Tocar para ocultar de la tienda' : 'Tocar para publicar'}
+                          aria-label={product.status === 'active' ? 'Despublicar' : 'Publicar'}
+                          style={{
+                            cursor: 'pointer', border: 'none', borderRadius: 999,
+                            padding: '0.25rem 0.7rem', fontSize: '0.75rem', fontWeight: 500,
+                            background: product.status === 'active' ? '#e8f5e9' : '#f0f0f0',
+                            color: product.status === 'active' ? '#2e7d32' : '#888',
+                          }}
+                        >
+                          {product.status === 'active' ? 'Activo' : 'Borrador'}
+                        </button>
+                      )}
                     </td>
                     <td>
                       <div className="admin-actions">

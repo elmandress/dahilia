@@ -76,14 +76,21 @@ export function Header() {
           padding: '14px 24px',
           display: 'flex', alignItems: 'center', gap: 20,
         }}>
-          {/* Left: hamburger (mobile) + brand */}
+          {/* Left: hamburger (mobile only). Visibility is controlled by the
+              .nav-mobile CSS class — we deliberately do NOT set `display` inline
+              here, because an inline display would override the class's
+              `display:none` and leak the hamburger onto desktop. */}
           <button
             onClick={() => setOpen(!open)}
             className="nav-mobile"
             aria-label="Menú"
             aria-expanded={open}
             aria-controls="mobile-menu"
-            style={{ ...iconBtn, width: 26, height: 26, color: dahila.ink900 }}
+            style={{
+              background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+              width: 26, height: 26, alignItems: 'center', justifyContent: 'center',
+              color: dahila.ink900,
+            }}
           >
             <Icon name={open ? 'x' : 'list'} size={22}/>
           </button>

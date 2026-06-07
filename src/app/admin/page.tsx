@@ -9,7 +9,9 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
     totalProducts: 0,
     activeProducts: 0,
-    pendingOrders: 0,
+    draftProducts: 0,
+    onOfferProducts: 0,
+    newOrders: 0,
     totalOrders: 0,
   })
   const [recentOrders, setRecentOrders] = useState<CustomOrder[]>([])
@@ -18,19 +20,24 @@ export default function AdminDashboardPage() {
   const loadDashboard = useCallback(async () => {
     const supabase = createClient()
 
-    const [productsRes, ordersRes, countRes] = await Promise.all([
-      supabase.from('products').select('id, status'),
+    const [productsRes, ordersRes, countRes, newCountRes] = await Promise.all([
+      supabase.from('products').select('id, status, discount_active, discount_percent'),
       supabase.from('custom_orders').select('*').order('created_at', { ascending: false }).limit(5),
       supabase.from('custom_orders').select('*', { count: 'exact', head: true }),
+      supabase.from('custom_orders').select('*', { count: 'exact', head: true }).eq('status', 'new'),
     ])
 
-    const products = (productsRes.data ?? []) as Pick<Product, 'id' | 'status'>[]
+    const products = (productsRes.data ?? []) as Array<
+      Pick<Product, 'id' | 'status' | 'discount_active' | 'discount_percent'>
+    >
     const orders = (ordersRes.data ?? []) as CustomOrder[]
 
     setStats({
       totalProducts: products.length,
       activeProducts: products.filter((p) => p.status === 'active').length,
-      pendingOrders: orders.filter((o) => o.status === 'new' || o.status === 'replied').length,
+      draftProducts: products.filter((p) => p.status === 'draft').length,
+      onOfferProducts: products.filter((p) => p.discount_active && (p.discount_percent ?? 0) > 0).length,
+      newOrders: newCountRes.count ?? orders.filter((o) => o.status === 'new').length,
       totalOrders: countRes.count ?? orders.length,
     })
     setRecentOrders(orders)
@@ -59,25 +66,50 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
+      {/* New-orders alert — only when there are unanswered orders */}
+      {stats.newOrders > 0 && (
+        <Link
+          href="/admin/encargos"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none',
+            background: '#FAF1DF', border: '1px solid rgba(143,59,83,0.25)',
+            borderRadius: 12, padding: '14px 18px', marginBottom: '1.25rem',
+          }}
+        >
+          <span style={{
+            background: '#8F3B53', color: '#fff', borderRadius: 999,
+            minWidth: 26, height: 26, display: 'inline-flex', alignItems: 'center',
+            justifyContent: 'center', fontSize: 13, fontWeight: 600,
+          }}>{stats.newOrders}</span>
+          <span style={{ color: '#1F1A1B', fontSize: '0.95rem' }}>
+            {stats.newOrders === 1 ? 'Tenés 1 encargo nuevo sin responder' : `Tenés ${stats.newOrders} encargos nuevos sin responder`}
+          </span>
+          <span style={{ marginLeft: 'auto', color: '#8F3B53', fontSize: '0.85rem' }}>Ver →</span>
+        </Link>
+      )}
+
       {/* Stats */}
       <div className="admin-stats-grid">
-        <div className="admin-stat-card">
-          <div className="stat-label">Total productos</div>
-          <div className="stat-value">{stats.totalProducts}</div>
-        </div>
-        <div className="admin-stat-card">
+        <Link href="/admin/productos" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Productos activos</div>
           <div className="stat-value">{stats.activeProducts}</div>
-        </div>
-        <div className="admin-stat-card">
-          <div className="stat-label">Encargos pendientes</div>
-          <div className="stat-value">{stats.pendingOrders}</div>
-          <div className="stat-sub">Nuevos y respondidos</div>
-        </div>
-        <div className="admin-stat-card">
+          <div className="stat-sub">{stats.totalProducts} en total{stats.draftProducts ? ` · ${stats.draftProducts} en borrador` : ''}</div>
+        </Link>
+        <Link href="/admin/descuentos" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className="stat-label">En oferta</div>
+          <div className="stat-value">{stats.onOfferProducts}</div>
+          <div className="stat-sub">Productos con descuento</div>
+        </Link>
+        <Link href="/admin/encargos" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className="stat-label">Encargos nuevos</div>
+          <div className="stat-value">{stats.newOrders}</div>
+          <div className="stat-sub">Sin responder</div>
+        </Link>
+        <Link href="/admin/encargos" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Total encargos</div>
           <div className="stat-value">{stats.totalOrders}</div>
-        </div>
+          <div className="stat-sub">Histórico</div>
+        </Link>
       </div>
 
       {/* Recent Orders */}
