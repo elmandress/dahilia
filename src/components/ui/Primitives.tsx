@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { ICON_PATHS, ICON_PATHS_FILL } from './icons'
 
 // Dahila — minimal primitives (v2)
 // White-led. Cream only on cards. Pink only on micro-details.
@@ -175,27 +176,28 @@ export function TextInput({ placeholder, value, onChange, type = 'text' }: { pla
   )
 }
 
-// --- Icon (Phosphor) ------------------------------------------
-// Phosphor v2 web requires the weight class (`ph-light`, `ph-regular`, ...) plus
-// the icon class (`ph-shopping-bag`). We reserve square space via inline width
-// to avoid layout shift while the CDN stylesheet loads.
+// --- Icon (inline SVG) ----------------------------------------
+// Inline SVGs (Phosphor paths) instead of the web font from a CDN. The font
+// approach loaded 4 full icon fonts render-blocking; this ships only the icons
+// we use, inside our own JS, with no network request and no layout shift.
 export function Icon({ name, size = 18, color, weight = 'light' }: { name: string, size?: number, color?: string, weight?: string }) {
+  const fillSet = weight === 'fill' ? ICON_PATHS_FILL[name] : undefined
+  const inner = fillSet ?? ICON_PATHS[name]
+  if (!inner) {
+    // Unknown icon → reserve the square so layout doesn't shift; render nothing.
+    return <span aria-hidden="true" style={{ display: 'inline-block', width: size, height: size, flex: '0 0 auto' }} />
+  }
   return (
-    <i
+    <svg
       aria-hidden="true"
-      className={`ph-${weight} ph-${name}`}
-      style={{
-        fontSize: size,
-        width: size,
-        height: size,
-        color: color || 'currentColor',
-        lineHeight: 1,
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flex: '0 0 auto',
-      }}
-    />
+      focusable="false"
+      viewBox="0 0 256 256"
+      width={size}
+      height={size}
+      style={{ color: color || 'currentColor', display: 'inline-block', flex: '0 0 auto', verticalAlign: 'middle' }}
+    >
+      {inner}
+    </svg>
   )
 }
 

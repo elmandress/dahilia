@@ -73,7 +73,7 @@ function EmptyCollectionState({ onCta }: { onCta: () => void }) {
 
 // Site settings shape — only the keys this page reads from.
 export type HomeSettings = Partial<Record<
-  | 'hero_subtitle' | 'hero_title' | 'hero_cta' | 'hero_image_url'
+  | 'hero_subtitle' | 'hero_title' | 'hero_cta' | 'hero_image_url' | 'hero_image_position'
   | 'process_1_title' | 'process_1_body'
   | 'process_2_title' | 'process_2_body'
   | 'process_3_title' | 'process_3_body'
@@ -96,6 +96,9 @@ export function HomeClient({ products, settings, discounts = [] }: { products: P
   const accesorios = products.filter((p) => p.category?.slug === 'accesorios').slice(0, 4)
 
   const heroImage = val(settings, 'hero_image_url', '/photos/top-lace-parque.png')
+  // Banner-style focal point (like LinkedIn/YouTube). Stored as "x% y%" so the
+  // owner can drag the image until the right part shows. Default 50% 30%.
+  const heroPosition = val(settings, 'hero_image_position', '50% 30%')
   const aboutImage = val(settings, 'about_image_url', '/photos/atelier-escritorio.png')
 
   const processItems = [
@@ -130,11 +133,11 @@ export function HomeClient({ products, settings, discounts = [] }: { products: P
             // Hero is the home LCP element (Next 16: fetchPriority replaces priority).
             fetchPriority="high"
             loading="eager"
-            quality={90}
+            quality={95}
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}
             sizes="100vw"
-            style={{ objectFit: 'cover', objectPosition: 'center 30%' }}
+            style={{ objectFit: 'cover', objectPosition: heroPosition }}
           />
           <div aria-hidden style={{
             position: 'absolute', inset: 0,

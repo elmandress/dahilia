@@ -79,6 +79,7 @@ INSERT INTO site_settings (key, value) VALUES
   ('hero_subtitle',      'Edición a medida'),
   ('hero_cta',           'Ver tienda'),
   ('hero_image_url',     '/photos/top-lace-parque.png'),
+  ('hero_image_position', '50% 30%'),
 
   -- Process strip (3 columns under "New in")
   ('process_1_title',    'A medida'),

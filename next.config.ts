@@ -4,12 +4,14 @@ const isProd = process.env.NODE_ENV === 'production'
 
 // CSP — production drops 'unsafe-eval'. Inline styles ('unsafe-inline') are
 // retained because Next renders style attributes that nonces don't cover.
+// Fonts are self-hosted by next/font and icons are inline SVG, so we no longer
+// need fonts.googleapis.com, fonts.gstatic.com or cdn.jsdelivr.net in the CSP.
 const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"};
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
-  img-src 'self' blob: data: https://*.supabase.co https://images.unsplash.com;
-  font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' blob: data: https://*.supabase.co;
+  font-src 'self' data:;
   connect-src 'self' https://*.supabase.co wss://*.supabase.co;
   object-src 'none';
   base-uri 'self';
@@ -26,8 +28,8 @@ const nextConfig: NextConfig = {
   },
   images: {
     // Allowlisted quality levels (Next 16 requires this when using the
-    // `quality` prop). We use 90 for hero/detail, 82 for cards.
-    qualities: [82, 90, 100],
+    // `quality` prop). 82 cards · 90 detail · 95 hero · 100 lightbox.
+    qualities: [82, 90, 95, 100],
     // Prefer modern formats; AVIF first, WebP fallback.
     formats: ['image/avif', 'image/webp'],
     // Match the breakpoints we actually render at, so the optimizer doesn't

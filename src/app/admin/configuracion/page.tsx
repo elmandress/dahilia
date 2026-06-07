@@ -8,12 +8,12 @@ import { createClient } from '@/lib/supabase/client'
 const SECTIONS = [
   {
     title: 'Portada (Hero)',
-    description: 'Lo primero que ve quien entra al sitio.',
+    description: 'Lo primero que ve quien entra al sitio. Para el banner conviene una foto horizontal (apaisada) y bien iluminada. Si no entra justa, podés arrastrarla para reencuadrarla.',
     fields: [
       { key: 'hero_subtitle', label: 'Antetítulo (eyebrow)', type: 'text' },
       { key: 'hero_title',    label: 'Título principal',     type: 'text' },
       { key: 'hero_cta',      label: 'Texto del botón',      type: 'text' },
-      { key: 'hero_image_url', label: 'Foto del hero',       type: 'image' },
+      { key: 'hero_image_url', label: 'Foto del hero',       type: 'hero' },
     ],
   },
   {
@@ -68,7 +68,149 @@ const SECTIONS = [
   },
 ] as const
 
-type FieldType = 'text' | 'textarea' | 'image'
+type FieldType = 'text' | 'textarea' | 'image' | 'hero'
+
+// Shared upload helper used by both the simple image field and the hero banner.
+async function uploadToMedia(file: File): Promise<string> {
+  const supabase = createClient()
+  const ext = file.name.split('.').pop() || 'jpg'
+  const path = `site/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+  const { error: upErr } = await supabase.storage
+    .from('media')
+    .upload(path, file, { cacheControl: '3600', upsert: false })
+  if (upErr) throw upErr
+  const { data: pub } = supabase.storage.from('media').getPublicUrl(path)
+  return pub.publicUrl
+}
+
+/**
+ * Hero banner editor — upload a (horizontal) photo, then drag it inside a
+ * preview that matches the live hero's aspect ratio to set the focal point,
+ * exactly like the LinkedIn / YouTube banner croppers. The position is stored
+ * as "x% y%" in `hero_image_position`.
+ */
+function HeroBannerEditor({
+  url,
+  position,
+  onUrl,
+  onPosition,
+}: {
+  url: string
+  position: string
+  onUrl: (v: string) => void
+  onPosition: (v: string) => void
+}) {
+  const fileInput = useRef<HTMLInputElement>(null)
+  const frameRef = useRef<HTMLDivElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [dragging, setDragging] = useState(false)
+
+  const [px, py] = (() => {
+    const m = position.match(/(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%/)
+    return m ? [Number(m[1]), Number(m[2])] : [50, 30]
+  })()
+
+  const setFromPointer = (clientX: number, clientY: number) => {
+    const el = frameRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const x = Math.max(0, Math.min(100, ((clientX - r.left) / r.width) * 100))
+    const y = Math.max(0, Math.min(100, ((clientY - r.top) / r.height) * 100))
+    onPosition(`${Math.round(x)}% ${Math.round(y)}%`)
+  }
+
+  const handleFile = async (file: File) => {
+    setError(null)
+    setUploading(true)
+    try {
+      onUrl(await uploadToMedia(file))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al subir')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Live-ratio preview. 16/7 ≈ the desktop hero band. Drag to reposition. */}
+      <div
+        ref={frameRef}
+        onPointerDown={(e) => { if (url) { setDragging(true); (e.target as HTMLElement).setPointerCapture?.(e.pointerId); setFromPointer(e.clientX, e.clientY) } }}
+        onPointerMove={(e) => { if (dragging) setFromPointer(e.clientX, e.clientY) }}
+        onPointerUp={() => setDragging(false)}
+        style={{
+          position: 'relative', width: '100%', maxWidth: 520, aspectRatio: '16 / 7',
+          borderRadius: 10, overflow: 'hidden', background: '#FAF1DF',
+          border: '1px solid rgba(31,26,27,0.12)',
+          cursor: url ? (dragging ? 'grabbing' : 'grab') : 'default',
+          touchAction: 'none', userSelect: 'none',
+        }}
+      >
+        {url ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={url}
+              alt=""
+              draggable={false}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${px}% ${py}%`, pointerEvents: 'none' }}
+            />
+            {/* Focal-point marker + readability scrim like the real hero */}
+            <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(255,255,255,0.5), rgba(255,255,255,0) 55%)', pointerEvents: 'none' }} />
+            <div aria-hidden style={{
+              position: 'absolute', left: `${px}%`, top: `${py}%`, transform: 'translate(-50%, -50%)',
+              width: 26, height: 26, borderRadius: 999, border: '2px solid #fff',
+              boxShadow: '0 0 0 2px rgba(31,26,27,0.4)', pointerEvents: 'none',
+            }} />
+          </>
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8C8285', fontSize: 13 }}>
+            Subí una foto horizontal para la portada
+          </div>
+        )}
+      </div>
+
+      {url && (
+        <p style={{ margin: 0, fontSize: 12, color: '#8C8285' }}>
+          Arrastrá sobre la imagen para elegir qué parte se ve. Posición actual: {px}% {py}%.
+        </p>
+      )}
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }}
+        />
+        <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading} className="admin-btn admin-btn-secondary admin-btn-sm">
+          {uploading ? 'Subiendo...' : url ? 'Cambiar foto' : 'Subir foto'}
+        </button>
+        {url && (
+          <>
+            <button type="button" onClick={() => onPosition('50% 30%')} className="admin-btn admin-btn-secondary admin-btn-sm">
+              Centrar
+            </button>
+            <button type="button" onClick={() => { onUrl(''); onPosition('50% 30%') }} className="admin-btn admin-btn-secondary admin-btn-sm">
+              Quitar
+            </button>
+          </>
+        )}
+        <input
+          type="text"
+          value={url}
+          onChange={(e) => onUrl(e.target.value)}
+          placeholder="o pegá una URL"
+          style={{ flex: '1 1 200px', minWidth: 0 }}
+        />
+      </div>
+      {error && <div role="alert" style={{ color: '#7a1e2f', fontSize: 12 }}>{error}</div>}
+    </div>
+  )
+}
 
 function ImageUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const fileInput = useRef<HTMLInputElement>(null)
@@ -79,15 +221,7 @@ function ImageUploader({ value, onChange }: { value: string; onChange: (url: str
     setError(null)
     setUploading(true)
     try {
-      const supabase = createClient()
-      const ext = file.name.split('.').pop() || 'jpg'
-      const path = `site/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
-      const { error: upErr } = await supabase.storage
-        .from('media')
-        .upload(path, file, { cacheControl: '3600', upsert: false })
-      if (upErr) throw upErr
-      const { data: pub } = supabase.storage.from('media').getPublicUrl(path)
-      onChange(pub.publicUrl)
+      onChange(await uploadToMedia(file))
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error al subir'
       setError(msg)
@@ -299,6 +433,14 @@ export default function ConfiguracionAdminPage() {
                     )}
                     {fieldType === 'image' && (
                       <ImageUploader value={value} onChange={(v) => update(field.key, v)} />
+                    )}
+                    {fieldType === 'hero' && (
+                      <HeroBannerEditor
+                        url={value}
+                        position={settings.hero_image_position ?? '50% 30%'}
+                        onUrl={(v) => update(field.key, v)}
+                        onPosition={(v) => update('hero_image_position', v)}
+                      />
                     )}
                   </div>
                 )
