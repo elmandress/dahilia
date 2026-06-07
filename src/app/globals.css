@@ -197,6 +197,16 @@ a.prose-link:hover {
 
 ::selection { background: var(--cream-100); color: var(--ink-900); }
 
+/* Respect users who ask for less motion — disable non-essential animation. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ============================================================
    Shared responsive grid overrides (formerly inline <style> blocks)
    ============================================================ */
@@ -215,8 +225,6 @@ a.prose-link:hover {
   .contact-grid     { grid-template-columns: 1fr !important; }
   .encargo-grid-4   { grid-template-columns: 1fr 1fr !important; }
   .encargo-grid-2   { grid-template-columns: 1fr !important; }
-  .nav-desktop      { display: none !important; }
-  .nav-mobile       { display: inline-flex !important; }
   .atelier-split    { grid-template-columns: 1fr !important; gap: 28px !important; }
   .numbers          { grid-template-columns: 1fr !important; gap: 0 !important; }
   .photo-strip      { grid-template-columns: 1fr 1fr !important; }
@@ -238,9 +246,19 @@ a.prose-link:hover {
   .brand-wordmark     { font-size: 18px !important; letter-spacing: 0.16em !important; }
   .brand-mark         { width: 30px !important; height: 30px !important; }
   .header-actions     { gap: 14px !important; }
+  .announce-bar       { font-size: 10px !important; letter-spacing: 0.06em !important; padding: 7px 12px !important; }
+  /* Inline search input shrinks so it never overflows on small phones */
+  .header-search input { width: 110px !important; }
 }
 
+/* Header navigation: horizontal on desktop, hamburger below 900px.
+   This is a header-specific breakpoint independent of the 720px content one,
+   because the 6-item nav needs more horizontal room. */
 .nav-mobile { display: none; }
+@media (max-width: 900px) {
+  .nav-desktop { display: none !important; }
+  .nav-mobile  { display: inline-flex !important; }
+}
 
 /* Hero: viewport-aware height */
 .hero-frame {

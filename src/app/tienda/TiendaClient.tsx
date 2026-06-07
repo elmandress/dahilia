@@ -124,7 +124,11 @@ export function TiendaClient({
           fontFamily: dahila.fontDisplay, fontWeight: 300,
           fontSize: 'clamp(32px, 5vw, 48px)', lineHeight: 1.05, letterSpacing: '-0.02em',
           color: dahila.ink900, margin: 0,
-        }}>Colección</h1>
+        }}>
+          {filter !== 'todo'
+            ? (categories.find((c) => c.slug === filter)?.name || 'Colección')
+            : 'Colección'}
+        </h1>
       </div>
 
       {/* Toolbar: category chips + search + sort + filter toggle */}
