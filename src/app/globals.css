@@ -284,6 +284,11 @@ a.prose-link:hover {
    six uppercase links + logo + icons genuinely stop fitting. Between ~820px
    and 980px we tighten the gap and type so the nav fits without wrapping. */
 .nav-mobile { display: none; }
+/* Mobile menu overlay (backdrop + slide-in panel) is hidden above the mobile
+   breakpoint and shown as a fixed overlay below it. Kept on its own classes so
+   the inline-flex hamburger rule never leaks onto the panel. */
+.mobile-menu-scrim,
+.mobile-menu-panel { display: none; }
 @media (max-width: 980px) {
   .nav-desktop { gap: 18px !important; }
   .nav-desktop a { font-size: 11px !important; letter-spacing: 0.04em !important; }
@@ -292,6 +297,8 @@ a.prose-link:hover {
   .nav-desktop { display: none !important; }
   .nav-mobile  { display: inline-flex !important; }
   .mega-menu   { display: none !important; }
+  .mobile-menu-scrim { display: block !important; }
+  .mobile-menu-panel { display: flex !important; }
 }
 
 /* Hero: viewport-aware height */
