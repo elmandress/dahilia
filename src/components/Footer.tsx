@@ -71,6 +71,7 @@ export function Footer() {
             title="Tienda"
             items={[
               { label: 'Novedades',  href: '/tienda' },
+              { label: 'Ofertas',    href: '/ofertas' },
               { label: 'Tops',       href: '/tienda?cat=tops' },
               { label: 'Accesorios', href: '/tienda?cat=accesorios' },
               { label: 'A medida',   href: '/encargo' },

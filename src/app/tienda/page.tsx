@@ -25,6 +25,10 @@ export default async function TiendaPage({
   const params = await searchParams
   const categoryFilter = typeof params.cat === 'string' ? params.cat : ''
   const searchQuery = typeof params.q === 'string' ? params.q : ''
+  const colorParam = typeof params.color === 'string' ? params.color : ''
+  const maxParam = typeof params.max === 'string' ? params.max : ''
+  const sortParam = typeof params.sort === 'string' ? params.sort : ''
+  const onlyOffers = params.oferta === '1'
 
   const [categoriesRes, productsRes, colorsRes, discountsRes] = await Promise.all([
     supabase.from('categories').select('*').order('sort_order', { ascending: true }),
@@ -52,13 +56,17 @@ export default async function TiendaPage({
 
   return (
     <TiendaClient
-      key={`${categoryFilter}|${searchQuery}`}
+      key={`${categoryFilter}|${searchQuery}|${colorParam}|${maxParam}|${sortParam}|${onlyOffers}`}
       initialProducts={products}
       categories={categories}
       colors={colors}
       discounts={discounts}
       initialFilter={categoryFilter}
       initialSearch={searchQuery}
+      initialColor={colorParam}
+      initialMax={maxParam}
+      initialSort={sortParam}
+      initialOnlyOffers={onlyOffers}
     />
   )
 }

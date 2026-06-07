@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Product, Category, Color, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
+import { QuickViewModal } from '@/components/QuickViewModal'
 import { getFinalPrice } from '@/lib/types'
 import { dahila, Eyebrow, Chip, Icon } from '@/components/ui/Primitives'
 
@@ -11,10 +12,11 @@ type SortKey = 'recientes' | 'precio-asc' | 'precio-desc' | 'nombre'
 
 const SORT_LABELS: Record<SortKey, string> = {
   recientes: 'Más recientes',
-  'precio-asc': 'Precio: menor a mayor',
-  'precio-desc': 'Precio: mayor a menor',
+  'precio-asc': 'Precio: de menor a mayor',
+  'precio-desc': 'Precio: de mayor a menor',
   nombre: 'Nombre (A–Z)',
 }
+const SORT_KEYS = Object.keys(SORT_LABELS) as SortKey[]
 
 export function TiendaClient({
   initialProducts,
@@ -23,6 +25,10 @@ export function TiendaClient({
   discounts,
   initialFilter,
   initialSearch,
+  initialColor,
+  initialMax,
+  initialSort,
+  initialOnlyOffers,
 }: {
   initialProducts: Product[]
   categories: Category[]
@@ -30,14 +36,24 @@ export function TiendaClient({
   discounts: Discount[]
   initialFilter: string
   initialSearch?: string
+  initialColor?: string
+  initialMax?: string
+  initialSort?: string
+  initialOnlyOffers?: boolean
 }) {
   const router = useRouter()
+
   const [filter, setFilter] = useState(initialFilter || 'todo')
   const [search, setSearch] = useState(initialSearch || '')
-  const [sort, setSort] = useState<SortKey>('recientes')
-  const [colorIds, setColorIds] = useState<string[]>([])
-  const [onlyDiscount, setOnlyDiscount] = useState(false)
+  const [sort, setSort] = useState<SortKey>(
+    SORT_KEYS.includes(initialSort as SortKey) ? (initialSort as SortKey) : 'recientes'
+  )
+  const [colorIds, setColorIds] = useState<string[]>(
+    initialColor ? initialColor.split(',').filter(Boolean) : []
+  )
+  const [onlyDiscount, setOnlyDiscount] = useState(!!initialOnlyOffers)
   const [showFilters, setShowFilters] = useState(false)
+  const [quickView, setQuickView] = useState<Product | null>(null)
 
   // Price bounds derived from the catalogue (discounted price).
   const priceBounds = useMemo(() => {
@@ -48,8 +64,31 @@ export function TiendaClient({
     return { min: Math.min(...prices), max: Math.max(...prices) }
   }, [initialProducts, discounts])
 
-  const [maxPrice, setMaxPrice] = useState<number | null>(null)
+  const parsedMax = initialMax ? Number(initialMax) : NaN
+  const [maxPrice, setMaxPrice] = useState<number | null>(
+    Number.isFinite(parsedMax) ? parsedMax : null
+  )
   const effectiveMax = maxPrice ?? priceBounds.max
+
+  // Sync filter state → URL (shareable, indexable). Debounced so dragging the
+  // price slider or typing doesn't spam history. router.replace keeps the back
+  // button sane.
+  const firstRun = useRef(true)
+  useEffect(() => {
+    if (firstRun.current) { firstRun.current = false; return }
+    const t = setTimeout(() => {
+      const sp = new URLSearchParams()
+      if (filter !== 'todo') sp.set('cat', filter)
+      if (search.trim()) sp.set('q', search.trim())
+      if (colorIds.length) sp.set('color', colorIds.join(','))
+      if (maxPrice !== null && maxPrice < priceBounds.max) sp.set('max', String(maxPrice))
+      if (sort !== 'recientes') sp.set('sort', sort)
+      if (onlyDiscount) sp.set('oferta', '1')
+      const qs = sp.toString()
+      router.replace(qs ? `/tienda?${qs}` : '/tienda', { scroll: false })
+    }, 350)
+    return () => clearTimeout(t)
+  }, [filter, search, colorIds, maxPrice, sort, onlyDiscount, priceBounds.max, router])
 
   // Only show colours that are actually used by at least one product.
   const usedColors = useMemo(() => {
@@ -69,7 +108,7 @@ export function TiendaClient({
         colorIds.length === 0 || (p.colors ?? []).some((c) => colorIds.includes(c.id))
       const finalPrice = getFinalPrice(p, undefined, discounts)
       const matchesPrice = effectiveMax <= 0 || finalPrice <= effectiveMax
-      const matchesDiscount = !onlyDiscount || getFinalPrice(p, undefined, discounts) < (p.base_price_uyu ?? Infinity)
+      const matchesDiscount = !onlyDiscount || finalPrice < (p.base_price_uyu ?? Infinity)
       return matchesCat && matchesSearch && matchesColor && matchesPrice && matchesDiscount
     })
 
@@ -109,12 +148,19 @@ export function TiendaClient({
     setMaxPrice(null)
     setOnlyDiscount(false)
     setSearch('')
-    router.push('/tienda', { scroll: false })
+    setSort('recientes')
   }
 
   const toggleColor = (id: string) => {
     setColorIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]))
   }
+
+  const heading =
+    filter !== 'todo'
+      ? categories.find((c) => c.slug === filter)?.name || 'Colección'
+      : onlyDiscount
+        ? 'Ofertas'
+        : 'Colección'
 
   return (
     <main style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
@@ -125,9 +171,7 @@ export function TiendaClient({
           fontSize: 'clamp(32px, 5vw, 48px)', lineHeight: 1.05, letterSpacing: '-0.02em',
           color: dahila.ink900, margin: 0,
         }}>
-          {filter !== 'todo'
-            ? (categories.find((c) => c.slug === filter)?.name || 'Colección')
-            : 'Colección'}
+          {heading}
         </h1>
       </div>
 
@@ -153,24 +197,25 @@ export function TiendaClient({
           }}>
             <input
               type="text"
-              placeholder="Buscar..."
+              placeholder="Buscar prenda..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              aria-label="Buscar prendas"
               style={{
                 border: 'none', outline: 'none', background: 'transparent',
-                fontFamily: dahila.fontSans, fontSize: 13, width: '100%',
-                padding: '6px 24px 6px 0', color: dahila.ink900,
+                fontFamily: dahila.fontSans, fontSize: 14, width: '100%',
+                padding: '8px 24px 8px 0', color: dahila.ink900,
               }}
             />
             <span style={{ position: 'absolute', right: 2, color: dahila.ink500, display: 'flex' }}>
-              <Icon name="magnifying-glass" size={14} />
+              <Icon name="magnifying-glass" size={15} />
             </span>
           </div>
 
           {/* Sort */}
           <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontFamily: dahila.fontSans, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: dahila.ink500 }}>
-              Ordenar
+            <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500 }}>
+              Ordenar por
             </span>
             <select
               value={sort}
@@ -179,10 +224,10 @@ export function TiendaClient({
               style={{
                 fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink900,
                 border: `1px solid ${dahila.borderStrong}`, borderRadius: 8,
-                padding: '7px 10px', background: '#fff', cursor: 'pointer',
+                padding: '8px 10px', background: '#fff', cursor: 'pointer',
               }}
             >
-              {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
+              {SORT_KEYS.map((k) => (
                 <option key={k} value={k}>{SORT_LABELS[k]}</option>
               ))}
             </select>
@@ -196,11 +241,11 @@ export function TiendaClient({
               display: 'inline-flex', alignItems: 'center', gap: 8,
               fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink900,
               border: `1px solid ${activeFilterCount > 0 ? dahila.ink900 : dahila.borderStrong}`,
-              borderRadius: 8, padding: '7px 12px', background: '#fff', cursor: 'pointer',
+              borderRadius: 8, padding: '8px 12px', background: '#fff', cursor: 'pointer',
             }}
           >
             <Icon name="sliders-horizontal" size={15} />
-            Filtros
+            Filtrar
             {activeFilterCount > 0 && (
               <span style={{
                 background: dahila.ink900, color: '#fff', borderRadius: 999,
@@ -264,11 +309,10 @@ export function TiendaClient({
                       title={c.name}
                       aria-label={c.name}
                       style={{
-                        width: 30, height: 30, borderRadius: 999,
+                        width: 32, height: 32, borderRadius: 999,
                         background: c.hex, cursor: 'pointer',
                         border: on ? `2px solid ${dahila.ink900}` : `1px solid ${dahila.borderStrong}`,
                         boxShadow: on ? `0 0 0 2px #fff inset` : 'none',
-                        outline: 'none',
                       }}
                     />
                   )
@@ -282,14 +326,14 @@ export function TiendaClient({
             <div style={{ fontFamily: dahila.fontSans, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: dahila.ink500, marginBottom: 12 }}>
               Ofertas
             </div>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink900 }}>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink900 }}>
               <input
                 type="checkbox"
                 checked={onlyDiscount}
                 onChange={(e) => setOnlyDiscount(e.target.checked)}
-                style={{ accentColor: '#B6314A', width: 16, height: 16 }}
+                style={{ accentColor: '#B6314A', width: 18, height: 18 }}
               />
-              Solo con descuento
+              Mostrar solo ofertas
             </label>
           </div>
         </div>
@@ -301,7 +345,7 @@ export function TiendaClient({
         marginBottom: 24, paddingBottom: 16, borderBottom: `1px solid ${dahila.border}`,
         fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700,
       }}>
-        <span>{filtered.length} {filtered.length === 1 ? 'pieza' : 'piezas'}</span>
+        <span>{filtered.length} {filtered.length === 1 ? 'prenda' : 'prendas'}</span>
         {activeFilterCount > 0 && (
           <button
             onClick={clearAll}
@@ -325,13 +369,13 @@ export function TiendaClient({
           <Eyebrow>Sin resultados</Eyebrow>
           <h3 style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, color: dahila.ink900, margin: 0 }}>
             {initialProducts.length === 0
-              ? 'No hay piezas en la tienda por ahora.'
-              : 'No encontramos piezas con esos filtros.'}
+              ? 'No hay prendas en la tienda por ahora.'
+              : 'No encontramos prendas con esos filtros.'}
           </h3>
-          <p style={{ fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, color: dahila.ink700, margin: 0, maxWidth: 460, lineHeight: 1.7 }}>
+          <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, color: dahila.ink700, margin: 0, maxWidth: 460, lineHeight: 1.7 }}>
             {initialProducts.length === 0
               ? 'Estoy preparando la próxima edición. Mientras tanto, podés pedir una prenda a medida.'
-              : 'Probá ampliando el rango de precio o sacando algún filtro.'}
+              : 'Probá ampliando el precio o sacando algún filtro.'}
           </p>
         </div>
       ) : (
@@ -339,9 +383,22 @@ export function TiendaClient({
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22, rowGap: 44,
         }}>
           {filtered.map((p) => (
-            <ProductCard key={p.id} product={p} discounts={discounts} />
+            <ProductCard
+              key={p.id}
+              product={p}
+              discounts={discounts}
+              onQuickView={() => setQuickView(p)}
+            />
           ))}
         </div>
+      )}
+
+      {quickView && (
+        <QuickViewModal
+          product={quickView}
+          discounts={discounts}
+          onClose={() => setQuickView(null)}
+        />
       )}
     </main>
   )

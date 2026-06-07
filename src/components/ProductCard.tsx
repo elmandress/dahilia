@@ -8,7 +8,15 @@ import { getEffectivePrice, getFinalPrice, resolveDiscountPercent, formatPrice, 
 import { useCart } from './CartProvider'
 import { dahila, Badge } from './ui/Primitives'
 
-export function ProductCard({ product, discounts }: { product: Product; discounts?: Discount[] }) {
+export function ProductCard({
+  product,
+  discounts,
+  onQuickView,
+}: {
+  product: Product
+  discounts?: Discount[]
+  onQuickView?: () => void
+}) {
   const router = useRouter()
   const { addToCart } = useCart()
   const [hover, setHover] = useState(false)
@@ -20,12 +28,15 @@ export function ProductCard({ product, discounts }: { product: Product; discount
   const discountPct = resolveDiscountPercent(product, discounts)
   const finalPrice = getFinalPrice(product, defaultSize, discounts)
   const hasDiscount = discountPct > 0 && listPrice > 0
+  const purchasable = product.status !== 'soldout' && !product.is_custom_only
 
-  const handleQuickAdd = async (e: React.MouseEvent) => {
+  const handleAction = async (e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
-    if (product.status === 'soldout' || product.is_custom_only) return
-
+    // If a quick-view handler is provided (store grid), open it so the shopper
+    // can choose a size. Otherwise (home grid) fall back to quick-add.
+    if (onQuickView) { onQuickView(); return }
+    if (!purchasable) return
     setIsAdding(true)
     await addToCart(product, defaultSize, 1)
     setTimeout(() => setIsAdding(false), 500)
@@ -80,24 +91,27 @@ export function ProductCard({ product, discounts }: { product: Product; discount
           <span style={{ position: 'absolute', top: 10, left: 10 }}><Badge tone="cream">A medida</Badge></span>
         ) : null}
 
-        {/* Quick-add bar on hover (desktop only — touch goes to detail page) */}
-        {product.status !== 'soldout' && !product.is_custom_only && (
+        {/* Action bar. On desktop it reveals on hover; on touch devices (where
+            there is no hover) it stays visible so the action is always reachable. */}
+        {purchasable && (
           <div
-            onClick={handleQuickAdd}
+            className="card-action"
+            onClick={handleAction}
             style={{
               position: 'absolute', left: 10, right: 10, bottom: 10,
-              background: 'rgba(255,255,255,0.95)',
+              background: 'rgba(255,255,255,0.96)',
               borderRadius: 8,
-              padding: '10px 12px',
+              padding: '11px 12px',
               fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 500,
-              letterSpacing: '0.18em', textTransform: 'uppercase',
+              letterSpacing: '0.12em', textTransform: 'uppercase',
               color: dahila.ink900, textAlign: 'center',
+              boxShadow: dahila.shadowSm,
               opacity: hover ? 1 : 0,
               transform: hover ? 'translateY(0)' : 'translateY(8px)',
               transition: `all 220ms ${dahila.ease}`,
               pointerEvents: hover ? 'auto' : 'none',
             }}>
-            {isAdding ? '✓ Añadido' : 'Agregar al carrito'}
+            {isAdding ? '✓ Añadido' : (onQuickView ? 'Vista rápida' : 'Agregar al carrito')}
           </div>
         )}
       </div>

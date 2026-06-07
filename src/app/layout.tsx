@@ -104,9 +104,10 @@ export default function RootLayout({
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/bold/style.css" />
       </head>
       <body>
+        <a href="#contenido" className="skip-link">Saltar al contenido</a>
         <CartProvider>
           <Header />
-          <main>
+          <main id="contenido">
             {children}
           </main>
           <Footer />
