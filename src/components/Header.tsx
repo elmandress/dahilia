@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
@@ -30,6 +30,18 @@ export function Header() {
   const [showSearch, setShowSearch] = useState(false)
   const [searchVal, setSearchVal] = useState('')
   const [megaOpen, setMegaOpen] = useState(false)
+  // Small close delay so moving the mouse from the "Tienda" trigger down into
+  // the panel (crossing the gap below the header) doesn't snap it shut.
+  const megaTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cancelMegaClose = useCallback(() => {
+    if (megaTimer.current) { clearTimeout(megaTimer.current); megaTimer.current = null }
+  }, [])
+  const openMega = useCallback(() => { cancelMegaClose(); setMegaOpen(true) }, [cancelMegaClose])
+  const scheduleMegaClose = useCallback(() => {
+    cancelMegaClose()
+    megaTimer.current = setTimeout(() => setMegaOpen(false), 180)
+  }, [cancelMegaClose])
+
   const { cartCount, hasMounted, openDrawer } = useCart()
   const showBadge = hasMounted && cartCount > 0
   const pathname = usePathname()
@@ -126,8 +138,8 @@ export function Header() {
                 return (
                   <div
                     key={it.id}
-                    onMouseEnter={() => setMegaOpen(true)}
-                    onMouseLeave={() => setMegaOpen(false)}
+                    onMouseEnter={openMega}
+                    onMouseLeave={scheduleMegaClose}
                     style={{ display: 'inline-flex', alignItems: 'center' }}
                   >
                     <Link
@@ -135,7 +147,7 @@ export function Header() {
                       style={linkStyle}
                       aria-haspopup="true"
                       aria-expanded={megaOpen}
-                      onFocus={() => setMegaOpen(true)}
+                      onFocus={openMega}
                     >
                       {it.label}
                     </Link>
@@ -210,8 +222,8 @@ export function Header() {
         {/* Mega-menu (desktop) — drops from the Tienda item, full width */}
         <div
           className="mega-menu"
-          onMouseEnter={() => setMegaOpen(true)}
-          onMouseLeave={() => setMegaOpen(false)}
+          onMouseEnter={openMega}
+          onMouseLeave={scheduleMegaClose}
           inert={!megaOpen}
           style={{
             position: 'absolute', left: 0, right: 0, top: '100%',
