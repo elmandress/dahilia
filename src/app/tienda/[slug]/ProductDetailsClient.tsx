@@ -7,6 +7,7 @@ import { ProductGallery } from '@/components/ProductGallery'
 import { ProductCard } from '@/components/ProductCard'
 import { RecentlyViewed } from '@/components/RecentlyViewed'
 import { SizeGuide } from '@/components/SizeGuide'
+import { ShareButton } from '@/components/ShareButton'
 import type { Product, Discount } from '@/lib/types'
 import { getEffectivePrice, formatPrice, getPrimaryPhoto } from '@/lib/types'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
@@ -118,6 +119,10 @@ export function ProductDetailsClient({
           <p style={{ fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: 0 }}>
             {product.description || 'Tejida a mano. Empieza cuando vos confirmás colores y medida.'}
           </p>
+
+          <div>
+            <ShareButton title={`${product.name} — Dahila Crochet`} text={`Mirá esta prenda de Dahila: ${product.name}`} />
+          </div>
 
           {!isSoldOut && !product.is_custom_only && (
             <div>

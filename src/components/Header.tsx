@@ -1,11 +1,14 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCart } from './CartProvider'
 import { dahila, Icon } from './ui/Primitives'
+import { formatPrice } from '@/lib/types'
+
+interface Suggestion { slug: string; name: string; photo: string; price: number; soldout: boolean }
 
 const NAV_ITEMS = [
   { id: '/tienda',   label: 'Tienda', mega: true },
@@ -29,6 +32,8 @@ export function Header() {
   const [open, setOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [searchVal, setSearchVal] = useState('')
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  const [searching, setSearching] = useState(false)
   const [megaOpen, setMegaOpen] = useState(false)
   // Small close delay so moving the mouse from the "Tienda" trigger down into
   // the panel (crossing the gap below the header) doesn't snap it shut.
@@ -47,6 +52,32 @@ export function Header() {
   const pathname = usePathname()
   const router = useRouter()
 
+  // Live search suggestions — debounced fetch while the search box is open.
+  useEffect(() => {
+    const q = searchVal.trim()
+    if (!showSearch || q.length < 2) {
+      // Clear stale results when the query is too short (syncing UI to input —
+      // an acceptable use of setState in an effect).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSuggestions([])
+      return
+    }
+    let cancelled = false
+    const t = setTimeout(async () => {
+      setSearching(true)
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`)
+        const data = await res.json()
+        if (!cancelled) setSuggestions(data.results || [])
+      } catch {
+        if (!cancelled) setSuggestions([])
+      } finally {
+        if (!cancelled) setSearching(false)
+      }
+    }, 220)
+    return () => { cancelled = true; clearTimeout(t) }
+  }, [searchVal, showSearch])
+
   // Admin uses its own layout/chrome — never render the public header there.
   if (pathname.startsWith('/admin')) return null
 
@@ -55,8 +86,8 @@ export function Header() {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   }
 
-  const submitSearch = (e: React.FormEvent) => {
-    e.preventDefault()
+  const submitSearch = (e?: React.SyntheticEvent) => {
+    e?.preventDefault()
     if (searchVal.trim()) {
       router.push(`/tienda?q=${encodeURIComponent(searchVal.trim())}`)
       setShowSearch(false)
@@ -166,27 +197,82 @@ export function Header() {
             marginLeft: 'auto',
           }}>
             {showSearch ? (
-              <form onSubmit={submitSearch} className="header-search" style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                borderBottom: `1px solid ${dahila.borderStrong}`,
-              }}>
-                <Icon name="magnifying-glass" size={16} color={dahila.ink500} />
-                <input
-                  type="text"
-                  placeholder="Buscar..."
-                  value={searchVal}
-                  onChange={(e) => setSearchVal(e.target.value)}
-                  autoFocus
-                  style={{
-                    background: 'transparent', border: 'none', outline: 'none',
-                    fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink900,
-                    width: 160,
-                  }}
-                />
-                <button type="button" onClick={() => { setShowSearch(false); setSearchVal('') }} style={{ ...iconBtn, padding: 2 }} aria-label="Cerrar búsqueda">
-                  <Icon name="x" size={16}/>
-                </button>
-              </form>
+              <div style={{ position: 'relative' }}>
+                <form onSubmit={submitSearch} className="header-search" style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  borderBottom: `1px solid ${dahila.borderStrong}`,
+                }}>
+                  <Icon name="magnifying-glass" size={16} color={dahila.ink500} />
+                  <input
+                    type="text"
+                    placeholder="Buscar..."
+                    value={searchVal}
+                    onChange={(e) => setSearchVal(e.target.value)}
+                    autoFocus
+                    aria-label="Buscar prendas"
+                    style={{
+                      background: 'transparent', border: 'none', outline: 'none',
+                      fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink900,
+                      width: 160,
+                    }}
+                  />
+                  <button type="button" onClick={() => { setShowSearch(false); setSearchVal('') }} style={{ ...iconBtn, padding: 2 }} aria-label="Cerrar búsqueda">
+                    <Icon name="x" size={16}/>
+                  </button>
+                </form>
+
+                {/* Live suggestions */}
+                {searchVal.trim().length >= 2 && (
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 10px)', right: 0,
+                    width: 320, maxWidth: '85vw',
+                    background: '#fff', borderRadius: 12,
+                    border: `1px solid ${dahila.border}`, boxShadow: dahila.shadowMd,
+                    overflow: 'hidden', zIndex: 60,
+                  }}>
+                    {searching && suggestions.length === 0 ? (
+                      <div style={{ padding: '16px', fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink500 }}>Buscando…</div>
+                    ) : suggestions.length === 0 ? (
+                      <div style={{ padding: '16px', fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink500 }}>Sin resultados.</div>
+                    ) : (
+                      <>
+                        {suggestions.map((sug) => (
+                          <Link
+                            key={sug.slug}
+                            href={`/tienda/${sug.slug}`}
+                            onClick={() => { setShowSearch(false); setSearchVal('') }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 12,
+                              padding: '10px 14px', textDecoration: 'none', color: 'inherit',
+                              borderBottom: `1px solid ${dahila.border}`,
+                            }}
+                          >
+                            <div style={{ position: 'relative', width: 40, height: 50, flexShrink: 0, borderRadius: 6, overflow: 'hidden', background: dahila.cream50 }}>
+                              <Image src={sug.photo} alt="" fill sizes="40px" style={{ objectFit: 'cover' }} />
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 14, color: dahila.ink900, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sug.name}</div>
+                              <div style={{ fontFamily: dahila.fontSans, fontSize: 12, color: sug.soldout ? dahila.ink500 : dahila.ink700 }}>
+                                {sug.soldout ? 'Agotado' : formatPrice(sug.price)}
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                        <button
+                          onClick={submitSearch}
+                          style={{
+                            width: '100%', textAlign: 'left', background: dahila.cream50, border: 'none', cursor: 'pointer',
+                            padding: '11px 14px', fontFamily: dahila.fontSans, fontSize: 12,
+                            color: dahila.ink900, letterSpacing: '0.04em',
+                          }}
+                        >
+                          Ver todos los resultados →
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             ) : (
               <button onClick={() => setShowSearch(true)} style={{ ...iconBtn, width: 26, height: 26 }} aria-label="Buscar">
                 <Icon name="magnifying-glass" size={20}/>

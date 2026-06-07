@@ -15,7 +15,7 @@ export type IconName =
   | 'magnifying-glass' | 'magnifying-glass-plus' | 'shopping-bag' | 'x' | 'list'
   | 'minus' | 'plus' | 'caret-left' | 'caret-right' | 'sliders-horizontal'
   | 'ruler' | 'flower' | 'package' | 'arrow-clockwise' | 'truck' | 'leaf'
-  | 'hand-heart' | 'heart' | 'chat-circle'
+  | 'hand-heart' | 'heart' | 'chat-circle' | 'check' | 'share-network'
   | 'instagram-logo' | 'whatsapp-logo' | 'envelope-simple'
 
 export const ICON_PATHS: Record<string, React.ReactNode> = {
@@ -135,6 +135,18 @@ export const ICON_PATHS: Record<string, React.ReactNode> = {
   ),
   'chat-circle': (
     <path d="M79.93,211.11a96,96,0,1,0-35-35h0L32.42,213.46a8,8,0,0,0,10.12,10.12l37.39-12.47Z" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+  ),
+  check: (
+    <polyline points="216 72 104 184 48 128" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+  ),
+  'share-network': (
+    <>
+      <circle cx="64" cy="128" r="32" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="176" cy="200" r="32" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="176" cy="56" r="32" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="149.09" y1="73.61" x2="90.91" y2="110.39" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="90.91" y1="145.61" x2="149.09" y2="182.39" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+    </>
   ),
   'instagram-logo': (
     <>
