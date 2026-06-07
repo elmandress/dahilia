@@ -109,6 +109,8 @@ export function ProductCard({ product, discounts }: { product: Product; discount
         <span style={{
           fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 16,
           color: dahila.ink900, lineHeight: 1.2,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
         }}>{product.name}</span>
         {hasDiscount ? (
           <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', whiteSpace: 'nowrap' }}>

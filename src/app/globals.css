@@ -197,6 +197,17 @@ a.prose-link:hover {
 
 ::selection { background: var(--cream-100); color: var(--ink-900); }
 
+/* Keyboard focus — a single intentional ring, only for keyboard users
+   (:focus-visible). Never the ugly default UA outline, never nothing. */
+:focus-visible {
+  outline: 2px solid var(--wine-600);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+/* Pointer/touch interactions don't get the ring (avoids the "sticky outline"
+   look after clicking), but keyboard nav always does. */
+:focus:not(:focus-visible) { outline: none; }
+
 /* Respect users who ask for less motion — disable non-essential animation. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -251,11 +262,16 @@ a.prose-link:hover {
   .header-search input { width: 110px !important; }
 }
 
-/* Header navigation: horizontal on desktop, hamburger below 900px.
-   This is a header-specific breakpoint independent of the 720px content one,
-   because the 6-item nav needs more horizontal room. */
+/* Header navigation: full horizontal nav stays visible on laptops and up.
+   The hamburger only appears on tablet-portrait / phones (≤ 768px), where
+   six uppercase links + logo + icons genuinely stop fitting. Between ~820px
+   and 980px we tighten the gap and type so the nav fits without wrapping. */
 .nav-mobile { display: none; }
-@media (max-width: 900px) {
+@media (max-width: 980px) {
+  .nav-desktop { gap: 18px !important; }
+  .nav-desktop a { font-size: 11px !important; letter-spacing: 0.04em !important; }
+}
+@media (max-width: 768px) {
   .nav-desktop { display: none !important; }
   .nav-mobile  { display: inline-flex !important; }
 }
