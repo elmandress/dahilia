@@ -2,11 +2,18 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import type { Product, Category, Color, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
-import { QuickViewModal } from '@/components/QuickViewModal'
 import { getFinalPrice } from '@/lib/types'
 import { dahila, Eyebrow, Chip, Icon } from '@/components/ui/Primitives'
+
+// Quick-view is only needed once the shopper opens it — load it on demand so
+// it stays out of the initial tienda bundle.
+const QuickViewModal = dynamic(
+  () => import('@/components/QuickViewModal').then((m) => m.QuickViewModal),
+  { ssr: false }
+)
 
 type SortKey = 'recientes' | 'precio-asc' | 'precio-desc' | 'nombre'
 

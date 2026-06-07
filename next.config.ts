@@ -20,6 +20,10 @@ const cspHeader = `
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Tree-shake large packages so only the modules we use are bundled.
+  experimental: {
+    optimizePackageImports: ['@supabase/supabase-js', '@supabase/ssr'],
+  },
   images: {
     // Allowlisted quality levels (Next 16 requires this when using the
     // `quality` prop). We use 90 for hero/detail, 82 for cards.

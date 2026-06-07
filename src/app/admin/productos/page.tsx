@@ -12,7 +12,10 @@ export default function ProductosPage() {
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterCategory, setFilterCategory] = useState<string>('all')
+  const [searchTerm, setSearchTerm] = useState('')
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [savingOrder, setSavingOrder] = useState(false)
 
   const loadData = useCallback(async () => {
     const supabase = createClient()
@@ -71,11 +74,41 @@ export default function ProductosPage() {
     }
   }
 
+  const term = searchTerm.trim().toLowerCase()
   const filteredProducts = products.filter(p => {
     if (filterStatus !== 'all' && p.status !== filterStatus) return false
     if (filterCategory !== 'all' && p.category_id !== filterCategory) return false
+    if (term && !p.name.toLowerCase().includes(term) && !p.slug.toLowerCase().includes(term)) return false
     return true
   })
+
+  // Drag-to-reorder is only meaningful on the full, unfiltered list (sort_order
+  // is a single global order). Disable it while any filter/search is active.
+  const reorderEnabled = filterStatus === 'all' && filterCategory === 'all' && !term
+
+  const handleDrop = async (targetId: string) => {
+    if (!dragId || dragId === targetId) { setDragId(null); return }
+    const list = [...products]
+    const from = list.findIndex((p) => p.id === dragId)
+    const to = list.findIndex((p) => p.id === targetId)
+    if (from === -1 || to === -1) { setDragId(null); return }
+    const [moved] = list.splice(from, 1)
+    list.splice(to, 0, moved)
+    // Reassign sort_order sequentially and persist only the rows that changed.
+    const reindexed = list.map((p, i) => ({ ...p, sort_order: i }))
+    setProducts(reindexed)
+    setDragId(null)
+    setSavingOrder(true)
+    try {
+      const supabase = createClient()
+      const changed = reindexed.filter((p, i) => products[i]?.id !== p.id || products[i]?.sort_order !== p.sort_order)
+      await Promise.all(
+        changed.map((p) => supabase.from('products').update({ sort_order: p.sort_order }).eq('id', p.id))
+      )
+    } finally {
+      setSavingOrder(false)
+    }
+  }
 
   if (loading) {
     return <div className="admin-loading"><div className="admin-spinner" /></div>
@@ -96,8 +129,16 @@ export default function ProductosPage() {
         </Link>
       </div>
 
-      {/* Filters */}
-      <div className="admin-filters">
+      {/* Filters + search */}
+      <div className="admin-filters" style={{ flexWrap: 'wrap', gap: 10 }}>
+        <input
+          type="search"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Buscar por nombre o slug..."
+          aria-label="Buscar productos"
+          style={{ flex: '1 1 220px', minWidth: 0 }}
+        />
         <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
           <option value="all">Todos los estados</option>
           <option value="active">Activo</option>
@@ -112,6 +153,13 @@ export default function ProductosPage() {
           ))}
         </select>
       </div>
+
+      <p style={{ fontSize: '0.8rem', color: '#888', margin: '0 0 12px' }}>
+        {reorderEnabled
+          ? `Arrastrá las filas para cambiar el orden en la tienda.${savingOrder ? ' Guardando…' : ''}`
+          : 'Quitá los filtros para poder reordenar.'}
+        {' '}Mostrando {filteredProducts.length} de {products.length}.
+      </p>
 
       {/* Table */}
       <div className="admin-card">
@@ -141,14 +189,29 @@ export default function ProductosPage() {
               </thead>
               <tbody>
                 {filteredProducts.map((product) => (
-                  <tr key={product.id}>
+                  <tr
+                    key={product.id}
+                    draggable={reorderEnabled}
+                    onDragStart={() => reorderEnabled && setDragId(product.id)}
+                    onDragOver={(e) => { if (reorderEnabled) e.preventDefault() }}
+                    onDrop={() => reorderEnabled && handleDrop(product.id)}
+                    style={{
+                      cursor: reorderEnabled ? 'grab' : 'default',
+                      opacity: dragId === product.id ? 0.5 : 1,
+                    }}
+                  >
                     <td>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={getPrimaryPhoto(product)}
-                        alt={product.name}
-                        className="product-thumb"
-                      />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {reorderEnabled && (
+                          <span aria-hidden style={{ color: '#bbb', fontSize: 16, lineHeight: 1, cursor: 'grab' }} title="Arrastrar para reordenar">⠿</span>
+                        )}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={getPrimaryPhoto(product)}
+                          alt={product.name}
+                          className="product-thumb"
+                        />
+                      </div>
                     </td>
                     <td>
                       <Link href={`/admin/productos/${product.id}`} style={{ color: '#1F1A1B', textDecoration: 'none', fontWeight: 500 }}>

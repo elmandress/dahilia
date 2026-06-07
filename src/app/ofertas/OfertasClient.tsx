@@ -2,10 +2,15 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import type { Product, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
-import { QuickViewModal } from '@/components/QuickViewModal'
 import { dahila, Eyebrow, Button } from '@/components/ui/Primitives'
+
+const QuickViewModal = dynamic(
+  () => import('@/components/QuickViewModal').then((m) => m.QuickViewModal),
+  { ssr: false }
+)
 
 export function OfertasClient({
   products,
