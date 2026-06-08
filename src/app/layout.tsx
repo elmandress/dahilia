@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Fraunces, Inter } from 'next/font/google'
 import { CartProvider } from '@/components/CartProvider'
+import { FavoritesProvider } from '@/components/FavoritesProvider'
 import { CartDrawer } from '@/components/CartDrawer'
 import { BackToTop } from '@/components/BackToTop'
 import { Header } from '@/components/Header'
@@ -103,13 +104,15 @@ export default function RootLayout({
       <body>
         <a href="#contenido" className="skip-link">Saltar al contenido</a>
         <CartProvider>
-          <Header />
-          <main id="contenido">
-            {children}
-          </main>
-          <Footer />
-          <CartDrawer />
-          <BackToTop />
+          <FavoritesProvider>
+            <Header />
+            <main id="contenido">
+              {children}
+            </main>
+            <Footer />
+            <CartDrawer />
+            <BackToTop />
+          </FavoritesProvider>
         </CartProvider>
       </body>
     </html>

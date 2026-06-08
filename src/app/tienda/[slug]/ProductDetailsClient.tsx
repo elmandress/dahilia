@@ -8,8 +8,9 @@ import { ProductCard } from '@/components/ProductCard'
 import { RecentlyViewed } from '@/components/RecentlyViewed'
 import { SizeGuide } from '@/components/SizeGuide'
 import { ShareButton } from '@/components/ShareButton'
+import { FavoriteButton } from '@/components/FavoriteButton'
 import type { Product, Discount } from '@/lib/types'
-import { getEffectivePrice, formatPrice, getPrimaryPhoto } from '@/lib/types'
+import { getEffectivePrice, formatPrice, getPrimaryPhoto, getScarcity } from '@/lib/types'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 
 export function ProductDetailsClient({
@@ -18,12 +19,14 @@ export function ProductDetailsClient({
   related = [],
   discounts = [],
   sizeGuideNote,
+  whatsappUrl = 'https://wa.me/59894605015',
 }: {
   product: Product
   discountPercent?: number
   related?: Product[]
   discounts?: Discount[]
   sizeGuideNote?: string
+  whatsappUrl?: string
 }) {
   const router = useRouter()
   const { addToCart } = useCart()
@@ -49,6 +52,14 @@ export function ProductDetailsClient({
   const finalPrice = hasDiscount ? Math.round((listPrice * (100 - discountPercent)) / 100) : listPrice
   const isSoldOut = product.status === 'soldout'
   const canBuy = !isSoldOut && !product.is_custom_only
+  const scarcity = getScarcity(product)
+
+  // Sold-out demand capture: a pre-filled WhatsApp message asking for a heads-up
+  // when the piece is back. No backend/email — just opens the chat.
+  const restockText = encodeURIComponent(
+    `Hola! Vi "${product.name}" en la web pero está agotado. ¿Me avisás cuando vuelva? 🧶`
+  )
+  const restockUrl = `${whatsappUrl}${whatsappUrl.includes('?') ? '&' : '?'}text=${restockText}`
 
   const handleAdd = async () => {
     if (!sizeAvailable) return
@@ -71,6 +82,14 @@ export function ProductDetailsClient({
         <button onClick={() => router.push('/')} style={crumb}>Inicio</button>
         <span>/</span>
         <button onClick={() => router.push('/tienda')} style={crumb}>Tienda</button>
+        {product.category && (
+          <>
+            <span>/</span>
+            <button onClick={() => router.push(`/tienda?cat=${product.category!.slug}`)} style={crumb}>
+              {product.category.name}
+            </button>
+          </>
+        )}
         <span>/</span>
         <span style={{ color: dahila.ink900 }}>{product.name}</span>
       </nav>
@@ -122,13 +141,56 @@ export function ProductDetailsClient({
                 </span>
               )}
             </div>
+
+            {/* Honest scarcity — only shown when there's something true to say. */}
+            {!isSoldOut && scarcity && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 10,
+                fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 500,
+                color: scarcity.level === 'last' ? '#B6314A' : dahila.wine600,
+                letterSpacing: '0.02em',
+              }}>
+                <span aria-hidden style={{
+                  width: 6, height: 6, borderRadius: 999,
+                  background: scarcity.level === 'last' ? '#B6314A' : dahila.wine600,
+                }} />
+                {scarcity.label}
+              </span>
+            )}
           </div>
 
           <p style={{ fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: 0 }}>
             {product.description || 'Tejida a mano. Empieza cuando vos confirmás colores y medida.'}
           </p>
 
-          <div>
+          {/* Colour palette — these are the tones Anush can work this piece in.
+              Selecting is coordinated over WhatsApp, so this is informational. */}
+          {product.colors && product.colors.length > 0 && (
+            <div>
+              <span style={{
+                display: 'block', marginBottom: 8,
+                fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
+                textTransform: 'uppercase', color: dahila.ink500,
+              }}>
+                Colores
+              </span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {product.colors.map((c) => (
+                  <span key={c.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <span aria-hidden style={{
+                      width: 16, height: 16, borderRadius: 999,
+                      background: c.hex || dahila.cream200,
+                      boxShadow: 'inset 0 0 0 1px rgba(31,26,27,0.18)',
+                    }} />
+                    <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700 }}>{c.name}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+            <FavoriteButton productId={product.id} variant="inline" />
             <ShareButton title={`${product.name} — Dahila Crochet`} text={`Mirá esta prenda de Dahila: ${product.name}`} />
           </div>
 
@@ -200,6 +262,33 @@ export function ProductDetailsClient({
                 </button>
               </div>
             )
+          )}
+
+          {/* Sold out → capture demand instead of a dead end. */}
+          {isSoldOut && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <a
+                href={restockUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+                  background: '#25D366', color: '#fff', textDecoration: 'none',
+                  borderRadius: 10, padding: '15px 22px',
+                  fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                }}
+              >
+                <Icon name="whatsapp-logo" size={18} /> Avisame cuando vuelva
+              </a>
+              <button onClick={() => router.push('/encargo')} style={{
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600,
+                textDecoration: 'underline', padding: 0, alignSelf: 'center',
+              }}>
+                O pedila a medida y la tejemos para vos →
+              </button>
+            </div>
           )}
 
           {/* Trust strip — reduces purchase anxiety near the CTA */}

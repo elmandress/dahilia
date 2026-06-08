@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCart } from './CartProvider'
+import { useFavorites } from './FavoritesProvider'
 import { useScrollLock } from '@/lib/scroll-lock'
 import { dahila, Icon } from './ui/Primitives'
 import { formatPrice } from '@/lib/types'
@@ -49,7 +50,9 @@ export function Header() {
   }, [cancelMegaClose])
 
   const { cartCount, hasMounted, openDrawer } = useCart()
+  const { count: favCount, hasMounted: favMounted } = useFavorites()
   const showBadge = hasMounted && cartCount > 0
+  const showFavBadge = favMounted && favCount > 0
   const pathname = usePathname()
   const router = useRouter()
 
@@ -297,6 +300,28 @@ export function Header() {
               </button>
             )}
 
+            <Link
+              href="/favoritos"
+              style={{ ...iconBtn, position: 'relative', width: 26, height: 26, color: dahila.ink900, textDecoration: 'none' }}
+              aria-label={`Favoritos${showFavBadge ? ` (${favCount})` : ''}`}
+            >
+              <Icon name="heart" size={20}/>
+              {showFavBadge && (
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute', top: -5, right: -7,
+                    minWidth: 17, height: 17, borderRadius: 999,
+                    background: dahila.ink900, color: '#fff',
+                    fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 500,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 5px', lineHeight: 1,
+                    boxShadow: '0 0 0 2px #fff',
+                  }}
+                >{favCount}</span>
+              )}
+            </Link>
+
             <button
               onClick={openDrawer}
               style={{ ...iconBtn, position: 'relative', width: 26, height: 26 }}
@@ -459,6 +484,16 @@ export function Header() {
                 </Link>
               )
             })}
+            <Link href="/favoritos" onClick={() => setOpen(false)} style={{
+              textDecoration: 'none',
+              fontFamily: dahila.fontSans, fontSize: 16, fontWeight: 300,
+              color: dahila.ink900, textAlign: 'left', padding: '15px 0',
+              letterSpacing: '0.04em', borderBottom: `1px solid ${dahila.border}`,
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <Icon name="heart" size={18} color={dahila.ink700} />
+              <span>Favoritos{showFavBadge ? ` (${favCount})` : ''}</span>
+            </Link>
           </nav>
           <div style={{ padding: '16px 20px calc(env(safe-area-inset-bottom, 0px) + 16px)', borderTop: `1px solid ${dahila.border}`, display: 'flex', gap: 16 }}>
             <a href="https://www.instagram.com/dahila.crochet/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{ color: dahila.ink700 }}><Icon name="instagram-logo" size={20} /></a>

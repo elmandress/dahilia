@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import type { Product, Discount } from '@/lib/types'
+import type { Product, Discount, Color } from '@/lib/types'
 import { getPrimaryPhoto, getFinalPrice, resolveDiscountPercent } from '@/lib/types'
 import { ProductDetailsClient } from './ProductDetailsClient'
 import Link from 'next/link'
@@ -76,12 +76,18 @@ export default async function ProductPage({
       .eq('slug', slug)
       .maybeSingle(),
     supabase.from('discounts').select('*').eq('active', true),
-    supabase.from('site_settings').select('key, value').eq('key', 'size_guide_note'),
+    supabase.from('site_settings').select('key, value').in('key', ['size_guide_note', 'contact_whatsapp_url']),
   ])
 
   const product = data as Product | null
+  // Flatten the joined product_colors → Color[] (mirrors the store query).
+  if (product) {
+    const joined = (product.colors ?? []) as unknown as Array<{ color: Color | null }>
+    product.colors = joined.map((c) => c.color).filter((c): c is Color => !!c)
+  }
   const discounts = (discountData ?? []) as Discount[]
   const sizeGuideNote = (settingsData ?? []).find((r) => r.key === 'size_guide_note')?.value as string | undefined
+  const whatsappUrl = ((settingsData ?? []).find((r) => r.key === 'contact_whatsapp_url')?.value as string | undefined) || 'https://wa.me/59894605015'
 
   if (!product) {
     notFound()
@@ -188,6 +194,7 @@ export default async function ProductPage({
         related={related}
         discounts={discounts}
         sizeGuideNote={sizeGuideNote}
+        whatsappUrl={whatsappUrl}
       />
     </div>
   )

@@ -72,6 +72,9 @@ export interface ProductSize {
   price_uyu: number | null;
   available: boolean;
   sort_order: number;
+  // Optional precise count. NULL = the owner only tracks the boolean `available`
+  // (the common case). When set to a small number we can show "Quedan N".
+  stock_qty?: number | null;
 }
 
 export interface ProductColor {
@@ -175,4 +178,39 @@ export function getPrimaryPhoto(product: Product): string {
   }
   const primary = product.media.find(m => m.is_primary && m.type === 'image');
   return primary?.url || product.media[0].url || PHOTO_PLACEHOLDER;
+}
+
+// Honest scarcity for a handmade catalogue. Everything here is derived from data
+// the owner already maintains (`available` per size, optional `stock_qty`) — we
+// never invent urgency. Returns null when there's nothing truthful to say.
+//   - `low`  → soft nudge worth showing on the card ("Pocas unidades").
+//   - `level: 'last'` when there is exactly one way to buy it left.
+export function getScarcity(product: Product): {
+  level: 'last' | 'low';
+  label: string;
+  /** Short label for the compact card badge. */
+  short: string;
+} | null {
+  if (product.status !== 'active' || product.is_custom_only) return null;
+  const sizes = product.sizes ?? [];
+
+  // If the owner tracks precise quantities, prefer them.
+  const counted = sizes.filter((s) => typeof s.stock_qty === 'number');
+  if (counted.length > 0) {
+    const total = counted.reduce((n, s) => n + Math.max(0, s.stock_qty as number), 0);
+    if (total <= 0) return null; // soldout handled elsewhere
+    if (total === 1) return { level: 'last', label: 'Última disponible', short: 'Última' };
+    if (total <= 3) return { level: 'low', label: `Quedan ${total}`, short: `Quedan ${total}` };
+    return null;
+  }
+
+  // Boolean-only mode: scarcity = how many sizes are still available.
+  const withSizes = sizes.length > 0;
+  if (!withSizes) return null; // single-size piece with no size rows — no signal
+  const avail = sizes.filter((s) => s.available);
+  if (avail.length === 0) return null; // effectively sold out
+  if (avail.length === 1 && sizes.length > 1) {
+    return { level: 'last', label: `Última en talle ${avail[0].size}`, short: 'Último talle' };
+  }
+  return null;
 }
