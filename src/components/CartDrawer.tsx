@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useCart } from './CartProvider'
 import { useScrollLock } from '@/lib/scroll-lock'
 import { dahila, Icon } from './ui/Primitives'
+import { PriceBlock } from './ui/PriceBlock'
 import {
   getPrimaryPhoto, getEffectivePrice, getFinalPrice, formatPrice, BLUR_DATA_URL,
 } from '@/lib/types'
@@ -123,7 +124,6 @@ export function CartDrawer() {
                 const photo = getPrimaryPhoto(item.product)
                 const list = getEffectivePrice(item.product, item.size)
                 const price = getFinalPrice(item.product, item.size, discounts)
-                const discounted = price < list
                 return (
                   <div key={item.id} style={{
                     display: 'flex', gap: 14, padding: '16px 0',
@@ -147,8 +147,7 @@ export function CartDrawer() {
                       </div>
                       <div style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500 }}>Talle: {item.size}</div>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                        <span style={{ fontFamily: dahila.fontSans, fontSize: 13, color: discounted ? '#B6314A' : dahila.ink900, fontWeight: discounted ? 500 : 400 }}>{formatPrice(price)}</span>
-                        {discounted && <span style={{ fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500, textDecoration: 'line-through' }}>{formatPrice(list)}</span>}
+                        <PriceBlock list={list} final={price} size="sm" />
                       </div>
 
                       {/* Qty + remove */}

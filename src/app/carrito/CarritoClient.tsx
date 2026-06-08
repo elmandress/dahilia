@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Button, Icon } from '@/components/ui/Primitives'
 import { getPrimaryPhoto, formatPrice, getEffectivePrice, getFinalPrice } from '@/lib/types'
+import { PriceBlock } from '@/components/ui/PriceBlock'
 import Image from 'next/image'
 import { SITE_URL } from '@/lib/env'
 
@@ -119,7 +120,6 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
           const photo = getPrimaryPhoto(item.product)
           const listPrice = getEffectivePrice(item.product, item.size)
           const price = getFinalPrice(item.product, item.size, discounts)
-          const discounted = price < listPrice
           return (
             <div key={item.id} className="cart-row" style={{
               display: 'flex', gap: 24, paddingBottom: 24,
@@ -140,14 +140,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
                   Talle: {item.size}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
-                  <span style={{ fontFamily: dahila.fontSans, fontSize: 14, color: discounted ? '#B6314A' : dahila.ink900, fontWeight: discounted ? 500 : 400 }}>
-                    {formatPrice(price)}
-                  </span>
-                  {discounted && (
-                    <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, textDecoration: 'line-through' }}>
-                      {formatPrice(listPrice)}
-                    </span>
-                  )}
+                  <PriceBlock list={listPrice} final={price} size="md" />
                 </div>
               </div>
 

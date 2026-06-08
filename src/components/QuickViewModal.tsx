@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import type { Product, Discount } from '@/lib/types'
 import {
-  getEffectivePrice, getFinalPrice, resolveDiscountPercent, formatPrice,
+  getEffectivePrice, getFinalPrice, resolveDiscountPercent,
   getPrimaryPhoto, BLUR_DATA_URL,
 } from '@/lib/types'
 import { useCart } from './CartProvider'
 import { useScrollLock } from '@/lib/scroll-lock'
 import { dahila, Button, Icon } from './ui/Primitives'
+import { PriceBlock } from './ui/PriceBlock'
 
 /**
  * Quick-view: a focused product preview the shopper can open from the grid
@@ -125,16 +126,7 @@ export function QuickViewModal({
               color: dahila.ink900, margin: '0 0 8px', lineHeight: 1.15,
             }}>{product.name}</h2>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-              {isSoldOut ? (
-                <span style={{ fontFamily: dahila.fontSans, fontSize: 16, color: dahila.ink500 }}>Agotado</span>
-              ) : hasDiscount ? (
-                <>
-                  <span style={{ fontFamily: dahila.fontSans, fontSize: 18, fontWeight: 600, color: '#B6314A' }}>{formatPrice(finalPrice)}</span>
-                  <span style={{ fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink500, textDecoration: 'line-through' }}>{formatPrice(listPrice)}</span>
-                </>
-              ) : (
-                <span style={{ fontFamily: dahila.fontSans, fontSize: 16, fontWeight: 500, color: dahila.ink900 }}>{formatPrice(finalPrice)}</span>
-              )}
+              <PriceBlock list={listPrice} final={finalPrice} size="md" soldOut={isSoldOut} />
             </div>
           </div>
 

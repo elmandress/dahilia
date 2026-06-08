@@ -4,10 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import type { Product, Discount } from '@/lib/types'
-import { getEffectivePrice, getFinalPrice, resolveDiscountPercent, formatPrice, getPrimaryPhoto, getScarcity, BLUR_DATA_URL } from '@/lib/types'
+import { getEffectivePrice, getFinalPrice, resolveDiscountPercent, getPrimaryPhoto, getScarcity, BLUR_DATA_URL } from '@/lib/types'
 import { useCart } from './CartProvider'
 import { FavoriteButton } from './FavoriteButton'
 import { dahila, Badge } from './ui/Primitives'
+import { PriceBlock } from './ui/PriceBlock'
 
 export function ProductCard({
   product,
@@ -164,21 +165,7 @@ export function ProductCard({
           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
         }}>{product.name}</span>
-        {hasDiscount ? (
-          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', whiteSpace: 'nowrap' }}>
-            <span style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500, color: '#B6314A' }}>
-              {formatPrice(finalPrice)}
-            </span>
-            <span style={{ fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500, textDecoration: 'line-through' }}>
-              {formatPrice(listPrice)}
-            </span>
-          </span>
-        ) : (
-          <span style={{
-            fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 400, color: dahila.ink900,
-            whiteSpace: 'nowrap',
-          }}>{formatPrice(finalPrice)}</span>
-        )}
+        <PriceBlock list={listPrice} final={finalPrice} size="sm" align="end" />
       </div>
 
       {/* Colour swatches — a glance at the palette without opening the piece. */}

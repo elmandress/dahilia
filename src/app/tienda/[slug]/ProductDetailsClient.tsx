@@ -10,7 +10,8 @@ import { SizeGuide } from '@/components/SizeGuide'
 import { ShareButton } from '@/components/ShareButton'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import type { Product, Discount } from '@/lib/types'
-import { getEffectivePrice, formatPrice, getPrimaryPhoto, getScarcity } from '@/lib/types'
+import { getEffectivePrice, getPrimaryPhoto, getScarcity } from '@/lib/types'
+import { PriceBlock } from '@/components/ui/PriceBlock'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 
 export function ProductDetailsClient({
@@ -126,22 +127,7 @@ export function ProductDetailsClient({
               color: dahila.ink900, margin: '10px 0 4px', letterSpacing: '-0.02em', lineHeight: 1.1,
             }}>{product.name}</h1>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-              {isSoldOut ? (
-                <span style={{ fontFamily: dahila.fontSans, fontSize: 16, fontWeight: 400, color: dahila.ink500 }}>Agotado</span>
-              ) : hasDiscount ? (
-                <>
-                  <span style={{ fontFamily: dahila.fontSans, fontSize: 18, fontWeight: 500, color: '#B6314A' }}>
-                    {formatPrice(finalPrice)}
-                  </span>
-                  <span style={{ fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink500, textDecoration: 'line-through' }}>
-                    {formatPrice(listPrice)}
-                  </span>
-                </>
-              ) : (
-                <span style={{ fontFamily: dahila.fontSans, fontSize: 16, fontWeight: 400, color: dahila.ink900 }}>
-                  {formatPrice(finalPrice)}
-                </span>
-              )}
+              <PriceBlock list={listPrice} final={finalPrice} size="md" soldOut={isSoldOut} />
             </div>
 
             {/* Honest scarcity — only shown when there's something true to say. */}
@@ -350,20 +336,7 @@ export function ProductDetailsClient({
       {canBuy && (
         <div className="pdp-sticky-bar">
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-            {hasDiscount ? (
-              <>
-                <span style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 600, color: '#B6314A' }}>
-                  {formatPrice(finalPrice)}
-                </span>
-                <span style={{ fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500, textDecoration: 'line-through' }}>
-                  {formatPrice(listPrice)}
-                </span>
-              </>
-            ) : (
-              <span style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 600, color: dahila.ink900 }}>
-                {formatPrice(finalPrice)}
-              </span>
-            )}
+            <PriceBlock list={listPrice} final={finalPrice} size="sm" align="end" />
           </div>
           <button
             onClick={handleAdd}
