@@ -127,6 +127,9 @@ INSERT INTO site_settings (key, value) VALUES
 
   -- Size guide note + Información page blocks (all editable from the admin)
   ('size_guide_note',    ''),
+  -- Short shipping line surfaced on the product page and cart (long version
+  -- lives in info_shipping). Seeded with a sensible default so it shows at once.
+  ('shipping_estimate',  'Envío a todo Uruguay · Montevideo y por agencia al interior'),
   ('info_shipping',      ''),
   ('info_returns',       ''),
   ('info_care',          ''),

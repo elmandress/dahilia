@@ -76,7 +76,7 @@ export default async function ProductPage({
       .eq('slug', slug)
       .maybeSingle(),
     supabase.from('discounts').select('*').eq('active', true),
-    supabase.from('site_settings').select('key, value').in('key', ['size_guide_note', 'contact_whatsapp_url']),
+    supabase.from('site_settings').select('key, value').in('key', ['size_guide_note', 'contact_whatsapp_url', 'shipping_estimate']),
   ])
 
   const product = data as Product | null
@@ -88,6 +88,7 @@ export default async function ProductPage({
   const discounts = (discountData ?? []) as Discount[]
   const sizeGuideNote = (settingsData ?? []).find((r) => r.key === 'size_guide_note')?.value as string | undefined
   const whatsappUrl = ((settingsData ?? []).find((r) => r.key === 'contact_whatsapp_url')?.value as string | undefined) || 'https://wa.me/59894605015'
+  const shippingEstimate = (settingsData ?? []).find((r) => r.key === 'shipping_estimate')?.value as string | undefined
 
   if (!product) {
     notFound()
@@ -195,6 +196,7 @@ export default async function ProductPage({
         discounts={discounts}
         sizeGuideNote={sizeGuideNote}
         whatsappUrl={whatsappUrl}
+        shippingEstimate={shippingEstimate}
       />
     </div>
   )

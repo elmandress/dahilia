@@ -20,6 +20,7 @@ export function ProductDetailsClient({
   discounts = [],
   sizeGuideNote,
   whatsappUrl = 'https://wa.me/59894605015',
+  shippingEstimate,
 }: {
   product: Product
   discountPercent?: number
@@ -27,6 +28,7 @@ export function ProductDetailsClient({
   discounts?: Discount[]
   sizeGuideNote?: string
   whatsappUrl?: string
+  shippingEstimate?: string
 }) {
   const router = useRouter()
   const { addToCart } = useCart()
@@ -325,7 +327,8 @@ export function ProductDetailsClient({
               <Icon name="flower" size={16} color={dahila.ink500}/> Tejido a mano en Montevideo
             </li>
             <li style={liStyle}>
-              <Icon name="package" size={16} color={dahila.ink500}/> Envío a todo Uruguay
+              <Icon name="package" size={16} color={dahila.ink500}/>
+              {shippingEstimate && shippingEstimate.trim() ? shippingEstimate : 'Envío a todo Uruguay'}
             </li>
             {(product.lead_time_weeks_min || product.lead_time_weeks_max) && (
               <li style={liStyle}>

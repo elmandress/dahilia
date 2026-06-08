@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
-import type { CartItem, Product } from '@/lib/types'
+import type { CartItem, Product, Discount } from '@/lib/types'
 import { getFinalPrice } from '@/lib/types'
 
 type CartItemWithProduct = CartItem & { product: Product }
@@ -10,6 +10,10 @@ interface CartContextType {
   items: CartItemWithProduct[]
   cartCount: number
   cartTotal: number
+  /** Active batch/category discount rules, so every cart view prices identically. */
+  discounts: Discount[]
+  /** Short CMS shipping line, shown as reassurance in the drawer/cart. */
+  shippingEstimate: string
   hasMounted: boolean
   isLoading: boolean
   drawerOpen: boolean
@@ -45,8 +49,19 @@ function pingOtherTabs() {
   }
 }
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({
+  children,
+  initialDiscounts = [],
+  shippingEstimate = '',
+}: {
+  children: React.ReactNode
+  initialDiscounts?: Discount[]
+  shippingEstimate?: string
+}) {
   const [items, setItems] = useState<CartItemWithProduct[]>([])
+  // Seeded from the server layout so the very first paint already prices with
+  // batch/category rules — no flash of an un-discounted total.
+  const [discounts] = useState<Discount[]>(initialDiscounts)
   const [isLoading, setIsLoading] = useState(true)
   // Avoid hydration mismatch: the badge depends on the cart, which is only known
   // after the client has called the API. Until then, render as if empty.
@@ -166,17 +181,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const cartCount = items.reduce((sum, item) => sum + item.qty, 0)
-  // Cart total uses the per-product discount baked into the joined product row.
-  // Batch/category discounts aren't applied here (they're a storefront concern);
-  // final pricing is reconfirmed with the customer over WhatsApp anyway.
+  // Cart total applies BOTH the per-product discount and any active batch/
+  // category rule (best wins, via getFinalPrice) so the total the shopper sees
+  // matches the price shown across the store, card, and PDP.
   const cartTotal = items.reduce((sum, item) => {
     if (!item.product) return sum
-    return sum + (getFinalPrice(item.product, item.size) * item.qty)
+    return sum + (getFinalPrice(item.product, item.size, discounts) * item.qty)
   }, 0)
 
   return (
     <CartContext.Provider value={{
-      items, cartCount, cartTotal, hasMounted, isLoading,
+      items, cartCount, cartTotal, discounts, shippingEstimate, hasMounted, isLoading,
       drawerOpen, openDrawer, closeDrawer, refresh,
       addToCart, updateQty, removeFromCart,
     }}>

@@ -7,6 +7,8 @@ import { BackToTop } from '@/components/BackToTop'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { SITE_URL } from '@/lib/env'
+import { createClient } from '@/lib/supabase/server'
+import type { Discount } from '@/lib/types'
 import './globals.css'
 
 export const viewport: Viewport = {
@@ -86,11 +88,23 @@ const organizationJsonLd = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Active discount rules are seeded into the cart provider so every cart view
+  // (drawer, page) prices with the same batch/category logic as the storefront.
+  // The short shipping line rides along so the drawer can reassure without an
+  // extra round-trip.
+  const supabase = await createClient()
+  const [{ data: discountData }, { data: shipData }] = await Promise.all([
+    supabase.from('discounts').select('*').eq('active', true),
+    supabase.from('site_settings').select('value').eq('key', 'shipping_estimate').maybeSingle(),
+  ])
+  const discounts = (discountData ?? []) as Discount[]
+  const shippingEstimate = (shipData?.value as string | undefined) ?? ''
+
   return (
     <html lang="es-UY" className={`${fraunces.variable} ${inter.variable}`}>
       <head>
@@ -103,7 +117,7 @@ export default function RootLayout({
       </head>
       <body>
         <a href="#contenido" className="skip-link">Saltar al contenido</a>
-        <CartProvider>
+        <CartProvider initialDiscounts={discounts} shippingEstimate={shippingEstimate}>
           <FavoritesProvider>
             <Header />
             <main id="contenido">

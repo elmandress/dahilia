@@ -85,6 +85,7 @@ const SECTIONS = [
     description: 'Se muestra en la página "Información" (link en el footer) y donde corresponda.',
     fields: [
       { key: 'size_guide_note',  label: 'Nota de la tabla de talles', type: 'textarea' },
+      { key: 'shipping_estimate', label: 'Envío — línea corta (se muestra en producto y carrito)', type: 'text', placeholder: 'Montevideo $200 · Interior por agencia' },
       { key: 'info_shipping',    label: 'Envíos',          type: 'textarea' },
       { key: 'info_returns',     label: 'Cambios y devoluciones', type: 'textarea' },
       { key: 'info_care',        label: 'Cuidados de las prendas', type: 'textarea' },

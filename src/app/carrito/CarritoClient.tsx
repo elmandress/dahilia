@@ -15,6 +15,7 @@ interface Props {
 /** Build a clean, multi-line WhatsApp message from the cart contents. */
 function buildWhatsAppMessage(
   items: ReturnType<typeof useCart>['items'],
+  discounts: ReturnType<typeof useCart>['discounts'],
   total: number
 ): string {
   const lines: string[] = []
@@ -25,7 +26,7 @@ function buildWhatsAppMessage(
     .filter((i) => !!i.product)
     .forEach((item, idx) => {
       const list = getEffectivePrice(item.product, item.size)
-      const unit = getFinalPrice(item.product, item.size)
+      const unit = getFinalPrice(item.product, item.size, discounts)
       const subtotal = unit * item.qty
       const slug = item.product.slug
       const discounted = unit < list
@@ -48,17 +49,17 @@ function buildWhatsAppMessage(
 }
 
 export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
-  const { items, removeFromCart, updateQty, isLoading } = useCart()
+  const { items, removeFromCart, updateQty, isLoading, discounts, shippingEstimate } = useCart()
   const router = useRouter()
 
   const total = items.reduce(
-    (acc, item) => acc + (getFinalPrice(item.product, item.size) * item.qty),
+    (acc, item) => acc + (getFinalPrice(item.product, item.size, discounts) * item.qty),
     0
   )
 
   const handleCheckout = () => {
     if (typeof window === 'undefined') return
-    const message = buildWhatsAppMessage(items, total)
+    const message = buildWhatsAppMessage(items, discounts, total)
     // wa.me supports `?text=` query param. encodeURIComponent handles the rest.
     // Strip any trailing slash from the base URL so we can append cleanly.
     const base = whatsappUrl.replace(/\/+$/, '')
@@ -117,7 +118,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
         {items.filter((i) => !!i.product).map((item) => {
           const photo = getPrimaryPhoto(item.product)
           const listPrice = getEffectivePrice(item.product, item.size)
-          const price = getFinalPrice(item.product, item.size)
+          const price = getFinalPrice(item.product, item.size, discounts)
           const discounted = price < listPrice
           return (
             <div key={item.id} className="cart-row" style={{
@@ -185,7 +186,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
         justifyContent: 'center',
       }}>
         {[
-          ['truck', 'Envío a todo Uruguay'],
+          ['truck', shippingEstimate.trim() || 'Envío a todo Uruguay'],
           ['hand-heart', 'Hecho a mano'],
           ['chat-circle', 'Atención personal por WhatsApp'],
         ].map(([icon, txt]) => (

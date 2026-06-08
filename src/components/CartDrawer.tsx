@@ -18,7 +18,7 @@ import {
  */
 export function CartDrawer() {
   const {
-    items, cartTotal, drawerOpen, closeDrawer, updateQty, removeFromCart,
+    items, cartTotal, discounts, shippingEstimate, drawerOpen, closeDrawer, updateQty, removeFromCart,
   } = useCart()
   const pathname = usePathname()
   const router = useRouter()
@@ -122,7 +122,7 @@ export function CartDrawer() {
               {visibleItems.map((item) => {
                 const photo = getPrimaryPhoto(item.product)
                 const list = getEffectivePrice(item.product, item.size)
-                const price = getFinalPrice(item.product, item.size)
+                const price = getFinalPrice(item.product, item.size, discounts)
                 const discounted = price < list
                 return (
                   <div key={item.id} style={{
@@ -180,6 +180,11 @@ export function CartDrawer() {
                 <span style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total</span>
                 <span style={{ fontFamily: dahila.fontDisplay, fontSize: 22, color: dahila.ink900 }}>{formatPrice(cartTotal)}</span>
               </div>
+              {shippingEstimate.trim() && (
+                <p style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700, margin: 0 }}>
+                  <Icon name="truck" size={14} color={dahila.ink500} /> {shippingEstimate}
+                </p>
+              )}
               <p style={{ fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500, margin: 0 }}>
                 Coordinás envío y pago con Anush por WhatsApp.
               </p>
