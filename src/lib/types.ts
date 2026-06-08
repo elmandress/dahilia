@@ -109,6 +109,7 @@ export interface CustomOrder {
   message: string | null;
   status: 'new' | 'replied' | 'in_progress' | 'done' | 'cancelled';
   admin_notes: string | null;
+  tracking_code: string | null;
   created_at: string;
   updated_at: string;
 }

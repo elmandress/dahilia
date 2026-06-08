@@ -174,6 +174,9 @@ export default function EncargosPage() {
                       {new Date(order.created_at).toLocaleDateString('es-UY', {
                         day: '2-digit', month: 'short', year: 'numeric',
                       })}
+                      {order.tracking_code && (
+                        <> · <span style={{ fontFamily: 'monospace', color: '#555' }}>{order.tracking_code}</span></>
+                      )}
                     </div>
                   </div>
                   <span className={`admin-badge ${order.status}`}>

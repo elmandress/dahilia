@@ -14,6 +14,7 @@ export default function EncargoForm() {
   const [whatsapp, setWhatsapp] = useState('')
   const [message, setMessage] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [trackingCode, setTrackingCode] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -58,6 +59,34 @@ export default function EncargoForm() {
           ))}
         </ol>
 
+        {/* Tracking code — so the customer can check the status later. */}
+        {trackingCode && (
+          <div style={{
+            background: dahila.cream100, borderRadius: 12, padding: '18px 20px',
+            margin: '0 auto 28px', maxWidth: 420,
+          }}>
+            <div style={{ fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: dahila.ink500, marginBottom: 6 }}>
+              Tu código de seguimiento
+            </div>
+            <div style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 26, letterSpacing: '0.08em', color: dahila.ink900 }}>
+              {trackingCode}
+            </div>
+            <p style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700, margin: '8px 0 0', lineHeight: 1.5 }}>
+              Guardalo. Con este código podés ver el estado de tu encargo cuando quieras.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push(`/encargo/estado?codigo=${encodeURIComponent(trackingCode)}`)}
+              style={{
+                marginTop: 12, background: 'transparent', border: 'none', cursor: 'pointer',
+                fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600, textDecoration: 'underline', padding: 0,
+              }}
+            >
+              Ver el estado de mi encargo →
+            </button>
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
           <a
             href={`https://wa.me/59894605015?text=${waText}`}
@@ -92,6 +121,7 @@ export default function EncargoForm() {
     startTransition(async () => {
       const res = await submitEncargo(fd)
       if (res.ok) {
+        setTrackingCode(res.code ?? null)
         setSubmitted(true)
       } else {
         setError(res.error || 'No se pudo enviar el encargo.')
@@ -110,6 +140,12 @@ export default function EncargoForm() {
         <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: 0 }}>
           Te respondo cuanto antes con un boceto, los materiales que tengo y el presupuesto.
         </p>
+        <button type="button" onClick={() => router.push('/encargo/estado')} style={{
+          alignSelf: 'flex-start', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+          fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600, textDecoration: 'underline',
+        }}>
+          ¿Ya hiciste un encargo? Seguí su estado con tu código →
+        </button>
       </div>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }} noValidate>

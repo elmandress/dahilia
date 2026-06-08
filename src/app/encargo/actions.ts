@@ -6,6 +6,16 @@ import { createClient } from '@/lib/supabase/server'
 export interface EncargoSubmission {
   ok: boolean
   error?: string
+  /** Short tracking code the customer can use at /encargo/estado. */
+  code?: string
+}
+
+// Human-friendly code: no ambiguous chars (0/O, 1/I), grouped like DAH-7K2Q.
+function makeTrackingCode(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let s = ''
+  for (let i = 0; i < 6; i++) s += alphabet[Math.floor(Math.random() * alphabet.length)]
+  return `DAH-${s.slice(0, 3)}${s.slice(3)}`
 }
 
 // Crude in-process rate limiter. Survives within a single server instance only;
@@ -92,6 +102,7 @@ export async function submitEncargo(form: FormData): Promise<EncargoSubmission> 
 
   try {
     const supabase = await createClient()
+    const code = makeTrackingCode()
     const { error } = await supabase.from('custom_orders').insert({
       customer_name: name,
       customer_email: email,
@@ -100,14 +111,68 @@ export async function submitEncargo(form: FormData): Promise<EncargoSubmission> 
       size: talle || null,
       message: message || null,
       status: 'new',
+      tracking_code: code,
     })
     if (error) {
+      // If the tracking_code column doesn't exist yet (migration not run), retry
+      // without it so the encargo still saves — the customer just won't get a code.
+      const missingColumn = typeof error.message === 'string' && /tracking_code/.test(error.message)
+      if (missingColumn) {
+        const retry = await supabase.from('custom_orders').insert({
+          customer_name: name, customer_email: email, whatsapp: whatsapp || null,
+          garment_type: tipo, size: talle || null, message: message || null, status: 'new',
+        })
+        if (retry.error) {
+          console.error('encargo insert error (retry)', retry.error)
+          return { ok: false, error: 'No pudimos guardar tu encargo. Intentá de nuevo.' }
+        }
+        return { ok: true }
+      }
       console.error('encargo insert error', error)
       return { ok: false, error: 'No pudimos guardar tu encargo. Intentá de nuevo.' }
     }
-    return { ok: true }
+    return { ok: true, code }
   } catch (e) {
     console.error('encargo unexpected error', e)
     return { ok: false, error: 'Error inesperado. Intentá de nuevo en un momento.' }
+  }
+}
+
+export type EncargoStatus = 'new' | 'replied' | 'in_progress' | 'done' | 'cancelled'
+
+export interface EncargoStatusResult {
+  found: boolean
+  status?: EncargoStatus
+  name?: string
+  createdAt?: string
+  updatedAt?: string
+  error?: string
+}
+
+// Public status lookup by tracking code. Uses the SECURITY DEFINER RPC
+// (get_order_status) so the anon client only ever sees the safe fields.
+export async function lookupEncargo(rawCode: string): Promise<EncargoStatusResult> {
+  const code = clean(rawCode, 16).toUpperCase()
+  if (code.length < 6) return { found: false, error: 'Ingresá un código válido (ej. DAH-AB2CDE).' }
+
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase.rpc('get_order_status', { p_code: code })
+    if (error) {
+      console.error('lookupEncargo rpc error', error)
+      return { found: false, error: 'No pudimos buscar tu encargo ahora. Probá de nuevo en un momento.' }
+    }
+    const row = Array.isArray(data) ? data[0] : data
+    if (!row) return { found: false }
+    return {
+      found: true,
+      status: row.status as EncargoStatus,
+      name: row.customer_name as string,
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string,
+    }
+  } catch (e) {
+    console.error('lookupEncargo unexpected', e)
+    return { found: false, error: 'Error inesperado. Probá de nuevo.' }
   }
 }
