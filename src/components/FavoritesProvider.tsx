@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import type { Product } from '@/lib/types'
+import { Icon } from './ui/Primitives'
 
 export interface FavoriteItem {
   id: string
@@ -43,6 +44,9 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<FavoriteItem[]>([])
   const [ids, setIds] = useState<Set<string>>(new Set())
   const [hasMounted, setHasMounted] = useState(false)
+  // Brief confirmation when a piece is saved (added, not removed).
+  const [toast, setToast] = useState(false)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasFetchedRef = useRef(false)
 
   const apply = useCallback((next: FavoriteItem[]) => {
@@ -90,6 +94,14 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   const isFavorite = useCallback((productId: string) => ids.has(productId), [ids])
 
+  const showToast = useCallback(() => {
+    setToast(true)
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(false), 2600)
+  }, [])
+
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current) }, [])
+
   const toggle = useCallback(async (productId: string) => {
     const wasFav = ids.has(productId)
     // Optimistic: flip the heart instantly so it feels native; reconcile with
@@ -99,6 +111,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       if (wasFav) next.delete(productId); else next.add(productId)
       return next
     })
+    if (!wasFav) showToast()
     try {
       const res = wasFav
         ? await fetch(`/api/favorites?productId=${encodeURIComponent(productId)}`, { method: 'DELETE', credentials: 'include' })
@@ -120,7 +133,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         return next
       })
     }
-  }, [ids, apply])
+  }, [ids, apply, showToast])
 
   const refresh = useCallback(async () => { await fetchFavorites() }, [fetchFavorites])
 
@@ -129,7 +142,39 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       items, ids, count: ids.size, hasMounted, isFavorite, toggle, refresh,
     }}>
       {children}
+      <FavoriteToast show={toast} />
     </FavoritesContext.Provider>
+  )
+}
+
+/**
+ * Small, non-blocking confirmation that a piece was saved. Bottom-centre so it
+ * sits in the thumb zone on mobile and never covers the corner heart. Polite
+ * live region so screen readers announce it without stealing focus.
+ */
+function FavoriteToast({ show }: { show: boolean }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        position: 'fixed', left: '50%', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 22px)',
+        transform: `translateX(-50%) translateY(${show ? '0' : '14px'})`,
+        zIndex: 130,
+        display: 'inline-flex', alignItems: 'center', gap: 10,
+        background: '#1F1A1B', color: '#fff',
+        padding: '11px 16px', borderRadius: 999,
+        fontFamily: 'var(--font-sans), sans-serif', fontSize: 13,
+        boxShadow: '0 12px 30px -12px rgba(31,26,27,0.5)',
+        opacity: show ? 1 : 0,
+        pointerEvents: show ? 'auto' : 'none',
+        transition: 'opacity 200ms cubic-bezier(0.22,0.61,0.36,1), transform 200ms cubic-bezier(0.22,0.61,0.36,1)',
+      }}
+    >
+      <Icon name="heart" weight="fill" size={16} color="#B6314A" />
+      Guardado en favoritos
+      <a href="/favoritos" style={{ color: '#fff', textDecoration: 'underline', textUnderlineOffset: 2 }}>Ver</a>
+    </div>
   )
 }
 
