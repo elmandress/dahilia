@@ -33,6 +33,7 @@ export interface Product {
   is_custom_only: boolean;
   discount_percent: number;   // 0-90, per-product discount
   discount_active: boolean;
+  collection_id: string | null;
   created_at: string;
   updated_at: string;
   // Joined data
@@ -40,6 +41,19 @@ export interface Product {
   media?: ProductMedia[];
   sizes?: ProductSize[];
   colors?: Color[];
+  collection?: Collection;
+}
+
+export interface Collection {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  cover_url: string | null;
+  published: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Discount {

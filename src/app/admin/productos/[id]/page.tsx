@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Category, Color, Product, ProductMedia, ProductSize, ProductColor } from '@/lib/types'
+import type { Category, Color, Collection, Product, ProductMedia, ProductSize, ProductColor } from '@/lib/types'
 
 type LoadedProductColor = Partial<ProductColor> & { color_id?: string; color?: { id: string } }
 type LoadedProduct = Omit<Partial<Product>, 'colors'> & {
@@ -52,6 +52,8 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [categories, setCategories] = useState<Category[]>([])
+  const [collections, setCollections] = useState<Collection[]>([])
+  const [collectionId, setCollectionId] = useState('')
   const [colors, setColors] = useState<Color[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -93,6 +95,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
     setSlug(p.slug || '')
     setDescription(p.description || '')
     setCategoryId(p.category_id || p.category?.id || '')
+    setCollectionId(p.collection_id || '')
     setBadge(p.badge || '')
     setStatus((p.status as 'draft' | 'active' | 'soldout') || 'draft')
     setBasePriceUyu(p.base_price_uyu ? String(p.base_price_uyu) : '')
@@ -144,13 +147,16 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
     const initPage = async () => {
       const supabase = createClient()
 
-      const [catRes, colRes] = await Promise.all([
+      const [catRes, colRes, collRes] = await Promise.all([
         supabase.from('categories').select('*').order('sort_order'),
         supabase.from('colors').select('*').order('sort_order'),
+        supabase.from('collections').select('*').order('sort_order'),
       ])
 
       setCategories((catRes.data ?? []) as Category[])
       setColors((colRes.data ?? []) as Color[])
+      // Collections are optional (table may not exist yet) — ignore errors.
+      if (collRes.data) setCollections(collRes.data as Collection[])
 
       try {
         const { data: productData, error: productErr } = await supabase
@@ -349,6 +355,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           slug: slug.trim(),
           description: description.trim() || null,
           category_id: categoryId || null,
+          collection_id: collectionId || null,
           badge: badge.trim() || null,
           status,
           base_price_uyu: basePriceUyu ? parseInt(basePriceUyu) : null,
@@ -563,6 +570,18 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                 ))}
               </select>
             </div>
+
+            {collections.length > 0 && (
+              <div className="admin-field">
+                <label>Colección</label>
+                <select value={collectionId} onChange={(e) => setCollectionId(e.target.value)}>
+                  <option value="">Sin colección</option>
+                  {collections.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="admin-field">
               <label>Etiqueta / Badge</label>

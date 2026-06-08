@@ -13,11 +13,12 @@ import { formatPrice } from '@/lib/types'
 interface Suggestion { slug: string; name: string; photo: string; price: number; soldout: boolean }
 
 const NAV_ITEMS = [
-  { id: '/tienda',   label: 'Tienda', mega: true },
-  { id: '/ofertas',  label: 'Ofertas', accent: true },
-  { id: '/encargo',  label: 'A medida' },
-  { id: '/atelier',  label: 'Sobre nosotros' },
-  { id: '/contacto', label: 'Contacto' },
+  { id: '/tienda',      label: 'Tienda', mega: true },
+  { id: '/colecciones', label: 'Colecciones' },
+  { id: '/ofertas',     label: 'Ofertas', accent: true },
+  { id: '/encargo',     label: 'A medida' },
+  { id: '/atelier',     label: 'Sobre nosotros' },
+  { id: '/contacto',    label: 'Contacto' },
 ]
 
 // Categories shown in the Tienda mega-menu. Static on purpose: the catalogue

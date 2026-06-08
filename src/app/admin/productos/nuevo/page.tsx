@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Category, Color } from '@/lib/types'
+import type { Category, Color, Collection } from '@/lib/types'
 
 interface SizeEntry {
   tempId: string
@@ -39,6 +39,8 @@ export default function NuevoProductoPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [categories, setCategories] = useState<Category[]>([])
+  const [collections, setCollections] = useState<Collection[]>([])
+  const [collectionId, setCollectionId] = useState('')
   const [colors, setColors] = useState<Color[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -76,12 +78,14 @@ export default function NuevoProductoPage() {
 
   const loadFormData = useCallback(async () => {
     const supabase = createClient()
-    const [catRes, colRes] = await Promise.all([
+    const [catRes, colRes, collRes] = await Promise.all([
       supabase.from('categories').select('*').order('sort_order'),
       supabase.from('colors').select('*').order('sort_order'),
+      supabase.from('collections').select('*').order('sort_order'),
     ])
     setCategories((catRes.data ?? []) as Category[])
     setColors((colRes.data ?? []) as Color[])
+    if (collRes.data) setCollections(collRes.data as Collection[])
   }, [])
 
   useEffect(() => {
@@ -263,6 +267,7 @@ export default function NuevoProductoPage() {
           slug: slug.trim(),
           description: description.trim() || null,
           category_id: categoryId || null,
+          collection_id: collectionId || null,
           badge: badge.trim() || null,
           status,
           base_price_uyu: basePriceUyu ? parseInt(basePriceUyu) : null,
@@ -603,6 +608,17 @@ export default function NuevoProductoPage() {
                 ))}
               </select>
             </div>
+            {collections.length > 0 && (
+              <div className="admin-field" style={{ marginTop: 12 }}>
+                <label>Colección</label>
+                <select value={collectionId} onChange={(e) => setCollectionId(e.target.value)}>
+                  <option value="">Sin colección</option>
+                  {collections.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Badge */}
