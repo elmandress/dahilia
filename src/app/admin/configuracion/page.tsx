@@ -17,6 +17,17 @@ const SECTIONS = [
     ],
   },
   {
+    title: 'Barra de promoción (arriba de todo)',
+    description: 'La franja superior del sitio. Usala para anuncios cortos: "Envío gratis esta semana", "Nueva colección", etc. Podés ponerle un link y cambiarle los colores.',
+    fields: [
+      { key: 'promo_bar_enabled', label: '¿Mostrar la barra?', type: 'toggle' },
+      { key: 'promo_bar_text',    label: 'Texto', type: 'text', placeholder: 'Hecho a mano en Uruguay · Envío a todo el país · A medida' },
+      { key: 'promo_bar_link',    label: 'Link (opcional)', type: 'text', placeholder: '/ofertas' },
+      { key: 'promo_bar_bg',      label: 'Color de fondo', type: 'color' },
+      { key: 'promo_bar_fg',      label: 'Color del texto', type: 'color' },
+    ],
+  },
+  {
     title: 'Tira de proceso',
     description: 'Las 3 columnas que aparecen abajo de "New in".',
     fields: [
@@ -26,6 +37,19 @@ const SECTIONS = [
       { key: 'process_2_body',  label: 'Col 2 — Texto',  type: 'textarea' },
       { key: 'process_3_title', label: 'Col 3 — Título', type: 'text' },
       { key: 'process_3_body',  label: 'Col 3 — Texto',  type: 'textarea' },
+    ],
+  },
+  {
+    title: 'Banner del home (promoción / destacado)',
+    description: 'Una sección con foto, texto y botón que aparece en la página principal. Prendela cuando quieras destacar algo (una colección, una promo, un anuncio). Si la apagás, no se muestra.',
+    fields: [
+      { key: 'home_banner_enabled',   label: '¿Mostrar el banner?', type: 'toggle' },
+      { key: 'home_banner_eyebrow',   label: 'Antetítulo (opcional)', type: 'text', placeholder: 'Nueva colección' },
+      { key: 'home_banner_title',     label: 'Título', type: 'text', placeholder: 'Invierno 2026' },
+      { key: 'home_banner_body',      label: 'Texto', type: 'textarea' },
+      { key: 'home_banner_cta_label', label: 'Texto del botón', type: 'text', placeholder: 'Ver la colección' },
+      { key: 'home_banner_cta_link',  label: 'Link del botón', type: 'text', placeholder: '/tienda' },
+      { key: 'home_banner_image_url', label: 'Foto', type: 'image' },
     ],
   },
   {
@@ -86,6 +110,9 @@ const SECTIONS = [
     fields: [
       { key: 'size_guide_note',  label: 'Nota de la tabla de talles', type: 'textarea' },
       { key: 'shipping_estimate', label: 'Envío — línea corta (se muestra en producto y carrito)', type: 'text', placeholder: 'Montevideo $200 · Interior por agencia' },
+      { key: 'pdp_trust_1', label: 'Garantía 1 (en cada producto)', type: 'text', placeholder: 'Envío a todo Uruguay' },
+      { key: 'pdp_trust_2', label: 'Garantía 2 (en cada producto)', type: 'text', placeholder: 'Hecho a mano' },
+      { key: 'pdp_trust_3', label: 'Garantía 3 (en cada producto)', type: 'text', placeholder: 'Coordinás por WhatsApp' },
       { key: 'info_shipping',    label: 'Envíos',          type: 'textarea' },
       { key: 'info_returns',     label: 'Cambios y devoluciones', type: 'textarea' },
       { key: 'info_care',        label: 'Cuidados de las prendas', type: 'textarea' },
@@ -95,7 +122,7 @@ const SECTIONS = [
   },
 ] as const
 
-type FieldType = 'text' | 'textarea' | 'image' | 'hero'
+type FieldType = 'text' | 'textarea' | 'image' | 'hero' | 'toggle' | 'color'
 
 // Shared upload helper used by both the simple image field and the hero banner.
 async function uploadToMedia(file: File): Promise<string> {
@@ -457,6 +484,37 @@ export default function ConfiguracionAdminPage() {
                         rows={3}
                         onChange={(e) => update(field.key, e.target.value)}
                       />
+                    )}
+                    {fieldType === 'toggle' && (
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14 }}>
+                        <input
+                          id={field.key}
+                          type="checkbox"
+                          checked={value !== 'false'}
+                          onChange={(e) => update(field.key, e.target.checked ? 'true' : 'false')}
+                          style={{ width: 18, height: 18 }}
+                        />
+                        {value !== 'false' ? 'Sí, mostrar' : 'No mostrar'}
+                      </label>
+                    )}
+                    {fieldType === 'color' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <input
+                          type="color"
+                          value={/^#[0-9a-fA-F]{6}$/.test(value) ? value : '#1F1A1B'}
+                          onChange={(e) => update(field.key, e.target.value)}
+                          style={{ width: 44, height: 36, padding: 0, border: '1px solid #ddd', borderRadius: 6, cursor: 'pointer' }}
+                          aria-label={field.label}
+                        />
+                        <input
+                          id={field.key}
+                          type="text"
+                          value={value}
+                          placeholder="#1F1A1B"
+                          onChange={(e) => update(field.key, e.target.value)}
+                          style={{ flex: '1 1 140px', minWidth: 0 }}
+                        />
+                      </div>
                     )}
                     {fieldType === 'image' && (
                       <ImageUploader value={value} onChange={(v) => update(field.key, v)} />

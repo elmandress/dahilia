@@ -22,6 +22,7 @@ export function ProductDetailsClient({
   sizeGuideNote,
   whatsappUrl = 'https://wa.me/59894605015',
   shippingEstimate,
+  trustItems,
 }: {
   product: Product
   discountPercent?: number
@@ -30,7 +31,13 @@ export function ProductDetailsClient({
   sizeGuideNote?: string
   whatsappUrl?: string
   shippingEstimate?: string
+  trustItems?: { icon: string; text: string }[]
 }) {
+  const trust = trustItems && trustItems.length > 0 ? trustItems : [
+    { icon: 'truck', text: 'Envío a todo Uruguay' },
+    { icon: 'hand-heart', text: 'Hecho a mano' },
+    { icon: 'whatsapp-logo', text: 'Coordinás por WhatsApp' },
+  ]
   const router = useRouter()
   const { addToCart } = useCart()
   // Default to the first AVAILABLE size, not just the first one.
@@ -284,17 +291,13 @@ export function ProductDetailsClient({
             display: 'flex', flexWrap: 'wrap', gap: 12,
             paddingTop: 14, marginTop: 2,
           }}>
-            {[
-              ['truck', 'Envío a todo Uruguay'],
-              ['hand-heart', 'Hecho a mano'],
-              ['whatsapp-logo', 'Coordinás por WhatsApp'],
-            ].map(([icon, txt]) => (
-              <span key={txt} style={{
+            {trust.map(({ icon, text }) => (
+              <span key={text} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500,
                 letterSpacing: '0.02em',
               }}>
-                <Icon name={icon} size={14} color={dahila.ink500} /> {txt}
+                <Icon name={icon} size={14} color={dahila.ink500} /> {text}
               </span>
             ))}
           </div>

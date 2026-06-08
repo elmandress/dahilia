@@ -246,6 +246,8 @@ a.prose-link:hover {
   .trust-bar        { grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
   .process          { grid-template-columns: 1fr !important; padding: 32px 28px !important; gap: 24px !important; }
   .split            { grid-template-columns: 1fr !important; gap: 28px !important; }
+  .home-banner      { grid-template-columns: 1fr !important; }
+  .home-banner-img  { min-height: 240px !important; }
   .hero-content     { padding: 0 24px !important; }
   .producto-split   { grid-template-columns: 1fr !important; gap: 24px !important; }
   .producto-detail  { position: static !important; }

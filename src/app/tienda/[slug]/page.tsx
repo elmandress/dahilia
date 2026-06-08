@@ -76,7 +76,7 @@ export default async function ProductPage({
       .eq('slug', slug)
       .maybeSingle(),
     supabase.from('discounts').select('*').eq('active', true),
-    supabase.from('site_settings').select('key, value').in('key', ['size_guide_note', 'contact_whatsapp_url', 'shipping_estimate']),
+    supabase.from('site_settings').select('key, value').in('key', ['size_guide_note', 'contact_whatsapp_url', 'shipping_estimate', 'pdp_trust_1', 'pdp_trust_2', 'pdp_trust_3']),
   ])
 
   const product = data as Product | null
@@ -89,6 +89,12 @@ export default async function ProductPage({
   const sizeGuideNote = (settingsData ?? []).find((r) => r.key === 'size_guide_note')?.value as string | undefined
   const whatsappUrl = ((settingsData ?? []).find((r) => r.key === 'contact_whatsapp_url')?.value as string | undefined) || 'https://wa.me/59894605015'
   const shippingEstimate = (settingsData ?? []).find((r) => r.key === 'shipping_estimate')?.value as string | undefined
+  const getSetting = (k: string) => (settingsData ?? []).find((r) => r.key === k)?.value as string | undefined
+  const trustItems = [
+    { icon: 'truck', text: getSetting('pdp_trust_1')?.trim() || 'Envío a todo Uruguay' },
+    { icon: 'hand-heart', text: getSetting('pdp_trust_2')?.trim() || 'Hecho a mano' },
+    { icon: 'whatsapp-logo', text: getSetting('pdp_trust_3')?.trim() || 'Coordinás por WhatsApp' },
+  ].filter((t) => t.text.length > 0)
 
   if (!product) {
     notFound()
@@ -197,6 +203,7 @@ export default async function ProductPage({
         sizeGuideNote={sizeGuideNote}
         whatsappUrl={whatsappUrl}
         shippingEstimate={shippingEstimate}
+        trustItems={trustItems}
       />
     </div>
   )

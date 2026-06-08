@@ -30,7 +30,15 @@ const MEGA_CATEGORIES = [
   { slug: 'sets',       label: 'Sets' },
 ]
 
-export function Header() {
+export interface PromoBar {
+  enabled: boolean
+  text: string
+  link: string
+  bg: string
+  fg: string
+}
+
+export function Header({ promo }: { promo?: PromoBar }) {
   const [open, setOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [searchVal, setSearchVal] = useState('')
@@ -116,17 +124,29 @@ export function Header() {
     }
   }
 
+  // Promo bar is CMS-driven; fall back to the brand benefits line. Hidden only
+  // when the owner explicitly turns it off or clears the text.
+  const promoText = (promo?.text ?? '').trim() || 'Hecho a mano en Uruguay · Envío a todo el país · A medida'
+  const promoEnabled = promo?.enabled !== false && promoText.length > 0
+  const promoBg = (promo?.bg ?? '').trim() || dahila.ink900
+  const promoFg = (promo?.fg ?? '').trim() || '#fff'
+  const promoLink = (promo?.link ?? '').trim()
+
   return (
     <>
-      {/* Announcement / benefits bar */}
-      <div className="announce-bar" role="note" style={{
-        background: dahila.ink900, color: '#fff',
-        textAlign: 'center', padding: '8px 16px',
-        fontFamily: dahila.fontSans, fontSize: 11.5, fontWeight: 400,
-        letterSpacing: '0.08em', textTransform: 'uppercase',
-      }}>
-        Hecho a mano en Uruguay · Envío a todo el país · A medida
-      </div>
+      {/* Announcement / promo bar — text/link/colours editable from the admin. */}
+      {promoEnabled && (
+        <div className="announce-bar" role="note" style={{
+          background: promoBg, color: promoFg,
+          textAlign: 'center', padding: '8px 16px',
+          fontFamily: dahila.fontSans, fontSize: 11.5, fontWeight: 400,
+          letterSpacing: '0.08em', textTransform: 'uppercase',
+        }}>
+          {promoLink ? (
+            <Link href={promoLink} style={{ color: promoFg, textDecoration: 'none' }}>{promoText}</Link>
+          ) : promoText}
+        </div>
+      )}
 
       <header className="site-header" style={{
         position: 'sticky', top: 0, zIndex: 50,

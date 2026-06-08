@@ -78,6 +78,8 @@ export type HomeSettings = Partial<Record<
   | 'process_2_title' | 'process_2_body'
   | 'process_3_title' | 'process_3_body'
   | 'about_eyebrow' | 'about_title' | 'about_title_em' | 'about_body' | 'about_image_url' | 'about_cta'
+  | 'home_banner_enabled' | 'home_banner_eyebrow' | 'home_banner_title' | 'home_banner_body'
+  | 'home_banner_cta_label' | 'home_banner_cta_link' | 'home_banner_image_url'
   | 'faq_1_q' | 'faq_1_a'
   | 'faq_2_q' | 'faq_2_a'
   | 'faq_3_q' | 'faq_3_a'
@@ -109,6 +111,20 @@ export function HomeClient({ products, settings, discounts = [] }: { products: P
     { t: val(settings, 'process_3_title', 'Envío incluido'),
       b: val(settings, 'process_3_body', 'A todo Uruguay. Internacionales bajo consulta.') },
   ]
+
+  // Optional promotional banner — off unless the owner turns it on and gives it
+  // a title. Editable from the admin (text, image, CTA).
+  const bannerEnabled = settings.home_banner_enabled === 'true'
+  const bannerTitle = val(settings, 'home_banner_title', '')
+  const showBanner = bannerEnabled && bannerTitle.trim().length > 0
+  const banner = {
+    eyebrow: val(settings, 'home_banner_eyebrow', ''),
+    title: bannerTitle,
+    body: val(settings, 'home_banner_body', ''),
+    ctaLabel: val(settings, 'home_banner_cta_label', 'Ver más'),
+    ctaLink: val(settings, 'home_banner_cta_link', '/tienda'),
+    image: val(settings, 'home_banner_image_url', ''),
+  }
 
   const faqItems: [string, string][] = [
     [val(settings, 'faq_1_q', '¿Cuánto tarda un encargo?'),
@@ -251,6 +267,50 @@ export function HomeClient({ products, settings, discounts = [] }: { products: P
           ))}
         </div>
       </section>
+
+      {/* PROMO BANNER — optional, editable from the admin. Image + copy + CTA. */}
+      {showBanner && (
+        <section style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
+          <div className="home-banner" style={{
+            display: 'grid', gridTemplateColumns: banner.image ? '1.1fr 1fr' : '1fr',
+            background: dahila.cream100, borderRadius: 20, overflow: 'hidden',
+            alignItems: 'stretch',
+          }}>
+            {banner.image && (
+              <div className="home-banner-img" style={{ position: 'relative', minHeight: 320 }}>
+                <Image
+                  src={banner.image}
+                  alt={banner.title}
+                  fill
+                  sizes="(max-width: 720px) 100vw, 600px"
+                  style={{ objectFit: 'cover' }}
+                />
+              </div>
+            )}
+            <div style={{
+              padding: 'clamp(32px, 5vw, 56px)',
+              display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 14,
+            }}>
+              {banner.eyebrow && <Eyebrow>{banner.eyebrow}</Eyebrow>}
+              <h2 style={{
+                fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(28px, 4vw, 40px)',
+                lineHeight: 1.1, letterSpacing: '-0.02em', color: dahila.ink900, margin: 0,
+              }}>{banner.title}</h2>
+              {banner.body && (
+                <p style={{
+                  fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7,
+                  color: dahila.ink700, margin: 0, maxWidth: 460,
+                }}>{banner.body}</p>
+              )}
+              {banner.ctaLabel && (
+                <div style={{ marginTop: 8 }}>
+                  <Button variant="primary" onClick={() => router.push(banner.ctaLink)}>{banner.ctaLabel}</Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ACCESORIOS */}
       {accesorios.length > 0 && (

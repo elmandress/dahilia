@@ -74,6 +74,22 @@ CREATE POLICY "Authenticated Delete"
 -- ============================================================
 
 INSERT INTO site_settings (key, value) VALUES
+  -- Promo bar (top strip — editable text/link/colours, on/off)
+  ('promo_bar_enabled',  'true'),
+  ('promo_bar_text',     'Hecho a mano en Uruguay · Envío a todo el país · A medida'),
+  ('promo_bar_link',     ''),
+  ('promo_bar_bg',       '#1F1A1B'),
+  ('promo_bar_fg',       '#FFFFFF'),
+
+  -- Home promo banner (off by default; the owner turns it on with a title)
+  ('home_banner_enabled',   'false'),
+  ('home_banner_eyebrow',   ''),
+  ('home_banner_title',     ''),
+  ('home_banner_body',      ''),
+  ('home_banner_cta_label', 'Ver la tienda'),
+  ('home_banner_cta_link',  '/tienda'),
+  ('home_banner_image_url', ''),
+
   -- Hero (home)
   ('hero_title',         'Tejido con tiempo.'),
   ('hero_subtitle',      'Edición a medida'),
@@ -130,6 +146,10 @@ INSERT INTO site_settings (key, value) VALUES
   -- Short shipping line surfaced on the product page and cart (long version
   -- lives in info_shipping). Seeded with a sensible default so it shows at once.
   ('shipping_estimate',  'Envío a todo Uruguay · Montevideo y por agencia al interior'),
+  -- Product-page trust strip (3 reassurance items next to the buy button)
+  ('pdp_trust_1',        'Envío a todo Uruguay'),
+  ('pdp_trust_2',        'Hecho a mano'),
+  ('pdp_trust_3',        'Coordinás por WhatsApp'),
   ('info_shipping',      ''),
   ('info_returns',       ''),
   ('info_care',          ''),

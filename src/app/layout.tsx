@@ -98,12 +98,26 @@ export default async function RootLayout({
   // The short shipping line rides along so the drawer can reassure without an
   // extra round-trip.
   const supabase = await createClient()
-  const [{ data: discountData }, { data: shipData }] = await Promise.all([
+  const [{ data: discountData }, { data: settingRows }] = await Promise.all([
     supabase.from('discounts').select('*').eq('active', true),
-    supabase.from('site_settings').select('value').eq('key', 'shipping_estimate').maybeSingle(),
+    supabase.from('site_settings').select('key, value').in('key', [
+      'shipping_estimate',
+      'promo_bar_enabled', 'promo_bar_text', 'promo_bar_link', 'promo_bar_bg', 'promo_bar_fg',
+    ]),
   ])
   const discounts = (discountData ?? []) as Discount[]
-  const shippingEstimate = (shipData?.value as string | undefined) ?? ''
+  const settings = (settingRows ?? []).reduce<Record<string, string>>(
+    (acc, r) => ({ ...acc, [r.key as string]: String(r.value ?? '') }), {}
+  )
+  const shippingEstimate = settings.shipping_estimate ?? ''
+  const promo = {
+    // Default ON unless the owner saved the literal string 'false'.
+    enabled: settings.promo_bar_enabled !== 'false',
+    text: settings.promo_bar_text ?? '',
+    link: settings.promo_bar_link ?? '',
+    bg: settings.promo_bar_bg ?? '',
+    fg: settings.promo_bar_fg ?? '',
+  }
 
   return (
     <html lang="es-UY" className={`${fraunces.variable} ${inter.variable}`}>
@@ -119,7 +133,7 @@ export default async function RootLayout({
         <a href="#contenido" className="skip-link">Saltar al contenido</a>
         <CartProvider initialDiscounts={discounts} shippingEstimate={shippingEstimate}>
           <FavoritesProvider>
-            <Header />
+            <Header promo={promo} />
             <main id="contenido">
               {children}
             </main>
