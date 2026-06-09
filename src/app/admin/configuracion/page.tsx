@@ -105,6 +105,29 @@ const SECTIONS = [
     ],
   },
   {
+    title: 'Esta semana en el taller',
+    description: 'Un bloque en el home donde Anush puede contar qué está tejiendo. Humaniza la marca sin necesitar Instagram. Si está apagado o el texto vacío, no se muestra.',
+    fields: [
+      { key: 'atelier_note_enabled',   label: '¿Mostrar esta sección?', type: 'toggle' },
+      { key: 'atelier_note_text',      label: 'Texto (en voz de Anush, estilo conversacional)', type: 'textarea', placeholder: 'Esta semana estoy terminando dos cardigans de lana merino para pedidos de julio. Si querés uno igual, escribime.' },
+      { key: 'atelier_note_cta_label', label: 'Texto del botón (opcional)', type: 'text', placeholder: 'Pedir a medida' },
+      { key: 'atelier_note_cta_link',  label: 'Link del botón (opcional)', type: 'text', placeholder: '/encargo' },
+    ],
+  },
+  {
+    title: 'Ficha de producto — pasos del proceso',
+    description: 'Un mini-stepper de 3 pasos que aparece en prendas "solo a medida" para explicar cómo funciona encargar. Reducís el miedo a pedir. Si está apagado, no se muestra.',
+    fields: [
+      { key: 'pdp_process_enabled', label: '¿Mostrar el proceso en fichas a medida?', type: 'toggle' },
+      { key: 'pdp_process_step_1_label', label: 'Paso 1 — Título', type: 'text', placeholder: 'Escribís' },
+      { key: 'pdp_process_step_1_body',  label: 'Paso 1 — Texto',  type: 'textarea', placeholder: 'Contame qué prenda querés, tu medida y colores favoritos.' },
+      { key: 'pdp_process_step_2_label', label: 'Paso 2 — Título', type: 'text', placeholder: 'Elegimos juntas' },
+      { key: 'pdp_process_step_2_body',  label: 'Paso 2 — Texto',  type: 'textarea', placeholder: 'Te muestro las lanas disponibles y confirmamos todos los detalles.' },
+      { key: 'pdp_process_step_3_label', label: 'Paso 3 — Título', type: 'text', placeholder: 'Te lo tejo' },
+      { key: 'pdp_process_step_3_body',  label: 'Paso 3 — Texto',  type: 'textarea', placeholder: 'Trabajo en tu prenda y te aviso cuando está lista para enviar.' },
+    ],
+  },
+  {
     title: 'Preguntas frecuentes',
     description: 'Las 4 preguntas que aparecen al final del home.',
     fields: [

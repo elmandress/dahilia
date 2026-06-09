@@ -191,7 +191,6 @@ export function ProductCard({
             )}
           </div>
         )}
-        {/* Lead time — shows how long the piece takes, reducing anxiety at browse time */}
         {product.lead_time_weeks_min > 0 && product.status !== 'soldout' && (
           <span style={{
             fontFamily: dahila.fontSans, fontSize: 10, color: dahila.ink500,
@@ -203,6 +202,22 @@ export function ProductCard({
           </span>
         )}
       </div>
+
+      {/* Material tag — tiny pill, solo si el producto lo tiene cargado */}
+      {product.material && (
+        <div style={{ padding: '0 2px', marginTop: 2 }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 400,
+            color: dahila.ink500, letterSpacing: '0.04em',
+            background: dahila.cream100,
+            borderRadius: 999, padding: '3px 8px',
+            border: `1px solid ${dahila.border}`,
+          }}>
+            {product.material}
+          </span>
+        </div>
+      )}
     </div>
   )
 }

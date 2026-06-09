@@ -29,6 +29,8 @@ export function ProductDetailsClient({
   makerPhoto = '',
   installmentsEnabled = false,
   installmentsLabel = '¿Querés pagar en 2 cuotas? Hablemos por WhatsApp →',
+  processEnabled = false,
+  processSteps = [],
 }: {
   product: Product
   discountPercent?: number
@@ -43,6 +45,8 @@ export function ProductDetailsClient({
   makerPhoto?: string
   installmentsEnabled?: boolean
   installmentsLabel?: string
+  processEnabled?: boolean
+  processSteps?: { icon: string; label: string; body: string }[]
 }) {
   const trust = trustItems && trustItems.length > 0 ? trustItems : [
     { icon: 'truck', text: 'Envío a todo Uruguay' },
@@ -245,8 +249,44 @@ export function ProductDetailsClient({
           )}
 
           {product.is_custom_only && (
-            <div style={{ marginTop: '1rem' }}>
-              <p style={{ marginBottom: '1rem', fontFamily: dahila.fontSans, fontSize: 14 }}>Esta pieza se realiza únicamente a medida.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Process stepper — solo si está habilitado y tiene pasos */}
+              {processEnabled && processSteps.length > 0 && (
+                <div style={{
+                  background: dahila.cream50, borderRadius: 14,
+                  padding: '18px 20px', border: `1px solid ${dahila.border}`,
+                }}>
+                  <div style={{
+                    fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.18em',
+                    textTransform: 'uppercase', color: dahila.ink500, marginBottom: 14,
+                  }}>
+                    Cómo funciona
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    {processSteps.map((step, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                        <div style={{
+                          flexShrink: 0, width: 32, height: 32, borderRadius: 999,
+                          background: dahila.cream200, display: 'flex',
+                          alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <Icon name={step.icon} size={15} color={dahila.wine600} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingTop: 6 }}>
+                          <span style={{
+                            fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
+                            color: dahila.ink900,
+                          }}>{step.label}</span>
+                          <span style={{
+                            fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 300,
+                            color: dahila.ink700, lineHeight: 1.55,
+                          }}>{step.body}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <Button variant="primary" full onClick={() => router.push('/encargo')}>Solicitar presupuesto</Button>
             </div>
           )}
@@ -409,8 +449,13 @@ export function ProductDetailsClient({
         </div>
       )}
 
-      {/* Related products — cross-sell */}
-      {related.length > 0 && (
+      {/* Related products — cross-sell con título contextual */}
+      {related.length > 0 && (() => {
+        const sameCollection = related.some((p) => p.collection_id && p.collection_id === product.collection_id)
+        const relatedTitle = sameCollection && product.collection?.name
+          ? `De la colección ${product.collection.name}`
+          : 'También tejemos'
+        return (
         <section style={{ marginTop: 88 }}>
           <h2 style={{
             fontFamily: dahila.fontDisplay, fontWeight: 300,
@@ -418,7 +463,7 @@ export function ProductDetailsClient({
             color: dahila.ink900, margin: '0 0 28px', paddingBottom: 12,
             borderBottom: `1px solid ${dahila.border}`,
           }}>
-            También te puede gustar
+            {relatedTitle}
           </h2>
           <div className="tienda-grid" style={{
             display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22, rowGap: 44,
@@ -428,7 +473,8 @@ export function ProductDetailsClient({
             ))}
           </div>
         </section>
-      )}
+        )
+      })()}
 
       <RecentlyViewed
         current={{

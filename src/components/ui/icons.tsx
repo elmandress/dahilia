@@ -17,6 +17,7 @@ export type IconName =
   | 'ruler' | 'flower' | 'package' | 'arrow-clockwise' | 'truck' | 'leaf'
   | 'hand-heart' | 'heart' | 'chat-circle' | 'check' | 'share-network' | 'caret-up'
   | 'instagram-logo' | 'whatsapp-logo' | 'envelope-simple' | 'gift' | 'star' | 'quotes'
+  | 'needle' | 'sparkle' | 'chat-text' | 'scissors'
 
 export const ICON_PATHS: Record<string, React.ReactNode> = {
   'magnifying-glass': (
@@ -183,6 +184,31 @@ export const ICON_PATHS: Record<string, React.ReactNode> = {
     <>
       <path d="M108,144H40a8,8,0,0,1-8-8V72a8,8,0,0,1,8-8h68a8,8,0,0,1,8,8v120a48,48,0,0,1-48,48" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M220,144H152a8,8,0,0,1-8-8V72a8,8,0,0,1,8-8h68a8,8,0,0,1,8,8v120a48,48,0,0,1-48,48" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  'needle': (
+    <path d="M216,32a8,8,0,0,0-8,8,8,8,0,0,1-8,8,40,40,0,0,0-27.31,10.56L43.31,188.69a16,16,0,0,0,22.63,22.63l57.37-57.38L144,184l22.06-22.06A96.32,96.32,0,0,0,192,96a8,8,0,0,1,8-8,24,24,0,0,0,24-24A8,8,0,0,0,216,32Z" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+  ),
+  'sparkle': (
+    <>
+      <path d="M172,120l-24-8-8-24-8,24-24,8,24,8,8,24,8-24Z" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M96,56l-16-5.33L74.67,35,69.33,50.67,53.33,56l16,5.33L75,77l5.33-15.67Z" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M59,152l-10.67-3.56L44.78,138,41.33,148,30.67,152,41.33,155.56,44.78,166,48.33,156Z" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  'chat-text': (
+    <>
+      <path d="M79.93,211.11a96,96,0,1,0-35-35h0L32.42,213.46a8,8,0,0,0,10.12,10.12l37.39-12.47Z" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="96" y1="112" x2="160" y2="112" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="96" y1="144" x2="144" y2="144" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  'scissors': (
+    <>
+      <circle cx="68" cy="172" r="40" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="68" cy="84" r="40" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="100.65" y1="155.35" x2="236" y2="20" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="100.65" y1="100.65" x2="236" y2="236" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
     </>
   ),
 }

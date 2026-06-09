@@ -85,7 +85,8 @@ export type HomeSettings = Partial<Record<
   | 'faq_1_q' | 'faq_1_a'
   | 'faq_2_q' | 'faq_2_a'
   | 'faq_3_q' | 'faq_3_a'
-  | 'faq_4_q' | 'faq_4_a',
+  | 'faq_4_q' | 'faq_4_a'
+  | 'atelier_note_enabled' | 'atelier_note_text' | 'atelier_note_cta_label' | 'atelier_note_cta_link',
   string
 >>
 
@@ -377,6 +378,39 @@ export function HomeClient({ products, settings, discounts = [], testimonials = 
 
       {/* TESTIMONIALS — social proof strip; only rendered when there are items */}
       {testimonials.length > 0 && <TestimonialsStrip items={testimonials} />}
+
+      {/* ESTA SEMANA EN EL TALLER — nota de Anush, humaniza la marca.
+          Solo aparece si atelier_note_enabled === 'true' Y hay texto. */}
+      {settings.atelier_note_enabled === 'true' && settings.atelier_note_text?.trim() && (
+        <section style={{ maxWidth: 760, margin: '88px auto 0', padding: '0 24px' }}>
+          <div style={{
+            background: dahila.cream100,
+            borderRadius: 20,
+            padding: 'clamp(28px, 5vw, 48px)',
+            display: 'flex', flexDirection: 'column', gap: 16,
+            border: `1px solid ${dahila.border}`,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Icon name="needle" size={18} color={dahila.wine600} />
+              <Eyebrow style={{ margin: 0 }}>Esta semana en el taller</Eyebrow>
+            </div>
+            <p style={{
+              fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300,
+              fontSize: 'clamp(16px, 2.4vw, 20px)', lineHeight: 1.65,
+              color: dahila.ink900, margin: 0,
+            }}>
+              {settings.atelier_note_text}
+            </p>
+            {settings.atelier_note_cta_label?.trim() && settings.atelier_note_cta_link?.trim() && (
+              <div>
+                <Button variant="secondary" onClick={() => router.push(settings.atelier_note_cta_link!)}>
+                  {settings.atelier_note_cta_label}
+                </Button>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* FAQ */}
       <section style={{ maxWidth: 880, margin: '88px auto 0', padding: '0 24px' }}>

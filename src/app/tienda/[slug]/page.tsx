@@ -69,6 +69,7 @@ export default async function ProductPage({
       .select(`
         *,
         category:categories(*),
+        collection:collections(*),
         media:product_media(*),
         sizes:product_sizes(*),
         colors:product_colors(*, color:colors(*))
@@ -81,6 +82,10 @@ export default async function ProductPage({
       'pdp_trust_1', 'pdp_trust_2', 'pdp_trust_3',
       'maker_name', 'maker_bio', 'maker_photo_url',
       'installments_enabled', 'installments_label',
+      'pdp_process_enabled',
+      'pdp_process_step_1_icon', 'pdp_process_step_1_label', 'pdp_process_step_1_body',
+      'pdp_process_step_2_icon', 'pdp_process_step_2_label', 'pdp_process_step_2_body',
+      'pdp_process_step_3_icon', 'pdp_process_step_3_label', 'pdp_process_step_3_body',
     ]),
   ])
 
@@ -214,6 +219,12 @@ export default async function ProductPage({
         makerPhoto={getSetting('maker_photo_url') || ''}
         installmentsEnabled={getSetting('installments_enabled') === 'true'}
         installmentsLabel={getSetting('installments_label') || '¿Querés pagar en 2 cuotas? Hablemos por WhatsApp →'}
+        processEnabled={getSetting('pdp_process_enabled') === 'true'}
+        processSteps={[
+          { icon: getSetting('pdp_process_step_1_icon') || 'chat-text',  label: getSetting('pdp_process_step_1_label') || 'Escribís',          body: getSetting('pdp_process_step_1_body') || 'Contame qué prenda querés, tu medida y colores favoritos.' },
+          { icon: getSetting('pdp_process_step_2_icon') || 'scissors',   label: getSetting('pdp_process_step_2_label') || 'Elegimos juntas',   body: getSetting('pdp_process_step_2_body') || 'Te muestro las lanas disponibles y confirmamos todos los detalles.' },
+          { icon: getSetting('pdp_process_step_3_icon') || 'needle',     label: getSetting('pdp_process_step_3_label') || 'Te lo tejo',        body: getSetting('pdp_process_step_3_body') || 'Trabajo en tu prenda y te aviso cuando está lista para enviar.' },
+        ].filter((s) => s.label.trim())}
       />
     </div>
   )
