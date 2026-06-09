@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { dahila, Eyebrow, Field, TextInput, Button } from '@/components/ui/Primitives'
+import { EncargosDisponibles } from '@/components/EncargosDisponibles'
 import { submitEncargo } from './actions'
 
 export default function EncargoForm() {
@@ -146,6 +147,7 @@ export default function EncargoForm() {
         }}>
           ¿Ya hiciste un encargo? Seguí su estado con tu código →
         </button>
+        <EncargosDisponibles />
       </div>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }} noValidate>

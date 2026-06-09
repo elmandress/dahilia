@@ -206,6 +206,18 @@ INSERT INTO site_settings (key, value) VALUES
   ('pdp_process_step_2_body',  'Te muestro las lanas disponibles y confirmamos todos los detalles.'),
   ('pdp_process_step_3_icon',  'needle'),
   ('pdp_process_step_3_label', 'Te lo tejo'),
-  ('pdp_process_step_3_body',  'Trabajo en tu prenda y te aviso cuando está lista para enviar.')
+  ('pdp_process_step_3_body',  'Trabajo en tu prenda y te aviso cuando está lista para enviar.'),
+
+  -- ── Botón flotante de WhatsApp ───────────────────────────
+  -- Activalo desde Configuración cuando quieras. Usa contact_whatsapp_url.
+  ('whatsapp_float_enabled', 'false'),
+
+  -- ── Cupos de encargos semanales ─────────────────────────
+  -- Activalo para mostrar cuántos lugares quedan en /encargo.
+  -- Actualizá encargos_cupos_taken a medida que confirmás pedidos.
+  ('encargos_cupos_enabled', 'false'),
+  ('encargos_cupos_total',   '4'),
+  ('encargos_cupos_taken',   '0'),
+  ('encargos_cupos_label',   '')
 
 ON CONFLICT (key) DO NOTHING;

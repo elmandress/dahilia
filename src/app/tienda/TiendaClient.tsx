@@ -3,10 +3,63 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
+import Image from 'next/image'
 import type { Product, Category, Color, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
-import { getFinalPrice } from '@/lib/types'
+import { getFinalPrice, BLUR_DATA_URL } from '@/lib/types'
 import { dahila, Eyebrow, Chip, Icon } from '@/components/ui/Primitives'
+
+/** Reads recently-viewed from localStorage and shows a strip above the grid. */
+function RecentlyViewedStrip() {
+  const [items, setItems] = useState<{ slug: string; name: string; photo: string; price: number }[]>([])
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('dahila_recently_viewed')
+      if (raw) setItems(JSON.parse(raw) ?? [])
+    } catch {}
+  }, [])
+
+  if (items.length < 2) return null
+
+  return (
+    <section style={{ marginBottom: 40 }}>
+      <div style={{
+        fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.18em',
+        textTransform: 'uppercase', color: dahila.ink500, marginBottom: 16,
+      }}>
+        Viste hace poco
+      </div>
+      <div style={{
+        display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 4,
+        scrollSnapType: 'x proximity',
+      }}>
+        {items.slice(0, 6).map((p) => (
+          <Link
+            key={p.slug}
+            href={`/tienda/${p.slug}`}
+            style={{
+              flexShrink: 0, width: 100, textDecoration: 'none', color: 'inherit',
+              scrollSnapAlign: 'start',
+            }}
+          >
+            <div style={{
+              position: 'relative', width: 100, height: 124,
+              borderRadius: 8, overflow: 'hidden', background: dahila.cream50, marginBottom: 6,
+            }}>
+              <Image src={p.photo} alt={p.name} fill quality={75} sizes="100px"
+                placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+            </div>
+            <div style={{ fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink900, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {p.name}
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
 
 // Quick-view is only needed once the shopper opens it — load it on demand so
 // it stays out of the initial tienda bundle.
@@ -371,6 +424,8 @@ export function TiendaClient({
           </button>
         )}
       </div>
+
+      <RecentlyViewedStrip />
 
       {filtered.length === 0 ? (
         <div style={{

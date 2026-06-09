@@ -154,6 +154,23 @@ const SECTIONS = [
     ],
   },
   {
+    title: 'Botón de WhatsApp flotante',
+    description: 'Un círculo verde fijo en la esquina de todas las páginas. Al tocarlo, abre WhatsApp con un mensaje genérico. Ideal para capturar consultas espontáneas. Usá el número que configuraste en Contacto.',
+    fields: [
+      { key: 'whatsapp_float_enabled', label: '¿Mostrar el botón flotante?', type: 'toggle' },
+    ],
+  },
+  {
+    title: 'Cupos de encargos semanales',
+    description: 'Mostrá en la página de encargo cuántos lugares quedan. Actualización manual: subí "Tomados" cada vez que confirmás un pedido. Al empezar la semana, reseteá ambos desde acá. Si está apagado o el total es 0, no se muestra nada.',
+    fields: [
+      { key: 'encargos_cupos_enabled', label: '¿Mostrar cupos disponibles?', type: 'toggle' },
+      { key: 'encargos_cupos_total',   label: 'Total de lugares por semana', type: 'text', placeholder: '4' },
+      { key: 'encargos_cupos_taken',   label: 'Lugares ya tomados esta semana', type: 'text', placeholder: '0' },
+      { key: 'encargos_cupos_label',   label: 'Texto personalizado (opcional)', type: 'text', placeholder: 'Quedan 2 lugares para esta semana' },
+    ],
+  },
+  {
     title: 'Información (envíos, cambios, cuidados)',
     description: 'Se muestra en la página "Información" (link en el footer) y donde corresponda.',
     fields: [

@@ -150,6 +150,23 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
                   <PriceBlock list={listPrice} final={price} size="md" />
                 </div>
+                {/* Lead time — shown only when the product has real data, never invented */}
+                {(item.product.lead_time_weeks_min > 0 || item.product.lead_time_weeks_max > 0) && (
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 2,
+                    fontFamily: 'var(--font-sans)', fontSize: 11, color: '#8C8285',
+                  }}>
+                    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4"/>
+                      <path d="M8 4.5V8l2.5 1.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                    </svg>
+                    {item.product.lead_time_weeks_min && item.product.lead_time_weeks_max
+                      ? `Se teje en ${item.product.lead_time_weeks_min}–${item.product.lead_time_weeks_max} semanas`
+                      : item.product.lead_time_weeks_max
+                        ? `Se teje en hasta ${item.product.lead_time_weeks_max} semanas`
+                        : `Se teje en ${item.product.lead_time_weeks_min} semana`}
+                  </div>
+                )}
               </div>
 
               <div className="cart-row-controls" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
