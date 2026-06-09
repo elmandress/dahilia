@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { dahila } from './ui/Primitives'
 import { STUDIO_INSTAGRAM, STUDIO_URL } from '@/lib/env'
 
@@ -42,6 +44,22 @@ function FooterCol({ title, items }: { title: string; items: NavItem[] }) {
 
 export function Footer() {
   const pathname = usePathname()
+  const [tagline, setTagline] = useState('Prendas tejidas a mano, a tu medida, desde Montevideo.')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'brand_short_intro')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.value && String(data.value).trim()) {
+          setTagline(String(data.value).trim())
+        }
+      })
+  }, [])
+
   if (pathname.startsWith('/admin')) return null
 
   return (
@@ -63,7 +81,7 @@ export function Footer() {
               <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, letterSpacing: '0.18em', color: dahila.ink900 }}>DAHILA</span>
             </div>
             <p style={{ fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300, fontSize: 16, lineHeight: 1.55, color: dahila.ink700, maxWidth: 320, margin: 0 }}>
-              Prendas tejidas a mano, a tu medida, desde Montevideo.
+              {tagline}
             </p>
           </div>
 
@@ -79,10 +97,11 @@ export function Footer() {
           <FooterCol
             title="Info"
             items={[
-              { label: 'Envíos y cambios', href: '/info' },
-              { label: 'Sobre nosotros',   href: '/atelier' },
-              { label: 'Contacto',         href: '/contacto' },
+              { label: 'Envíos y cambios',  href: '/info' },
+              { label: 'Sobre nosotros',    href: '/atelier' },
+              { label: 'Contacto',          href: '/contacto' },
               { label: 'Estado de encargo', href: '/encargo/estado' },
+              { label: 'Términos y cond.',  href: '/terminos' },
             ]}
           />
           <FooterCol
