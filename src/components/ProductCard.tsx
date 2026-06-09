@@ -168,28 +168,41 @@ export function ProductCard({
         <PriceBlock list={listPrice} final={finalPrice} size="sm" align="end" />
       </div>
 
-      {/* Colour swatches — a glance at the palette without opening the piece. */}
-      {swatches.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0 2px', marginTop: -2 }}>
-          {swatches.map((c) => (
-            <span
-              key={c.id}
-              title={c.name}
-              aria-hidden
-              style={{
-                width: 11, height: 11, borderRadius: 999,
-                background: c.hex || dahila.cream200,
-                boxShadow: 'inset 0 0 0 1px rgba(31,26,27,0.18)',
-              }}
-            />
-          ))}
-          {(product.colors?.length ?? 0) > swatches.length && (
-            <span style={{ fontFamily: dahila.fontSans, fontSize: 10, color: dahila.ink500 }}>
-              +{(product.colors!.length) - swatches.length}
-            </span>
-          )}
-        </div>
-      )}
+      {/* Colour swatches + lead time in one row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px', marginTop: -2, gap: 8 }}>
+        {swatches.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            {swatches.map((c) => (
+              <span
+                key={c.id}
+                title={c.name}
+                aria-hidden
+                style={{
+                  width: 11, height: 11, borderRadius: 999,
+                  background: c.hex || dahila.cream200,
+                  boxShadow: 'inset 0 0 0 1px rgba(31,26,27,0.18)',
+                }}
+              />
+            ))}
+            {(product.colors?.length ?? 0) > swatches.length && (
+              <span style={{ fontFamily: dahila.fontSans, fontSize: 10, color: dahila.ink500 }}>
+                +{(product.colors!.length) - swatches.length}
+              </span>
+            )}
+          </div>
+        )}
+        {/* Lead time — shows how long the piece takes, reducing anxiety at browse time */}
+        {product.lead_time_weeks_min > 0 && product.status !== 'soldout' && (
+          <span style={{
+            fontFamily: dahila.fontSans, fontSize: 10, color: dahila.ink500,
+            letterSpacing: '0.02em', whiteSpace: 'nowrap', marginLeft: 'auto',
+          }}>
+            {product.lead_time_weeks_min === product.lead_time_weeks_max
+              ? `${product.lead_time_weeks_min} sem.`
+              : `${product.lead_time_weeks_min}–${product.lead_time_weeks_max} sem.`}
+          </span>
+        )}
+      </div>
     </div>
   )
 }

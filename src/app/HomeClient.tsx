@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { ProductCard } from '@/components/ProductCard'
+import { TestimonialsStrip } from '@/components/TestimonialsStrip'
 import type { Product, Discount } from '@/lib/types'
+import type { Testimonial } from '@/components/TestimonialsStrip'
 import { BLUR_DATA_URL } from '@/lib/types'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 import { useRouter } from 'next/navigation'
@@ -92,7 +94,7 @@ function val<K extends keyof HomeSettings>(s: HomeSettings, key: K, fallback: st
   return v && v.trim() !== '' ? v : fallback
 }
 
-export function HomeClient({ products, settings, discounts = [] }: { products: Product[]; settings: HomeSettings; discounts?: Discount[] }) {
+export function HomeClient({ products, settings, discounts = [], testimonials = [] }: { products: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[] }) {
   const router = useRouter()
   const featured = products.slice(0, 4)
   const accesorios = products.filter((p) => p.category?.slug === 'accesorios').slice(0, 4)
@@ -372,6 +374,9 @@ export function HomeClient({ products, settings, discounts = [] }: { products: P
           </div>
         </div>
       </section>
+
+      {/* TESTIMONIALS — social proof strip; only rendered when there are items */}
+      {testimonials.length > 0 && <TestimonialsStrip items={testimonials} />}
 
       {/* FAQ */}
       <section style={{ maxWidth: 880, margin: '88px auto 0', padding: '0 24px' }}>

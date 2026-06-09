@@ -76,7 +76,12 @@ export default async function ProductPage({
       .eq('slug', slug)
       .maybeSingle(),
     supabase.from('discounts').select('*').eq('active', true),
-    supabase.from('site_settings').select('key, value').in('key', ['size_guide_note', 'contact_whatsapp_url', 'shipping_estimate', 'pdp_trust_1', 'pdp_trust_2', 'pdp_trust_3']),
+    supabase.from('site_settings').select('key, value').in('key', [
+      'size_guide_note', 'contact_whatsapp_url', 'shipping_estimate',
+      'pdp_trust_1', 'pdp_trust_2', 'pdp_trust_3',
+      'maker_name', 'maker_bio', 'maker_photo_url',
+      'installments_enabled', 'installments_label',
+    ]),
   ])
 
   const product = data as Product | null
@@ -204,6 +209,11 @@ export default async function ProductPage({
         whatsappUrl={whatsappUrl}
         shippingEstimate={shippingEstimate}
         trustItems={trustItems}
+        makerName={getSetting('maker_name') || 'Anush'}
+        makerBio={getSetting('maker_bio') || ''}
+        makerPhoto={getSetting('maker_photo_url') || ''}
+        installmentsEnabled={getSetting('installments_enabled') === 'true'}
+        installmentsLabel={getSetting('installments_label') || '¿Querés pagar en 2 cuotas? Hablemos por WhatsApp →'}
       />
     </div>
   )

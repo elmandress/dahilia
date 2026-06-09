@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useCart } from '@/components/CartProvider'
 import { ProductGallery } from '@/components/ProductGallery'
 import { ProductCard } from '@/components/ProductCard'
@@ -10,7 +11,7 @@ import { SizeGuide } from '@/components/SizeGuide'
 import { ShareButton } from '@/components/ShareButton'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import type { Product, Discount } from '@/lib/types'
-import { getEffectivePrice, getPrimaryPhoto, getScarcity } from '@/lib/types'
+import { getEffectivePrice, getPrimaryPhoto, getScarcity, BLUR_DATA_URL } from '@/lib/types'
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 
@@ -23,6 +24,11 @@ export function ProductDetailsClient({
   whatsappUrl = 'https://wa.me/59894605015',
   shippingEstimate,
   trustItems,
+  makerName = 'Anush',
+  makerBio = '',
+  makerPhoto = '',
+  installmentsEnabled = false,
+  installmentsLabel = '¿Querés pagar en 2 cuotas? Hablemos por WhatsApp →',
 }: {
   product: Product
   discountPercent?: number
@@ -32,6 +38,11 @@ export function ProductDetailsClient({
   whatsappUrl?: string
   shippingEstimate?: string
   trustItems?: { icon: string; text: string }[]
+  makerName?: string
+  makerBio?: string
+  makerPhoto?: string
+  installmentsEnabled?: boolean
+  installmentsLabel?: string
 }) {
   const trust = trustItems && trustItems.length > 0 ? trustItems : [
     { icon: 'truck', text: 'Envío a todo Uruguay' },
@@ -283,6 +294,45 @@ export function ProductDetailsClient({
               }}>
                 O pedila a medida y la tejemos para vos →
               </button>
+            </div>
+          )}
+
+          {/* Installments — optional WhatsApp payment plan link */}
+          {installmentsEnabled && !isSoldOut && (
+            <a
+              href={`${whatsappUrl}${whatsappUrl.includes('?') ? '&' : '?'}text=${encodeURIComponent(`Hola! Me interesa "${product.name}" pero quisiera pagar en cuotas. ¿Lo coordinamos?`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'block',
+                fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600,
+                textDecoration: 'underline', padding: '2px 0', lineHeight: 1.5,
+              }}
+            >
+              {installmentsLabel}
+            </a>
+          )}
+
+          {/* Maker bio — who made this piece; builds trust for artisan brands */}
+          {makerBio.trim().length > 0 && (
+            <div style={{
+              display: 'flex', gap: 12, alignItems: 'flex-start',
+              background: dahila.cream50, borderRadius: 12, padding: '14px 16px',
+              border: `1px solid ${dahila.border}`,
+            }}>
+              {makerPhoto.trim().length > 0 && (
+                <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 999, overflow: 'hidden', position: 'relative' }}>
+                  <Image src={makerPhoto} alt={makerName} fill sizes="40px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+                </div>
+              )}
+              <div>
+                <div style={{ fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: dahila.ink500, marginBottom: 4 }}>
+                  Hecho por {makerName}
+                </div>
+                <p style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, lineHeight: 1.6, color: dahila.ink700, margin: 0 }}>
+                  {makerBio}
+                </p>
+              </div>
             </div>
           )}
 

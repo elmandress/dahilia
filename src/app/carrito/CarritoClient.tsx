@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Button, Icon } from '@/components/ui/Primitives'
@@ -17,7 +18,8 @@ interface Props {
 function buildWhatsAppMessage(
   items: ReturnType<typeof useCart>['items'],
   discounts: ReturnType<typeof useCart>['discounts'],
-  total: number
+  total: number,
+  giftNote?: string
 ): string {
   const lines: string[] = []
   lines.push('Hola Anush! Quiero coordinar este pedido:')
@@ -43,6 +45,10 @@ function buildWhatsAppMessage(
     })
 
   lines.push(`Total: ${formatPrice(total)}`)
+  if (giftNote) {
+    lines.push('')
+    lines.push(`🎁 Nota de regalo: "${giftNote}"`)
+  }
   lines.push('')
   lines.push('¿Me confirmás stock, plazos y forma de pago? ¡Gracias!')
 
@@ -52,6 +58,8 @@ function buildWhatsAppMessage(
 export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
   const { items, removeFromCart, updateQty, isLoading, discounts, shippingEstimate } = useCart()
   const router = useRouter()
+  const [giftNote, setGiftNote] = useState('')
+  const [showGiftNote, setShowGiftNote] = useState(false)
 
   const total = items.reduce(
     (acc, item) => acc + (getFinalPrice(item.product, item.size, discounts) * item.qty),
@@ -60,7 +68,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
 
   const handleCheckout = () => {
     if (typeof window === 'undefined') return
-    const message = buildWhatsAppMessage(items, discounts, total)
+    const message = buildWhatsAppMessage(items, discounts, total, giftNote.trim())
     // wa.me supports `?text=` query param. encodeURIComponent handles the rest.
     // Strip any trailing slash from the base URL so we can append cleanly.
     const base = whatsappUrl.replace(/\/+$/, '')
@@ -217,6 +225,55 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
         }}>
           Coordinás stock, envío y pago directo con Anush por WhatsApp.
         </p>
+
+        {/* Gift note toggle — opens a small textarea; content goes into WA message */}
+        <div style={{ width: '100%', maxWidth: 420, alignSelf: 'flex-end' }}>
+          {!showGiftNote ? (
+            <button
+              type="button"
+              onClick={() => setShowGiftNote(true)}
+              style={{
+                background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+                fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink500,
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                textDecoration: 'underline',
+              }}
+            >
+              <Icon name="gift" size={14} color={dahila.ink500} />
+              Es un regalo — agregar nota
+            </button>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <label style={{ fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: dahila.ink500 }}>
+                Nota de regalo
+              </label>
+              <textarea
+                rows={2}
+                maxLength={200}
+                value={giftNote}
+                onChange={(e) => setGiftNote(e.target.value)}
+                placeholder='Ej: "Con cariño para vos 🧶"'
+                style={{
+                  fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink900,
+                  background: dahila.cream50, border: `1px solid ${dahila.borderStrong}`,
+                  borderRadius: 8, padding: '10px 12px', resize: 'none', outline: 'none',
+                  width: '100%', boxSizing: 'border-box',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => { setShowGiftNote(false); setGiftNote('') }}
+                style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+                  fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500, alignSelf: 'flex-start',
+                  textDecoration: 'underline',
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          )}
+        </div>
 
         <button
           onClick={handleCheckout}

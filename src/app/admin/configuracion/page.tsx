@@ -79,6 +79,32 @@ const SECTIONS = [
     ],
   },
   {
+    title: 'La artesana',
+    description: 'Aparece en cada ficha de producto: foto pequeña, nombre y una descripción breve de quién hace las prendas. Si el texto está vacío, la sección no se muestra.',
+    fields: [
+      { key: 'maker_name',      label: 'Nombre',      type: 'text',     placeholder: 'Anush' },
+      { key: 'maker_bio',       label: 'Descripción', type: 'textarea', placeholder: 'Tejo a crochet desde 2015, siempre a mano y con materiales naturales.' },
+      { key: 'maker_photo_url', label: 'Foto (redonda, 40×40)',  type: 'image' },
+    ],
+  },
+  {
+    title: 'Opciones de pago',
+    description: 'Activá el mensaje de cuotas que aparece debajo del botón "Agregar al carrito". Al hacer clic, el cliente abre WhatsApp con el mensaje pre-llenado.',
+    fields: [
+      { key: 'installments_enabled', label: '¿Mostrar el mensaje de cuotas?', type: 'toggle' },
+      { key: 'installments_label',   label: 'Texto del link', type: 'text', placeholder: '¿Querés pagar en 2 cuotas? Hablemos por WhatsApp →' },
+    ],
+  },
+  {
+    title: 'Página "Sobre nosotros" — fotos',
+    description: 'Las 3 fotos en formato retrato (3:4) que aparecen al pie de la página Atelier.',
+    fields: [
+      { key: 'atelier_photo_1', label: 'Foto 1', type: 'image' },
+      { key: 'atelier_photo_2', label: 'Foto 2', type: 'image' },
+      { key: 'atelier_photo_3', label: 'Foto 3', type: 'image' },
+    ],
+  },
+  {
     title: 'Preguntas frecuentes',
     description: 'Las 4 preguntas que aparecen al final del home.',
     fields: [

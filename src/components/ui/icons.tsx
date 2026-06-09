@@ -16,7 +16,7 @@ export type IconName =
   | 'minus' | 'plus' | 'caret-left' | 'caret-right' | 'sliders-horizontal'
   | 'ruler' | 'flower' | 'package' | 'arrow-clockwise' | 'truck' | 'leaf'
   | 'hand-heart' | 'heart' | 'chat-circle' | 'check' | 'share-network' | 'caret-up'
-  | 'instagram-logo' | 'whatsapp-logo' | 'envelope-simple'
+  | 'instagram-logo' | 'whatsapp-logo' | 'envelope-simple' | 'gift' | 'star' | 'quotes'
 
 export const ICON_PATHS: Record<string, React.ReactNode> = {
   'magnifying-glass': (
@@ -165,6 +165,24 @@ export const ICON_PATHS: Record<string, React.ReactNode> = {
     <>
       <rect x="32" y="48" width="192" height="160" rx="8" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
       <polyline points="224 56 128 144 32 56" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  'gift': (
+    <>
+      <polyline points="32 128 32 224 224 224 224 128" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="16" y="72" width="224" height="56" rx="8" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1="128" y1="72" x2="128" y2="224" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M128,72H88a32,32,0,0,1,0-64C112,8,128,72,128,72Z" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M128,72h40a32,32,0,0,0,0-64C144,8,128,72,128,72Z" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  'star': (
+    <polygon points="128 24 158.22 90.42 232 100.08 179.11 151.66 192.44 224 128 190.42 63.56 224 76.89 151.66 24 100.08 97.78 90.42 128 24" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+  ),
+  'quotes': (
+    <>
+      <path d="M108,144H40a8,8,0,0,1-8-8V72a8,8,0,0,1,8-8h68a8,8,0,0,1,8,8v120a48,48,0,0,1-48,48" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M220,144H152a8,8,0,0,1-8-8V72a8,8,0,0,1,8-8h68a8,8,0,0,1,8,8v120a48,48,0,0,1-48,48" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
     </>
   ),
 }

@@ -27,6 +27,7 @@ export default async function AtelierPage() {
       'about_value_1_title', 'about_value_1_body',
       'about_value_2_title', 'about_value_2_body',
       'about_value_3_title', 'about_value_3_body',
+      'atelier_photo_1', 'atelier_photo_2', 'atelier_photo_3',
     ])
 
   const s = (data ?? []).reduce<Record<string, string>>(
@@ -45,6 +46,12 @@ export default async function AtelierPage() {
     { t: val('about_value_1_title', 'Hecho a mano'), b: val('about_value_1_body', 'Cada prenda se teje pieza por pieza, sin máquinas.') },
     { t: val('about_value_2_title', 'A tu medida'),   b: val('about_value_2_body', 'Ajustamos talle y colores a lo que vos querés.') },
     { t: val('about_value_3_title', 'Materiales nobles'), b: val('about_value_3_body', 'Lana y algodón natural, elegidos con cuidado.') },
+  ]
+
+  const stripPhotos = [
+    val('atelier_photo_1', '/photos/detalle-tejido.jpg'),
+    val('atelier_photo_2', '/photos/atelier-escritorio.png'),
+    val('atelier_photo_3', '/photos/bufanda-verde.png'),
   ]
 
   return (
@@ -114,13 +121,13 @@ export default async function AtelierPage() {
         </div>
       </section>
 
-      {/* Photo strip */}
+      {/* Photo strip — CMS-editable via atelier_photo_1/2/3 in site_settings */}
       <section style={{ marginTop: 64, marginBottom: 96 }}>
         <div className="photo-strip" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-          {['detalle-tejido.jpg', 'atelier-escritorio.png', 'bufanda-verde.png'].map((p) => (
-            <div key={p} style={{ position: 'relative', width: '100%', aspectRatio: '3/4', borderRadius: 12, overflow: 'hidden' }}>
+          {stripPhotos.map((src, i) => (
+            <div key={i} style={{ position: 'relative', width: '100%', aspectRatio: '3/4', borderRadius: 12, overflow: 'hidden' }}>
               <Image
-                src={`/photos/${p}`}
+                src={src}
                 alt=""
                 fill
                 sizes="(max-width: 720px) 50vw, 33vw"
