@@ -412,3 +412,65 @@ a.prose-link:hover {
   background-size: 200% 100%;
   animation: sk-shimmer-anim 1.6s linear infinite;
 }
+
+/* ============================================================
+   Tienda toolbar — 2-row layout on mobile so it never squishes
+   ============================================================ */
+@media (max-width: 640px) {
+  /* Outer wrapper: become a column so cats sit above actions */
+  .tienda-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+  /* Category chips: horizontal scroll, no wrap, hide scrollbar */
+  .tienda-toolbar-cats {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tienda-toolbar-cats::-webkit-scrollbar { display: none; }
+  /* Actions row: search takes remaining space */
+  .tienda-toolbar-actions {
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+  }
+  .tienda-toolbar-actions > div:first-child {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+  /* Hide "Ordenar por" label to save space */
+  .tienda-sort-label { display: none !important; }
+}
+
+/* ============================================================
+   Ofertas savings strip — price comparison area on mobile
+   ============================================================ */
+@media (max-width: 480px) {
+  .ofertas-savings-strip {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+  }
+}
+
+/* ============================================================
+   Footer mobile: at very small screens, compact copyright row
+   ============================================================ */
+@media (max-width: 380px) {
+  .footer-copyright {
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+}
+
+/* ============================================================
+   Print styles — useful when someone prints an order/product
+   ============================================================ */
+@media print {
+  .site-header, footer, .pdp-sticky-bar, .cart-drawer-overlay { display: none !important; }
+  main { padding: 0 !important; }
+  body { font-size: 12pt; }
+}

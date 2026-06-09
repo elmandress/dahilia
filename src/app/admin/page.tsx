@@ -13,6 +13,8 @@ export default function AdminDashboardPage() {
     onOfferProducts: 0,
     newOrders: 0,
     totalOrders: 0,
+    activeCarts: 0,
+    totalCollections: 0,
   })
   const [recentOrders, setRecentOrders] = useState<CustomOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -20,11 +22,17 @@ export default function AdminDashboardPage() {
   const loadDashboard = useCallback(async () => {
     const supabase = createClient()
 
-    const [productsRes, ordersRes, countRes, newCountRes] = await Promise.all([
+    const [productsRes, ordersRes, countRes, newCountRes, cartsRes, collectionsRes] = await Promise.all([
       supabase.from('products').select('id, status, discount_active, discount_percent'),
       supabase.from('custom_orders').select('*').order('created_at', { ascending: false }).limit(5),
       supabase.from('custom_orders').select('*', { count: 'exact', head: true }),
       supabase.from('custom_orders').select('*', { count: 'exact', head: true }).eq('status', 'new'),
+      // Active carts: created in the last 7 days with at least one item
+      supabase.from('cart_items').select('cart_id', { count: 'exact', head: true }),
+      // Collections (graceful — table may not exist yet)
+      Promise.resolve(
+        supabase.from('collections').select('id', { count: 'exact', head: true }).eq('published', true)
+      ).catch(() => ({ count: 0 })),
     ])
 
     const products = (productsRes.data ?? []) as Array<
@@ -39,6 +47,8 @@ export default function AdminDashboardPage() {
       onOfferProducts: products.filter((p) => p.discount_active && (p.discount_percent ?? 0) > 0).length,
       newOrders: newCountRes.count ?? orders.filter((o) => o.status === 'new').length,
       totalOrders: countRes.count ?? orders.length,
+      activeCarts: cartsRes.count ?? 0,
+      totalCollections: (collectionsRes as { count: number | null }).count ?? 0,
     })
     setRecentOrders(orders)
     setLoading(false)
@@ -110,6 +120,18 @@ export default function AdminDashboardPage() {
           <div className="stat-value">{stats.totalOrders}</div>
           <div className="stat-sub">Histórico</div>
         </Link>
+        <Link href="/admin/carritos" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className="stat-label">Carritos con ítems</div>
+          <div className="stat-value">{stats.activeCarts}</div>
+          <div className="stat-sub">Potenciales consultas</div>
+        </Link>
+        {stats.totalCollections > 0 && (
+          <Link href="/admin/colecciones" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div className="stat-label">Colecciones publicadas</div>
+            <div className="stat-value">{stats.totalCollections}</div>
+            <div className="stat-sub">Lookbook activo</div>
+          </Link>
+        )}
       </div>
 
       {/* Recent Orders */}
@@ -186,6 +208,12 @@ export default function AdminDashboardPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859" />
             </svg>
             Ver encargos
+          </Link>
+          <Link href="/admin/colecciones" className="admin-quick-action">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+            </svg>
+            Colecciones
           </Link>
           <Link href="/admin/configuracion" className="admin-quick-action">
             <svg width="18" height="18" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

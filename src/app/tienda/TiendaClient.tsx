@@ -182,12 +182,16 @@ export function TiendaClient({
         </h1>
       </div>
 
-      {/* Toolbar: category chips + search + sort + filter toggle */}
-      <div style={{
+      {/* Toolbar: category chips + search + sort + filter toggle
+          On mobile (<640px) splits into 2 rows via .tienda-toolbar CSS class:
+          row 1 → category chips (scrollable horizontally)
+          row 2 → search + sort + filter toggle */}
+      <div className="tienda-toolbar" style={{
         display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'center',
         justifyContent: 'space-between', marginBottom: 18,
       }}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {/* Row 1: category chips — horizontal scroll on mobile */}
+        <div className="tienda-toolbar-cats" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <Chip on={filter === 'todo'} onClick={() => setFilter('todo')}>Todo</Chip>
           {categories.map((c) => (
             <Chip key={c.id} on={filter === c.slug} onClick={() => setFilter(c.slug)}>
@@ -196,11 +200,12 @@ export function TiendaClient({
           ))}
         </div>
 
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        {/* Row 2: search + sort + filter toggle */}
+        <div className="tienda-toolbar-actions" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Search */}
           <div style={{
             position: 'relative', display: 'flex', alignItems: 'center',
-            borderBottom: `1px solid ${dahila.borderStrong}`, minWidth: 180,
+            borderBottom: `1px solid ${dahila.borderStrong}`, minWidth: 160,
           }}>
             <input
               type="text"
@@ -221,7 +226,7 @@ export function TiendaClient({
 
           {/* Sort */}
           <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500 }}>
+            <span className="tienda-sort-label" style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500 }}>
               Ordenar por
             </span>
             <select

@@ -70,20 +70,19 @@ export function Footer() {
           <FooterCol
             title="Tienda"
             items={[
-              { label: 'Novedades',  href: '/tienda' },
-              { label: 'Ofertas',    href: '/ofertas' },
-              { label: 'Tops',       href: '/tienda?cat=tops' },
-              { label: 'Accesorios', href: '/tienda?cat=accesorios' },
-              { label: 'A medida',   href: '/encargo' },
+              { label: 'Novedades',    href: '/tienda' },
+              { label: 'Ofertas',      href: '/ofertas' },
+              { label: 'Colecciones',  href: '/colecciones' },
+              { label: 'A medida',     href: '/encargo' },
             ]}
           />
           <FooterCol
             title="Info"
             items={[
-              { label: 'Cómo encargar',  href: '/encargo' },
               { label: 'Envíos y cambios', href: '/info' },
-              { label: 'Sobre nosotros', href: '/atelier' },
-              { label: 'Contacto',       href: '/contacto' },
+              { label: 'Sobre nosotros',   href: '/atelier' },
+              { label: 'Contacto',         href: '/contacto' },
+              { label: 'Estado de encargo', href: '/encargo/estado' },
             ]}
           />
           <FooterCol

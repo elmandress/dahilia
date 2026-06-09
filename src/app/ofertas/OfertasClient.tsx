@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import type { Product, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
+import { getFinalPrice, getEffectivePrice } from '@/lib/types'
 import { dahila, Eyebrow, Button } from '@/components/ui/Primitives'
 
 const QuickViewModal = dynamic(
@@ -22,9 +23,29 @@ export function OfertasClient({
   const router = useRouter()
   const [quickView, setQuickView] = useState<Product | null>(null)
 
+  // Compute aggregate savings to show in the strip
+  const savings = useMemo(() => {
+    let totalList = 0
+    let totalFinal = 0
+    for (const p of products) {
+      const list = getEffectivePrice(p)
+      const final = getFinalPrice(p, undefined, discounts)
+      totalList += list
+      totalFinal += final
+    }
+    const saved = totalList - totalFinal
+    const maxPct = products.reduce((best, p) => {
+      const list = getEffectivePrice(p)
+      const final = getFinalPrice(p, undefined, discounts)
+      if (list <= 0) return best
+      return Math.max(best, Math.round(((list - final) / list) * 100))
+    }, 0)
+    return { saved, maxPct }
+  }, [products, discounts])
+
   return (
     <main style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 28 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: products.length > 0 ? 20 : 28 }}>
         <Eyebrow>Tienda</Eyebrow>
         <h1 style={{
           fontFamily: dahila.fontDisplay, fontWeight: 300,
@@ -35,6 +56,38 @@ export function OfertasClient({
           Prendas con descuento, por tiempo limitado.
         </p>
       </div>
+
+      {/* Savings strip — only shown when there are real discounts */}
+      {products.length > 0 && savings.maxPct > 0 && (
+        <div className="ofertas-savings-strip" style={{
+          display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
+          background: 'rgba(182,49,74,0.06)',
+          border: '1px solid rgba(182,49,74,0.18)',
+          borderRadius: 12,
+          padding: '14px 20px',
+          marginBottom: 28,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{
+              background: '#B6314A', color: '#fff',
+              borderRadius: 8, padding: '4px 10px',
+              fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 600,
+              letterSpacing: '0.02em',
+            }}>
+              Hasta {savings.maxPct}% OFF
+            </span>
+            <span style={{ fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, color: '#7a1e2f' }}>
+              en prendas seleccionadas
+            </span>
+          </div>
+          <span style={{
+            fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500,
+            marginLeft: 'auto',
+          }}>
+            {products.length} {products.length === 1 ? 'prenda' : 'prendas'} en oferta
+          </span>
+        </div>
+      )}
 
       {products.length === 0 ? (
         <div style={{
@@ -54,26 +107,18 @@ export function OfertasClient({
           </div>
         </div>
       ) : (
-        <>
-          <div style={{
-            marginBottom: 24, paddingBottom: 16, borderBottom: `1px solid ${dahila.border}`,
-            fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700,
-          }}>
-            {products.length} {products.length === 1 ? 'prenda en oferta' : 'prendas en oferta'}
-          </div>
-          <div className="tienda-grid" style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22, rowGap: 44,
-          }}>
-            {products.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                discounts={discounts}
-                onQuickView={() => setQuickView(p)}
-              />
-            ))}
-          </div>
-        </>
+        <div className="tienda-grid" style={{
+          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22, rowGap: 44,
+        }}>
+          {products.map((p) => (
+            <ProductCard
+              key={p.id}
+              product={p}
+              discounts={discounts}
+              onQuickView={() => setQuickView(p)}
+            />
+          ))}
+        </div>
       )}
 
       {quickView && (
