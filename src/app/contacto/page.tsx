@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import ContactoClient from './ContactoClient'
+import { SITE_URL } from '@/lib/env'
 
 export const revalidate = 3600
 
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Contacto | Dahila Crochet',
     description: 'Escribime por WhatsApp o Instagram. Te respondo cuanto antes.',
-    url: '/contacto',
+    url: `${SITE_URL}/contacto`,
   },
 }
 

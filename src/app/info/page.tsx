@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { dahila, Eyebrow } from '@/components/ui/Primitives'
+import { SITE_URL } from '@/lib/env'
 
 export const revalidate = 3600
 
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Información | Dahila Crochet',
     description: 'Envíos, cambios, cuidados, pagos y encargos a medida.',
-    url: '/info',
+    url: `${SITE_URL}/info`,
   },
 }
 

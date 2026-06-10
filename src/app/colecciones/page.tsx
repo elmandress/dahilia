@@ -11,6 +11,12 @@ export const metadata: Metadata = {
   title: 'Colecciones',
   description: 'Las colecciones de Dahila Crochet — piezas tejidas a mano agrupadas por temporada e historia.',
   alternates: { canonical: '/colecciones' },
+  openGraph: {
+    title: 'Colecciones | Dahila Crochet',
+    description: 'Explorá las colecciones de Dahila — piezas tejidas a crochet, hechas a mano, agrupadas por temporada e historia.',
+    url: '/colecciones',
+    type: 'website',
+  },
 }
 
 export default async function ColeccionesPage() {

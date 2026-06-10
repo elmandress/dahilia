@@ -50,6 +50,19 @@ export default async function Home() {
     })),
   } : null
 
+  // WebSite schema — enables Google SERP search box for the domain.
+  const websiteJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Dahila Crochet',
+    url: SITE_URL,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/tienda?q={search_term_string}` },
+      'query-input': 'required name=search_term_string',
+    },
+  }
+
   // LocalBusiness — shows brand panel in Google with location, contact, links.
   const waUrl = settings.contact_whatsapp_url || 'https://wa.me/59894605015'
   const igUrl = settings.contact_instagram_url || 'https://www.instagram.com/dahila.crochet/'
@@ -76,6 +89,10 @@ export default async function Home() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
