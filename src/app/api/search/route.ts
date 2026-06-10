@@ -6,6 +6,7 @@ import type { Product } from '@/lib/types'
 export const revalidate = 0
 
 // Strip diacritics + lowercase so "cardigan" matches "Cardigán" and vice versa.
+// Use explicit Unicode escape range to avoid source-encoding corruption of literal chars.
 function normalize(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
 }

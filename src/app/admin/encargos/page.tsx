@@ -22,12 +22,16 @@ const STATUS_OPTIONS: Array<{ value: CustomOrder['status']; label: string }> = [
 ]
 
 function whatsappLinkFromOrder(order: CustomOrder): string | null {
-  const candidate = order.whatsapp || ''
-  const digits = candidate.replace(/\D/g, '')
-  // Heuristic: assume Uruguay if only 8-9 digits and no country code.
+  const raw = (order.whatsapp || '').trim()
+  if (!raw) return null
+  const digits = raw.replace(/\D/g, '')
   if (!digits) return null
-  if (digits.length >= 11) return `https://wa.me/${digits}`
-  return `https://wa.me/598${digits.replace(/^0+/, '')}`
+  // Already has country code (11+ digits or starts with +)
+  if (raw.startsWith('+') || digits.length >= 11) return `https://wa.me/${digits}`
+  // 8-9 digits with leading 0 → strip 0 and assume Uruguay (+598)
+  if (digits.startsWith('0')) return `https://wa.me/598${digits.replace(/^0+/, '')}`
+  // 8-9 digits without leading 0 → assume Uruguay (+598)
+  return `https://wa.me/598${digits}`
 }
 
 export default function EncargosPage() {

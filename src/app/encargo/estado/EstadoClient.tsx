@@ -103,6 +103,8 @@ export function EstadoClient() {
       setCode(c)
       run(c)
     }
+    // run is stable (refs startTransition which is stable); omitting to avoid loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params])
 
   return (

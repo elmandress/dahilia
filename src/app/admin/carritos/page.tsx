@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { CartItem, Product } from '@/lib/types'
+import type { CartItem, Product, Discount } from '@/lib/types'
 import { getPrimaryPhoto, getFinalPrice, formatPrice } from '@/lib/types'
 
 type Row = CartItem & { product?: Product }
@@ -16,6 +16,7 @@ interface CartGroup {
 
 export default function CarritosAdminPage() {
   const [groups, setGroups] = useState<CartGroup[]>([])
+  const [discounts, setDiscounts] = useState<Discount[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -23,27 +24,32 @@ export default function CarritosAdminPage() {
     setError(null)
     try {
       const supabase = createClient()
-      const { data, error: err } = await supabase
-        .from('cart_items')
-        .select('*, product:products(*, media:product_media(*), sizes:product_sizes(*))')
-        .order('added_at', { ascending: false })
-      if (err) throw err
+      const [cartRes, discountRes] = await Promise.all([
+        supabase
+          .from('cart_items')
+          .select('*, product:products(*, media:product_media(*), sizes:product_sizes(*))')
+          .order('added_at', { ascending: false }),
+        supabase.from('discounts').select('*').eq('active', true),
+      ])
+      if (cartRes.error) throw cartRes.error
 
-      const rows = (data ?? []) as Row[]
+      const activeDiscounts = (discountRes.data ?? []) as Discount[]
+      setDiscounts(activeDiscounts)
+
+      const rows = (cartRes.data ?? []) as Row[]
       const byCart = new Map<string, Row[]>()
       for (const r of rows) {
         if (!byCart.has(r.cart_id)) byCart.set(r.cart_id, [])
         byCart.get(r.cart_id)!.push(r)
       }
       const grouped: CartGroup[] = [...byCart.entries()].map(([cartId, items]) => {
-        const total = items.reduce((s, it) => s + (it.product ? getFinalPrice(it.product, it.size) * it.qty : 0), 0)
-        const lastActivity = items
-          .map((it) => it.added_at)
-          .sort()
-          .reverse()[0]
+        const total = items.reduce(
+          (s, it) => s + (it.product ? getFinalPrice(it.product, it.size, activeDiscounts) * it.qty : 0),
+          0
+        )
+        const lastActivity = items.map((it) => it.added_at).sort().reverse()[0]
         return { cartId, items, total, lastActivity }
       })
-      // Most recently active first.
       grouped.sort((a, b) => (a.lastActivity < b.lastActivity ? 1 : -1))
       setGroups(grouped)
     } catch (e) {
@@ -100,20 +106,28 @@ export default function CarritosAdminPage() {
               </header>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {g.items.filter((it) => it.product).map((it) => (
+                {g.items.map((it) => it.product ? (
                   <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={getPrimaryPhoto(it.product!)}
+                      src={getPrimaryPhoto(it.product)}
                       alt=""
                       style={{ width: 44, height: 54, objectFit: 'cover', borderRadius: 6, background: '#FAF1DF', flexShrink: 0 }}
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.9rem', color: '#1F1A1B' }}>{it.product!.name}</div>
+                      <div style={{ fontSize: '0.9rem', color: '#1F1A1B' }}>{it.product.name}</div>
                       <div style={{ fontSize: '0.8rem', color: '#888' }}>Talle {it.size} · x{it.qty}</div>
                     </div>
                     <div style={{ fontSize: '0.88rem', color: '#1F1A1B' }}>
-                      {formatPrice(getFinalPrice(it.product!, it.size) * it.qty)}
+                      {formatPrice(getFinalPrice(it.product, it.size, discounts) * it.qty)}
+                    </div>
+                  </div>
+                ) : (
+                  <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 12, opacity: 0.5 }}>
+                    <div style={{ width: 44, height: 54, borderRadius: 6, background: '#FAF1DF', flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.85rem', color: '#B6314A' }}>Producto eliminado</div>
+                      <div style={{ fontSize: '0.8rem', color: '#888' }}>Talle {it.size} · x{it.qty}</div>
                     </div>
                   </div>
                 ))}
