@@ -6,7 +6,7 @@ import { dahila, Eyebrow, Field, TextInput, Button } from '@/components/ui/Primi
 import { EncargosDisponibles } from '@/components/EncargosDisponibles'
 import { submitEncargo } from './actions'
 
-export default function EncargoForm() {
+export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
   const router = useRouter()
   const [tipo, setTipo] = useState('Cardigan')
   const [talle, setTalle] = useState('M')
@@ -90,7 +90,7 @@ export default function EncargoForm() {
 
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
           <a
-            href={`https://wa.me/59894605015?text=${waText}`}
+            href={`${whatsappUrl.replace(/\/+$/, '')}?text=${waText}`}
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -112,6 +112,11 @@ export default function EncargoForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+
+    if (!name.trim()) { setError('Contanos cómo te llamás.'); return }
+    if (!whatsapp.trim() && !email.trim()) { setError('Dejá tu WhatsApp o email para poder responderte.'); return }
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('El email no parece válido.'); return }
+
     const fd = new FormData()
     fd.set('name', name)
     fd.set('email', email)

@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Button, Icon } from '@/components/ui/Primitives'
-import { getPrimaryPhoto, formatPrice, getEffectivePrice, getFinalPrice } from '@/lib/types'
+import { getPrimaryPhoto, formatPrice, getEffectivePrice, getFinalPrice, BLUR_DATA_URL } from '@/lib/types'
+import type { Product, Discount } from '@/lib/types'
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import Image from 'next/image'
 import { SITE_URL } from '@/lib/env'
@@ -12,6 +14,16 @@ import { SITE_URL } from '@/lib/env'
 interface Props {
   whatsappUrl: string
   whatsappLabel: string
+  featuredProducts?: Product[]
+  discounts?: Discount[]
+}
+
+function leadTimeLabel(min: number, max: number): string {
+  if (min > 0 && max > 0 && min !== max) return `Se teje en ${min}–${max} semanas`
+  if (min > 0 && max > 0 && min === max) return min === 1 ? 'Se teje en 1 semana' : `Se teje en ${min} semanas`
+  if (max > 0) return max === 1 ? 'Se teje en hasta 1 semana' : `Se teje en hasta ${max} semanas`
+  if (min > 0) return min === 1 ? 'Se teje en 1 semana' : `Se teje en ${min} semanas`
+  return ''
 }
 
 /** Build a clean, multi-line WhatsApp message from the cart contents. */
@@ -55,7 +67,7 @@ function buildWhatsAppMessage(
   return lines.join('\n')
 }
 
-export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
+export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProducts = [], discounts: serverDiscounts = [] }: Props) {
   const { items, removeFromCart, updateQty, isLoading, discounts, shippingEstimate } = useCart()
   const router = useRouter()
   const [giftNote, setGiftNote] = useState('')
@@ -97,20 +109,70 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
 
   if (items.length === 0) {
     return (
-      <main style={{ maxWidth: 560, margin: '0 auto', padding: '120px 24px', textAlign: 'center' }}>
-        <div style={{ marginBottom: 24, color: dahila.ink300 }}>
-          <Icon name="shopping-bag" size={48} />
+      <main style={{ maxWidth: 880, margin: '0 auto', padding: '80px 24px' }}>
+        <div style={{ textAlign: 'center', marginBottom: featuredProducts.length > 0 ? 56 : 0 }}>
+          <div style={{ marginBottom: 20, color: dahila.ink300 }}>
+            <Icon name="shopping-bag" size={44} />
+          </div>
+          <Eyebrow>Tu carrito</Eyebrow>
+          <h1 style={{
+            fontFamily: dahila.fontDisplay, fontWeight: 300,
+            fontSize: 'clamp(28px, 4vw, 40px)', lineHeight: 1.1, letterSpacing: '-0.02em',
+            color: dahila.ink900, margin: '14px 0 12px',
+          }}>Está vacío.</h1>
+          <p style={{ fontFamily: dahila.fontSans, fontWeight: 300, fontSize: 15, color: dahila.ink700, marginBottom: 28 }}>
+            Todavía no agregaste nada. Mirá lo que hay disponible.
+          </p>
+          <Button variant="primary" onClick={() => router.push('/tienda')}>Ir a la tienda</Button>
         </div>
-        <Eyebrow>Tu carrito</Eyebrow>
-        <h1 style={{
-          fontFamily: dahila.fontDisplay, fontWeight: 300,
-          fontSize: 'clamp(32px, 5vw, 48px)', lineHeight: 1.1, letterSpacing: '-0.02em',
-          color: dahila.ink900, margin: '14px 0 16px',
-        }}>Está vacío.</h1>
-        <p style={{ fontFamily: dahila.fontSans, fontWeight: 300, fontSize: 15, color: dahila.ink700, marginBottom: 32 }}>
-          Llenalo con algunas de las piezas de la colección.
-        </p>
-        <Button variant="primary" onClick={() => router.push('/tienda')}>Ir a la tienda</Button>
+
+        {featuredProducts.length > 0 && (
+          <div style={{ marginTop: 64 }}>
+            <p style={{
+              fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.18em',
+              textTransform: 'uppercase', color: dahila.ink500, textAlign: 'center', marginBottom: 28,
+            }}>Algunas piezas que te pueden gustar</p>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+              gap: 20,
+            }}>
+              {featuredProducts.map((p) => {
+                const photo = getPrimaryPhoto(p)
+                const price = getFinalPrice(p, undefined, serverDiscounts)
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/tienda/${p.slug}`}
+                    style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}
+                  >
+                    <div style={{
+                      position: 'relative', aspectRatio: '3/4',
+                      borderRadius: 10, overflow: 'hidden', background: dahila.cream50,
+                    }}>
+                      <Image
+                        src={photo}
+                        alt={p.name}
+                        fill
+                        quality={80}
+                        sizes="(max-width: 600px) 50vw, 220px"
+                        placeholder="blur"
+                        blurDataURL={BLUR_DATA_URL}
+                        style={{ objectFit: 'cover' }}
+                      />
+                    </div>
+                    <div style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 14, color: dahila.ink900, lineHeight: 1.3 }}>
+                      {p.name}
+                    </div>
+                    <div style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700 }}>
+                      {formatPrice(price)}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </main>
     )
   }
@@ -150,8 +212,8 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
                   <PriceBlock list={listPrice} final={price} size="md" />
                 </div>
-                {/* Lead time — shown only when the product has real data, never invented */}
-                {(item.product.lead_time_weeks_min > 0 || item.product.lead_time_weeks_max > 0) && (
+                {/* Lead time — shown only when the product has real data */}
+                {leadTimeLabel(item.product.lead_time_weeks_min, item.product.lead_time_weeks_max) && (
                   <div style={{
                     display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 2,
                     fontFamily: 'var(--font-sans)', fontSize: 11, color: '#8C8285',
@@ -160,11 +222,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel }: Props) {
                       <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4"/>
                       <path d="M8 4.5V8l2.5 1.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
                     </svg>
-                    {item.product.lead_time_weeks_min && item.product.lead_time_weeks_max
-                      ? `Se teje en ${item.product.lead_time_weeks_min}–${item.product.lead_time_weeks_max} semanas`
-                      : item.product.lead_time_weeks_max
-                        ? `Se teje en hasta ${item.product.lead_time_weeks_max} semanas`
-                        : `Se teje en ${item.product.lead_time_weeks_min} semana`}
+                    {leadTimeLabel(item.product.lead_time_weeks_min, item.product.lead_time_weeks_max)}
                   </div>
                 )}
               </div>

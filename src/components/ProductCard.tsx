@@ -25,7 +25,10 @@ export function ProductCard({
   const [isAdding, setIsAdding] = useState(false)
 
   const photo = getPrimaryPhoto(product)
-  const defaultSize = product.sizes && product.sizes.length > 0 ? product.sizes[0].size : 'Único'
+  const defaultSize =
+    product.sizes?.find((s) => s.available !== false)?.size ||
+    product.sizes?.[0]?.size ||
+    'Único'
   const listPrice = getEffectivePrice(product, defaultSize)
   const discountPct = resolveDiscountPercent(product, discounts)
   const finalPrice = getFinalPrice(product, defaultSize, discounts)
