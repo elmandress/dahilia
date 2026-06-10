@@ -1,20 +1,75 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createBrowserClient } from '@/lib/supabase/client'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import type { Product, Discount, Color } from '@/lib/types'
+import type { Product, Category, Color, Discount } from '@/lib/types'
 import { getPrimaryPhoto, getFinalPrice, resolveDiscountPercent } from '@/lib/types'
 import { ProductDetailsClient } from './ProductDetailsClient'
+import { TiendaClient } from '../TiendaClient'
 import Link from 'next/link'
 import { SITE_URL } from '@/lib/env'
 
 export const revalidate = 3600
 
-export async function generateMetadata(
-  { params }: { params: Promise<{ slug: string }> }
-): Promise<Metadata> {
+/**
+ * This single dynamic segment handles two URL shapes:
+ *   /tienda/cardigans        → category page (CollectionPage schema, full filter UI)
+ *   /tienda/cardigan-merino  → product detail page (Product schema, PDP)
+ *
+ * Resolution order: check categories first (fast, few rows), then products.
+ * If neither matches → 404.
+ */
+async function resolveSlug(slug: string) {
+  const supabase = await createClient()
+  const [catRes, prodRes] = await Promise.all([
+    supabase.from('categories').select('*').eq('slug', slug).maybeSingle(),
+    supabase.from('products').select('slug, status').eq('slug', slug).maybeSingle(),
+  ])
+  if (catRes.data) return { type: 'category' as const, category: catRes.data as Category }
+  if (prodRes.data) return { type: 'product' as const }
+  return null
+}
+
+export async function generateStaticParams() {
+  const supabase = createBrowserClient()
+  const [{ data: cats }, { data: prods }] = await Promise.all([
+    supabase.from('categories').select('slug'),
+    supabase.from('products').select('slug').in('status', ['active', 'soldout']),
+  ])
+  return [
+    ...(cats ?? []).map((c) => ({ slug: c.slug })),
+    ...(prods ?? []).map((p) => ({ slug: p.slug })),
+  ]
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
   const { slug } = await params
   const supabase = await createClient()
 
+  // Try category first
+  const { data: cat } = await supabase
+    .from('categories')
+    .select('name, description')
+    .eq('slug', slug)
+    .maybeSingle()
+
+  if (cat) {
+    const desc =
+      cat.description ||
+      `${cat.name} tejidos a crochet, hechos a mano y a medida en Montevideo. Encontrá tu ${cat.name.toLowerCase()} ideal en Dahila Crochet.`
+    return {
+      title: cat.name,
+      description: desc,
+      alternates: { canonical: `/tienda/${slug}` },
+      openGraph: { title: `${cat.name} | Dahila Crochet`, description: desc, url: `${SITE_URL}/tienda/${slug}` },
+    }
+  }
+
+  // Try product
   const { data } = await supabase
     .from('products')
     .select('*, media:product_media(*)')
@@ -22,13 +77,7 @@ export async function generateMetadata(
     .maybeSingle()
 
   const product = data as Product | null
-
-  if (!product) {
-    return {
-      title: 'Producto no encontrado',
-      robots: { index: false, follow: false },
-    }
-  }
+  if (!product) return { title: 'Producto no encontrado', robots: { index: false, follow: false } }
 
   const photo = getPrimaryPhoto(product)
   const description = product.description || `Comprar ${product.name} a medida en Dahila Crochet.`
@@ -36,9 +85,7 @@ export async function generateMetadata(
   return {
     title: product.name,
     description,
-    alternates: {
-      canonical: `/tienda/${product.slug}`,
-    },
+    alternates: { canonical: `/tienda/${product.slug}` },
     openGraph: {
       type: 'website',
       title: `${product.name} | Dahila Crochet`,
@@ -55,12 +102,92 @@ export async function generateMetadata(
   }
 }
 
-export default async function ProductPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}) {
-  const { slug } = await params
+// ─── Category view ───────────────────────────────────────────────────────────
+
+async function CategoryPage({ slug, category }: { slug: string; category: Category }) {
+  const supabase = await createClient()
+
+  const [categoriesRes, productsRes, colorsRes, discountsRes] = await Promise.all([
+    supabase.from('categories').select('*').order('sort_order', { ascending: true }),
+    supabase
+      .from('products')
+      .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*))')
+      .in('status', ['active', 'soldout'])
+      .order('sort_order', { ascending: true }),
+    supabase.from('colors').select('*').order('sort_order', { ascending: true }),
+    supabase.from('discounts').select('*').eq('active', true),
+  ])
+
+  const categories = (categoriesRes.data ?? []) as Category[]
+  const colors = (colorsRes.data ?? []) as Color[]
+  const discounts = (discountsRes.data ?? []) as Discount[]
+  const products = (productsRes.data ?? []).map((p) => {
+    const joined = (p.colors ?? []) as Array<{ color: Color | null }>
+    return { ...p, colors: joined.map((c) => c.color).filter((c): c is Color => !!c) }
+  }) as Product[]
+
+  const categoryProducts = products.filter((p) => p.category?.slug === slug)
+
+  const collectionPageJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: category.name,
+    description: category.description || `${category.name} de Dahila Crochet`,
+    url: `${SITE_URL}/tienda/${slug}`,
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITE_URL },
+        { '@type': 'ListItem', position: 2, name: 'Tienda', item: `${SITE_URL}/tienda` },
+        { '@type': 'ListItem', position: 3, name: category.name, item: `${SITE_URL}/tienda/${slug}` },
+      ],
+    },
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: categoryProducts.slice(0, 24).map((p, i) => {
+        const photo = getPrimaryPhoto(p)
+        return {
+          '@type': 'ListItem',
+          position: i + 1,
+          item: {
+            '@type': 'Product',
+            name: p.name,
+            url: `${SITE_URL}/tienda/${p.slug}`,
+            image: photo.startsWith('http') ? photo : `${SITE_URL}${photo}`,
+            offers: {
+              '@type': 'Offer',
+              price: getFinalPrice(p, undefined, discounts).toFixed(2),
+              priceCurrency: 'UYU',
+              availability: p.status === 'active' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            },
+          },
+        }
+      }),
+    },
+  }
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageJsonLd) }}
+      />
+      <TiendaClient
+        key={`cat:${slug}`}
+        initialProducts={products}
+        categories={categories}
+        colors={colors}
+        discounts={discounts}
+        initialFilter={slug}
+        canonicalCat={slug}
+      />
+    </>
+  )
+}
+
+// ─── Product detail view ──────────────────────────────────────────────────────
+
+async function ProductPage({ slug }: { slug: string }) {
   const supabase = await createClient()
 
   const [{ data }, { data: discountData }, { data: settingsData }] = await Promise.all([
@@ -81,7 +208,6 @@ export default async function ProductPage({
       'size_guide_note', 'contact_whatsapp_url', 'shipping_estimate',
       'pdp_trust_1', 'pdp_trust_2', 'pdp_trust_3',
       'maker_name', 'maker_bio', 'maker_photo_url',
-      'installments_enabled', 'installments_label',
       'pdp_process_enabled',
       'pdp_process_step_1_icon', 'pdp_process_step_1_label', 'pdp_process_step_1_body',
       'pdp_process_step_2_icon', 'pdp_process_step_2_label', 'pdp_process_step_2_body',
@@ -90,28 +216,23 @@ export default async function ProductPage({
   ])
 
   const product = data as Product | null
-  // Flatten the joined product_colors → Color[] (mirrors the store query).
   if (product) {
     const joined = (product.colors ?? []) as unknown as Array<{ color: Color | null }>
     product.colors = joined.map((c) => c.color).filter((c): c is Color => !!c)
   }
   const discounts = (discountData ?? []) as Discount[]
-  const sizeGuideNote = (settingsData ?? []).find((r) => r.key === 'size_guide_note')?.value as string | undefined
-  const whatsappUrl = ((settingsData ?? []).find((r) => r.key === 'contact_whatsapp_url')?.value as string | undefined) || 'https://wa.me/59894605015'
-  const shippingEstimate = (settingsData ?? []).find((r) => r.key === 'shipping_estimate')?.value as string | undefined
   const getSetting = (k: string) => (settingsData ?? []).find((r) => r.key === k)?.value as string | undefined
+  const sizeGuideNote = getSetting('size_guide_note')
+  const whatsappUrl = getSetting('contact_whatsapp_url') || 'https://wa.me/59894605015'
+  const shippingEstimate = getSetting('shipping_estimate')
   const trustItems = [
-    { icon: 'truck', text: getSetting('pdp_trust_1')?.trim() || 'Envío a todo Uruguay' },
-    { icon: 'hand-heart', text: getSetting('pdp_trust_2')?.trim() || 'Hecho a mano' },
+    { icon: 'truck',         text: getSetting('pdp_trust_1')?.trim() || 'Envío a todo Uruguay' },
+    { icon: 'hand-heart',    text: getSetting('pdp_trust_2')?.trim() || 'Hecho a mano' },
     { icon: 'whatsapp-logo', text: getSetting('pdp_trust_3')?.trim() || 'Coordinás por WhatsApp' },
   ].filter((t) => t.text.length > 0)
 
-  if (!product) {
-    notFound()
-  }
+  if (!product) notFound()
 
-  // Related products: same category first, fall back to any active product.
-  // Fetched after we know the product so we can filter by its category.
   const { data: relatedData } = await supabase
     .from('products')
     .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*)')
@@ -125,10 +246,9 @@ export default async function ProductPage({
   const related = (sameCategory.length >= 2 ? sameCategory : relatedAll).slice(0, 4)
 
   const photo = getPrimaryPhoto(product)
-  // Schema.org requires absolute image URLs.
   const absolutePhoto = photo.startsWith('http') ? photo : `${SITE_URL}${photo}`
-  // Use the discounted price in structured data so Google shows the real price.
   const finalPrice = getFinalPrice(product, undefined, discounts)
+
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -136,10 +256,7 @@ export default async function ProductPage({
     ...(product.description ? { description: product.description } : {}),
     image: [absolutePhoto],
     sku: product.id,
-    brand: {
-      '@type': 'Brand',
-      name: 'Dahila Crochet',
-    },
+    brand: { '@type': 'Brand', name: 'Dahila Crochet' },
     ...(product.material ? { material: product.material } : {}),
     offers: {
       '@type': 'Offer',
@@ -163,12 +280,7 @@ export default async function ProductPage({
       { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITE_URL },
       { '@type': 'ListItem', position: 2, name: 'Tienda', item: `${SITE_URL}/tienda` },
       ...(product.category
-        ? [{
-            '@type': 'ListItem',
-            position: 3,
-            name: product.category.name,
-            item: `${SITE_URL}/tienda?cat=${product.category.slug}`,
-          }]
+        ? [{ '@type': 'ListItem', position: 3, name: product.category.name, item: `${SITE_URL}/tienda/${product.category.slug}` }]
         : []),
       {
         '@type': 'ListItem',
@@ -181,7 +293,6 @@ export default async function ProductPage({
 
   return (
     <div className="container" style={{ paddingBottom: '4rem' }}>
-      {/* Breadcrumbs */}
       <nav className="breadcrumbs hide-mobile" aria-label="Migas de pan">
         <Link href="/">Inicio</Link>
         <span className="breadcrumbs__sep">/</span>
@@ -189,21 +300,16 @@ export default async function ProductPage({
         {product.category && (
           <>
             <span className="breadcrumbs__sep">/</span>
-            <Link href={`/tienda?cat=${product.category.slug}`}>{product.category.name}</Link>
+            {/* Clean category URL — /tienda/cardigans instead of ?cat= */}
+            <Link href={`/tienda/${product.category.slug}`}>{product.category.name}</Link>
           </>
         )}
         <span className="breadcrumbs__sep">/</span>
         <span style={{ color: 'var(--fg)' }}>{product.name}</span>
       </nav>
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
       <ProductDetailsClient
         product={product}
@@ -217,15 +323,34 @@ export default async function ProductPage({
         makerName={getSetting('maker_name') || 'Anush'}
         makerBio={getSetting('maker_bio') || ''}
         makerPhoto={getSetting('maker_photo_url') || ''}
-        installmentsEnabled={getSetting('installments_enabled') === 'true'}
-        installmentsLabel={getSetting('installments_label') || '¿Querés pagar en 2 cuotas? Hablemos por WhatsApp →'}
         processEnabled={getSetting('pdp_process_enabled') === 'true'}
         processSteps={[
-          { icon: getSetting('pdp_process_step_1_icon') || 'chat-text',  label: getSetting('pdp_process_step_1_label') || 'Escribís',          body: getSetting('pdp_process_step_1_body') || 'Contame qué prenda querés, tu medida y colores favoritos.' },
-          { icon: getSetting('pdp_process_step_2_icon') || 'scissors',   label: getSetting('pdp_process_step_2_label') || 'Elegimos juntas',   body: getSetting('pdp_process_step_2_body') || 'Te muestro las lanas disponibles y confirmamos todos los detalles.' },
-          { icon: getSetting('pdp_process_step_3_icon') || 'needle',     label: getSetting('pdp_process_step_3_label') || 'Te lo tejo',        body: getSetting('pdp_process_step_3_body') || 'Trabajo en tu prenda y te aviso cuando está lista para enviar.' },
+          { icon: getSetting('pdp_process_step_1_icon') || 'chat-text',  label: getSetting('pdp_process_step_1_label') || 'Escribís',        body: getSetting('pdp_process_step_1_body') || 'Contame qué prenda querés, tu medida y colores favoritos.' },
+          { icon: getSetting('pdp_process_step_2_icon') || 'scissors',   label: getSetting('pdp_process_step_2_label') || 'Elegimos juntas', body: getSetting('pdp_process_step_2_body') || 'Te muestro las lanas disponibles y confirmamos todos los detalles.' },
+          { icon: getSetting('pdp_process_step_3_icon') || 'needle',     label: getSetting('pdp_process_step_3_label') || 'Te lo tejo',      body: getSetting('pdp_process_step_3_body') || 'Trabajo en tu prenda y te aviso cuando está lista para enviar.' },
         ].filter((s) => s.label.trim())}
       />
     </div>
   )
+}
+
+// ─── Entry point ─────────────────────────────────────────────────────────────
+
+export default async function TiendaSlugPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const { slug } = await params
+  await searchParams // consumed by TiendaClient via URL state
+
+  const resolved = await resolveSlug(slug)
+  if (!resolved) notFound()
+
+  if (resolved.type === 'category') {
+    return <CategoryPage slug={slug} category={resolved.category} />
+  }
+  return <ProductPage slug={slug} />
 }

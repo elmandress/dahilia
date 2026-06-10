@@ -88,14 +88,6 @@ const SECTIONS = [
     ],
   },
   {
-    title: 'Opciones de pago',
-    description: 'Activá el mensaje de cuotas que aparece debajo del botón "Agregar al carrito". Al hacer clic, el cliente abre WhatsApp con el mensaje pre-llenado.',
-    fields: [
-      { key: 'installments_enabled', label: '¿Mostrar el mensaje de cuotas?', type: 'toggle' },
-      { key: 'installments_label',   label: 'Texto del link', type: 'text', placeholder: '¿Querés pagar en 2 cuotas? Hablemos por WhatsApp →' },
-    ],
-  },
-  {
     title: 'Página "Sobre nosotros" — fotos',
     description: 'Las 3 fotos en formato retrato (3:4) que aparecen al pie de la página Atelier.',
     fields: [

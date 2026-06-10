@@ -78,6 +78,33 @@ export default function EncargosPage() {
   const filteredOrders =
     filterStatus === 'all' ? orders : orders.filter((o) => o.status === filterStatus)
 
+  const exportCSV = () => {
+    const rows = filteredOrders.map((o) => ({
+      Fecha: new Date(o.created_at).toLocaleDateString('es-UY'),
+      Nombre: o.customer_name,
+      WhatsApp: o.whatsapp || '',
+      Email: o.customer_email,
+      Prenda: o.garment_type,
+      Talle: o.size || '',
+      Estado: o.status,
+      'Código de seguimiento': o.tracking_code || '',
+      Notas: (o.admin_notes || '').replace(/\n/g, ' '),
+      Mensaje: (o.message || '').replace(/\n/g, ' '),
+    }))
+    const header = Object.keys(rows[0] ?? {}).join(',')
+    const body = rows.map((r) =>
+      Object.values(r).map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')
+    ).join('\n')
+    const csv = `﻿${header}\n${body}` // BOM for Excel UTF-8
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `encargos-dahila-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const statusCounts: Record<string, number> = {
     all: orders.length,
     new: orders.filter((o) => o.status === 'new').length,
@@ -96,6 +123,18 @@ export default function EncargosPage() {
           <h2>Encargos a medida</h2>
           <p>Gestioná los pedidos personalizados.</p>
         </div>
+        {filteredOrders.length > 0 && (
+          <button
+            onClick={exportCSV}
+            className="admin-btn admin-btn-secondary admin-btn-sm"
+            title="Exportar la lista actual como CSV (abre en Excel)"
+          >
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" style={{ marginRight: 6 }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Exportar CSV
+          </button>
+        )}
       </div>
 
       <div

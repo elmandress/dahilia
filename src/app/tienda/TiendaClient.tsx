@@ -89,6 +89,7 @@ export function TiendaClient({
   initialMax,
   initialSort,
   initialOnlyOffers,
+  canonicalCat,
 }: {
   initialProducts: Product[]
   categories: Category[]
@@ -100,6 +101,8 @@ export function TiendaClient({
   initialMax?: string
   initialSort?: string
   initialOnlyOffers?: boolean
+  /** When rendered from /tienda/[cat], keep URLs under that slug */
+  canonicalCat?: string
 }) {
   const router = useRouter()
 
@@ -133,19 +136,27 @@ export function TiendaClient({
   // Sync filter state → URL (shareable, indexable). Debounced so dragging the
   // price slider or typing doesn't spam history. router.replace keeps the back
   // button sane.
+  // When a canonical category slug is set (/tienda/[cat]), category changes
+  // navigate to the proper slug route for clean SEO URLs.
   const firstRun = useRef(true)
   useEffect(() => {
     if (firstRun.current) { firstRun.current = false; return }
     const t = setTimeout(() => {
       const sp = new URLSearchParams()
-      if (filter !== 'todo') sp.set('cat', filter)
       if (search.trim()) sp.set('q', search.trim())
       if (colorIds.length) sp.set('color', colorIds.join(','))
       if (maxPrice !== null && maxPrice < priceBounds.max) sp.set('max', String(maxPrice))
       if (sort !== 'recientes') sp.set('sort', sort)
       if (onlyDiscount) sp.set('oferta', '1')
       const qs = sp.toString()
-      router.replace(qs ? `/tienda?${qs}` : '/tienda', { scroll: false })
+
+      // Prefer clean category URLs over query params
+      if (filter !== 'todo') {
+        const base = `/tienda/${filter}`
+        router.replace(qs ? `${base}?${qs}` : base, { scroll: false })
+      } else {
+        router.replace(qs ? `/tienda?${qs}` : '/tienda', { scroll: false })
+      }
     }, 350)
     return () => clearTimeout(t)
   }, [filter, search, colorIds, maxPrice, sort, onlyDiscount, priceBounds.max, router])

@@ -27,8 +27,6 @@ export function ProductDetailsClient({
   makerName = 'Anush',
   makerBio = '',
   makerPhoto = '',
-  installmentsEnabled = false,
-  installmentsLabel = '¿Querés pagar en 2 cuotas? Hablemos por WhatsApp →',
   processEnabled = false,
   processSteps = [],
 }: {
@@ -43,8 +41,6 @@ export function ProductDetailsClient({
   makerName?: string
   makerBio?: string
   makerPhoto?: string
-  installmentsEnabled?: boolean
-  installmentsLabel?: string
   processEnabled?: boolean
   processSteps?: { icon: string; label: string; body: string }[]
 }) {
@@ -335,22 +331,6 @@ export function ProductDetailsClient({
                 O pedila a medida y la tejemos para vos →
               </button>
             </div>
-          )}
-
-          {/* Installments — optional WhatsApp payment plan link */}
-          {installmentsEnabled && !isSoldOut && (
-            <a
-              href={`${whatsappUrl}${whatsappUrl.includes('?') ? '&' : '?'}text=${encodeURIComponent(`Hola! Me interesa "${product.name}" pero quisiera pagar en cuotas. ¿Lo coordinamos?`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'block',
-                fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600,
-                textDecoration: 'underline', padding: '2px 0', lineHeight: 1.5,
-              }}
-            >
-              {installmentsLabel}
-            </a>
           )}
 
           {/* Maker bio — who made this piece; builds trust for artisan brands */}
