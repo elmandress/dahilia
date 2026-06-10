@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -15,7 +15,7 @@ export function WhatsAppFloat() {
   const [waUrl, setWaUrl] = useState('https://wa.me/59894605015')
   const [enabled, setEnabled] = useState(false)
   const [visible, setVisible] = useState(true)
-  const [lastY, setLastY] = useState(0)
+  const lastYRef = useRef(0)
 
   useEffect(() => {
     const supabase = createClient()
@@ -32,20 +32,21 @@ export function WhatsAppFloat() {
       })
   }, [])
 
+  // Use a ref for lastY so the scroll handler is stable (registered once, not
+  // re-added on every scroll tick as it was when lastY lived in state).
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY
-      // Show when scrolling up or near top; hide when scrolling down past 200px
-      if (y < 200 || y < lastY) {
+      if (y < 200 || y < lastYRef.current) {
         setVisible(true)
-      } else if (y > lastY + 8) {
+      } else if (y > lastYRef.current + 8) {
         setVisible(false)
       }
-      setLastY(y)
+      lastYRef.current = y
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [lastY])
+  }, [])
 
   // Hide on admin, cart (has its own CTA), and order form
   if (
@@ -55,6 +56,11 @@ export function WhatsAppFloat() {
   ) return null
 
   if (!enabled) return null
+
+  // Only allow known-safe WhatsApp domains to prevent open redirect if the
+  // admin accidentally pastes a non-WA URL into site_settings.
+  const safeWa = waUrl.startsWith('https://wa.me/') || waUrl.startsWith('https://api.whatsapp.com/')
+  if (!safeWa) return null
 
   const message = encodeURIComponent('Hola! Estoy en el sitio de Dahila Crochet y tengo una consulta 🧶')
   const href = `${waUrl.replace(/\/$/, '')}?text=${message}`

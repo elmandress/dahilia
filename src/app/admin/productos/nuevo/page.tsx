@@ -252,6 +252,10 @@ export default function NuevoProductoPage() {
       setError('El slug es requerido')
       return
     }
+    if (!isCustomOnly && !basePriceUyu && sizes.every((s) => !s.price_uyu)) {
+      setError('Ingresá un precio base o un precio en al menos un talle.')
+      return
+    }
 
     setSaving(true)
     setError('')

@@ -232,15 +232,22 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                   display: 'flex', alignItems: 'center', gap: 12,
                   border: `1px solid ${dahila.borderStrong}`, borderRadius: 999, padding: '6px 12px'
                 }}>
-                  <button onClick={() => updateQty(item.id, item.qty - 1)} aria-label="Restar" style={{
+                  <button onClick={() => updateQty(item.id, item.qty - 1)} aria-label="Restar uno" style={{
                     background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink900, padding: 0,
                     width: 22, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   }}><Icon name="minus" size={12} /></button>
                   <span style={{ fontFamily: dahila.fontSans, fontSize: 14, minWidth: 14, textAlign: 'center' }}>{item.qty}</span>
-                  <button onClick={() => updateQty(item.id, item.qty + 1)} aria-label="Sumar" style={{
-                    background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink900, padding: 0,
-                    width: 22, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  }}><Icon name="plus" size={12} /></button>
+                  <button
+                    onClick={() => updateQty(item.id, item.qty + 1)}
+                    aria-label="Sumar uno"
+                    disabled={item.qty >= 20}
+                    style={{
+                      background: 'transparent', border: 'none', padding: 0,
+                      cursor: item.qty >= 20 ? 'default' : 'pointer',
+                      color: item.qty >= 20 ? dahila.ink300 : dahila.ink900,
+                      width: 22, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  ><Icon name="plus" size={12} /></button>
                 </div>
 
                 <button onClick={() => removeFromCart(item.id)} style={{

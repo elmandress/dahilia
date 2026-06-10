@@ -10,13 +10,12 @@ interface CartContextType {
   items: CartItemWithProduct[]
   cartCount: number
   cartTotal: number
-  /** Active batch/category discount rules, so every cart view prices identically. */
   discounts: Discount[]
-  /** Short CMS shipping line, shown as reassurance in the drawer/cart. */
   shippingEstimate: string
   hasMounted: boolean
   isLoading: boolean
   drawerOpen: boolean
+  addError: boolean
   openDrawer: () => void
   closeDrawer: () => void
   refresh: () => Promise<void>
@@ -63,10 +62,9 @@ export function CartProvider({
   // batch/category rules — no flash of an un-discounted total.
   const [discounts] = useState<Discount[]>(initialDiscounts)
   const [isLoading, setIsLoading] = useState(true)
-  // Avoid hydration mismatch: the badge depends on the cart, which is only known
-  // after the client has called the API. Until then, render as if empty.
   const [hasMounted, setHasMounted] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [addError, setAddError] = useState(false)
   const hasFetchedRef = useRef(false)
 
   const openDrawer = useCallback(() => setDrawerOpen(true), [])
@@ -142,11 +140,12 @@ export function CartProvider({
       const data = await jsonOrThrow(res)
       setItems(data.items || [])
       pingOtherTabs()
-      // Immediate feedback: slide the mini-cart open so the shopper sees the
-      // item landed (the highest-impact add-to-cart UX pattern).
       setDrawerOpen(true)
     } catch (e) {
       console.error('addToCart failed', e)
+      // Surface the error so the user knows the add failed.
+      setAddError(true)
+      setTimeout(() => setAddError(false), 3500)
     }
   }, [])
 
@@ -192,10 +191,31 @@ export function CartProvider({
   return (
     <CartContext.Provider value={{
       items, cartCount, cartTotal, discounts, shippingEstimate, hasMounted, isLoading,
-      drawerOpen, openDrawer, closeDrawer, refresh,
+      drawerOpen, addError, openDrawer, closeDrawer, refresh,
       addToCart, updateQty, removeFromCart,
     }}>
       {children}
+      {/* Error toast when add-to-cart fails (network error or product unavailable) */}
+      <div
+        role="alert"
+        aria-live="assertive"
+        style={{
+          position: 'fixed', left: '50%', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 22px)',
+          transform: `translateX(-50%) translateY(${addError ? '0' : '14px'})`,
+          zIndex: 131,
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+          background: '#7a1e2f', color: '#fff',
+          padding: '11px 16px', borderRadius: 999,
+          fontFamily: 'var(--font-sans), sans-serif', fontSize: 13,
+          boxShadow: '0 12px 30px -12px rgba(31,26,27,0.5)',
+          opacity: addError ? 1 : 0,
+          pointerEvents: 'none',
+          transition: 'opacity 200ms ease, transform 200ms ease',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        No se pudo agregar al carrito. Intentá de nuevo.
+      </div>
     </CartContext.Provider>
   )
 }

@@ -92,6 +92,15 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('storage', onStorage)
   }, [fetchFavorites])
 
+  // Refetch when the tab regains focus — mirrors CartProvider behaviour.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && hasFetchedRef.current) void fetchFavorites()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [fetchFavorites])
+
   const isFavorite = useCallback((productId: string) => ids.has(productId), [ids])
 
   const showToast = useCallback(() => {
