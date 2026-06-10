@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import type { Product, Discount } from '@/lib/types'
 import { getEffectivePrice, getFinalPrice, resolveDiscountPercent, getPrimaryPhoto, getScarcity, BLUR_DATA_URL } from '@/lib/types'
@@ -19,7 +19,6 @@ export function ProductCard({
   discounts?: Discount[]
   onQuickView?: () => void
 }) {
-  const router = useRouter()
   const { addToCart } = useCart()
   const [hover, setHover] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
@@ -52,22 +51,16 @@ export function ProductCard({
   }
 
   return (
-    // Whole card is clickable, but it hosts its own buttons (heart, quick-add),
-    // so it can't be a <button> (no nested buttons). A focusable div with a
-    // keyboard handler keeps it accessible.
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => router.push(`/tienda/${product.slug}`)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/tienda/${product.slug}`) }
-      }}
+    // <Link> wraps the whole card so it works with Ctrl+click, middle-click,
+    // and crawlers. The inner FavoriteButton and quick-add use e.stopPropagation()
+    // so they don't trigger navigation.
+    <Link
+      href={`/tienda/${product.slug}`}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      aria-label={product.name}
       style={{
-        background: 'transparent', border: 'none', padding: 0, textAlign: 'left',
-        cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 10,
+        textDecoration: 'none', color: 'inherit',
+        display: 'flex', flexDirection: 'column', gap: 10,
       }}>
 
       <div style={{
@@ -221,6 +214,6 @@ export function ProductCard({
           </span>
         </div>
       )}
-    </div>
+    </Link>
   )
 }

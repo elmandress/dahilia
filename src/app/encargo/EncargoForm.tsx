@@ -160,8 +160,8 @@ export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
         <Field label="¿Qué querés tejer?">
           <div className="encargo-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 8 }}>
             {['Cardigan', 'Top', 'Set', 'Otro'].map((t) => (
-              <button key={t} type="button" onClick={() => setTipo(t)} style={{
-                padding: '14px 8px', borderRadius: 8,
+              <button key={t} type="button" onClick={() => setTipo(t)} aria-pressed={tipo === t} style={{
+                padding: '14px 8px', minHeight: 44, borderRadius: 8,
                 background: tipo === t ? dahila.ink900 : '#fff',
                 color: tipo === t ? '#fff' : dahila.ink900,
                 border: `1px solid ${tipo === t ? dahila.ink900 : dahila.borderStrong}`,
@@ -192,8 +192,8 @@ export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
         <Field label="Talle aproximado">
           <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
             {['XS', 'S', 'M', 'L', 'XL'].map((t) => (
-              <button key={t} type="button" onClick={() => setTalle(t)} style={{
-                width: 44, height: 40, borderRadius: 8,
+              <button key={t} type="button" onClick={() => setTalle(t)} aria-pressed={talle === t} style={{
+                width: 44, height: 44, borderRadius: 8,
                 fontFamily: dahila.fontSans, fontSize: 12,
                 border: `1px solid ${talle === t ? dahila.ink900 : dahila.borderStrong}`,
                 background: talle === t ? dahila.ink900 : '#fff',
@@ -215,6 +215,7 @@ export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
               background: 'transparent', border: 'none',
               borderBottom: `1px solid ${dahila.borderStrong}`,
               padding: '10px 0 8px', outline: 'none', resize: 'vertical',
+              width: '100%', boxSizing: 'border-box',
             }}
           />
         </Field>

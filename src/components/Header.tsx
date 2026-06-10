@@ -405,7 +405,7 @@ export function Header({ promo }: { promo?: PromoBar }) {
                 </li>
                 {MEGA_CATEGORIES.map((c) => (
                   <li key={c.slug}>
-                    <Link href={`/tienda?cat=${c.slug}`} onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>
+                    <Link href={`/tienda/${c.slug}`} onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>
                       {c.label}
                     </Link>
                   </li>

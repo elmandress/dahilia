@@ -153,7 +153,12 @@ export function CartDrawer() {
                       {/* Qty + remove */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, border: `1px solid ${dahila.borderStrong}`, borderRadius: 999, padding: '4px 10px' }}>
-                          <button onClick={() => updateQty(item.id, item.qty - 1)} aria-label="Restar uno" style={qtyBtn}><Icon name="minus" size={11} /></button>
+                          <button
+                            onClick={() => updateQty(item.id, item.qty - 1)}
+                            aria-label="Restar uno"
+                            disabled={item.qty <= 1}
+                            style={{ ...qtyBtn, cursor: item.qty <= 1 ? 'default' : 'pointer', color: item.qty <= 1 ? dahila.ink300 : dahila.ink900 }}
+                          ><Icon name="minus" size={11} /></button>
                           <span style={{ fontFamily: dahila.fontSans, fontSize: 13, minWidth: 12, textAlign: 'center' }}>{item.qty}</span>
                           <button
                             onClick={() => updateQty(item.id, item.qty + 1)}

@@ -150,6 +150,7 @@ export function CartProvider({
   }, [])
 
   const updateQty = useCallback(async (itemId: string, qty: number) => {
+    if (qty < 0) return
     try {
       const res = await fetch('/api/cart', {
         method: 'PATCH',

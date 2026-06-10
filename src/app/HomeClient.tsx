@@ -8,10 +8,11 @@ import type { Product, Discount } from '@/lib/types'
 import type { Testimonial } from '@/components/TestimonialsStrip'
 import { BLUR_DATA_URL } from '@/lib/types'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 function FAQ({ items }: { items: [string, string][] }) {
-  const [open, setOpen] = useState<number>(0)
+  const [open, setOpen] = useState<number>(-1)
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       {items.map(([q, a], i) => (
@@ -232,11 +233,10 @@ export function HomeClient({ products, settings, discounts = [], testimonials = 
             fontSize: 22, letterSpacing: '0.08em', textTransform: 'uppercase',
             color: dahila.ink900, margin: 0,
           }}>Nuevo</h2>
-          <button onClick={() => router.push('/tienda')} style={{
-            background: 'transparent', border: 'none', cursor: 'pointer',
+          <Link href="/tienda" style={{
             fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
-            letterSpacing: '0.06em', color: dahila.ink700,
-          }}>Ver más →</button>
+            letterSpacing: '0.06em', color: dahila.ink700, textDecoration: 'none',
+          }}>Ver más →</Link>
         </div>
 
         <div className="product-grid" style={{

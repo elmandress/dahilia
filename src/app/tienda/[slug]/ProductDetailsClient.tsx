@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import { useCart } from '@/components/CartProvider'
 import { ProductGallery } from '@/components/ProductGallery'
@@ -96,23 +97,23 @@ export function ProductDetailsClient({
 
   return (
     <main style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px 0' }}>
-      <nav style={{
+      <nav aria-label="Breadcrumb" style={{
         display: 'flex', gap: 6, fontFamily: dahila.fontSans, fontSize: 11,
         color: dahila.ink500, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 28,
       }}>
-        <button onClick={() => router.push('/')} style={crumb}>Inicio</button>
-        <span>/</span>
-        <button onClick={() => router.push('/tienda')} style={crumb}>Tienda</button>
+        <Link href="/" style={crumb}>Inicio</Link>
+        <span aria-hidden>/</span>
+        <Link href="/tienda" style={crumb}>Tienda</Link>
         {product.category && (
           <>
-            <span>/</span>
-            <button onClick={() => router.push(`/tienda?cat=${product.category!.slug}`)} style={crumb}>
+            <span aria-hidden>/</span>
+            <Link href={`/tienda/${product.category.slug}`} style={crumb}>
               {product.category.name}
-            </button>
+            </Link>
           </>
         )}
-        <span>/</span>
-        <span style={{ color: dahila.ink900 }}>{product.name}</span>
+        <span aria-hidden>/</span>
+        <span style={{ color: dahila.ink900 }} aria-current="page">{product.name}</span>
       </nav>
 
       <div className="producto-split" style={{
@@ -408,8 +409,14 @@ export function ProductDetailsClient({
       {/* Sticky mobile add-to-cart — visible only on small screens */}
       {canBuy && (
         <div className="pdp-sticky-bar">
-          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-            <PriceBlock list={listPrice} final={finalPrice} size="sm" align="end" />
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, minWidth: 0, flex: '0 1 auto' }}>
+            <span style={{
+              fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 14,
+              color: dahila.ink900, lineHeight: 1.2,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              maxWidth: '40vw',
+            }}>{product.name}</span>
+            <PriceBlock list={listPrice} final={finalPrice} size="sm" align="start" />
           </div>
           <button
             onClick={handleAdd}

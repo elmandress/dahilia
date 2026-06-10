@@ -24,7 +24,19 @@ export function ShareButton({ title, text }: { title: string; text?: string }) {
         await nav.clipboard.writeText(url)
         setCopied(true)
         setTimeout(() => setCopied(false), 1800)
+        return
       }
+      // Fallback for browsers where clipboard API is unavailable (HTTP, old WebView)
+      const ta = document.createElement('textarea')
+      ta.value = url
+      ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0'
+      document.body.appendChild(ta)
+      ta.focus()
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
     } catch {
       // User cancelled the share sheet, or clipboard blocked — ignore.
     }
