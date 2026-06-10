@@ -447,81 +447,84 @@ export function Header({ promo }: { promo?: PromoBar }) {
           </div>
         </div>
 
-        {/* Mobile menu — full-height slide-in panel with a backdrop. */}
-        <div
-          className="mobile-menu-scrim"
-          onClick={() => setOpen(false)}
-          aria-hidden={!open}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 80,
-            background: 'rgba(20,16,17,0.4)',
-            opacity: open ? 1 : 0,
-            pointerEvents: open ? 'auto' : 'none',
-            transition: `opacity 220ms ${dahila.ease}`,
-          }}
-        />
-        <aside
-          id="mobile-menu"
-          className="mobile-menu-panel"
-          inert={!open}
-          aria-label="Menú"
-          style={{
-            position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 81,
-            width: 'min(320px, 86vw)',
-            background: '#fff',
-            display: 'flex', flexDirection: 'column',
-            transform: open ? 'translateX(0)' : 'translateX(-100%)',
-            transition: `transform 280ms ${dahila.ease}`,
-            boxShadow: open ? '20px 0 50px -30px rgba(31,26,27,0.4)' : 'none',
-          }}
-        >
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '16px 20px', borderBottom: `1px solid ${dahila.border}`,
-          }}>
-            <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 20, letterSpacing: '0.16em', color: dahila.ink900 }}>DAHILA</span>
-            <button onClick={() => setOpen(false)} aria-label="Cerrar menú" style={{
-              background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink900,
-              width: 32, height: 32, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Icon name="x" size={20} />
-            </button>
-          </div>
-          <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 20px 16px', display: 'flex', flexDirection: 'column' }}>
-            {NAV_ITEMS.map((it) => {
-              const base = it.id.split('?')[0]
-              const on = !it.id.includes('?') && pathname === base
-              return (
-                <Link key={it.id} href={it.id} onClick={() => setOpen(false)} style={{
-                  textDecoration: 'none',
-                  fontFamily: dahila.fontSans, fontSize: 16, fontWeight: it.accent ? 500 : (on ? 500 : 300),
-                  color: it.accent ? '#B6314A' : dahila.ink900, textAlign: 'left', padding: '15px 0',
-                  letterSpacing: '0.04em',
-                  borderBottom: `1px solid ${dahila.border}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                }}>
-                  <span>{it.label}</span>
-                  {on && <span aria-hidden style={{ width: 6, height: 6, borderRadius: 999, background: it.accent ? '#B6314A' : dahila.ink900 }} />}
-                </Link>
-              )
-            })}
-            <Link href="/favoritos" onClick={() => setOpen(false)} style={{
-              textDecoration: 'none',
-              fontFamily: dahila.fontSans, fontSize: 16, fontWeight: 300,
-              color: dahila.ink900, textAlign: 'left', padding: '15px 0',
-              letterSpacing: '0.04em', borderBottom: `1px solid ${dahila.border}`,
-              display: 'flex', alignItems: 'center', gap: 10,
-            }}>
-              <Icon name="heart" size={18} color={dahila.ink700} />
-              <span>Favoritos{showFavBadge ? ` (${favCount})` : ''}</span>
-            </Link>
-          </nav>
-          <div style={{ padding: '16px 20px calc(env(safe-area-inset-bottom, 0px) + 16px)', borderTop: `1px solid ${dahila.border}`, display: 'flex', gap: 16 }}>
-            <a href="https://www.instagram.com/dahila.crochet/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{ color: dahila.ink700 }}><Icon name="instagram-logo" size={20} /></a>
-            <a href="https://wa.me/59894605015" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" style={{ color: dahila.ink700 }}><Icon name="whatsapp-logo" size={20} /></a>
-          </div>
-        </aside>
       </header>
+
+      {/* Mobile menu — rendered OUTSIDE the <header> so backdrop-filter on the
+          sticky header doesn't create a new stacking context that traps these
+          fixed-position overlays and clips/hides them on iOS Safari / Chrome. */}
+      <div
+        className="mobile-menu-scrim"
+        onClick={() => setOpen(false)}
+        aria-hidden={!open}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 80,
+          background: 'rgba(20,16,17,0.4)',
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? 'auto' : 'none',
+          transition: `opacity 220ms ${dahila.ease}`,
+        }}
+      />
+      <aside
+        id="mobile-menu"
+        className="mobile-menu-panel"
+        inert={!open}
+        aria-label="Menú"
+        style={{
+          position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 81,
+          width: 'min(320px, 86vw)',
+          background: '#fff',
+          display: 'flex', flexDirection: 'column',
+          transform: open ? 'translateX(0)' : 'translateX(-100%)',
+          transition: `transform 280ms ${dahila.ease}`,
+          boxShadow: open ? '20px 0 50px -30px rgba(31,26,27,0.4)' : 'none',
+        }}
+      >
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 20px', borderBottom: `1px solid ${dahila.border}`,
+        }}>
+          <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 20, letterSpacing: '0.16em', color: dahila.ink900 }}>DAHILA</span>
+          <button onClick={() => setOpen(false)} aria-label="Cerrar menú" style={{
+            background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink900,
+            width: 32, height: 32, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Icon name="x" size={20} />
+          </button>
+        </div>
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 20px 16px', display: 'flex', flexDirection: 'column' }}>
+          {NAV_ITEMS.map((it) => {
+            const base = it.id.split('?')[0]
+            const on = !it.id.includes('?') && pathname === base
+            return (
+              <Link key={it.id} href={it.id} onClick={() => setOpen(false)} style={{
+                textDecoration: 'none',
+                fontFamily: dahila.fontSans, fontSize: 16, fontWeight: it.accent ? 500 : (on ? 500 : 300),
+                color: it.accent ? '#B6314A' : dahila.ink900, textAlign: 'left', padding: '15px 0',
+                letterSpacing: '0.04em',
+                borderBottom: `1px solid ${dahila.border}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <span>{it.label}</span>
+                {on && <span aria-hidden style={{ width: 6, height: 6, borderRadius: 999, background: it.accent ? '#B6314A' : dahila.ink900 }} />}
+              </Link>
+            )
+          })}
+          <Link href="/favoritos" onClick={() => setOpen(false)} style={{
+            textDecoration: 'none',
+            fontFamily: dahila.fontSans, fontSize: 16, fontWeight: 300,
+            color: dahila.ink900, textAlign: 'left', padding: '15px 0',
+            letterSpacing: '0.04em', borderBottom: `1px solid ${dahila.border}`,
+            display: 'flex', alignItems: 'center', gap: 10,
+          }}>
+            <Icon name="heart" size={18} color={dahila.ink700} />
+            <span>Favoritos{showFavBadge ? ` (${favCount})` : ''}</span>
+          </Link>
+        </nav>
+        <div style={{ padding: '16px 20px calc(env(safe-area-inset-bottom, 0px) + 16px)', borderTop: `1px solid ${dahila.border}`, display: 'flex', gap: 16 }}>
+          <a href="https://www.instagram.com/dahila.crochet/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{ color: dahila.ink700 }}><Icon name="instagram-logo" size={20} /></a>
+          <a href="https://wa.me/59894605015" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" style={{ color: dahila.ink700 }}><Icon name="whatsapp-logo" size={20} /></a>
+        </div>
+      </aside>
     </>
   )
 }

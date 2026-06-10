@@ -247,7 +247,7 @@ export default function ProductosPage() {
                 <tr>
                   <th style={{ width: 60 }}></th>
                   <th>Nombre</th>
-                  <th>Categoría</th>
+                  <th className="col-hide-mobile">Categoría</th>
                   <th>Precio</th>
                   <th>Estado</th>
                   <th>Acciones</th>
@@ -296,7 +296,7 @@ export default function ProductosPage() {
                       <br />
                       <span style={{ fontSize: '0.8rem', color: '#999' }}>/{product.slug}</span>
                     </td>
-                    <td>{product.category?.name || '—'}</td>
+                    <td className="col-hide-mobile">{product.category?.name || '—'}</td>
                     <td>{product.base_price_uyu ? formatPrice(product.base_price_uyu) : '—'}</td>
                     <td>
                       {product.status === 'soldout' ? (

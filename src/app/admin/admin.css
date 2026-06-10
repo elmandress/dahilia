@@ -207,6 +207,11 @@
   box-shadow: 0 -8px 20px -12px rgba(31,26,27,0.18);
 }
 
+/* Hide non-critical table columns on mobile */
+@media (max-width: 768px) {
+  .col-hide-mobile { display: none !important; }
+}
+
 @media (max-width: 768px) {
   .admin-mobile-toggle,
   .admin-mobile-logout {
@@ -1154,4 +1159,77 @@
 @keyframes admin-toast-in {
   from { opacity: 0; transform: translateY(1rem); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   Admin responsive — mobile-specific patches
+   ============================================================ */
+
+/* Ensure every table is scrollable horizontally on small screens */
+.admin-card .admin-table-wrap,
+.admin-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Subtle hint that content is scrollable */
+  scrollbar-width: thin;
+}
+
+/* Tighten toast position on mobile so it doesn't sit over sticky save bar */
+@media (max-width: 768px) {
+  .admin-toast {
+    bottom: 80px;
+    right: 1rem;
+    left: 1rem;
+    text-align: center;
+  }
+
+  /* Encargo card: make the grid a 2-col on small phones */
+  .encargo-card dl {
+    grid-template-columns: auto 1fr !important;
+    font-size: 0.82rem !important;
+  }
+
+  /* Products list: hide sort-order column (numeric only, rarely needed on mobile) */
+  .admin-table .col-order { display: none; }
+
+  /* Order detail inside encargo-card: single column */
+  .admin-order-detail .detail-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Colors page swatch list: smaller swatches */
+  .admin-media-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+  }
+
+  /* Page header buttons: make them full-width stack on tiny screens */
+  .admin-page-header {
+    gap: 0.5rem !important;
+  }
+
+  /* Sizes rows in product forms: let price field shrink */
+  .admin-size-row input { width: 80px; }
+  .admin-size-row { flex-wrap: wrap; }
+}
+
+@media (max-width: 480px) {
+  /* Tables: minimum legible font */
+  .admin-table th, .admin-table td {
+    padding: 0.45rem 0.5rem !important;
+    font-size: 0.78rem !important;
+  }
+
+  /* Thumbnail even smaller on mini phones */
+  .admin-table .product-thumb { width: 32px !important; height: 32px !important; }
+
+  /* Stat cards: 1-up on phones narrower than 480px (already set for 420px, extend here) */
+  .admin-stats-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* Card padding: very tight */
+  .admin-card { padding: 0.75rem !important; }
+
+  /* Carritos / encargos page header: stack vertically */
+  .admin-page-header { flex-direction: column !important; align-items: stretch !important; }
+  .admin-page-header > * { width: 100%; }
+  .admin-page-header .admin-btn { width: auto; align-self: flex-start; }
 }

@@ -79,8 +79,10 @@ export async function generateMetadata({
   const product = data as Product | null
   if (!product) return { title: 'Producto no encontrado', robots: { index: false, follow: false } }
 
-  const photo = getPrimaryPhoto(product)
+  const photoRaw = getPrimaryPhoto(product)
+  const photoUrl = photoRaw.startsWith('http') ? photoRaw : `${SITE_URL}${photoRaw}`
   const description = product.description || `Comprar ${product.name} a medida en Dahila Crochet.`
+  const ogImage = { url: photoUrl, width: 1200, height: 1500, alt: product.name }
 
   return {
     title: product.name,
@@ -91,13 +93,13 @@ export async function generateMetadata({
       title: `${product.name} | Dahila Crochet`,
       description,
       url: `${SITE_URL}/tienda/${product.slug}`,
-      images: [photo],
+      images: [ogImage],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${product.name} | Dahila Crochet`,
       description,
-      images: [photo],
+      images: [photoUrl],
     },
   }
 }
