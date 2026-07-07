@@ -22,7 +22,10 @@ export default function TestimoniosPage() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load()
+  }, [load])
 
   const save = async () => {
     if (!editing) return
@@ -148,7 +151,7 @@ export default function TestimoniosPage() {
             <div key={item.id} className="admin-card" style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 14, color: '#333', margin: '0 0 8px', lineHeight: 1.55 }}>
-                  "{item.text}"
+                  &quot;{item.text}&quot;
                 </p>
                 <div style={{ fontSize: 12, color: '#888' }}>
                   <strong style={{ color: '#555' }}>{item.author}</strong>

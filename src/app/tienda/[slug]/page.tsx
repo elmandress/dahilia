@@ -181,7 +181,6 @@ async function CategoryPage({ slug, category }: { slug: string; category: Catego
         colors={colors}
         discounts={discounts}
         initialFilter={slug}
-        canonicalCat={slug}
       />
     </>
   )
@@ -249,20 +248,37 @@ async function ProductPage({ slug }: { slug: string }) {
 
   const photo = getPrimaryPhoto(product)
   const absolutePhoto = photo.startsWith('http') ? photo : `${SITE_URL}${photo}`
+  // Full image set → richer Product structured data (Google can show several).
+  const galleryImages = (product.media ?? [])
+    .filter((m) => m.type === 'image')
+    .map((m) => (m.url.startsWith('http') ? m.url : `${SITE_URL}${m.url}`))
+  const schemaImages = galleryImages.length > 0 ? galleryImages : [absolutePhoto]
   const finalPrice = getFinalPrice(product, undefined, discounts)
+
+  // Price validity one year out — keeps Google Merchant / rich-results parsing
+  // happy without asserting a promo end date the owner didn't set. This is a
+  // Server Component that runs per-request (revalidate=3600), so reading the
+  // clock here is intentional and safe.
+  // eslint-disable-next-line react-hooks/purity
+  const priceValidUntil = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10)
 
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
     ...(product.description ? { description: product.description } : {}),
-    image: [absolutePhoto],
+    image: schemaImages,
     sku: product.id,
+    mpn: product.id,
     brand: { '@type': 'Brand', name: 'Dahila Crochet' },
+    ...(product.category ? { category: product.category.name } : {}),
     ...(product.material ? { material: product.material } : {}),
     offers: {
       '@type': 'Offer',
       url: `${SITE_URL}/tienda/${product.slug}`,
+      seller: { '@type': 'Organization', name: 'Dahila Crochet', url: SITE_URL },
       price: finalPrice.toFixed(2),
       priceCurrency: 'UYU',
       availability:
@@ -272,6 +288,13 @@ async function ProductPage({ slug }: { slug: string }) {
             ? 'https://schema.org/OutOfStock'
             : 'https://schema.org/PreOrder',
       itemCondition: 'https://schema.org/NewCondition',
+      priceValidUntil,
+      // Hecho a medida: no se aceptan cambios (coherente con la FAQ del sitio).
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'UY',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+      },
     },
   }
 

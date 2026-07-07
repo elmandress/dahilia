@@ -17,6 +17,7 @@ function RecentlyViewedStrip() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem('dahila_recently_viewed')
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw) setItems(JSON.parse(raw) ?? [])
     } catch {}
   }, [])
@@ -89,7 +90,6 @@ export function TiendaClient({
   initialMax,
   initialSort,
   initialOnlyOffers,
-  canonicalCat,
 }: {
   initialProducts: Product[]
   categories: Category[]
@@ -101,8 +101,6 @@ export function TiendaClient({
   initialMax?: string
   initialSort?: string
   initialOnlyOffers?: boolean
-  /** When rendered from /tienda/[cat], keep URLs under that slug */
-  canonicalCat?: string
 }) {
   const router = useRouter()
 

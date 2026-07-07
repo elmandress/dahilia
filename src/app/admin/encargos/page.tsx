@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { CustomOrder } from '@/lib/types'
+import { updateEncargoStatus } from './actions'
 
 const STATUS_TABS: Array<{ key: string; label: string }> = [
   { key: 'all',         label: 'Todos' },
@@ -11,6 +12,7 @@ const STATUS_TABS: Array<{ key: string; label: string }> = [
   { key: 'in_progress', label: 'En proceso' },
   { key: 'done',        label: 'Completados' },
   { key: 'cancelled',   label: 'Cancelados' },
+  { key: 'archived',    label: 'Papelera' },
 ]
 
 const STATUS_OPTIONS: Array<{ value: CustomOrder['status']; label: string }> = [
@@ -20,6 +22,16 @@ const STATUS_OPTIONS: Array<{ value: CustomOrder['status']; label: string }> = [
   { value: 'done',        label: 'Completado' },
   { value: 'cancelled',   label: 'Cancelado' },
 ]
+
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+
+// When the archive migration (schema-archive-orders.sql) hasn't been run yet,
+// Postgres reports an undefined-column error. We detect it to show a helpful
+// message instead of a generic failure.
+function isMissingArchiveColumn(err: unknown): boolean {
+  const msg = (err as { message?: string } | null)?.message
+  return typeof msg === 'string' && /archived_at/.test(msg)
+}
 
 function whatsappLinkFromOrder(order: CustomOrder): string | null {
   const raw = (order.whatsapp || '').trim()
@@ -38,14 +50,19 @@ export default function EncargosPage() {
   const [orders, setOrders] = useState<CustomOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   const loadOrders = useCallback(async () => {
     const supabase = createClient()
-    const { data } = await supabase
+    const { data, error: loadError } = await supabase
       .from('custom_orders')
       .select('*')
       .order('created_at', { ascending: false })
 
+    if (loadError) {
+      setError('No se pudieron cargar los encargos. Probá recargar la página.')
+    }
     setOrders((data ?? []) as CustomOrder[])
     setLoading(false)
   }, [])
@@ -56,31 +73,116 @@ export default function EncargosPage() {
   }, [loadOrders])
 
   const updateStatus = async (id: string, newStatus: CustomOrder['status']) => {
-    const supabase = createClient()
-    const { error } = await supabase
-      .from('custom_orders')
-      .update({ status: newStatus })
-      .eq('id', id)
-
-    if (!error) {
-      setOrders((curr) => curr.map((o) => (o.id === id ? { ...o, status: newStatus } : o)))
+    setError(null)
+    setNotice(null)
+    // Goes through a server action so the customer status email is sent
+    // server-side (the Resend key never reaches the browser).
+    const res = await updateEncargoStatus(id, newStatus)
+    if (!res.ok) {
+      setError('No se pudo cambiar el estado. Revisá tu conexión e intentá de nuevo.')
+      return
     }
+    setOrders((curr) => curr.map((o) => (o.id === id ? { ...o, status: newStatus } : o)))
+    setNotice('Estado actualizado.')
   }
 
   const updateNotes = async (id: string, notes: string) => {
+    setError(null)
     const supabase = createClient()
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from('custom_orders')
       .update({ admin_notes: notes })
       .eq('id', id)
 
-    if (!error) {
-      setOrders((curr) => curr.map((o) => (o.id === id ? { ...o, admin_notes: notes } : o)))
+    if (updateError) {
+      setError('No se pudieron guardar las notas. Intentá de nuevo.')
+      return
     }
+    setOrders((curr) => curr.map((o) => (o.id === id ? { ...o, admin_notes: notes } : o)))
   }
 
+  const setArchived = async (id: string, archived: boolean) => {
+    setError(null)
+    setNotice(null)
+    const supabase = createClient()
+    const archived_at = archived ? new Date().toISOString() : null
+    const { error: updateError } = await supabase
+      .from('custom_orders')
+      .update({ archived_at })
+      .eq('id', id)
+
+    if (updateError) {
+      if (isMissingArchiveColumn(updateError)) {
+        setError('La papelera necesita la migración: corré database/schema-archive-orders.sql en Supabase.')
+      } else {
+        setError('No se pudo actualizar la papelera. Intentá de nuevo.')
+      }
+      return
+    }
+    setOrders((curr) => curr.map((o) => (o.id === id ? { ...o, archived_at } : o)))
+    setNotice(archived ? 'Encargo movido a la papelera.' : 'Encargo restaurado.')
+  }
+
+  const archiveOldCancelled = async () => {
+    setError(null)
+    setNotice(null)
+    const cutoff = Date.now() - THIRTY_DAYS_MS
+    const eligible = orders.filter(
+      (o) => o.status === 'cancelled' && !o.archived_at && new Date(o.created_at).getTime() < cutoff
+    )
+    if (eligible.length === 0) {
+      setNotice('No hay cancelados de más de 30 días para archivar.')
+      return
+    }
+    const supabase = createClient()
+    const archived_at = new Date().toISOString()
+    const { error: updateError } = await supabase
+      .from('custom_orders')
+      .update({ archived_at })
+      .in('id', eligible.map((o) => o.id))
+
+    if (updateError) {
+      if (isMissingArchiveColumn(updateError)) {
+        setError('La papelera necesita la migración: corré database/schema-archive-orders.sql en Supabase.')
+      } else {
+        setError('No se pudieron archivar. Intentá de nuevo.')
+      }
+      return
+    }
+    const ids = new Set(eligible.map((o) => o.id))
+    setOrders((curr) => curr.map((o) => (ids.has(o.id) ? { ...o, archived_at } : o)))
+    setNotice(`${eligible.length} ${eligible.length === 1 ? 'encargo archivado' : 'encargos archivados'}.`)
+  }
+
+  const deleteForever = async (id: string, name: string) => {
+    if (!window.confirm(`¿Eliminar definitivamente el encargo de ${name}? Esta acción no se puede deshacer.`)) {
+      return
+    }
+    setError(null)
+    setNotice(null)
+    const supabase = createClient()
+    const { error: deleteError } = await supabase
+      .from('custom_orders')
+      .delete()
+      .eq('id', id)
+
+    if (deleteError) {
+      setError('No se pudo eliminar el encargo. Intentá de nuevo.')
+      return
+    }
+    setOrders((curr) => curr.filter((o) => o.id !== id))
+    setNotice('Encargo eliminado definitivamente.')
+  }
+
+  const notArchived = orders.filter((o) => !o.archived_at)
+  const archivedOrders = orders.filter((o) => !!o.archived_at)
+
   const filteredOrders =
-    filterStatus === 'all' ? orders : orders.filter((o) => o.status === filterStatus)
+    filterStatus === 'all'
+      ? notArchived
+      : filterStatus === 'archived'
+        ? archivedOrders
+        : notArchived.filter((o) => o.status === filterStatus)
 
   const exportCSV = () => {
     const rows = filteredOrders.map((o) => ({
@@ -110,12 +212,13 @@ export default function EncargosPage() {
   }
 
   const statusCounts: Record<string, number> = {
-    all: orders.length,
-    new: orders.filter((o) => o.status === 'new').length,
-    replied: orders.filter((o) => o.status === 'replied').length,
-    in_progress: orders.filter((o) => o.status === 'in_progress').length,
-    done: orders.filter((o) => o.status === 'done').length,
-    cancelled: orders.filter((o) => o.status === 'cancelled').length,
+    all: notArchived.length,
+    new: notArchived.filter((o) => o.status === 'new').length,
+    replied: notArchived.filter((o) => o.status === 'replied').length,
+    in_progress: notArchived.filter((o) => o.status === 'in_progress').length,
+    done: notArchived.filter((o) => o.status === 'done').length,
+    cancelled: notArchived.filter((o) => o.status === 'cancelled').length,
+    archived: archivedOrders.length,
   }
 
   if (loading) return <div className="admin-loading"><div className="admin-spinner" /></div>
@@ -127,19 +230,51 @@ export default function EncargosPage() {
           <h2>Encargos a medida</h2>
           <p>Gestioná los pedidos personalizados.</p>
         </div>
-        {filteredOrders.length > 0 && (
-          <button
-            onClick={exportCSV}
-            className="admin-btn admin-btn-secondary admin-btn-sm"
-            title="Exportar la lista actual como CSV (abre en Excel)"
-          >
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" style={{ marginRight: 6 }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-            </svg>
-            Exportar CSV
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {filterStatus === 'cancelled' && statusCounts.cancelled > 0 && (
+            <button
+              onClick={archiveOldCancelled}
+              className="admin-btn admin-btn-secondary admin-btn-sm"
+              title="Mueve a la papelera los encargos cancelados de más de 30 días"
+            >
+              Archivar cancelados +30 días
+            </button>
+          )}
+          {filteredOrders.length > 0 && (
+            <button
+              onClick={exportCSV}
+              className="admin-btn admin-btn-secondary admin-btn-sm"
+              title="Exportar la lista actual como CSV (abre en Excel)"
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" style={{ marginRight: 6 }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              Exportar CSV
+            </button>
+          )}
+        </div>
       </div>
+
+      {error && (
+        <div role="alert" style={{
+          background: 'rgba(182,49,74,0.06)', border: '1px solid rgba(182,49,74,0.24)',
+          color: '#7a1e2f', padding: '12px 14px', borderRadius: 8, marginBottom: 18, fontSize: 13,
+          display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center',
+        }}>
+          <span>{error}</span>
+          <button onClick={() => setError(null)} aria-label="Cerrar aviso" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7a1e2f', fontSize: 16 }}>×</button>
+        </div>
+      )}
+      {notice && (
+        <div role="status" style={{
+          background: 'rgba(56,142,60,0.08)', border: '1px solid rgba(56,142,60,0.28)',
+          color: '#2e6b32', padding: '10px 14px', borderRadius: 8, marginBottom: 18, fontSize: 13,
+          display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center',
+        }}>
+          <span>{notice}</span>
+          <button onClick={() => setNotice(null)} aria-label="Cerrar aviso" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2e6b32', fontSize: 16 }}>×</button>
+        </div>
+      )}
 
       <div
         role="tablist"
@@ -196,14 +331,16 @@ export default function EncargosPage() {
 
       {filteredOrders.length === 0 ? (
         <div className="admin-card admin-empty">
-          <p>No hay encargos en este estado.</p>
+          <p>{filterStatus === 'archived' ? 'La papelera está vacía.' : 'No hay encargos en este estado.'}</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {filteredOrders.map((order) => {
             const waLink = whatsappLinkFromOrder(order)
+            const isArchived = !!order.archived_at
+            const canArchive = order.status === 'cancelled' || order.status === 'done'
             return (
-              <article key={order.id} className="admin-card encargo-card">
+              <article key={order.id} className="admin-card encargo-card" style={isArchived ? { opacity: 0.85 } : undefined}>
                 <header
                   style={{
                     display: 'flex', flexWrap: 'wrap', gap: 12,
@@ -282,27 +419,55 @@ export default function EncargosPage() {
                     </span>
                   )}
 
-                  <label
-                    style={{
-                      marginLeft: 'auto',
-                      display: 'inline-flex', alignItems: 'center', gap: 6,
-                      fontSize: '0.78rem', color: '#666',
-                    }}
-                  >
-                    Estado
-                    <select
-                      value={order.status}
-                      onChange={(e) => updateStatus(order.id, e.target.value as CustomOrder['status'])}
-                      style={{
-                        padding: '6px 10px', fontSize: '0.85rem',
-                        borderRadius: 8, border: '1px solid #ddd',
-                      }}
-                    >
-                      {STATUS_OPTIONS.map((s) => (
-                        <option key={s.value} value={s.value}>{s.label}</option>
-                      ))}
-                    </select>
-                  </label>
+                  {isArchived ? (
+                    <div style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+                      <button
+                        onClick={() => setArchived(order.id, false)}
+                        className="admin-btn admin-btn-secondary admin-btn-sm"
+                      >
+                        Restaurar
+                      </button>
+                      <button
+                        onClick={() => deleteForever(order.id, order.customer_name)}
+                        className="admin-btn admin-btn-sm"
+                        style={{ background: '#B6314A', color: '#fff', border: 'none' }}
+                      >
+                        Eliminar definitivamente
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ marginLeft: 'auto', display: 'inline-flex', gap: 10, alignItems: 'center' }}>
+                      {canArchive && (
+                        <button
+                          onClick={() => setArchived(order.id, true)}
+                          className="admin-btn admin-btn-secondary admin-btn-sm"
+                          title="Mover a la papelera"
+                        >
+                          Archivar
+                        </button>
+                      )}
+                      <label
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                          fontSize: '0.78rem', color: '#666',
+                        }}
+                      >
+                        Estado
+                        <select
+                          value={order.status}
+                          onChange={(e) => updateStatus(order.id, e.target.value as CustomOrder['status'])}
+                          style={{
+                            padding: '6px 10px', fontSize: '0.85rem',
+                            borderRadius: 8, border: '1px solid #ddd',
+                          }}
+                        >
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s.value} value={s.value}>{s.label}</option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  )}
                 </div>
 
                 <details style={{ marginTop: 12 }}>

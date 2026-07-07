@@ -38,6 +38,13 @@ export const metadata: Metadata = {
   },
   description: 'Prendas únicas tejidas a crochet en Uruguay. Colecciones a medida, tops, cardigans y accesorios con diseño contemporáneo.',
   keywords: ['crochet', 'ropa a medida', 'uruguay', 'tejido', 'handmade', 'slow fashion', 'dahila'],
+  applicationName: 'Dahila Crochet',
+  authors: [{ name: 'Dahila Crochet' }],
+  creator: 'Dahila Crochet',
+  publisher: 'Dahila Crochet',
+  category: 'shopping',
+  // Evita que iOS convierta números (precios, medidas) en enlaces de teléfono.
+  formatDetection: { telephone: false, address: false, email: false },
   alternates: {
     canonical: '/',
   },
@@ -79,13 +86,31 @@ const organizationJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'Dahila Crochet',
+  alternateName: 'Dahila',
   url: SITE_URL,
   logo: `${SITE_URL}/isotype-color.png`,
+  image: `${SITE_URL}/logo-full.jpg`,
+  description: 'Prendas tejidas a crochet, hechas a mano y a medida, desde Montevideo, Uruguay.',
   sameAs: ['https://www.instagram.com/dahila.crochet/'],
   address: {
     '@type': 'PostalAddress',
     addressLocality: 'Montevideo',
     addressCountry: 'UY',
+  },
+  areaServed: { '@type': 'Country', name: 'Uruguay' },
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer service',
+    telephone: '+59894605015',
+    availableLanguage: ['Spanish'],
+  },
+  // Store-wide return policy — piezas a medida no admiten cambios (coherente con
+  // la FAQ). Google recomienda declararla a nivel Organization cuando aplica a
+  // toda la tienda, y sirve como override base para el Product schema.
+  hasMerchantReturnPolicy: {
+    '@type': 'MerchantReturnPolicy',
+    applicableCountry: 'UY',
+    returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
   },
 }
 

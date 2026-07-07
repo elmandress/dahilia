@@ -60,6 +60,17 @@ export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
           ))}
         </ol>
 
+        {/* Email tracking notice — only when the customer left an email (that's
+            when the status-change emails actually fire). */}
+        {email.trim() && (
+          <p style={{
+            fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, lineHeight: 1.6,
+            color: dahila.ink700, margin: '0 auto 28px', maxWidth: 420,
+          }}>
+            📧 Te avisamos a <strong style={{ fontWeight: 500 }}>{email.trim()}</strong> cada vez que tu encargo cambie de estado.
+          </p>
+        )}
+
         {/* Tracking code — so the customer can check the status later. */}
         {trackingCode && (
           <div style={{
@@ -181,7 +192,7 @@ export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
           <Field label="WhatsApp" helper="Te respondo más rápido por acá.">
             <TextInput placeholder="+598 ..." value={whatsapp} onChange={setWhatsapp} />
           </Field>
-          <Field label="Mail" helper="Si preferís, dejá tu mail.">
+          <Field label="Mail" helper="Si lo dejás, te avisamos por mail cada cambio de estado de tu encargo.">
             <TextInput placeholder="vos@correo.uy" type="email" value={email} onChange={setEmail} />
           </Field>
         </div>

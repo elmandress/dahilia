@@ -80,6 +80,9 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
 
   // Media
   const [mediaEntries, setMediaEntries] = useState<MediaEntry[]>([])
+  const [urlInput, setUrlInput] = useState('')
+  const [storageFiles, setStorageFiles] = useState<string[]>([])
+  const [showStoragePicker, setShowStoragePicker] = useState(false)
 
   // Sizes
   const [sizes, setSizes] = useState<SizeEntry[]>([])
@@ -253,6 +256,34 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       uploadFiles(e.dataTransfer.files)
     }
   }, [uploadFiles])
+
+  const addByUrl = useCallback((url: string) => {
+    const trimmed = url.trim()
+    if (!trimmed) return
+    const tempId = `url_${Date.now()}_${Math.random().toString(36).slice(2)}`
+    setMediaEntries(prev => [...prev, {
+      tempId,
+      url: trimmed,
+      type: 'image',
+      alt: '',
+      position: prev.length,
+      is_primary: prev.length === 0,
+    }])
+    setUrlInput('')
+  }, [])
+
+  const loadStorageFiles = useCallback(async () => {
+    const supabase = createClient()
+    const { data } = await supabase.storage.from('media').list('products', { limit: 200, sortBy: { column: 'created_at', order: 'desc' } })
+    if (data) {
+      const urls = data.map(f => {
+        const { data: pub } = supabase.storage.from('media').getPublicUrl(`products/${f.name}`)
+        return pub.publicUrl
+      })
+      setStorageFiles(urls)
+    }
+    setShowStoragePicker(true)
+  }, [])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -692,6 +723,68 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
               <p>Arrastrá varias fotos aquí o hacé clic para elegirlas</p>
               <div className="dropzone-hint">Podés subir varias a la vez · Arrastralas para ordenarlas · La primera es la principal</div>
             </div>
+
+            {/* Agregar por URL de Storage */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <input
+                type="url"
+                placeholder="Pegar URL de foto ya subida..."
+                value={urlInput}
+                onChange={e => setUrlInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addByUrl(urlInput))}
+                style={{ flex: 1, padding: '7px 10px', borderRadius: 6, border: '1px solid #ddd', fontSize: '0.85rem', fontFamily: 'var(--font-sans)' }}
+              />
+              <button
+                type="button"
+                className="admin-btn admin-btn-secondary admin-btn-sm"
+                onClick={() => addByUrl(urlInput)}
+              >
+                + URL
+              </button>
+              <button
+                type="button"
+                className="admin-btn admin-btn-secondary admin-btn-sm"
+                onClick={loadStorageFiles}
+              >
+                📂 Storage
+              </button>
+            </div>
+
+            {/* Storage picker modal */}
+            {showStoragePicker && (
+              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+                <div style={{ background: '#fff', borderRadius: 12, padding: 24, maxWidth: 780, width: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ margin: 0, fontWeight: 400, fontFamily: 'var(--font-display)' }}>Fotos en Storage ({storageFiles.length})</h3>
+                    <button type="button" onClick={() => setShowStoragePicker(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 20, color: '#555' }}>✕</button>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#888' }}>Hacé clic en una foto para agregarla a este producto.</p>
+                  <div style={{ overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 8 }}>
+                    {storageFiles.map(url => {
+                      const already = mediaEntries.some(m => m.url === url)
+                      return (
+                        <button
+                          key={url}
+                          type="button"
+                          onClick={() => { if (!already) addByUrl(url) }}
+                          style={{
+                            position: 'relative', aspectRatio: '1', border: already ? '2px solid #4ade80' : '2px solid transparent',
+                            borderRadius: 8, overflow: 'hidden', padding: 0, cursor: already ? 'default' : 'pointer',
+                            background: '#f5f5f5', opacity: already ? 0.6 : 1,
+                          }}
+                          title={url.split('/').pop()}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          {already && <span style={{ position: 'absolute', top: 4, right: 4, background: '#4ade80', color: '#fff', borderRadius: 999, width: 18, height: 18, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✓</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <button type="button" className="admin-btn admin-btn-secondary" onClick={() => setShowStoragePicker(false)}>Cerrar</button>
+                </div>
+              </div>
+            )}
 
             {mediaEntries.length > 0 && (
               <div className="admin-media-grid">

@@ -56,40 +56,55 @@ export default async function TiendaPage({
     }
   }) as Product[]
 
-  // ItemList JSON-LD — helps Google show the category as a product carousel.
-  // Limited to the first 24 to keep the payload reasonable.
-  const itemListJsonLd = {
+  // CollectionPage + ItemList JSON-LD — describes /tienda as a product listing
+  // and lets Google show it as a carousel. Limited to the first 24 items.
+  const collectionJsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    itemListElement: products.slice(0, 24).map((p, i) => {
-      const photo = getPrimaryPhoto(p)
-      return {
-        '@type': 'ListItem',
-        position: i + 1,
-        item: {
-          '@type': 'Product',
-          name: p.name,
-          url: `${SITE_URL}/tienda/${p.slug}`,
-          image: photo.startsWith('http') ? photo : `${SITE_URL}${photo}`,
-          offers: {
-            '@type': 'Offer',
-            price: getFinalPrice(p, undefined, discounts).toFixed(2),
-            priceCurrency: 'UYU',
-            availability:
-              p.status === 'active'
-                ? 'https://schema.org/InStock'
-                : 'https://schema.org/OutOfStock',
+    '@type': 'CollectionPage',
+    name: 'Tienda',
+    description: 'Colección actual de prendas tejidas a crochet — tops, cardigans, accesorios y sets.',
+    url: `${SITE_URL}/tienda`,
+    isPartOf: { '@type': 'WebSite', name: 'Dahila Crochet', url: SITE_URL },
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITE_URL },
+        { '@type': 'ListItem', position: 2, name: 'Tienda', item: `${SITE_URL}/tienda` },
+      ],
+    },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: products.length,
+      itemListElement: products.slice(0, 24).map((p, i) => {
+        const photo = getPrimaryPhoto(p)
+        return {
+          '@type': 'ListItem',
+          position: i + 1,
+          item: {
+            '@type': 'Product',
+            name: p.name,
+            url: `${SITE_URL}/tienda/${p.slug}`,
+            image: photo.startsWith('http') ? photo : `${SITE_URL}${photo}`,
+            offers: {
+              '@type': 'Offer',
+              price: getFinalPrice(p, undefined, discounts).toFixed(2),
+              priceCurrency: 'UYU',
+              availability:
+                p.status === 'active'
+                  ? 'https://schema.org/InStock'
+                  : 'https://schema.org/OutOfStock',
+            },
           },
-        },
-      }
-    }),
+        }
+      }),
+    },
   }
 
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
       />
     <TiendaClient
       key={`${categoryFilter}|${searchQuery}|${colorParam}|${maxParam}|${sortParam}|${onlyOffers}`}

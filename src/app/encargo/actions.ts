@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { notifyNewEncargo, reportSystemError } from '@/lib/email'
 
 export interface EncargoSubmission {
   ok: boolean
@@ -68,6 +69,26 @@ function clean(s: unknown, max: number): string {
   return s.replace(CTRL_CHARS, '').trim().slice(0, max)
 }
 
+// Fire owner + customer notifications without ever breaking the save (no-ops
+// until the email env vars are set). Shared by both insert paths.
+async function safeNotify(p: {
+  name: string; email: string; contact: string; tipo: string; talle: string; message: string; code?: string
+}): Promise<void> {
+  try {
+    await notifyNewEncargo({
+      name: p.name,
+      email: p.email || null,
+      contact: p.contact,
+      garmentType: p.tipo,
+      size: p.talle || null,
+      message: p.message || null,
+      trackingCode: p.code,
+    })
+  } catch (e) {
+    console.error('encargo notification failed (encargo saved OK)', e)
+  }
+}
+
 export async function submitEncargo(form: FormData): Promise<EncargoSubmission> {
   const name = clean(form.get('name'), MAX.name)
   const email = clean(form.get('email'), MAX.email)
@@ -124,16 +145,21 @@ export async function submitEncargo(form: FormData): Promise<EncargoSubmission> 
         })
         if (retry.error) {
           console.error('encargo insert error (retry)', retry.error)
+          await reportSystemError('encargo insert (retry)', retry.error)
           return { ok: false, error: 'No pudimos guardar tu encargo. Intentá de nuevo.' }
         }
+        await safeNotify({ name, email, contact: email || whatsapp, tipo, talle, message })
         return { ok: true }
       }
       console.error('encargo insert error', error)
+      await reportSystemError('encargo insert', error)
       return { ok: false, error: 'No pudimos guardar tu encargo. Intentá de nuevo.' }
     }
+    await safeNotify({ name, email, contact: email || whatsapp, tipo, talle, message, code })
     return { ok: true, code }
   } catch (e) {
     console.error('encargo unexpected error', e)
+    await reportSystemError('encargo submit', e)
     return { ok: false, error: 'Error inesperado. Intentá de nuevo en un momento.' }
   }
 }

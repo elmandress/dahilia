@@ -78,6 +78,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'El producto no está disponible.' }, { status: 409 })
     }
 
+    // Reject explicitly-unavailable sizes. Single-size products have no size rows,
+    // so a missing row means "no size constraint" and is allowed (unchanged behaviour).
+    const { data: sizeRow } = await supabase
+      .from('product_sizes')
+      .select('available')
+      .eq('product_id', productId)
+      .eq('size', size)
+      .maybeSingle()
+    if (sizeRow && sizeRow.available === false) {
+      return NextResponse.json({ error: 'Ese talle no está disponible.' }, { status: 409 })
+    }
+
     // Upsert: increment qty if existing
     const { data: existing } = await supabase
       .from('cart_items')

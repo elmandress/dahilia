@@ -61,7 +61,7 @@ export function TestimonialsStrip({ items }: { items: Testimonial[] }) {
           color: dahila.ink900, margin: '0 0 24px',
           maxWidth: 640, marginLeft: 'auto', marginRight: 'auto',
         }}>
-          "{item.text}"
+          &quot;{item.text}&quot;
         </blockquote>
 
         <div style={{

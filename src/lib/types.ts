@@ -112,6 +112,9 @@ export interface CustomOrder {
   tracking_code: string | null;
   created_at: string;
   updated_at: string;
+  // Soft-delete / papelera. Requires schema-archive-orders.sql. Undefined when the
+  // column doesn't exist yet → treated as "not archived" so nothing breaks.
+  archived_at?: string | null;
 }
 
 export interface CartItem {

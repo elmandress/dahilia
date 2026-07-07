@@ -27,8 +27,8 @@ export default function AdminDashboardPage() {
       supabase.from('custom_orders').select('*').order('created_at', { ascending: false }).limit(5),
       supabase.from('custom_orders').select('*', { count: 'exact', head: true }),
       supabase.from('custom_orders').select('*', { count: 'exact', head: true }).eq('status', 'new'),
-      // Active carts: created in the last 7 days with at least one item
-      supabase.from('cart_items').select('cart_id', { count: 'exact', head: true }),
+      // Active carts: fetch cart_id values so we can count DISTINCT carts (not rows)
+      supabase.from('cart_items').select('cart_id'),
       // Collections (graceful — table may not exist yet)
       Promise.resolve(
         supabase.from('collections').select('id', { count: 'exact', head: true }).eq('published', true)
@@ -47,7 +47,9 @@ export default function AdminDashboardPage() {
       onOfferProducts: products.filter((p) => p.discount_active && (p.discount_percent ?? 0) > 0).length,
       newOrders: newCountRes.count ?? orders.filter((o) => o.status === 'new').length,
       totalOrders: countRes.count ?? orders.length,
-      activeCarts: cartsRes.count ?? 0,
+      activeCarts: new Set(
+        ((cartsRes.data ?? []) as Array<{ cart_id: string }>).map((r) => r.cart_id)
+      ).size,
       totalCollections: (collectionsRes as { count: number | null }).count ?? 0,
     })
     setRecentOrders(orders)
