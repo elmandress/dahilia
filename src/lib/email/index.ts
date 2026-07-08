@@ -13,6 +13,7 @@ export {
   notifyEncargoStatusChange,
   notifyOwnerStatusChange,
   notifyNewOrder,
+  notifyWeaverApplication,
   reportSystemError,
   sendDailySummary,
 } from './notifications'
@@ -20,6 +21,7 @@ export {
 export type {
   EncargoEmailData,
   OrderEmailData,
+  WeaverApplicationEmailData,
   CustomerState,
   DailySummaryData,
 } from './templates'

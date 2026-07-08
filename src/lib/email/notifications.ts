@@ -6,6 +6,7 @@ import { sendEmail, type SendEmailResult } from './client'
 import {
   ownerNewEncargo,
   ownerNewOrder,
+  ownerNewWeaverApplication,
   ownerStatusChange,
   ownerSystemError,
   ownerEmailFailure,
@@ -15,6 +16,7 @@ import {
   customerStatusEmail,
   type EncargoEmailData,
   type OrderEmailData,
+  type WeaverApplicationEmailData,
   type CustomerState,
   type DailySummaryData,
   type RenderedEmail,
@@ -74,6 +76,11 @@ export async function notifyEncargoStatusChange(d: EncargoEmailData, dbStatus: s
   if (state && d.email) {
     await dispatch('customer', d.email, customerStatusEmail(state, d), ownerAddress())
   }
+}
+
+/** New weaver application from /tejedoras: notify the owner. */
+export async function notifyWeaverApplication(d: WeaverApplicationEmailData): Promise<void> {
+  await dispatch('owner', ownerAddress(), ownerNewWeaverApplication(d))
 }
 
 /** New storefront order (ready for when order-capture is added — see AUDITORIA). */

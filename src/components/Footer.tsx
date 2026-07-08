@@ -3,10 +3,11 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { dahila } from './ui/Primitives'
 import { STUDIO_INSTAGRAM, STUDIO_URL } from '@/lib/env'
+import { subscribeToVipList } from '@/lib/subscribe'
 
 interface NavItem { label: string; href: string }
 
@@ -38,6 +39,88 @@ function FooterCol({ title, items }: { title: string; items: NavItem[] }) {
           )
         })}
       </ul>
+    </div>
+  )
+}
+
+// Lista VIP — captura de email para drops/lanzamientos. La promesa es honesta:
+// acceso anticipado a cada colección, nada de spam.
+function VipSignup() {
+  const [email, setEmail] = useState('')
+  const [done, setDone] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    startTransition(async () => {
+      const res = await subscribeToVipList(email, 'footer')
+      if (res.ok) {
+        setDone(res.already ? 'Ya estabas en la lista — te avisamos primero.' : '¡Lista! Vas a ver cada colección antes que nadie.')
+      } else {
+        setError(res.error || 'No pudimos anotarte. Probá de nuevo.')
+      }
+    })
+  }
+
+  return (
+    <div style={{
+      marginTop: 52, paddingTop: 32, borderTop: `1px solid ${dahila.border}`,
+      display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'flex-end', justifyContent: 'space-between',
+    }}>
+      <div style={{ maxWidth: 420 }}>
+        <div style={{
+          fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
+          textTransform: 'uppercase', color: dahila.ink500, marginBottom: 8,
+        }}>Lista VIP</div>
+        <p style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, lineHeight: 1.6, color: dahila.ink700, margin: 0 }}>
+          Cada colección sale en cantidades chicas — es tejido a mano.
+          Anotate y comprá 24 horas antes que el resto.
+        </p>
+      </div>
+      {done ? (
+        <p role="status" style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 400, color: dahila.wine600, margin: 0 }}>
+          {done}
+        </p>
+      ) : (
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <input
+              type="email"
+              required
+              placeholder="tu@correo.uy"
+              aria-label="Tu email para la lista VIP"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, color: dahila.ink900,
+                background: 'transparent', border: 'none',
+                borderBottom: `1px solid ${dahila.borderStrong}`,
+                padding: '10px 0 8px', outline: 'none', minWidth: 220,
+              }}
+            />
+            <button
+              type="submit"
+              disabled={isPending}
+              style={{
+                fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 500,
+                letterSpacing: '0.08em', textTransform: 'uppercase',
+                background: dahila.ink900, color: '#fff', border: 'none',
+                borderRadius: 8, padding: '12px 18px', cursor: isPending ? 'wait' : 'pointer',
+                opacity: isPending ? 0.7 : 1,
+              }}
+            >
+              {isPending ? 'Anotando…' : 'Quiero acceso anticipado'}
+            </button>
+          </div>
+          {error && (
+            <span role="alert" style={{ fontFamily: dahila.fontSans, fontSize: 12, color: '#B6314A' }}>
+              {error}
+            </span>
+          )}
+        </form>
+      )}
     </div>
   )
 }
@@ -101,6 +184,7 @@ export function Footer() {
               { label: 'Sobre nosotros',    href: '/atelier' },
               { label: 'Contacto',          href: '/contacto' },
               { label: 'Estado de encargo', href: '/encargo/estado' },
+              { label: 'Tejé con Dahila',   href: '/tejedoras' },
               { label: 'Términos y cond.',  href: '/terminos' },
             ]}
           />
@@ -113,9 +197,11 @@ export function Footer() {
           />
         </div>
 
+        <VipSignup />
+
         {/* Copyright row */}
         <div style={{
-          marginTop: 56, paddingTop: 22,
+          marginTop: 40, paddingTop: 22,
           borderTop: `1px solid ${dahila.border}`,
           display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
           fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 400, color: dahila.ink500,

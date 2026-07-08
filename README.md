@@ -158,6 +158,10 @@ For the database, run these SQL files **in order** in the Supabase SQL Editor (a
 1. [`database/schema.sql`](./database/schema.sql) — core tables, RLS, `media` storage bucket.
 2. [`database/schema-extra.sql`](./database/schema-extra.sql) — CMS `site_settings` keys, `homepage_media`, storage policy fix.
 3. [`database/schema-discounts.sql`](./database/schema-discounts.sql) — `discounts` table + per-product discount columns.
+4. [`database/schema-tejedoras.sql`](./database/schema-tejedoras.sql) — `weaver_applications` (postulaciones de la página pública `/tejedoras`).
+5. [`database/schema-suscriptores.sql`](./database/schema-suscriptores.sql) — `subscribers` (lista VIP capturada en el footer).
+
+One-off data migration: [`database/precios-2026-07.sql`](./database/precios-2026-07.sql) applies the July 2026 approved price update (run once; `/admin/estrategia` shows live whether it has been applied).
 
 To grant admin access, create a user in Supabase Auth (Authentication → Users → Add user). Any authenticated user has admin rights per the current RLS.
 

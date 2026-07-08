@@ -117,6 +117,35 @@ export interface CustomOrder {
   archived_at?: string | null;
 }
 
+// Postulación de tejedora (página pública /tejedoras). Requires schema-tejedoras.sql.
+export interface WeaverApplication {
+  id: string;
+  name: string;
+  location: string | null;
+  whatsapp: string | null;
+  email: string | null;
+  experience: string | null;      // '<1' | '1-3' | '3-5' | '5+' años
+  skills: string | null;          // qué sabe tejer, lista separada por comas
+  availability: string | null;    // horas semanales
+  has_materials: boolean;
+  portfolio: string | null;       // links a trabajos
+  message: string | null;
+  status: 'new' | 'contacted' | 'sample' | 'approved' | 'rejected';
+  admin_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Suscriptora de la lista VIP (drops/lanzamientos). Requires schema-suscriptores.sql.
+export interface Subscriber {
+  id: string;
+  email: string;
+  name: string | null;
+  source: 'footer' | 'encargo' | 'drop' | 'manual';
+  created_at: string;
+  unsubscribed_at: string | null;
+}
+
 export interface CartItem {
   id: string;
   cart_id: string;

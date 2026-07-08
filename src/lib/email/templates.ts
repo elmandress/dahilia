@@ -23,6 +23,19 @@ export interface OrderEmailData {
   reference?: string | null
 }
 
+export interface WeaverApplicationEmailData {
+  name: string
+  location?: string | null
+  /** Owner-facing contact string (WhatsApp or email). */
+  contact?: string | null
+  experience?: string | null
+  skills?: string | null
+  availability?: string | null
+  hasMaterials?: boolean
+  portfolio?: string | null
+  message?: string | null
+}
+
 /** Logical customer-facing states. The DB enum maps onto a subset of these; the
  *  rest ('shipped', 'delivered') are ready for when tracking/fulfilment is added. */
 export type CustomerState =
@@ -116,6 +129,34 @@ export function ownerNewOrder(d: OrderEmailData): RenderedEmail {
         ]) + `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1F1A1B;line-height:1.7;margin-top:6px;">${itemsHtml}</div>`,
       button: { label: 'Ver en el panel', url: `${SITE_URL}/admin` },
       footerNote: 'Aviso automático del sistema de Dahila Crochet.',
+    }),
+  }
+}
+
+export function ownerNewWeaverApplication(d: WeaverApplicationEmailData): RenderedEmail {
+  const wa = waFromContact(d.contact)
+  return {
+    subject: `🧵 Nueva postulación de tejedora: ${firstName(d.name)}`,
+    html: renderEmail({
+      preheader: `${d.name} · ${d.location || 'Uruguay'} · ${d.experience || '—'} de experiencia`,
+      heading: 'Nueva postulación de tejedora',
+      intro: 'Alguien quiere tejer con Dahila. Revisá sus trabajos y, si pinta bien, coordiná la muestra pagada.',
+      bodyHtml: infoTable([
+        ['Recibida', nowMontevideo()],
+        ['Nombre', d.name],
+        ['Ubicación', d.location || '—'],
+        ['Contacto', d.contact || '—'],
+        ['Experiencia', d.experience || '—'],
+        ['Sabe tejer', d.skills || '—'],
+        ['Disponibilidad', d.availability || '—'],
+        ['Materiales propios', d.hasMaterials ? 'Sí' : 'No'],
+        ['Trabajos', d.portfolio || '—'],
+        ['Mensaje', d.message || '—'],
+      ]),
+      button: wa
+        ? { label: 'Responder por WhatsApp', url: wa }
+        : { label: 'Ver en el panel', url: `${SITE_URL}/admin/tejedoras` },
+      footerNote: `Gestioná las postulaciones en el <a href="${SITE_URL}/admin/tejedoras" style="color:#8F3B53;text-decoration:none;">panel</a>.`,
     }),
   }
 }

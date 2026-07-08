@@ -1,0 +1,165 @@
+# Estrategia definitiva — Dahila Crochet (precios, tejedoras, drops)
+
+Consultoría comercial · foco **Uruguay** · 2026-07. Supera a los informes anteriores donde haya diferencias (prioridad: mejor evidencia, no consistencia).
+
+---
+
+## 1. Mercado uruguayo (referencias reales, no promedios ciegos)
+
+El mercado UY de crochet artesanal es **opaco**: casi nadie publica precios (se cotiza por DM/feria/ML). Referencias UY que sí conseguí:
+
+| Referencia | Qué es | Precio real (UYU) |
+|---|---|---|
+| **Moda crochet by me** (Mitienda UY) | Emprendimiento local, top crochet corto | **$850** (top) · carpetas $350–420 |
+| **Indian** (retail, **máquina**) | Poleras/sweaters | $899–1.499 lista; cardigan **$1.399** |
+| **Zara/Mango UY** (retail, máquina) | Knitwear | ~$1.500–3.500 |
+| **Manos del Uruguay** (premium, exporta) | Sacos/ponchos | ~$4.000–10.000+ |
+| **Clase de crochet UY** (valor del trabajo) | Hora de la habilidad | **$350–500/h** |
+| **Etsy** (techo global handmade) | tops/cardigans/bikinis | ~$1.200–4.000 |
+
+**Criterio (no promedio):** el **piso local** de un top de crochet básico es ~$800–850 (emprendimientos tipo "Moda crochet by me"). Dahila hoy (899) está **pegada a ese piso**, pese a tener MUCHO mejor sitio, fotos, marca y experiencia. El techo es Etsy/Manos ($4.000+), inalcanzable e innecesario. **El lugar correcto de Dahila: un escalón por encima del emprendimiento local básico** (justificado por presentación claramente superior), bien por debajo del retail a máquina y de Etsy. Eso da aumentos **moderados**, no agresivos — exactamente la estrategia aprobada.
+
+Fuentes: [Moda crochet by me](https://www.mitienda.uy/moda-crochet-by-me) · [Indian](https://www.indian.com.uy/tejidos) · [Manos (El Observador)](https://www.elobservador.com.uy/cafe-y-negocios/de-la-cooperativa-paysandu-un-desfile-gabriela-hearst-nueva-york-la-historia-mabel-manos-del-uruguay-y-la-resistencia-las-artesanas-un-mundo-consumo-voraz-n6046465) · [fórmula de pricing handmade](https://www.letstalkshop.com/blog/handmade-pricing-formula) · [Nest](https://www.buildanest.org/) · [WhatsApp retail](https://www.hello-charles.com/success/fashionette).
+
+---
+
+## 2. Tabla definitiva — TODOS los productos
+
+`Mat.` = materiales estimados (UYU, **la dueña debe ajustar con sus costos reales**). `Contrib. HOY` = precio HOY − materiales (efectivo que queda para su trabajo + ganancia). `$/h` = contribución por hora a precio HOY (el número que revela subvaluación).
+
+| Producto | Actual | **HOY** | 12m | Δ HOY | Horas | Mat. | Contrib. HOY | **$/h** | Prio | Conf. |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|:--:|:--:|
+| **Set BRISA** (3 pzs) | 690 | **890** | 1.090 | +29% | 16 | 350 | 540 | **34** | 🔴 | Alta |
+| Cardigan 3/4 | 1.100 | **1.290** | 1.490 | +17% | 22 | 480 | 810 | **37** | 🔴 | Alta |
+| Cardigan CRUZADO | 1.100 | **1.290** | 1.490 | +17% | 22 | 480 | 810 | **37** | 🔴 | Alta |
+| Poncho | 1.100 | **1.290** | 1.450 | +17% | 19 | 450 | 840 | **44** | 🔴 | Alta |
+| Set LUEUR (3 pzs) | 999 | **1.150** | 1.290 | +15% | 18 | 380 | 770 | **43** | 🔴 | Alta |
+| Chaleco | 1.000 | **1.190** | 1.350 | +19% | 16 | 350 | 840 | **53** | 🟠 | Alta |
+| Set LUREX | 1.100 | **1.250** | 1.390 | +14% | 17 | 400 | 850 | **50** | 🟠 | Media-Alta |
+| BEACH set | 1.300 | **1.490** | 1.690 | +15% | 20 | 450 | 1.040 | **52** | 🟠 | Alta |
+| Top FLOWER | 1.100 | **1.250** | 1.390 | +14% | 16 | 320 | 930 | **58** | 🟠 | Alta |
+| Top CHERRY | 990 | **1.090** | 1.190 | +10% | 14 | 300 | 790 | **56** | 🟠 | Alta |
+| Top SUMMER | 990 | **1.090** | 1.190 | +10% | 14 | 300 | 790 | **56** | 🟠 | Alta |
+| Falda SERENADA | 990 | **1.090** | 1.190 | +10% | 14 | 300 | 790 | **56** | 🟠 | Media-Alta |
+| Top HIGGIE | 950 | **1.050** | 1.150 | +11% | 13 | 280 | 770 | **59** | 🟡 | Alta |
+| Top RACE | 899 | **990** | 1.090 | +10% | 13 | 280 | 710 | **55** | 🟡 | Alta |
+| Top MARESIA | 899 | **990** | 1.090 | +10% | 13 | 280 | 710 | **55** | 🟡 | Alta |
+| Top LAGOM | 899 | **990** | 1.090 | +10% | 13 | 280 | 710 | **55** | 🟡 | Alta |
+| Top AMÉLIE | 899 | **990** | 1.090 | +10% | 13 | 280 | 710 | **55** | 🟡 | Alta |
+| Top HALTER | 780 | **890** | 990 | +14% | 11 | 250 | 640 | **58** | 🟡 | Alta |
+| Top DUNA | 780 | **890** | 990 | +14% | 11 | 250 | 640 | **58** | 🟡 | Alta |
+| Set bufanda y guantes | 700 | **790** | 890 | +13% | 9 | 220 | 570 | **63** | 🟡 | Media |
+| COWL NECK top | 560 | **620** | 720 | +11% | 8 | 200 | 420 | **53** | 🟡 | Media |
+| Bolso de estudiante | 650 | **720** | 790 | +11% | 7 | 250 | 470 | **67** | 🟢 | Media |
+| Tote bag de playa | 670 | **720** | 790 | +7% | 7 | 250 | 470 | **67** | 🟢 | Media |
+| DONUT bag | 650 | **720** | 790 | +11% | 6 | 220 | 500 | **83** | 🟢 | Media |
+| Bolso a cuadros | 950 | **1.050** | 1.150 | +11% | 8 | 300 | 750 | **94** | 🟢 | Media |
+| Mini tote bag | 590 | **650** | 690 | +10% | 5 | 180 | 470 | **94** | 🟢 | Media |
+| Bolso LOLA | 1.300 | **1.390** | 1.490 | +7% | 10 | 350 | 1.040 | **104** | 🟢 | Media |
+| Bufanda SOPHIE | 550 | **590** | 620 | +7% | 5 | 180 | 410 | **82** | 🟢 | Media |
+| Calentadores | 550 | **590** | 620 | +7% | 5 | 180 | 410 | **82** | 🟢 | Media |
+| **Bandana** | 500 | **500** (HOLD) | 550 | 0% | 4 | 150 | 350 | **88** | ⚪ | — |
+| **Mini BUFANDAS** | 360 | **360** (HOLD) | 390 | 0% | 3 | 100 | 260 | **87** | ⚪ | — |
+| **Box de regalo** | 650 | **revisar** | — | — | — | — | — | — | ⚪ | — |
+
+Prioridad: 🔴 urgente · 🟠 alta · 🟡 media · 🟢 baja · ⚪ no tocar.
+
+### El criterio que ordena todo: **contribución por hora**
+No es un promedio de precios — es tu propia economía. Mirá la columna **$/h**:
+- **Bolsos y accesorios pagan $67–104/hora.** Están bien valorados.
+- **Cardigans, poncho y Set BRISA pagan $34–44/hora** — la mitad. **Ahí está la subvaluación real**, no en una comparación con Etsy. Por eso son prioridad 🔴: no porque "afuera cuesta más", sino porque **te pagan la mitad por hora que un bolso**.
+
+Incluso al target 12m, un cardigan queda en ~$46/h y un top en ~$62/h: **seguís siendo el mejor valor**, nunca "caro". La suba no busca alcanzar a nadie afuera; busca **emparejar tu propia escalera interna**.
+
+---
+
+## 3. 🔑 El hallazgo que conecta precios y tejedoras (lee esto)
+
+Al calcular la economía sale algo crítico: **a los precios actuales, pagarle a otra tejedora un sueldo justo da pérdida.**
+
+Ejemplo top (13 h): si le pagás a una tejedora aunque sea **$80/h** (por debajo del salario mínimo UY ≈ $110/h), son **$1.040** de mano de obra + $280 de lana = **$1.320 de costo**, contra un precio de **990**. **Pérdida.** Un cardigan (22 h) es peor. Solo los **bolsos** (pocas horas, buen precio) se acercan a cerrar.
+
+**Conclusión estratégica (cambia el orden de las cosas):**
+1. **Los aumentos de precio no son solo por margen: son el que HABILITA escalar con tejedoras.** Sin subir precios, no podés pagar mano de obra ajena. Precios y red de tejedoras son **el mismo proyecto**.
+2. **La hora de la dueña vale MUCHísimo más enseñando que tejiendo.** Tejiendo, su hora "produce" ~$40–60 de contribución. **Enseñando, una clase vale $350–500/hora** — 6 a 8 veces más, sin costo de materiales ni de mano de obra. Esto reordena la prioridad (ver §5).
+
+---
+
+## 4. Sistema completo de red de tejedoras
+
+Basado en Manos del Uruguay (12 cooperativas desde 1968; pagan por hora y por prenda; clasifican prendas por horas; cada prenda lleva el nombre de quién la hizo) + Nest / Artisan Craft Company (educación + comunidad + acceso a mercado) + principios de producción distribuida (delegar primero lo no-core, mantener la mano del artesano en el modelado/terminación/QC, producción por lotes).
+
+**a) Reclutar.** Fuentes: alumnas de las clases (la mejor, ver §5), referidas, y una **sección `/tejedoras`** en el sitio. Empezar con **1** persona, no diez.
+
+**b) Filtrar postulantes.** Formulario: nombre, departamento, años de experiencia, **fotos de 2–3 trabajos**, qué sabe tejer, disponibilidad horaria semanal, si tiene lana/agujas. Descarte rápido por las fotos (tensión pareja, terminación prolija).
+
+**c) Prueba.** **Muestra pagada**: una pieza contra una **ficha técnica** (lana, aguja, medidas por talle, puntos, fotos de "aceptable / no aceptable"). Se evalúa: tensión/parejo, medidas exactas, terminación, **tiempo real** que le llevó, y si siguió las instrucciones.
+
+**d) Cómo pagar y cuánto por pieza.** Fórmula: **pago = horas estándar del modelo × tarifa/hora acordada**, pagado **al aprobar** la pieza (no antes). Empezar con una tarifa modesta y transparente (arrancá en el rango que tu precio permita — hoy solo cierra en bolsos/statement caros; ver §3) y **subirla a medida que suben los precios**. Materiales los provee Dahila (controla calidad de la lana).
+
+**e) Mantener calidad.** Ficha técnica por modelo + **QC pieza por pieza antes de enviar** (checklist: medidas, tensión, terminación, costuras, cierres) + **nombre de la tejedora en la prenda** (orgullo y responsabilidad, como Manos).
+
+**f) Manejar tiempos y a quien va más lento.** Clasificá cada modelo por horas estándar; asigná **fechas realistas** con colchón. Si alguien es consistente pero lenta → dale modelos más simples o menos volumen, no la castigues. Si es rápida y buena → más y mejores encargos (tiers: **aprendiz → asociada → senior**).
+
+**g) Errores.** Primera vez: se corrige y se explica (con la ficha). Reincidencia en el mismo error: baja de tier o pausa. Nunca enviar una pieza que no pasó QC — se rehace (esa es la barrera que protege la marca).
+
+**h) Asignar pedidos.** Empezá delegando lo **simple y repetible** (accesorios, bolsos, tops básicos). La dueña conserva lo complejo/statement al inicio. A medida que una tejedora sube de tier, más complejidad.
+
+**i) Consistencia entre varias.** La clave: **fichas técnicas idénticas + misma lana provista + QC centralizado en la dueña**. La consistencia no la ponen las tejedoras; la pone tu estándar documentado y tu control final.
+
+**j) Reutilizá lo que ya tenés:** el sistema de encargos/estados/emails sirve para gestionar asignaciones (estado extra: *asignado → en producción → QC → listo*). Puedo construir la página `/tejedoras` cuando decidas.
+
+---
+
+## 5. Decisión estratégica: ¿reclutar, dar clases, o ambas?
+
+Analizado con casos reales (Nest enseña a makers; Artisan Craft Co. es cooperativa que forma; producción distribuida delega lo no-core) y con **tu propia economía** (§3).
+
+| Criterio | Reclutar directo | Dar clases (formar) | Ambas |
+|---|---|---|---|
+| Rentabilidad inmediata | ❌ (a precios de hoy da pérdida pagar mano de obra) | ✅✅ (la hora de clase vale $350–500, alta ganancia) | ✅ |
+| Alivia el cuello de botella ya | ✅ rápido | ❌ lento (6–12 meses) | ✅ parcial |
+| Dificultad | Media (encontrar skill escaso) | Media-alta (enseñar lleva tiempo) | Media |
+| Escalabilidad | Media (skill escaso en UY) | **Alta** (creás tu propia oferta + comunidad) | **Alta** |
+| Tiempo a resultados | 1–2 meses | 6–12 meses (para producir) / **inmediato** (para facturar clases) | Escalonado |
+| Bonus | — | Genera ingresos, comunidad, lista de emails, **pipeline de tejedoras**, marca | Lo mejor de ambos |
+
+**Qué elegiría como CEO: AMBAS, pero LIDERANDO CON CLASES.** Cambio mi recomendación anterior (antes dije "reclutar 1-2 primero") porque la evidencia económica manda:
+1. **Clases YA.** Es la mejor forma de monetizar la hora escasa de la dueña (6–8× lo que rinde tejiendo), **sin el problema de costo de mano de obra**. Además genera ingresos hoy, comunidad, lista de emails para los drops, y **resuelve el problema de "no tiene alumnas"**: las clases SON el pipeline.
+2. **Reclutar selectivo, en paralelo.** Sumá **1 tejedora** solo para las piezas donde la economía cierra (bolsos, y statement **después** de subir precios). No para todo.
+3. **Subí precios (habilitador).** A medida que los precios se acercan al valor justo, el modelo de tejedoras se vuelve rentable.
+4. **A 6–12 meses, el flywheel:** las mejores alumnas → tejedoras ya formadas **a tu estándar** (resuelve calidad y consistencia de raíz). Es el modelo Nest/Artisan Craft Co. adaptado a Dahila.
+
+En una frase: **enseñar es hoy el mejor negocio de su tiempo Y la fábrica de sus futuras tejedoras.** Reclutar puro es caro y sin pipeline; formar construye oferta, comunidad y marca a la vez.
+
+---
+
+## 6. Drops — desarrollado (versión artesanal uruguaya)
+
+**Por qué:** drops = 40–60% de facturación en marcas que los usan; el handmade ya es escaso de verdad; y es el marco perfecto para introducir aumentos ("colección nueva").
+
+**Canal estrella en UY: WhatsApp.** Datos: 90%+ de tasa de lectura, 40–60% de conversión, 7–14× ROI en marcas que lo usan bien — muy por encima del email. Sumado a Instagram y una lista de emails, es tu motor de drops.
+
+**Cadencia:** 3–4 drops/año por ocasión UY: **Verano** (nov), **Día de la Madre** (may), **Invierno** (jun), **Navidad** (dic). Cada drop = colección con nombre ("Verano '26").
+
+**Playbook por drop (4 semanas):**
+- **Sem −3/−2 · Expectativa:** "algo se viene" (fotos borrosas, detalle de un punto, BTS del tejido). **Abrir lista VIP** (WhatsApp difusión + email) con promesa de **acceso anticipado**. CTA: "sumate para verlo primero".
+- **Sem −1 · Reveal:** un "first look" por día en Stories con **countdown sticker**; 1 reel de proceso; teaser de piezas. Grupo/lista VIP recibe sneak peeks exclusivos.
+- **Día 0 · Lanzamiento = evento:** la **lista VIP compra 24 h antes** que el público. "Live now" en Stories + **difusión de WhatsApp** con el link + email. Opcional: IG Live mostrando la colección.
+- **Post:** "lo que queda" a las pocas horas; después **recap** ("se agotó X"). Reposición **solo por encargo a medida** con plazo mayor → mantiene la escasez.
+
+**Cómo generar expectativa real (sin engañar):** cantidades **realmente** limitadas (es a mano), **"edición [temporada]"**, **número de pieza a mano**, y "después del drop solo por encargo con más demora". Todo cierto.
+
+**Captar emails/WhatsApp (el activo):** landing de lista VIP + campo en el footer + aviso post-encargo. Incentivo honesto: **acceso anticipado** + sneak peeks. Seguimiento 24–48 h después con otro ángulo (recupera 12–28% de los que no abrieron).
+
+**Recompra y comunidad:** premiá la **participación**, no solo la compra (quien asiste a un IG Live, comparte una foto, o está en la lista VIP entra a sorteos/acceso). Los que compran un drop entran a una **lista "clientas Dahila"** que recibe el próximo drop primero. Así cada lanzamiento alimenta al siguiente y la gente **espera** la próxima colección.
+
+---
+
+## 7. Orden de ejecución sugerido
+1. **Aplicar precios HOY** (🔴 y 🟠 primero; entry en HOLD).
+2. **Lanzar clases** (mejor uso de su tiempo + pipeline de tejedoras + comunidad + emails).
+3. **Capturar email/WhatsApp** (footer + post-encargo) y armar la **lista VIP**.
+4. **Primer drop "Verano '26"** con el playbook.
+5. **Sumar 1 tejedora** para bolsos/statement (donde la economía ya cierra), y construir `/tejedoras`.
+6. **Segundo paso de precios** (mes 4–5) junto al drop.

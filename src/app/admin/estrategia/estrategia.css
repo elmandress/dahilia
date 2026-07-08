@@ -1,0 +1,357 @@
+/* ============================================================
+   ESTRATEGIA Y CRECIMIENTO — /admin/estrategia
+   Extiende admin.css (mismo lenguaje visual del panel).
+   ============================================================ */
+
+/* ---------- Navegación de secciones ---------- */
+.est-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0.75rem 0;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(#f8f8f8 85%, rgba(248,248,248,0));
+  scrollbar-width: none;
+}
+.est-nav::-webkit-scrollbar { display: none; }
+
+.est-nav a {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid #e2ddd4;
+  background: #fff;
+  color: #4A4143;
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.est-nav a:hover {
+  border-color: #8F3B53;
+  color: #8F3B53;
+}
+
+/* ---------- Secciones ---------- */
+.est-section {
+  margin-bottom: 3rem;
+  scroll-margin-top: 72px;
+}
+
+.est-section-head { margin-bottom: 1.1rem; }
+
+.est-section-head .est-kicker {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #8F3B53;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.est-section-head h3 {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1F1A1B;
+}
+
+.est-section-head p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #777;
+  max-width: 68ch;
+  line-height: 1.6;
+}
+
+/* ---------- Norte (hero) ---------- */
+.est-north {
+  background: #1F1A1B;
+  color: #FAF1DF;
+  border-radius: 16px;
+  padding: 1.75rem 1.9rem;
+  margin-bottom: 2.5rem;
+}
+.est-north .est-kicker {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #E693A7;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.est-north blockquote {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.55;
+  font-weight: 300;
+}
+.est-north .est-north-meta {
+  margin-top: 14px;
+  font-size: 0.75rem;
+  color: rgba(250,241,223,0.55);
+}
+
+/* ---------- Grillas y tarjetas ---------- */
+.est-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.9rem;
+}
+.est-grid.wide { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+
+.est-card {
+  background: #fff;
+  border: 1px solid #eee9e0;
+  border-radius: 12px;
+  padding: 1.1rem 1.2rem;
+}
+.est-card h4 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1F1A1B;
+}
+.est-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #5c5556;
+  line-height: 1.65;
+}
+.est-card.cream { background: #FAF7F0; }
+.est-card .est-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.est-card .est-card-top h4 { margin: 0; }
+
+/* ---------- Stat tiles ---------- */
+.est-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.9rem;
+}
+.est-stat {
+  background: #fff;
+  border: 1px solid #eee9e0;
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+}
+.est-stat .value {
+  font-size: 1.55rem;
+  font-weight: 650;
+  color: #1F1A1B;
+  letter-spacing: -0.01em;
+}
+.est-stat .value.wine { color: #8F3B53; }
+.est-stat .label {
+  font-size: 0.82rem;
+  color: #4A4143;
+  margin-top: 2px;
+  line-height: 1.45;
+}
+.est-stat .sub {
+  font-size: 0.72rem;
+  color: #999;
+  margin-top: 4px;
+}
+
+/* ---------- Badges ---------- */
+.est-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.est-badge.prio-urgente { background: #FDECEA; color: #B03A2E; }
+.est-badge.prio-alta    { background: #FEF3E2; color: #B9770E; }
+.est-badge.prio-media   { background: #FDF6D8; color: #8D7B11; }
+.est-badge.prio-baja    { background: #EAF7EE; color: #1E8449; }
+.est-badge.prio-hold    { background: #EFEDEE; color: #777; }
+.est-badge.ok           { background: #EAF7EE; color: #1E8449; }
+.est-badge.pend         { background: #FDF6D8; color: #8D7B11; }
+.est-badge.riesgo-alta  { background: #FDECEA; color: #B03A2E; }
+.est-badge.riesgo-media { background: #FEF3E2; color: #B9770E; }
+.est-badge.riesgo-baja  { background: #EAF7EE; color: #1E8449; }
+
+/* ---------- Gráfico de bandas de mercado ---------- */
+.est-bands { display: flex; flex-direction: column; gap: 10px; }
+.est-band { display: grid; grid-template-columns: 220px 1fr; gap: 12px; align-items: center; }
+.est-band .name { font-size: 0.8rem; color: #4A4143; font-weight: 500; line-height: 1.3; }
+.est-band .name small { display: block; font-weight: 400; color: #999; font-size: 0.7rem; }
+.est-band .track {
+  position: relative;
+  height: 22px;
+  background: #f3f0ea;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.est-band .range {
+  position: absolute;
+  top: 0; bottom: 0;
+  background: #d9cfc0;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.66rem;
+  color: #6b6257;
+  font-weight: 600;
+  min-width: 52px;
+}
+.est-band.self .range { background: #8F3B53; color: #fff; }
+
+/* ---------- Tabla de precios ---------- */
+.est-price-table td, .est-price-table th { white-space: nowrap; }
+.est-price-table .up { color: #1E8449; font-weight: 600; }
+.est-price-table .name-cell { max-width: 240px; white-space: normal; }
+.est-price-table .name-cell small { display: block; color: #999; font-size: 0.72rem; line-height: 1.4; }
+
+/* ---------- Timeline ---------- */
+.est-timeline { position: relative; padding-left: 22px; display: flex; flex-direction: column; gap: 1.1rem; }
+.est-timeline::before {
+  content: '';
+  position: absolute;
+  left: 6px; top: 6px; bottom: 6px;
+  width: 2px;
+  background: #e8e2d8;
+  border-radius: 2px;
+}
+.est-timeline-item { position: relative; }
+.est-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -22px; top: 5px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #8F3B53;
+}
+.est-timeline-item .when {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8F3B53;
+}
+.est-timeline-item .title { font-size: 0.92rem; font-weight: 600; color: #1F1A1B; margin: 2px 0; }
+.est-timeline-item .body { font-size: 0.84rem; color: #5c5556; line-height: 1.6; margin: 0; }
+
+/* ---------- Pipeline de tejedoras ---------- */
+.est-pipeline { display: flex; flex-wrap: wrap; gap: 8px; }
+.est-pipeline-step {
+  flex: 1 1 170px;
+  background: #fff;
+  border: 1px solid #eee9e0;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  position: relative;
+}
+.est-pipeline-step .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #FAF1DF;
+  color: #8F3B53;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.est-pipeline-step .step { font-size: 0.88rem; font-weight: 600; color: #1F1A1B; margin-bottom: 4px; }
+.est-pipeline-step .detail { font-size: 0.78rem; color: #777; line-height: 1.55; }
+
+/* ---------- Checklist persistente ---------- */
+.est-checklist { display: flex; flex-direction: column; gap: 8px; }
+.est-check {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: #fff;
+  border: 1px solid #eee9e0;
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.est-check:hover { border-color: #d9cfc0; }
+.est-check input {
+  margin-top: 3px;
+  width: 17px; height: 17px;
+  accent-color: #8F3B53;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.est-check .txt { flex: 1; }
+.est-check .txt .t { font-size: 0.88rem; font-weight: 500; color: #1F1A1B; }
+.est-check .txt .d { font-size: 0.78rem; color: #888; line-height: 1.55; margin-top: 2px; }
+.est-check.done .txt .t { text-decoration: line-through; color: #999; }
+.est-check.done .txt .d { color: #bbb; }
+
+/* ---------- Drops ---------- */
+.est-drops { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.9rem; }
+.est-drop {
+  background: #fff;
+  border: 1px solid #eee9e0;
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+}
+.est-drop.next { border-color: #8F3B53; box-shadow: 0 0 0 1px #8F3B53; }
+.est-drop .month {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8F3B53;
+}
+.est-drop .name { font-size: 1rem; font-weight: 600; color: #1F1A1B; margin: 3px 0 4px; }
+.est-drop .hook { font-size: 0.78rem; color: #777; line-height: 1.5; }
+
+/* ---------- Callout ---------- */
+.est-callout {
+  background: #FAF1DF;
+  border: 1px solid rgba(143,59,83,0.25);
+  border-radius: 12px;
+  padding: 1.1rem 1.3rem;
+  font-size: 0.9rem;
+  color: #4A2A35;
+  line-height: 1.65;
+}
+.est-callout strong { color: #1F1A1B; }
+
+/* ---------- Progreso de precios ---------- */
+.est-progress-track {
+  height: 8px;
+  background: #efe9de;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.est-progress-fill {
+  height: 100%;
+  background: #1E8449;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .est-band { grid-template-columns: 1fr; gap: 4px; }
+  .est-north { padding: 1.25rem 1.3rem; }
+  .est-north blockquote { font-size: 1rem; }
+}
