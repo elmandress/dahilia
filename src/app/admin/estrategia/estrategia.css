@@ -1,10 +1,10 @@
 /* ============================================================
    ESTRATEGIA Y CRECIMIENTO — /admin/estrategia
-   Extiende admin.css (mismo lenguaje visual del panel).
+   Mobile-first. Extiende admin.css (mismo lenguaje visual del panel).
    ============================================================ */
 
-/* ---------- Navegación de secciones ---------- */
-.est-nav {
+/* ---------- Pestañas ---------- */
+.est-tabs {
   position: sticky;
   top: 0;
   z-index: 10;
@@ -12,39 +12,39 @@
   gap: 6px;
   overflow-x: auto;
   padding: 0.75rem 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   background: linear-gradient(#f8f8f8 85%, rgba(248,248,248,0));
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
-.est-nav::-webkit-scrollbar { display: none; }
+.est-tabs::-webkit-scrollbar { display: none; }
 
-.est-nav a {
+.est-tabs button {
   flex-shrink: 0;
-  padding: 7px 14px;
+  padding: 10px 16px;
+  min-height: 42px;
   border-radius: 999px;
   border: 1px solid #e2ddd4;
   background: #fff;
   color: #4A4143;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   font-weight: 500;
-  text-decoration: none;
+  cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
 }
-.est-nav a:hover {
-  border-color: #8F3B53;
-  color: #8F3B53;
+.est-tabs button:hover { border-color: #8F3B53; color: #8F3B53; }
+.est-tabs button.active {
+  background: #1F1A1B;
+  border-color: #1F1A1B;
+  color: #fff;
 }
 
-/* ---------- Secciones ---------- */
-.est-section {
-  margin-bottom: 3rem;
-  scroll-margin-top: 72px;
-}
+/* ---------- Encabezados de sección ---------- */
+.est-section-head { margin: 0 0 1rem; }
 
-.est-section-head { margin-bottom: 1.1rem; }
-
-.est-section-head .est-kicker {
+.est-section-head .est-kicker,
+.est-north .est-kicker {
   display: block;
   font-size: 0.68rem;
   letter-spacing: 0.18em;
@@ -56,7 +56,7 @@
 
 .est-section-head h3 {
   margin: 0 0 4px;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: #1F1A1B;
 }
@@ -65,35 +65,36 @@
   margin: 0;
   font-size: 0.88rem;
   color: #777;
-  max-width: 68ch;
+  max-width: 62ch;
   line-height: 1.6;
 }
 
-/* ---------- Norte (hero) ---------- */
+.est-group-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8F3B53;
+  margin-bottom: 8px;
+}
+
+/* ---------- Norte ---------- */
 .est-north {
   background: #1F1A1B;
   color: #FAF1DF;
   border-radius: 16px;
-  padding: 1.75rem 1.9rem;
-  margin-bottom: 2.5rem;
+  padding: 1.5rem 1.6rem;
+  margin-bottom: 1.5rem;
 }
-.est-north .est-kicker {
-  display: block;
-  font-size: 0.68rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #E693A7;
-  font-weight: 600;
-  margin-bottom: 10px;
-}
+.est-north .est-kicker { color: #E693A7; margin-bottom: 10px; }
 .est-north blockquote {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.08rem;
   line-height: 1.55;
   font-weight: 300;
 }
 .est-north .est-north-meta {
-  margin-top: 14px;
+  margin-top: 12px;
   font-size: 0.75rem;
   color: rgba(250,241,223,0.55);
 }
@@ -101,10 +102,10 @@
 /* ---------- Grillas y tarjetas ---------- */
 .est-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 0.9rem;
 }
-.est-grid.wide { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.est-grid.wide { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 
 .est-card {
   background: #fff;
@@ -120,7 +121,7 @@
 }
 .est-card p {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.86rem;
   color: #5c5556;
   line-height: 1.65;
 }
@@ -131,13 +132,14 @@
   align-items: flex-start;
   gap: 10px;
   margin-bottom: 6px;
+  flex-wrap: wrap;
 }
 .est-card .est-card-top h4 { margin: 0; }
 
-/* ---------- Stat tiles ---------- */
+/* ---------- Tiles de datos ---------- */
 .est-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.9rem;
 }
 .est-stat {
@@ -154,48 +156,56 @@
 }
 .est-stat .value.wine { color: #8F3B53; }
 .est-stat .label {
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   color: #4A4143;
   margin-top: 2px;
   line-height: 1.45;
 }
 .est-stat .sub {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   color: #999;
   margin-top: 4px;
 }
 
-/* ---------- Badges ---------- */
+/* ---------- Badges y puntos de prioridad ---------- */
 .est-badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 999px;
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.03em;
   white-space: nowrap;
 }
-.est-badge.prio-urgente { background: #FDECEA; color: #B03A2E; }
-.est-badge.prio-alta    { background: #FEF3E2; color: #B9770E; }
-.est-badge.prio-media   { background: #FDF6D8; color: #8D7B11; }
-.est-badge.prio-baja    { background: #EAF7EE; color: #1E8449; }
 .est-badge.prio-hold    { background: #EFEDEE; color: #777; }
 .est-badge.ok           { background: #EAF7EE; color: #1E8449; }
 .est-badge.pend         { background: #FDF6D8; color: #8D7B11; }
 .est-badge.riesgo-alta  { background: #FDECEA; color: #B03A2E; }
 .est-badge.riesgo-media { background: #FEF3E2; color: #B9770E; }
-.est-badge.riesgo-baja  { background: #EAF7EE; color: #1E8449; }
 
-/* ---------- Gráfico de bandas de mercado ---------- */
-.est-bands { display: flex; flex-direction: column; gap: 10px; }
-.est-band { display: grid; grid-template-columns: 220px 1fr; gap: 12px; align-items: center; }
-.est-band .name { font-size: 0.8rem; color: #4A4143; font-weight: 500; line-height: 1.3; }
-.est-band .name small { display: block; font-weight: 400; color: #999; font-size: 0.7rem; }
+.est-dot {
+  display: inline-block;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  margin-right: 7px;
+  vertical-align: baseline;
+}
+.est-dot.prio-urgente { background: #C0392B; }
+.est-dot.prio-alta    { background: #E67E22; }
+.est-dot.prio-media   { background: #D4AC0D; }
+.est-dot.prio-baja    { background: #1E8449; }
+.est-dot.prio-hold    { background: #C9C2C4; }
+
+/* ---------- Bandas de mercado ---------- */
+.est-bands { display: flex; flex-direction: column; gap: 12px; }
+.est-band { display: grid; grid-template-columns: 1fr; gap: 4px; align-items: center; }
+.est-band .name { font-size: 0.82rem; color: #4A4143; font-weight: 500; line-height: 1.3; }
+.est-band .name small { font-weight: 400; color: #999; font-size: 0.72rem; margin-left: 6px; }
 .est-band .track {
   position: relative;
-  height: 22px;
+  height: 24px;
   background: #f3f0ea;
   border-radius: 999px;
   overflow: hidden;
@@ -208,20 +218,68 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.66rem;
+  font-size: 0.68rem;
   color: #6b6257;
   font-weight: 600;
-  min-width: 52px;
+  min-width: 56px;
 }
 .est-band.self .range { background: #8F3B53; color: #fff; }
 
-/* ---------- Tabla de precios ---------- */
+@media (min-width: 640px) {
+  .est-band { grid-template-columns: 230px 1fr; gap: 12px; }
+  .est-band .name small { display: block; margin-left: 0; }
+}
+
+/* ---------- Tabla de precios (escritorio) ---------- */
+.est-only-mobile { display: block; }
+.est-only-desktop { display: none; }
+@media (min-width: 760px) {
+  .est-only-mobile { display: none; }
+  .est-only-desktop { display: block; }
+}
+
 .est-price-table td, .est-price-table th { white-space: nowrap; }
 .est-price-table .up { color: #1E8449; font-weight: 600; }
-.est-price-table .name-cell { max-width: 240px; white-space: normal; }
-.est-price-table .name-cell small { display: block; color: #999; font-size: 0.72rem; line-height: 1.4; }
+.est-price-table .name-cell { max-width: 250px; white-space: normal; }
+.est-price-table .name-cell small { display: block; color: #999; font-size: 0.72rem; line-height: 1.4; margin-left: 16px; }
 
-/* ---------- Timeline ---------- */
+/* ---------- Tarjetas de precio (móvil) ---------- */
+.est-price-cards { display: flex; flex-direction: column; gap: 8px; }
+.est-price-card {
+  background: #fff;
+  border: 1px solid #eee9e0;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+}
+.est-price-card .row1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.est-price-card .pname { font-size: 0.92rem; font-weight: 600; color: #1F1A1B; }
+.est-price-card .row2 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.est-price-card .was { color: #999; text-decoration: line-through; font-size: 0.85rem; }
+.est-price-card .arrow { color: #C9C2C4; }
+.est-price-card .now { font-size: 1.1rem; font-weight: 650; color: #1E8449; }
+.est-price-card .target { font-size: 0.78rem; color: #8F3B53; font-weight: 500; }
+.est-price-card .row3 {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: #888;
+}
+.est-price-card .pnote { margin-top: 6px; font-size: 0.75rem; color: #A37B53; line-height: 1.5; }
+
+/* ---------- Línea de tiempo ---------- */
 .est-timeline { position: relative; padding-left: 22px; display: flex; flex-direction: column; gap: 1.1rem; }
 .est-timeline::before {
   content: '';
@@ -241,6 +299,7 @@
   background: #fff;
   border: 3px solid #8F3B53;
 }
+.est-timeline-item.done::before { background: #1E8449; border-color: #1E8449; }
 .est-timeline-item .when {
   font-size: 0.7rem;
   font-weight: 700;
@@ -248,33 +307,36 @@
   text-transform: uppercase;
   color: #8F3B53;
 }
-.est-timeline-item .title { font-size: 0.92rem; font-weight: 600; color: #1F1A1B; margin: 2px 0; }
-.est-timeline-item .body { font-size: 0.84rem; color: #5c5556; line-height: 1.6; margin: 0; }
+.est-timeline-item.done .when { color: #1E8449; }
+.est-timeline-item .title { font-size: 0.94rem; font-weight: 600; color: #1F1A1B; margin: 2px 0; }
+.est-timeline-item .body { font-size: 0.86rem; color: #5c5556; line-height: 1.6; margin: 0; }
 
-/* ---------- Pipeline de tejedoras ---------- */
+/* ---------- Pipeline (tejedoras, clases) ---------- */
 .est-pipeline { display: flex; flex-wrap: wrap; gap: 8px; }
 .est-pipeline-step {
-  flex: 1 1 170px;
+  flex: 1 1 100%;
   background: #fff;
   border: 1px solid #eee9e0;
   border-radius: 12px;
   padding: 0.9rem 1rem;
-  position: relative;
+}
+@media (min-width: 640px) {
+  .est-pipeline-step { flex: 1 1 180px; }
 }
 .est-pipeline-step .num {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px; height: 22px;
+  width: 24px; height: 24px;
   border-radius: 50%;
   background: #FAF1DF;
   color: #8F3B53;
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 700;
   margin-bottom: 8px;
 }
-.est-pipeline-step .step { font-size: 0.88rem; font-weight: 600; color: #1F1A1B; margin-bottom: 4px; }
-.est-pipeline-step .detail { font-size: 0.78rem; color: #777; line-height: 1.55; }
+.est-pipeline-step .step { font-size: 0.9rem; font-weight: 600; color: #1F1A1B; margin-bottom: 4px; }
+.est-pipeline-step .detail { font-size: 0.8rem; color: #777; line-height: 1.55; }
 
 /* ---------- Checklist persistente ---------- */
 .est-checklist { display: flex; flex-direction: column; gap: 8px; }
@@ -285,26 +347,26 @@
   background: #fff;
   border: 1px solid #eee9e0;
   border-radius: 10px;
-  padding: 0.8rem 1rem;
+  padding: 0.85rem 1rem;
   cursor: pointer;
   transition: border-color 0.15s ease;
 }
 .est-check:hover { border-color: #d9cfc0; }
 .est-check input {
   margin-top: 3px;
-  width: 17px; height: 17px;
+  width: 19px; height: 19px;
   accent-color: #8F3B53;
   cursor: pointer;
   flex-shrink: 0;
 }
 .est-check .txt { flex: 1; }
-.est-check .txt .t { font-size: 0.88rem; font-weight: 500; color: #1F1A1B; }
-.est-check .txt .d { font-size: 0.78rem; color: #888; line-height: 1.55; margin-top: 2px; }
+.est-check .txt .t { font-size: 0.9rem; font-weight: 500; color: #1F1A1B; }
+.est-check .txt .d { font-size: 0.8rem; color: #888; line-height: 1.55; margin-top: 2px; }
 .est-check.done .txt .t { text-decoration: line-through; color: #999; }
 .est-check.done .txt .d { color: #bbb; }
 
 /* ---------- Drops ---------- */
-.est-drops { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.9rem; }
+.est-drops { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.9rem; }
 .est-drop {
   background: #fff;
   border: 1px solid #eee9e0;
@@ -322,36 +384,81 @@
 .est-drop .name { font-size: 1rem; font-weight: 600; color: #1F1A1B; margin: 3px 0 4px; }
 .est-drop .hook { font-size: 0.78rem; color: #777; line-height: 1.5; }
 
+/* Antes / Durante / Después */
+.est-stages { display: grid; grid-template-columns: 1fr; gap: 0.9rem; }
+@media (min-width: 900px) { .est-stages { grid-template-columns: repeat(3, 1fr); } }
+.est-stage {
+  background: #fff;
+  border: 1px solid #eee9e0;
+  border-radius: 12px;
+  padding: 1.1rem 1.2rem;
+}
+.est-stage-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.est-stage-head .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: #1F1A1B;
+  color: #FAF1DF;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.est-stage-head .stage { font-size: 1rem; font-weight: 650; color: #1F1A1B; }
+.est-stage-head .when { font-size: 0.72rem; color: #8F3B53; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.est-stage ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+.est-stage li { font-size: 0.84rem; color: #5c5556; line-height: 1.6; }
+
+/* ---------- Canales ---------- */
+.est-channels { display: flex; flex-direction: column; gap: 10px; }
+.est-channel {
+  display: flex;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid #eee9e0;
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+}
+.est-channel .rank {
+  flex-shrink: 0;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: #FAF1DF;
+  color: #8F3B53;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.est-channel .body { flex: 1; min-width: 0; }
+.est-channel .head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.est-channel .head h4 { margin: 0; font-size: 0.98rem; font-weight: 600; color: #1F1A1B; }
+.est-channel .why { margin: 0 0 6px; font-size: 0.84rem; color: #5c5556; line-height: 1.6; }
+.est-channel .action { margin: 0; font-size: 0.82rem; color: #4A4143; line-height: 1.6; }
+.est-channel .action strong { color: #8F3B53; }
+
 /* ---------- Callout ---------- */
 .est-callout {
   background: #FAF1DF;
   border: 1px solid rgba(143,59,83,0.25);
   border-radius: 12px;
   padding: 1.1rem 1.3rem;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   color: #4A2A35;
   line-height: 1.65;
 }
 .est-callout strong { color: #1F1A1B; }
-
-/* ---------- Progreso de precios ---------- */
-.est-progress-track {
-  height: 8px;
-  background: #efe9de;
-  border-radius: 999px;
-  overflow: hidden;
-  margin-top: 8px;
-}
-.est-progress-fill {
-  height: 100%;
-  background: #1E8449;
-  border-radius: 999px;
-  transition: width 0.4s ease;
-}
-
-/* ---------- Responsive ---------- */
-@media (max-width: 640px) {
-  .est-band { grid-template-columns: 1fr; gap: 4px; }
-  .est-north { padding: 1.25rem 1.3rem; }
-  .est-north blockquote { font-size: 1rem; }
-}

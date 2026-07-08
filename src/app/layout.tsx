@@ -7,6 +7,7 @@ import { BackToTop } from '@/components/BackToTop'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { WhatsAppFloat } from '@/components/WhatsAppFloat'
+import { WeaverCallout } from '@/components/WeaverCallout'
 import { SITE_URL } from '@/lib/env'
 import { createClient } from '@/lib/supabase/server'
 import type { Discount } from '@/lib/types'
@@ -167,6 +168,7 @@ export default async function RootLayout({
             <CartDrawer />
             <BackToTop />
             <WhatsAppFloat />
+            <WeaverCallout />
           </FavoritesProvider>
         </CartProvider>
       </body>

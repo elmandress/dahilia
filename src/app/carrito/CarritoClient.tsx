@@ -1,15 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Button, Icon } from '@/components/ui/Primitives'
 import { getPrimaryPhoto, formatPrice, getEffectivePrice, getFinalPrice, BLUR_DATA_URL } from '@/lib/types'
 import type { Product, Discount } from '@/lib/types'
+import { computeCouponEffect, type PublicCoupon } from '@/lib/coupons'
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import Image from 'next/image'
 import { SITE_URL } from '@/lib/env'
+
+// Recuerda el código ingresado entre recargas (se re-valida siempre contra el
+// servidor al montar — nunca se confía en lo guardado).
+const COUPON_STORAGE_KEY = 'dahila_coupon_code'
 
 interface Props {
   whatsappUrl: string
@@ -31,7 +36,8 @@ function buildWhatsAppMessage(
   items: ReturnType<typeof useCart>['items'],
   discounts: ReturnType<typeof useCart>['discounts'],
   total: number,
-  giftNote?: string
+  giftNote?: string,
+  coupon?: { code: string; discount: number; freeShipping: boolean } | null
 ): string {
   const lines: string[] = []
   lines.push('Hola Anush! Quiero coordinar este pedido:')
@@ -56,6 +62,12 @@ function buildWhatsAppMessage(
       lines.push('')
     })
 
+  if (coupon && coupon.discount > 0) {
+    lines.push(`Cupón ${coupon.code}: −${formatPrice(coupon.discount)}`)
+  }
+  if (coupon?.freeShipping) {
+    lines.push(`Cupón ${coupon.code}: envío gratis`)
+  }
   lines.push(`Total: ${formatPrice(total)}`)
   if (giftNote) {
     lines.push('')
@@ -72,15 +84,97 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
   const router = useRouter()
   const [giftNote, setGiftNote] = useState('')
   const [showGiftNote, setShowGiftNote] = useState(false)
+  const [showCoupon, setShowCoupon] = useState(false)
+  const [couponInput, setCouponInput] = useState('')
+  const [coupon, setCoupon] = useState<PublicCoupon | null>(null)
+  const [couponError, setCouponError] = useState<string | null>(null)
+  const [couponPending, startCouponTransition] = useTransition()
 
-  const total = items.reduce(
+  // Re-validar un cupón recordado de una visita anterior (silencioso).
+  useEffect(() => {
+    const saved = sessionStorage.getItem(COUPON_STORAGE_KEY)
+    if (!saved) return
+    fetch('/api/coupon', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: saved }),
+    })
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.ok && res.coupon) setCoupon(res.coupon as PublicCoupon)
+        else sessionStorage.removeItem(COUPON_STORAGE_KEY)
+      })
+      .catch(() => { /* sin red: el cupón simplemente no se restaura */ })
+  }, [])
+
+  const subtotal = items.reduce(
     (acc, item) => acc + (getFinalPrice(item.product, item.size, discounts) * item.qty),
     0
   )
+  // Efecto del cupón calculado en vivo sobre el carrito actual (si cambian
+  // cantidades, el descuento se recalcula solo).
+  const couponEffect = coupon ? computeCouponEffect(coupon, items, discounts) : null
+  const couponDiscount = couponEffect && !couponEffect.blocked ? couponEffect.discount : 0
+  const freeShipping = !!(couponEffect && !couponEffect.blocked && couponEffect.freeShipping)
+  const total = Math.max(0, subtotal - couponDiscount)
 
-  const handleCheckout = () => {
+  const applyCoupon = () => {
+    const code = couponInput.trim()
+    if (!code) return
+    setCouponError(null)
+    startCouponTransition(async () => {
+      try {
+        const r = await fetch('/api/coupon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        })
+        const res = await r.json()
+        if (res.ok && res.coupon) {
+          setCoupon(res.coupon as PublicCoupon)
+          setCouponInput('')
+          setShowCoupon(false)
+          sessionStorage.setItem(COUPON_STORAGE_KEY, (res.coupon as PublicCoupon).code)
+        } else {
+          setCouponError(res.error || 'No pudimos validar el cupón.')
+        }
+      } catch {
+        setCouponError('No pudimos validar el cupón. Revisá tu conexión.')
+      }
+    })
+  }
+
+  const clearCoupon = () => {
+    setCoupon(null)
+    setCouponError(null)
+    sessionStorage.removeItem(COUPON_STORAGE_KEY)
+  }
+
+  const handleCheckout = async () => {
     if (typeof window === 'undefined') return
-    const message = buildWhatsAppMessage(items, discounts, total, giftNote.trim())
+    // Registrar el canje ANTES de abrir WhatsApp. Si justo se agotó, avisamos
+    // y NO abrimos el chat con un total que ya no es válido.
+    if (coupon && (couponDiscount > 0 || freeShipping)) {
+      try {
+        const r = await fetch('/api/coupon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: coupon.code, redeem: true }),
+        })
+        const res = await r.json()
+        if (!res.ok) {
+          clearCoupon()
+          setCouponError('Ese cupón se agotó justo ahora. El total quedó actualizado — volvé a tocar el botón.')
+          return
+        }
+      } catch {
+        /* sin red para registrar: no bloqueamos la venta */
+      }
+    }
+    const message = buildWhatsAppMessage(
+      items, discounts, total, giftNote.trim(),
+      coupon ? { code: coupon.code, discount: couponDiscount, freeShipping } : null
+    )
     // wa.me supports `?text=` query param. encodeURIComponent handles the rest.
     // Strip any trailing slash from the base URL so we can append cleanly.
     const base = whatsappUrl.replace(/\/+$/, '')
@@ -296,16 +390,113 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 14,
         }}
       >
-        <div style={{ display: 'flex', gap: 48, alignItems: 'baseline' }}>
-          <span style={{
-            fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink700,
-            textTransform: 'uppercase', letterSpacing: '0.06em',
-          }}>
-            Total
-          </span>
-          <span style={{ fontFamily: dahila.fontDisplay, fontSize: 24, color: dahila.ink900 }}>
-            {formatPrice(total)}
-          </span>
+        {/* Cupón — disclosure discreto, mismo lenguaje que la nota de regalo */}
+        <div style={{ width: '100%', maxWidth: 420, alignSelf: 'flex-end', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+          {coupon ? (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end',
+              fontFamily: dahila.fontSans, fontSize: 13,
+            }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: couponEffect?.blocked ? 'rgba(182,49,74,0.07)' : 'rgba(30,132,73,0.08)',
+                color: couponEffect?.blocked ? '#7a1e2f' : '#1E8449',
+                borderRadius: 999, padding: '6px 12px', fontWeight: 500,
+              }}>
+                <Icon name="tag" size={14} />
+                Cupón {coupon.code}
+                {!couponEffect?.blocked && couponDiscount > 0 && ` · −${formatPrice(couponDiscount)}`}
+                {!couponEffect?.blocked && freeShipping && ' · envío gratis'}
+              </span>
+              <button type="button" onClick={clearCoupon} style={{
+                background: 'transparent', border: 'none', cursor: 'pointer', padding: 4,
+                fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, textDecoration: 'underline',
+              }}>
+                Quitar
+              </button>
+              {couponEffect?.blocked && (
+                <span role="alert" style={{ width: '100%', textAlign: 'right', fontSize: 12, color: '#7a1e2f' }}>
+                  {couponEffect.blocked}
+                </span>
+              )}
+            </div>
+          ) : !showCoupon ? (
+            <button
+              type="button"
+              onClick={() => setShowCoupon(true)}
+              style={{
+                background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+                fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink500,
+                display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'underline',
+              }}
+            >
+              <Icon name="tag" size={14} color={dahila.ink500} />
+              ¿Tenés un cupón?
+            </button>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => { if (e.key === 'Enter') applyCoupon() }}
+                  placeholder="TU-CUPON"
+                  aria-label="Código de cupón"
+                  autoFocus
+                  style={{
+                    fontFamily: dahila.fontSans, fontSize: 13, letterSpacing: '0.08em',
+                    color: dahila.ink900, background: dahila.cream50,
+                    border: `1px solid ${dahila.borderStrong}`, borderRadius: 8,
+                    padding: '10px 12px', outline: 'none', width: 150, textTransform: 'uppercase',
+                  }}
+                />
+                <Button variant="secondary" size="sm" onClick={applyCoupon} disabled={couponPending}>
+                  {couponPending ? '...' : 'Aplicar'}
+                </Button>
+                <button type="button" onClick={() => { setShowCoupon(false); setCouponError(null) }} aria-label="Cerrar cupón" style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink500, padding: 4,
+                }}>
+                  <Icon name="x" size={16} />
+                </button>
+              </div>
+              {couponError && (
+                <span role="alert" style={{ fontFamily: dahila.fontSans, fontSize: 12, color: '#7a1e2f', maxWidth: 300, textAlign: 'right' }}>
+                  {couponError}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+          {couponDiscount > 0 && (
+            <div style={{ display: 'flex', gap: 24, alignItems: 'baseline', fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700 }}>
+              <span>Subtotal</span>
+              <span>{formatPrice(subtotal)}</span>
+            </div>
+          )}
+          {couponDiscount > 0 && (
+            <div style={{ display: 'flex', gap: 24, alignItems: 'baseline', fontFamily: dahila.fontSans, fontSize: 13, color: '#1E8449' }}>
+              <span>Cupón {coupon?.code}</span>
+              <span>−{formatPrice(couponDiscount)}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 48, alignItems: 'baseline' }}>
+            <span style={{
+              fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink700,
+              textTransform: 'uppercase', letterSpacing: '0.06em',
+            }}>
+              Total
+            </span>
+            <span style={{ fontFamily: dahila.fontDisplay, fontSize: 24, color: dahila.ink900 }}>
+              {formatPrice(total)}
+            </span>
+          </div>
+          {freeShipping && (
+            <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: '#1E8449' }}>
+              Tu cupón incluye envío gratis
+            </span>
+          )}
         </div>
 
         <p style={{

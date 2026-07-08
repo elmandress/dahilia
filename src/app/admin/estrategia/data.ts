@@ -1,138 +1,129 @@
 // ============================================================
-// Estrategia y crecimiento — contenido estructurado
+// Estrategia y crecimiento — contenido
 // ============================================================
-// Única fuente de verdad del conocimiento estratégico del negocio, consumida
-// por /admin/estrategia. Deriva de la consultoría comercial de julio 2026
-// (mercado UY relevado a mano, modelo Manos del Uruguay, benchmarks reales de
-// WhatsApp/drops) y de las decisiones aprobadas por la dueña.
+// La guía del negocio que Anush consulta cada semana. Se escribe PARA ELLA:
+// lenguaje simple, cero jerga técnica, todo accionable.
 //
-// Para actualizar la estrategia se edita ESTE archivo — la página se encarga
-// del resto (los datos vivos: precios aplicados, postulaciones y suscriptoras
-// se leen de la base en tiempo real).
+// Para actualizar la estrategia se edita este archivo. Los datos vivos
+// (precios aplicados, postulaciones, lista VIP, checklist) los lee la página
+// de la base en tiempo real.
+//
+// Fuentes: mercado UY relevado a mano (jul 2026), Manos del Uruguay,
+// Alabama Chanin, Krochet Kids, estándares Nest, benchmarks reales de
+// WhatsApp. Los informes completos están en los ESTRATEGIA-*.md del repo.
 // ============================================================
 
 export const ULTIMA_REVISION = 'julio 2026'
 
 export const NORTE =
-  'Ser el mejor tejido a mano de Uruguay al precio más justo: un escalón por encima del emprendimiento informal, siempre por debajo del retail a máquina. Que cada clienta sienta que paga menos de lo que recibe.'
+  'El mejor tejido a mano de Uruguay al precio más justo: un escalón arriba del emprendimiento informal, siempre abajo de la ropa de máquina. Que cada clienta sienta que recibe más de lo que pagó.'
 
-// ─── 1. Posicionamiento y mercado ────────────────────────────
+// ─── Mercado ─────────────────────────────────────────────────
 
 export interface MarketBand {
   name: string
   detail: string
   min: number
   max: number
-  /** Marca la banda propia. */
   self?: boolean
 }
 
-/** Bandas de precio del mercado (UYU, prendas tejidas). Escala log en el gráfico. */
 export const MARKET_BANDS: MarketBand[] = [
-  { name: 'Emprendimiento informal UY', detail: 'ferias, DM de Instagram, Mitienda', min: 350, max: 850 },
-  { name: 'Dahila (precios nuevos)', detail: 'handmade con sitio, marca y seguimiento', min: 360, max: 1540, self: true },
-  { name: 'Retail a máquina', detail: 'Indian $899–1.499 · Zara/Mango $1.500–3.500', min: 899, max: 3500 },
-  { name: 'Handmade global (Etsy)', detail: 'tops/cardigans USD 30–100', min: 1200, max: 4000 },
-  { name: 'Premium (Manos del Uruguay, MOMO NY)', detail: 'exportación, lujo', min: 4000, max: 14000 },
+  { name: 'Emprendimientos informales', detail: 'ferias, DM de Instagram', min: 350, max: 850 },
+  { name: 'Dahila', detail: 'a mano, con marca y a medida', min: 360, max: 1540, self: true },
+  { name: 'Ropa de máquina', detail: 'Indian, Zara, Mango', min: 899, max: 3500 },
+  { name: 'Handmade internacional', detail: 'Etsy', min: 1200, max: 4000 },
+  { name: 'Lujo artesanal', detail: 'Manos del Uruguay', min: 4000, max: 14000 },
 ]
 
 export interface MarketRef {
   name: string
-  what: string
   price: string
   lesson: string
-  url?: string
 }
 
 export const MARKET_REFS: MarketRef[] = [
   {
-    name: 'Moda crochet by me',
-    what: 'Emprendimiento UY en Mitienda — el "piso local"',
-    price: 'Top $850 · carpetas $350–420',
-    lesson: 'Dahila a 899 estaba pegada al piso informal pese a tener sitio, fotos y marca muy superiores.',
-    url: 'https://www.mitienda.uy/moda-crochet-by-me',
+    name: 'Moda crochet by me (Mitienda)',
+    price: 'Top $850',
+    lesson: 'Es el piso informal. Dahila estaba pegada a ese piso con un sitio, fotos y marca muy superiores.',
   },
   {
-    name: 'Indian (tejidos a máquina)',
-    what: 'Retail masivo, tejido industrial',
-    price: 'Poleras $899–1.499 · cardigan $1.399',
-    lesson: 'Un cardigan tejido A MANO no puede costar menos que uno de máquina. Era la anomalía del catálogo.',
-    url: 'https://www.indian.com.uy/tejidos',
+    name: 'Indian — tejido a máquina',
+    price: 'Cardigan $1.399',
+    lesson: 'Tu cardigan tejido a mano costaba MENOS que uno de máquina. Esa era la anomalía a corregir.',
   },
   {
-    name: 'Mercado UY en general',
-    what: 'Instagram, Facebook, ML, ferias',
-    price: 'Casi nadie publica precios',
-    lesson: 'Mercado opaco → el cliente no puede comparar → publicar precios claros es una ventaja competitiva, y hay margen para cobrar por valor.',
-  },
-  {
-    name: 'Etsy (handmade global)',
-    what: 'El techo del handmade online',
-    price: 'Tops/cardigans $1.200–4.000 · bikini ~$3.700',
-    lesson: 'Incluso con los precios a 12 meses, cada pieza Dahila queda a la mitad o menos que Etsy. La clienta sigue "robando".',
+    name: 'Etsy — handmade internacional',
+    price: 'Tops $1.200–4.000',
+    lesson: 'Incluso con los precios a 12 meses, cada pieza tuya cuesta la mitad o menos que allá.',
   },
   {
     name: 'Manos del Uruguay',
-    what: 'Cooperativas desde 1968 — teje para Gabriela Hearst',
     price: '$4.000–10.000+',
-    lesson: '"Hecho a mano en Uruguay" tiene prestigio internacional real. Y su modelo de tejedoras es el mapa para escalar.',
-    url: 'https://manos.uy/artesanas',
+    lesson: '"Hecho a mano en Uruguay" viste a marcas de lujo en Nueva York. El prestigio es real — usalo.',
   },
   {
-    name: 'Clases de crochet UY',
-    what: 'Superprof, Casa Dominga, lanerías',
-    price: '$291–500/h particular · $1.500/mes grupal',
-    lesson: 'La hora de esa habilidad vale 6–8× lo que hoy rinde tejiendo. Reordena todo (ver Clases).',
-    url: 'https://www.superprof.uy/clases/crochet/montevideo/',
+    name: 'El resto del mercado UY',
+    price: 'No publica precios',
+    lesson: 'Casi nadie muestra precios: se cotiza por mensaje. Que vos los publiques claros ya es una ventaja.',
   },
 ]
 
-// ─── 2. Precios ──────────────────────────────────────────────
+// ─── Precios ─────────────────────────────────────────────────
+
+/** La explicación de fondo, en una frase. */
+export const PRICING_WHY =
+  'La regla es simple: mirá cuánto te queda por hora de trabajo en cada pieza (precio menos materiales, dividido las horas). Los bolsos te pagaban $67–104 la hora; los cardigans y sets, $34–44 — la mitad. Por eso suben primero las piezas de muchas horas: no porque "afuera cueste más", sino porque eran las que peor te pagaban a VOS.'
 
 export const PRICING_RULES = [
   {
-    title: 'Nunca la marca cara',
-    body: 'El techo es el retail a máquina; jamás la banda Etsy. El posicionamiento es "handmade a precio de casi-máquina" — la mejor relación calidad-precio del país.',
+    title: 'Nunca ser la marca cara',
+    body: 'El techo es la ropa de máquina; jamás los precios de Etsy. Tu lugar: "hecho a mano al precio de casi-máquina".',
   },
   {
-    title: 'Todo aumento con una razón',
-    body: 'Ningún aumento sin mejora visible (packaging, fotos, descripciones) y sin narrativa ("colección nueva", "lana premium"). Nunca se anuncia "subimos precios".',
+    title: 'Todo aumento llega con una mejora',
+    body: 'Packaging nuevo, fotos nuevas o colección nueva. Nunca se anuncia "subimos precios" — se anuncia algo mejor.',
   },
   {
-    title: 'La escalera refleja horas',
-    body: 'Un poncho de 19 horas no puede costar casi lo mismo que un top de 13. La contribución por hora ($/h) es el criterio que ordena la tabla — no el promedio del mercado.',
+    title: 'Más horas = más precio',
+    body: 'Un poncho de 19 horas no puede costar casi lo mismo que un top de 13. La escalera de precios sigue a las horas.',
   },
   {
-    title: 'La entrada no se toca',
-    body: 'Bandana y mini bufandas quedan baratas a propósito: son el gancho de prueba y regalo que sostiene la percepción de "mejor valor" en todo el catálogo.',
+    title: 'La entrada queda barata a propósito',
+    body: 'Bandana y mini bufandas no se tocan: son la puerta de entrada para probar la marca y hacer regalos.',
   },
+]
+
+/** Referencias del valor de una hora de trabajo en Uruguay (para decidir con contexto). */
+export const HOUR_REFS = [
+  { value: '$110', label: 'salario mínimo por hora en Uruguay', sub: 'el piso legal de referencia' },
+  { value: '$150–250', label: 'tarifa razonable para pagarle a una tejedora', sub: 'por hora estándar del modelo, a convenir y subir con la experiencia' },
+  { value: '$291–500', label: 'lo que vale una hora de clase de crochet', sub: 'precios reales publicados en Uruguay' },
 ]
 
 export type PricePriority = 'urgente' | 'alta' | 'media' | 'baja' | 'hold'
 
 export interface PriceRow {
-  /** Slug del producto en la tienda (para chequear en vivo si el precio ya se aplicó). */
   slug: string
   name: string
-  /** Precio anterior (antes de julio 2026). */
   before: number
-  /** Precio HOY aprobado. null = HOLD (no tocar). */
+  /** Precio aprobado (jul 2026). null = no se toca. */
   today: number | null
-  /** Target a 12 meses. */
+  /** A dónde llegar en 12 meses. */
   target: number | null
   hours: number | null
-  /** Materiales estimados UYU (la dueña debe ajustar con costos reales). */
   materials: number | null
   priority: PricePriority
   note?: string
 }
 
-/** Tabla aprobada por la dueña (columna HOY de la estrategia definitiva, jul 2026). */
+/** Tabla aprobada (julio 2026). Ya aplicada en la tienda — el semáforo lo verifica en vivo. */
 export const PRICE_TABLE: PriceRow[] = [
-  { slug: 'set-brisa', name: 'Set BRISA (3 piezas)', before: 690, today: 890, target: 1090, hours: 16, materials: 350, priority: 'urgente', note: '3 piezas con bikini — era la pieza más subvaluada del catálogo' },
-  { slug: 'cardigan-3-4', name: 'Cardigan 3/4', before: 1100, today: 1290, target: 1490, hours: 22, materials: 480, priority: 'urgente', note: 'Costaba menos que un cardigan de máquina ($1.399)' },
+  { slug: 'set-brisa', name: 'Set BRISA (3 piezas)', before: 690, today: 890, target: 1090, hours: 16, materials: 350, priority: 'urgente', note: 'Era la pieza más regalada del catálogo' },
+  { slug: 'cardigan-3-4', name: 'Cardigan 3/4', before: 1100, today: 1290, target: 1490, hours: 22, materials: 480, priority: 'urgente', note: 'Costaba menos que uno de máquina' },
   { slug: 'cardigan-cruzado', name: 'Cardigan CRUZADO', before: 1100, today: 1290, target: 1490, hours: 22, materials: 480, priority: 'urgente' },
-  { slug: 'poncho', name: 'Poncho', before: 1100, today: 1290, target: 1450, hours: 19, materials: 450, priority: 'urgente', note: 'En Etsy un poncho similar ronda $8.000' },
+  { slug: 'poncho', name: 'Poncho', before: 1100, today: 1290, target: 1450, hours: 19, materials: 450, priority: 'urgente' },
   { slug: 'set-lueur', name: 'Set LUEUR (3 piezas)', before: 999, today: 1150, target: 1290, hours: 18, materials: 380, priority: 'urgente' },
   { slug: 'chaleco', name: 'Chaleco', before: 1000, today: 1190, target: 1350, hours: 16, materials: 350, priority: 'alta' },
   { slug: 'set-lurex', name: 'Set LUREX', before: 1100, today: 1250, target: 1390, hours: 17, materials: 400, priority: 'alta' },
@@ -149,7 +140,7 @@ export const PRICE_TABLE: PriceRow[] = [
   { slug: 'top-halter', name: 'Top HALTER', before: 780, today: 890, target: 990, hours: 11, materials: 250, priority: 'media' },
   { slug: 'top-duna', name: 'Top DUNA', before: 780, today: 890, target: 990, hours: 11, materials: 250, priority: 'media' },
   { slug: 'set-de-bufanda-y-guantes', name: 'Set bufanda y guantes', before: 700, today: 790, target: 890, hours: 9, materials: 220, priority: 'media' },
-  { slug: 'cowl-neck-top', name: 'COWL NECK top', before: 560, today: 620, target: 720, hours: 8, materials: 200, priority: 'media', note: 'El top más accesible — sirve para captar primera compra' },
+  { slug: 'cowl-neck-top', name: 'COWL NECK top', before: 560, today: 620, target: 720, hours: 8, materials: 200, priority: 'media', note: 'El top más accesible: sirve para la primera compra' },
   { slug: 'bolso-de-estudiante', name: 'Bolso de estudiante', before: 650, today: 720, target: 790, hours: 7, materials: 250, priority: 'baja' },
   { slug: 'tote-bag-de-playa', name: 'Tote bag de playa', before: 670, today: 720, target: 790, hours: 7, materials: 250, priority: 'baja' },
   { slug: 'donut-bag', name: 'DONUT bag', before: 650, today: 720, target: 790, hours: 6, materials: 220, priority: 'baja' },
@@ -158,12 +149,12 @@ export const PRICE_TABLE: PriceRow[] = [
   { slug: 'bolso-lola', name: 'Bolso LOLA', before: 1300, today: 1390, target: 1490, hours: 10, materials: 350, priority: 'baja' },
   { slug: 'bufanda-sophie', name: 'Bufanda SOPHIE', before: 550, today: 590, target: 620, hours: 5, materials: 180, priority: 'baja' },
   { slug: 'calentadores', name: 'Calentadores', before: 550, today: 590, target: 620, hours: 5, materials: 180, priority: 'baja' },
-  { slug: 'bandana', name: 'Bandana', before: 500, today: null, target: 550, hours: 4, materials: 150, priority: 'hold', note: 'Gancho de entrada — no tocar este año' },
-  { slug: 'mini-bufandas', name: 'Mini BUFANDAS', before: 360, today: null, target: 390, hours: 3, materials: 100, priority: 'hold', note: 'Producto de prueba/impulso — no tocar' },
-  { slug: 'box-de-regalo', name: 'Box de regalo', before: 650, today: null, target: null, hours: null, materials: null, priority: 'hold', note: '¿Producto o packaging? Recomendado: volver el buen packaging estándar y retirarlo como producto' },
+  { slug: 'bandana', name: 'Bandana', before: 500, today: null, target: 550, hours: 4, materials: 150, priority: 'hold', note: 'Puerta de entrada — no tocar este año' },
+  { slug: 'mini-bufandas', name: 'Mini BUFANDAS', before: 360, today: null, target: 390, hours: 3, materials: 100, priority: 'hold', note: 'Compra impulso y regalo — no tocar' },
+  { slug: 'box-de-regalo', name: 'Box de regalo', before: 650, today: null, target: null, hours: null, materials: null, priority: 'hold', note: 'Mejor: que el buen packaging sea estándar y retirarlo como producto' },
 ]
 
-/** Contribución por hora a un precio dado (precio − materiales) / horas. */
+/** Contribución por hora: (precio − materiales) / horas. */
 export function contribPerHour(row: PriceRow, price: number | null): number | null {
   if (price == null || row.hours == null || row.materials == null || row.hours <= 0) return null
   return Math.round((price - row.materials) / row.hours)
@@ -171,328 +162,340 @@ export function contribPerHour(row: PriceRow, price: number | null): number | nu
 
 export const PRICING_PHASES = [
   {
-    when: 'Ahora (jul 2026)',
-    title: 'Fase 1 — aplicar la columna HOY',
-    body: 'Todo el catálogo salvo los HOLD. Acompañar con descripciones nuevas y packaging tipo regalo — el aumento siempre llega junto a una mejora visible.',
+    when: 'Hecho (jul 2026)',
+    title: 'Primer paso aplicado',
+    body: 'Todo el catálogo subió al precio aprobado, salvo bandana, mini bufandas y box.',
+    done: true,
   },
   {
-    when: 'Mes 4–5 (nov)',
-    title: 'Fase 2 — segundo paso en tops y bolsos',
-    body: 'Hacia el target de 12 meses, lanzado junto al drop "Verano \'26": la colección nueva es la razón del precio nuevo.',
+    when: 'Nov 2026',
+    title: 'Segundo paso, con el drop de verano',
+    body: 'Tops y bolsos suben hacia la meta de 12 meses. La colección nueva es la razón del precio nuevo.',
+    done: false,
   },
   {
-    when: 'Mes 7–8',
-    title: 'Fase 3 — cerrar statement y sets',
-    body: 'Statement y sets llegan al target. Empezar a mover los best-sellers (recién acá: primero se re-ancla el resto del catálogo).',
+    when: 'Feb–Mar 2027',
+    title: 'Cardigans, ponchos y sets a la meta',
+    body: 'Las piezas de más horas llegan a su precio justo. Recién acá se mueven los best-sellers.',
+    done: false,
   },
   {
-    when: 'Mes 10–11',
-    title: 'Fase 4 — cierre y redondeos',
-    body: 'Tops y bolsos al target. Redondeo simbólico en la entrada (bandana a 550, mini bufandas a 390).',
+    when: 'May–Jun 2027',
+    title: 'Cierre',
+    body: 'Todo el catálogo en la meta de 12 meses. Bandana a $550, mini bufandas a $390.',
+    done: false,
   },
 ]
 
-// ─── 3. La economía de la hora (el hallazgo que ordena todo) ─
-
-export const HOUR_ECONOMICS = {
-  headline: 'La hora de Anush vale 6–8 veces más enseñando que tejiendo',
-  stats: [
-    { value: '$21–34', label: 'por hora tejiendo un Set BRISA', sub: 'contribución antes → después del aumento' },
-    { value: '$110', label: 'salario mínimo UY aprox. por hora', sub: 'referencia de piso' },
-    { value: '$291–500', label: 'por hora dando clase de crochet', sub: 'mercado real UY (Superprof)' },
-  ],
-  implications: [
-    'A los precios viejos, pagarle a otra tejedora un sueldo justo daba PÉRDIDA en casi todo el catálogo (solo cerraban los bolsos). Los aumentos no son solo margen: son lo que habilita escalar con tejedoras.',
-    'Precios, clases y red de tejedoras son el mismo proyecto, no tres ideas sueltas: los precios pagan la mano de obra, las clases monetizan la hora escasa y forman a las futuras tejedoras.',
-  ],
+/** Mejoras que acompañan cada aumento (suben el valor percibido casi sin costo). */
+export interface ActionItem {
+  id: string
+  label: string
+  detail: string
 }
 
-// ─── 4. Red de tejedoras ─────────────────────────────────────
+export const VALUE_ACTIONS: ActionItem[] = [
+  { id: 'vp-regalo', label: 'Envolver cada pieza como un regalo', detail: 'Papel de seda + bolsa kraft + sticker con el logo. Costo mínimo, efecto enorme.' },
+  { id: 'vp-tarjeta', label: 'Tarjeta escrita a mano, con el nombre de la clienta', detail: 'Firmada por vos. Es lo que ninguna marca de máquina puede copiar.' },
+  { id: 'vp-cuidado', label: 'Tarjeta de cuidado', detail: 'Cómo lavar y guardar la prenda. Dice "esto es de calidad" sin decirlo.' },
+  { id: 'vp-ajuste', label: 'Prometer "si no te queda, lo ajustamos"', detail: 'Al tejer a medida te cuesta poco — y mata el miedo #1 de comprar ropa online.' },
+  { id: 'vp-edicion', label: 'Numerar a mano las piezas grandes', detail: '"Pieza única N.º 3". La escasez es real: mostrala.' },
+  { id: 'vp-etiqueta', label: 'Etiqueta "Dahila" cosida', detail: 'La marca viaja con la prenda para siempre.' },
+  { id: 'vp-qr', label: 'QR a un video del tejido en el packaging', detail: '30 segundos de esa pieza naciendo. La historia sube lo que la gente paga con gusto.' },
+  { id: 'vp-sorpresa', label: 'Regalito sorpresa en pedidos grandes', detail: 'Un mini accesorio → fotos espontáneas en redes → boca a boca gratis.' },
+  { id: 'vp-bundle', label: 'Combos "completá el look" + envío gratis desde $1.400', detail: 'Sube el ticket sin bajar el precio de nada.' },
+]
+
+// ─── Tejedoras ───────────────────────────────────────────────
+
+export interface WeaverModel {
+  name: string
+  where: string
+  how: string
+  takeaway: string
+}
+
+/** Modelos reales estudiados — no copiamos uno: armamos el de Dahila con lo mejor de cada uno. */
+export const WEAVER_MODELS: WeaverModel[] = [
+  {
+    name: 'Manos del Uruguay',
+    where: 'Uruguay, desde 1968',
+    how: 'Cooperativas de artesanas que cobran por hora y por prenda terminada. Cada modelo tiene un patrón de referencia aprobado y una clasificación por horas (15/20/30 h). Cada prenda lleva el nombre y la firma de quien la tejió.',
+    takeaway: 'Tomamos: la ficha por modelo con horas estándar, el control de calidad central y el nombre de la tejedora en la prenda.',
+  },
+  {
+    name: 'Alabama Chanin',
+    where: 'Estados Unidos',
+    how: 'Las artesanas son micro-emprendimientos independientes: toman un proyecto con precio pactado de antemano, reciben el kit de materiales, cosen en su casa y entregan. Si la pieza llega tarde o no pasa la calidad, se paga menos, según reglas acordadas antes.',
+    takeaway: 'Tomamos: precio cerrado ANTES de tejer (nada de sorpresas) y reglas claras y escritas para cuando algo sale mal.',
+  },
+  {
+    name: 'Krochet Kids',
+    where: 'Uganda y Perú',
+    how: 'Forman a sus tejedoras con un programa de 3 años con mentoría, pagan por encima del salario justo local, y cada gorro lleva la firma a mano de quien lo hizo — podés conocer su historia online.',
+    takeaway: 'Tomamos: formar gente es parte del negocio (tus clases), y la historia de quién lo tejió tiene valor de venta.',
+  },
+  {
+    name: 'Estándares Nest',
+    where: 'Global (trabajo artesanal en casa)',
+    how: 'La organización que escribió las reglas del trabajo artesanal domiciliario: la consistencia no sale del talento individual sino de estándares documentados, muestras de "aceptable / no aceptable" y revisión antes de enviar.',
+    takeaway: 'Tomamos: documentar todo. La calidad la pone tu estándar escrito y tu revisión final, no la suerte.',
+  },
+]
 
 export const WEAVER_PIPELINE = [
-  { step: 'Postulación', detail: 'Formulario público en /tejedoras. El filtro rápido son las fotos: tensión pareja y terminación prolija.' },
-  { step: 'Charla', detail: 'WhatsApp. Conocerla, contarle cómo se trabaja, acordar expectativas.' },
-  { step: 'Muestra pagada', detail: 'Una pieza contra ficha técnica (lana, aguja, medidas, fotos de aceptable/no aceptable). Se paga siempre, quede o no.' },
-  { step: 'Aprendiz', detail: 'Primeros encargos simples y repetibles: accesorios, bolsos, tops básicos.' },
-  { step: 'Asociada → Senior', detail: 'Con consistencia sube el tier: más volumen y piezas más complejas.' },
+  { step: 'Postulación', detail: 'Llega desde /tejedoras. Mirá primero las fotos: tensión pareja y terminaciones prolijas.' },
+  { step: 'Charla', detail: 'Por WhatsApp. Conocela y contale cómo trabajás.' },
+  { step: 'Muestra pagada', detail: 'Una pieza de prueba contra ficha técnica. Se paga siempre, quede o no — es tu mejor filtro y tu carta de seriedad.' },
+  { step: 'Primeros encargos', detail: 'Piezas simples y repetibles: bolsos, accesorios. Precio por pieza pactado antes de empezar.' },
+  { step: 'Crecimiento', detail: 'Con constancia: más volumen, piezas más complejas y mejor tarifa.' },
 ]
 
 export const WEAVER_SYSTEM = [
   {
-    title: 'Cómo se paga',
-    body: 'Pago por pieza = horas estándar del modelo × tarifa/hora acordada, abonado al aprobar la pieza. La lana la provee Dahila (controla calidad y color). La tarifa arranca donde el precio lo permite y sube con cada fase de precios.',
+    title: 'Cuánto y cómo pagar',
+    body: 'Precio por pieza = horas estándar del modelo × tarifa por hora acordada (referencia: $150–250/h). Se pacta ANTES de tejer y se paga al aprobar la pieza. La lana la ponés vos: controlás calidad y color.',
   },
   {
-    title: 'Control de calidad',
-    body: 'Ficha técnica idéntica por modelo + QC pieza por pieza antes de entregar (medidas, tensión, terminación, costuras, cierres). Nunca sale una pieza sin QC: esa barrera protege la marca.',
+    title: 'Control de calidad, sin excepciones',
+    body: 'Cada pieza pasa por tus manos antes de llegar a una clienta: medidas, tensión, terminaciones, costuras. Una sola pieza floja daña la marca más que diez perfectas la construyen.',
+  },
+  {
+    title: 'La ficha técnica es la clave',
+    body: 'Por cada modelo: lana, aguja, medidas por talle, y fotos de "así sí / así no". Dos tejedoras con la misma ficha tejen igual. Sin ficha, cada una teje a su manera.',
   },
   {
     title: 'El nombre en la prenda',
-    body: 'Cada pieza lleva el nombre de quien la tejió, como hace Manos del Uruguay. Orgullo + responsabilidad + historia que la clienta valora.',
+    body: 'Cada pieza lleva quién la tejió, como Manos del Uruguay y Krochet Kids. Orgullo para ella, historia para la clienta, responsabilidad para todas.',
   },
   {
     title: 'Errores y ritmos',
-    body: 'Primer error: se corrige y se explica con la ficha. Reincidencia: baja de tier o pausa. ¿Consistente pero lenta? Modelos más simples, no castigo. ¿Rápida y prolija? Más y mejores encargos.',
+    body: 'Primer error: se corrige juntas con la ficha. Si se repite: piezas más simples por un tiempo. ¿Es prolija pero lenta? Dale modelos cortos, no la apures. ¿Rápida y prolija? Dale más y mejor.',
   },
   {
-    title: 'Por dónde empezar',
-    body: 'Con UNA tejedora, para bolsos y accesorios (donde la economía ya cierra). La dueña conserva las piezas statement hasta que la red madure. Se suma otra recién cuando la primera es consistente.',
-  },
-  {
-    title: 'La consistencia no es magia',
-    body: 'La ponen las fichas técnicas idénticas + la misma lana provista + el QC centralizado. No depende del talento individual: depende del estándar documentado.',
+    title: 'Empezá con UNA',
+    body: 'Una sola tejedora, para bolsos y accesorios (donde los números ya cierran). Vos seguís con las piezas grandes. Sumás otra recién cuando la primera es constante.',
   },
 ]
 
-// ─── 5. Clases ───────────────────────────────────────────────
+// ─── Clases ──────────────────────────────────────────────────
 
-export const CLASSES_VERDICT = {
-  decision: 'SÍ — y liderar con clases',
-  reasons: [
-    'Es el mejor uso posible de la hora escasa de la dueña: $291–500/h enseñando vs. $21–58/h de contribución tejiendo, sin costo de materiales.',
-    'Las mejores alumnas son las futuras tejedoras, ya formadas al estándar Dahila — resuelve calidad y consistencia de raíz (modelo Nest / Manos).',
-    'Genera comunidad, contenido para redes y lista de emails para los drops. Cada clase alimenta el resto del sistema.',
-    'Facturación inmediata mientras la red de tejedoras madura (esa tarda 6–12 meses en producir).',
+export const CLASSES_INTRO =
+  'Una hora tuya tejiendo deja $34–58. Una hora enseñando vale $291–500 — y encima te fabrica futuras tejedoras, comunidad y contenido. Es el mejor negocio de tu tiempo.'
+
+export const CLASSES_START = [
+  { step: 'Piloto', detail: 'Un ciclo de 4 encuentros con 3–4 conocidas o clientas fieles, a precio amigo o gratis. Objetivo: aprender a enseñar y juntar fotos y testimonios.' },
+  { step: 'Ajustar', detail: 'Después del piloto: ¿qué proyecto funcionó? ¿alcanzaron 2 horas? ¿qué preguntaron más? Ajustá el formato antes de cobrar precio pleno.' },
+  { step: 'Publicar', detail: 'Anunciá el primer ciclo pago en Instagram y a la lista VIP. Cupos chicos (4–6) — que se agote es parte del atractivo.' },
+  { step: 'Ritmo', detail: 'Un ciclo por mes es suficiente. No es tu negocio principal: es el multiplicador del resto.' },
+]
+
+export const CLASSES_PRICING = {
+  title: 'Cuánto cobrar (referencias reales, a validar)',
+  refs: [
+    'Casa Dominga (Montevideo): $1.500 por mes, 8 encuentros grupales, materiales incluidos.',
+    'Clases particulares en Superprof Uruguay: $291–500 la hora.',
   ],
-  comparison: [
-    { option: 'Solo reclutar', pros: 'Alivia el cuello de botella en 1–2 meses', cons: 'A precios viejos daba pérdida; el skill es escaso en UY; sin pipeline propio' },
-    { option: 'Solo clases', pros: 'Máxima rentabilidad por hora, comunidad, pipeline', cons: 'Lento para producir (6–12 meses hasta que una alumna teje para la marca)' },
-    { option: 'Ambas (elegida)', pros: 'Clases monetizan YA + 1 tejedora selectiva donde la economía cierra', cons: 'Requiere disciplina para no dispersarse' },
-  ],
-  format: {
-    title: 'Formato sugerido (a validar con costos reales)',
-    body: 'Grupal de 3–5 alumnas, ciclo mensual de 4 encuentros de 2 h. Referencias de mercado: Casa Dominga cobra $1.500/mes con materiales; una particular vale $291–500/h. Arrancar con un ciclo piloto con 3–4 personas de confianza antes de publicar precio.',
-  },
+  suggestion:
+    'Sugerencia: ciclo mensual de 4 encuentros de 2 h en grupo de 4–6, entre $1.600 y $2.200 por persona con materiales incluidos. Un grupo de 5 deja $8.000–11.000 por mes por 8 horas de trabajo — mejor que cualquier prenda. Validalo con tus costos de lana antes de publicar.',
 }
 
-// ─── 6. Drops ────────────────────────────────────────────────
+export const CLASSES_LEVELS = [
+  { level: 'Nivel 1 — Tu primer accesorio', detail: 'De cero. En 4 encuentros cada alumna se va con una bandana o mini bufanda hecha por ella. Proyecto concreto, no "puntos sueltos": la gente vuelve cuando termina algo.' },
+  { level: 'Nivel 2 — Tu primer top', detail: 'Para las que ya tejen. Un top simple con medidas de verdad: acá se aprende tensión pareja y talles — justo lo que necesita una futura tejedora.' },
+  { level: 'Nivel 3 — Nivel Dahila', detail: 'Tejer una pieza del catálogo real con su ficha técnica. Es un curso Y una prueba: quien lo termina bien ya sabe trabajar a tu estándar.' },
+]
+
+export const CLASSES_COMMUNITY = [
+  'Grupo de WhatsApp de alumnas: dudas entre encuentros, fotos de avances, y tu canal directo para anunciar los próximos ciclos y drops.',
+  'Descuento de alumna en lana y productos: la clase te convierte en SU marca de crochet.',
+  'Las clases son contenido: fotos y videos de cada encuentro alimentan Instagram toda la semana.',
+  'Cada alumna que termina algo lo muestra — y etiqueta. Es publicidad que encima te pagó.',
+]
+
+export const CLASSES_FLYWHEEL =
+  'El círculo completo: las clases pagan tu hora mejor que tejer → las mejores alumnas del Nivel 3 pasan a la muestra pagada → las que aprueban tejen para la marca → vos tejés menos y diseñás más → hay más piezas para los drops → los drops traen más clientas y más alumnas. Cada vuelta empuja la siguiente.'
+
+// ─── Drops ───────────────────────────────────────────────────
 
 export interface DropEvent {
   name: string
-  month: number // 1-12
+  month: number
   monthLabel: string
   hook: string
 }
 
 export const DROP_CALENDAR: DropEvent[] = [
   { name: 'Día de la Madre', month: 5, monthLabel: 'mayo', hook: 'Regalos: bolsos, bufandas, box' },
-  { name: 'Invierno', month: 6, monthLabel: 'junio', hook: 'Cardigans, ponchos, cuellos, calentadores' },
-  { name: "Verano '26", month: 11, monthLabel: 'noviembre', hook: 'Bikinis, salidas de playa, tops — el drop grande del año' },
-  { name: 'Navidad', month: 12, monthLabel: 'diciembre', hook: 'Regalos + box + gift cards artesanales' },
+  { name: 'Invierno', month: 6, monthLabel: 'junio', hook: 'Cardigans, ponchos, calentadores' },
+  { name: "Verano '26", month: 11, monthLabel: 'noviembre', hook: 'Bikinis, salidas de playa, tops — el grande del año' },
+  { name: 'Navidad', month: 12, monthLabel: 'diciembre', hook: 'Regalos + box' },
 ]
 
-export const DROP_PLAYBOOK = [
+export interface DropStage {
+  stage: string
+  when: string
+  items: string[]
+}
+
+export const DROP_STAGES: DropStage[] = [
   {
-    phase: 'Semanas −3 y −2 · Expectativa',
-    actions: 'Fotos borrosas, macro de un punto, behind-the-scenes del tejido. Abrir lista VIP (footer + difusión WA) con la promesa concreta: "lo ves y comprás 24 h antes".',
+    stage: 'Antes',
+    when: '3 semanas de expectativa',
+    items: [
+      'Semanas 1 y 2: mostrá que algo se viene sin mostrarlo — fotos borrosas, el detalle de un punto, vos tejiendo. Invitá a la lista VIP: "lo ves y comprás 24 horas antes".',
+      'Semana 3: un adelanto por día en Stories con cuenta regresiva. Un video del proceso. La lista VIP ve piezas que el resto no.',
+      'Dejá pronto: fotos de todas las piezas, la colección cargada en el panel (oculta), el mensaje de difusión escrito y el cupón del drop creado.',
+    ],
   },
   {
-    phase: 'Semana −1 · Reveal',
-    actions: 'Un "first look" por día en Stories con countdown sticker. 1 reel de proceso. La lista VIP recibe sneak peeks exclusivos que el feed no ve.',
+    stage: 'Durante',
+    when: 'el día del lanzamiento',
+    items: [
+      'La lista VIP compra primero: mandales el link por email y difusión de WhatsApp 24 horas antes de publicarlo.',
+      'Al otro día, público general: "ya está online" en Stories + post + difusión.',
+      'A las pocas horas: "esto es lo que queda" — la escasez es real porque es a mano, mostrala sin vergüenza.',
+    ],
   },
   {
-    phase: 'Día 0 · Lanzamiento',
-    actions: 'La lista VIP compra 24 h antes que el público. Después: "live now" en Stories + difusión de WhatsApp con el link + email a la lista.',
-  },
-  {
-    phase: 'Post · Escasez y recap',
-    actions: 'A las horas: "lo que queda". Después: recap ("se agotó X"). Reposición solo por encargo a medida con plazo mayor — la escasez se mantiene porque es real.',
+    stage: 'Después',
+    when: 'la semana siguiente',
+    items: [
+      'Recap: "se agotó tal pieza en X horas". Lo que quedó, se muestra como última oportunidad.',
+      'Lo agotado se puede encargar a medida con más plazo — la venta no se pierde, la escasez tampoco.',
+      'Quien compró entra a la lista de clientas: el próximo drop lo ve primero. Anotá qué se agotó y qué no — eso decide la próxima colección.',
+    ],
   },
 ]
 
 export const DROP_BENCHMARKS = [
-  { value: '90%+', label: 'tasa de lectura de una difusión de WhatsApp', sub: 'vs ~20% de apertura de email' },
-  { value: '4–7%', label: 'compra en difusiones de WhatsApp bien hechas', sub: '15–20% si la lista está segmentada' },
-  { value: '4–6/mes', label: 'máximo de difusiones sin quemar la lista', sub: 'mínimo 3 días entre envíos' },
+  { value: '90%+', label: 'de la gente LEE una difusión de WhatsApp', sub: 'el email ronda el 20% de apertura' },
+  { value: '4–7%', label: 'compra desde una difusión bien hecha', sub: 'hasta 15–20% si la lista es de clientas' },
+  { value: '4–6', label: 'difusiones por mes, máximo', sub: 'más que eso quema la lista; separá 3+ días' },
 ]
 
-export const DROP_RULES = [
-  'La escasez es honesta o no es: cantidades realmente limitadas (es a mano), "edición [temporada]", número de pieza escrito a mano.',
-  'Cada drop es el marco perfecto para introducir la siguiente fase de precios: "colección nueva" es la razón.',
-  'Quien compra un drop entra a la lista "clientas" que ve el siguiente primero: cada lanzamiento alimenta al próximo.',
-  'Premiar participación, no solo compra: estar en la lista, compartir una foto o asistir a un live también da acceso.',
+// ─── Canales ─────────────────────────────────────────────────
+
+export interface Channel {
+  rank: number
+  channel: string
+  role: string
+  why: string
+  action: string
+}
+
+export const CHANNELS: Channel[] = [
+  {
+    rank: 1,
+    channel: 'Instagram',
+    role: 'Donde te descubren',
+    why: 'Es tu única fuente de tráfico hoy y donde vive tu categoría: el crochet se vende por los ojos. Todo lo demás depende de que acá entre gente.',
+    action: 'Link en bio a /tienda · Highlights que respondan precio, envío y cómo encargar · 1 video de proceso por semana (es el contenido que más vende en tejido).',
+  },
+  {
+    rank: 2,
+    channel: 'WhatsApp',
+    role: 'Donde se cierra la venta',
+    why: 'El 90%+ lee los mensajes y el checkout ya vive acá. Nada convierte mejor — pero necesita que Instagram le traiga gente.',
+    action: 'Catálogo con precios en WhatsApp Business · respuestas rápidas para las 5 preguntas de siempre · lista de difusión de clientas para los drops.',
+  },
+  {
+    rank: 3,
+    channel: 'Lista VIP (email)',
+    role: 'Tu audiencia propia',
+    why: 'Instagram te alquila su audiencia; la lista es tuya para siempre. Es lo que hace posible el "acceso anticipado" de los drops.',
+    action: 'Crece sola desde el footer. Antes de cada drop: descargar el CSV y mandar el acceso anticipado.',
+  },
+  {
+    rank: 4,
+    channel: 'Pinterest',
+    role: 'Tráfico que no caduca',
+    why: 'La gente busca "top crochet" con ganas de comprar, y un pin trabaja meses (un reel, horas). Para crochet es oro y casi nadie lo usa en Uruguay.',
+    action: 'Un pin por producto apuntando a su ficha. Una hora por semana alcanza.',
+  },
+  {
+    rank: 5,
+    channel: 'Google',
+    role: 'Confianza y búsqueda local',
+    why: '"Crochet Montevideo" te tiene que encontrar. Además el perfil de negocio da confianza cuando pedís seña por WhatsApp.',
+    action: 'Crear el Perfil de Negocio de Google (gratis, 1 hora). Las descripciones de producto hacen el resto — el sitio ya está preparado.',
+  },
+  {
+    rank: 6,
+    channel: 'TikTok',
+    role: 'Apuesta de alcance',
+    why: 'Un video de proceso puede explotar y traerte el país entero — o nada. Como reutilizás los videos de Instagram, apostar cuesta cero.',
+    action: 'Republicá tal cual los videos de proceso. Sin estrategia propia por ahora.',
+  },
+  {
+    rank: 7,
+    channel: 'Facebook',
+    role: 'Presencia mínima',
+    why: 'El público de regalo (madres, señoras) todavía está ahí, pero el retorno por hora invertida es el más bajo de la lista.',
+    action: 'Página espejo de Instagram (se comparte solo). Nada más.',
+  },
 ]
 
-// ─── 7. Marketing y canales ──────────────────────────────────
-
-export const CHANNELS = [
-  { channel: 'Instagram', role: 'Canal #1 — descubrimiento', action: 'Bio → /tienda · shopping tags · Highlights que respondan precio/envío/cómo encargar · 1 reel de proceso por semana (el contenido que más convierte en esta categoría).' },
-  { channel: 'WhatsApp', role: 'Cierre de venta + recompra', action: 'Catálogo con precios en WhatsApp Business · respuestas rápidas · lista de difusión para drops (máx 4–6/mes).' },
-  { channel: 'Pinterest', role: 'Tráfico evergreen', action: 'Un pin por producto → ficha. Los pines viven meses (un reel vive horas). El canal más subestimado para crochet.' },
-  { channel: 'Google + IA', role: 'Confianza y búsqueda local', action: 'Google Business Profile ("crochet Montevideo") + descripciones ricas en las fichas: las IAs citan texto estructurado, y el sitio ya tiene el schema listo.' },
-  { channel: 'Lista VIP (email)', role: 'El activo de los drops', action: 'Crece sola desde el footer. Antes de cada drop: exportar CSV y mandar el acceso anticipado.' },
-  { channel: 'TikTok', role: 'Apuesta asimétrica', action: 'Reutilizar los reels de proceso tal cual. Costo marginal cero, upside nacional.' },
-]
-
-// ─── 8. Objetivos accionables (checklist persistente) ────────
+// ─── Para hacer (checklist persistente) ──────────────────────
 
 export type ActionHorizon = 'ya' | 'mes' | 'trimestre'
 
-export interface ActionItem {
-  id: string
-  label: string
-  detail: string
+export interface TodoAction extends ActionItem {
   horizon: ActionHorizon
 }
 
-export const NEXT_ACTIONS: ActionItem[] = [
-  { id: 'run-precios', label: 'Aplicar los precios nuevos en la base', detail: 'Ejecutar database/precios-2026-07.sql en el SQL Editor de Supabase (1 minuto). El semáforo de la tabla de abajo se pone verde solo.', horizon: 'ya' },
-  { id: 'run-schemas', label: 'Activar tejedoras y lista VIP', detail: 'Ejecutar database/schema-tejedoras.sql y database/schema-suscriptores.sql en Supabase. Habilita las postulaciones y la captura de emails del footer.', horizon: 'ya' },
-  { id: 'descripciones', label: 'Escribir las descripciones de los 32 productos', detail: 'Material, medidas por talle, horas de tejido, cuidado, "queda bien con…". Es el multiplicador de conversión + SEO + IA más grande del proyecto.', horizon: 'ya' },
-  { id: 'packaging', label: 'Packaging tipo regalo', detail: 'Papel de seda + bolsa kraft + tarjeta escrita a mano + tarjeta de cuidado. El aumento de precio llega junto a esta mejora visible.', horizon: 'ya' },
-  { id: 'clase-piloto', label: 'Primera clase piloto', detail: '3–4 alumnas de confianza, un ciclo de 4 encuentros de 2 h. Validar formato y precio antes de publicarlo.', horizon: 'mes' },
-  { id: 'difusion-wa', label: 'Lista de difusión en WhatsApp Business', detail: 'Con clientas que ya compraron + catálogo con precios + respuestas rápidas. Es el canal de mejor conversión para los drops.', horizon: 'mes' },
-  { id: 'anunciar-tejedoras', label: 'Difundir /tejedoras', detail: 'Story fijada + link en bio + contárselo a alumnas y conocidas. Objetivo: 1 tejedora aprobada para bolsos.', horizon: 'mes' },
-  { id: 'gbp', label: 'Google Business Profile', detail: 'Perfil de negocio con área de servicio (Montevideo). Gratis: confianza + SEO local + citación por IAs.', horizon: 'mes' },
-  { id: 'mercadopago', label: 'Link de pago Mercado Pago con cuotas', detail: 'Manual, por WhatsApp, al cerrar cada venta. Las cuotas hacen indoloro el precio nuevo.', horizon: 'mes' },
-  { id: 'drop-verano', label: 'Preparar el drop "Verano \'26"', detail: 'Sesión de fotos, colección con nombre en el panel, playbook de 4 semanas (ver Drops). Lanzamiento: noviembre.', horizon: 'trimestre' },
-  { id: 'dominio', label: 'Dominio propio dahila.uy', detail: 'Comprar, setear NEXT_PUBLIC_SITE_URL, 301 desde Netlify, Search Console, y enviar emails desde el dominio propio (arregla el spam).', horizon: 'trimestre' },
-  { id: 'precios-fase2', label: 'Fase 2 de precios (con el drop)', detail: 'Segundo paso en tops y bolsos hacia el target 12m, lanzado junto a la colección de verano.', horizon: 'trimestre' },
+export const NEXT_ACTIONS: TodoAction[] = [
+  { id: 'descripciones', label: 'Escribir las descripciones de los 32 productos', detail: 'Material, medidas, horas de tejido, cuidado. Es la mejora que más ventas destraba: sin texto no hay conversión, ni Google, ni IA.', horizon: 'ya' },
+  { id: 'packaging', label: 'Armar el packaging tipo regalo', detail: 'Papel de seda, bolsa kraft, tarjeta a mano. El aumento de precios ya está — esta es la mejora visible que lo acompaña.', horizon: 'ya' },
+  { id: 'clase-piloto', label: 'Hacer la clase piloto', detail: '3–4 conocidas, 4 encuentros. El plan completo está en la pestaña Clases.', horizon: 'mes' },
+  { id: 'difusion-wa', label: 'Armar la lista de difusión de WhatsApp', detail: 'Con clientas que ya compraron. Es el canal #1 para vender los drops.', horizon: 'mes' },
+  { id: 'anunciar-tejedoras', label: 'Contar que buscás tejedoras', detail: 'Story fijada + link en bio a /tejedoras. La página y el aviso al mail ya funcionan solos.', horizon: 'mes' },
+  { id: 'gbp', label: 'Crear el Perfil de Negocio de Google', detail: 'Gratis, ~1 hora. Confianza + aparecer en "crochet Montevideo".', horizon: 'mes' },
+  { id: 'mercadopago', label: 'Usar links de pago de Mercado Pago con cuotas', detail: 'Se arma en 2 minutos al cerrar cada venta por WhatsApp. Las cuotas hacen fácil el precio nuevo.', horizon: 'mes' },
+  { id: 'cupon-vip', label: 'Crear el primer cupón para la lista VIP', detail: 'Un código de bienvenida chico (ej. 10%) da una razón concreta para anotarse. Se crea en Cupones.', horizon: 'mes' },
+  { id: 'drop-verano', label: "Preparar el drop Verano '26", detail: 'Fotos, colección, cupón y el paso a paso de la pestaña Drops. Lanzamiento: noviembre.', horizon: 'trimestre' },
+  { id: 'dominio', label: 'Comprar dahila.uy', detail: 'Más confianza, mejores emails (hoy pueden caer en spam) y marca propia. El sitio ya está preparado para migrar.', horizon: 'trimestre' },
+  { id: 'precios-fase2', label: 'Segundo paso de precios', detail: 'Con el drop de verano, tops y bolsos suben hacia la meta de 12 meses (columna "12m" de la tabla).', horizon: 'trimestre' },
 ]
 
-export const VALUE_ACTIONS: ActionItem[] = [
-  { id: 'vp-regalo', label: 'Envolver cada pieza como un regalo', detail: 'Papel de seda + sticker con el logo. Costo mínimo, percepción máxima.', horizon: 'ya' },
-  { id: 'vp-tarjeta', label: 'Tarjeta escrita a mano firmada por Anush', detail: 'Con el nombre de la clienta. El toque humano que nadie industrial puede copiar.', horizon: 'ya' },
-  { id: 'vp-cuidado', label: 'Tarjeta de cuidado de la prenda', detail: 'Cómo lavar y guardar. Comunica calidad y alarga la vida de la pieza.', horizon: 'ya' },
-  { id: 'vp-edicion', label: 'Número de edición a mano en piezas statement', detail: '"Pieza única N.º —". Escasez tangible y honesta.', horizon: 'mes' },
-  { id: 'vp-etiqueta', label: 'Etiqueta "Dahila" cosida', detail: 'Marca permanente en la prenda. Profesionaliza y viaja con la pieza.', horizon: 'mes' },
-  { id: 'vp-qr', label: 'QR a un reel del proceso en el packaging', detail: '30 segundos del tejido de ESA pieza o del taller. La narrativa sube la disposición a pagar.', horizon: 'mes' },
-  { id: 'vp-ajuste', label: 'Comunicar "ajuste garantizado"', detail: 'Si no te queda bien, lo ajustamos. Al ser a medida cuesta casi nada y elimina el miedo #1 de comprar ropa online.', horizon: 'ya' },
-  { id: 'vp-sorpresa', label: 'Regalito sorpresa en pedidos grandes', detail: 'Mini accesorio o muestra de lana → fotos espontáneas en redes → boca a boca.', horizon: 'mes' },
-  { id: 'vp-bundle', label: 'Bundles "completá el look" + envío gratis desde $1.400', detail: 'Sube el ticket sin descontar el producto core.', horizon: 'trimestre' },
-]
-
-// ─── 9. Riesgos ──────────────────────────────────────────────
+// ─── Riesgos ─────────────────────────────────────────────────
 
 export interface Risk {
   title: string
-  severity: 'alta' | 'media' | 'baja'
+  severity: 'alta' | 'media'
   detail: string
   mitigation: string
 }
 
 export const RISKS: Risk[] = [
   {
-    title: 'Todo depende de una sola persona',
+    title: 'Todo depende de vos',
     severity: 'alta',
-    detail: 'Anush teje, vende, responde y hace envíos. Una gripe frena el negocio; el crecimiento la ahoga.',
-    mitigation: 'Red de tejedoras (delegar producción simple) + clases (monetizar la hora sin tejer) + este panel como memoria del negocio.',
+    detail: 'Tejés, vendés, respondés y enviás. Una gripe frena el negocio; crecer te ahoga.',
+    mitigation: 'La red de tejedoras y las clases existen para esto: delegar producción y monetizar tu hora sin tejer.',
   },
   {
-    title: 'Audiencia alquilada al algoritmo',
+    title: 'Vivir del algoritmo de Instagram',
     severity: 'alta',
-    detail: 'El 100% del tráfico nace en Instagram. Un cambio de algoritmo o un bloqueo de cuenta apaga las ventas.',
-    mitigation: 'Lista VIP propia (footer), difusión de WhatsApp, Pinterest evergreen y SEO/IA. Activos propios, no alquilados.',
+    detail: 'Si Instagram baja tu alcance o te bloquea la cuenta, las ventas se apagan de un día para el otro.',
+    mitigation: 'Lista VIP, difusión de WhatsApp y Pinterest: audiencias que son tuyas.',
   },
   {
-    title: 'Subvaluación crónica → burnout',
+    title: 'Cobrar de menos y quemarte',
     severity: 'alta',
-    detail: 'Trabajar a $21–58/h de contribución no es sostenible: agota y no financia crecimiento ni delegación.',
-    mitigation: 'Aplicar la tabla de precios; medir $/h por pieza; decir no a encargos que no cierran.',
+    detail: 'Trabajar a $34 la hora no financia crecimiento y agota. Era el riesgo #1 y ya empezó a corregirse.',
+    mitigation: 'Precios nuevos aplicados + mirar la columna $/h antes de aceptar cualquier encargo especial.',
   },
   {
-    title: 'Emails a spam (dominio nuevo sin DMARC)',
+    title: 'Una pieza floja de otra tejedora',
     severity: 'media',
-    detail: 'send.farodigital.uy es nuevo y el nombre no coincide con la marca — los avisos pueden caer en spam.',
-    mitigation: 'Registro DMARC en NetUY, marcar "no es spam" + contacto, y al comprar dahila.uy enviar desde el dominio propio.',
+    detail: 'La primera prenda mal terminada que llegue a una clienta se lleva puesta la reputación de la marca.',
+    mitigation: 'Muestra pagada + ficha técnica + revisar TODO antes de enviar. Nunca sale nada sin pasar por tus manos.',
   },
   {
-    title: 'Dominio propio pendiente',
+    title: 'Emails que caen en spam',
     severity: 'media',
-    detail: 'La marca vive en dahila-crochet.netlify.app: menos confianza y SEO que se pierde al migrar mal.',
-    mitigation: 'Comprar dahila.uy → cambiar una sola variable (NEXT_PUBLIC_SITE_URL) + 301 + Search Console. El código ya quedó preparado.',
-  },
-  {
-    title: 'Calidad inconsistente al delegar',
-    severity: 'media',
-    detail: 'La primera pieza floja de una tejedora que llega a una clienta daña la marca desproporcionadamente.',
-    mitigation: 'Muestra pagada + ficha técnica + QC de cada pieza antes de enviar, sin excepciones. Nunca sale nada sin pasar por Anush.',
-  },
-]
-
-// ─── 10. Decisiones y descartes ──────────────────────────────
-
-export interface Decision {
-  date: string
-  title: string
-  why: string
-}
-
-export const DECISIONS: Decision[] = [
-  {
-    date: 'jul 2026',
-    title: 'Posicionamiento: el mejor handmade al precio más justo de Uruguay',
-    why: 'Un escalón sobre el emprendimiento informal (lo justifica la presentación), siempre debajo del retail a máquina y lejísimos de Etsy. Todo cambio de precio se mide contra esta frase.',
-  },
-  {
-    date: 'jul 2026',
-    title: 'Aumentos moderados en dos pasos (HOY + 12 meses), ordenados por $/h',
-    why: 'El criterio es la economía interna (contribución por hora), no el promedio del mercado. Statement y sets primero porque pagaban la mitad por hora que un bolso.',
-  },
-  {
-    date: 'jul 2026',
-    title: 'Liderar con clases; reclutar 1 tejedora en paralelo',
-    why: 'La hora enseñando rinde 6–8× la hora tejiendo y las alumnas son el semillero de tejedoras formadas al estándar propio. Cambió la recomendación anterior ("reclutar primero") cuando la economía de la hora quedó sobre la mesa.',
-  },
-  {
-    date: 'jul 2026',
-    title: 'Drops 3–4 por año sobre la feature de colecciones',
-    why: 'Colecciones estaba construida y vacía. El handmade es escaso de verdad: el modelo de lanzamientos limitados con lista VIP es el que más factura por pieza en marcas chicas.',
-  },
-  {
-    date: 'jul 2026',
-    title: 'El checkout sigue siendo WhatsApp',
-    why: 'A esta escala convierte mejor que un checkout online (confianza + a medida + cuotas por link manual). Se revisa al llegar a ~40–50 pedidos/mes.',
-  },
-  {
-    date: 'jul 2026',
-    title: 'Corrección de benchmark de WhatsApp',
-    why: 'Un informe anterior decía "40–60% de conversión" en difusiones: el dato real es 90%+ de LECTURA y 4–7% de compra (15–20% segmentado). Sigue siendo el mejor canal, pero planificamos con números honestos.',
-  },
-  {
-    date: 'jul 2026',
-    title: 'Captura de email en el footer + página /tejedoras públicas',
-    why: 'Las dos piezas de infraestructura que faltaban para drops y para la red. Costo bajo, reutilizan patrones existentes (formularios, RLS, emails).',
-  },
-]
-
-export interface DiscardedIdea {
-  title: string
-  why: string
-  revisit?: string
-}
-
-export const DISCARDED: DiscardedIdea[] = [
-  {
-    title: 'Vender en Etsy / exportar ya',
-    why: 'Envíos internacionales, comisiones y competir con miles de tiendas sin historial. El cachet "hecho en Uruguay" rinde más localmente hoy.',
-    revisit: 'Cuando la red de tejedoras dé capacidad ociosa',
-  },
-  {
-    title: 'Checkout online integrado (Mercado Pago)',
-    why: 'No rinde hasta ~40–50 pedidos/mes y cambia un flujo que funciona. El link de pago manual con cuotas logra el 90% del beneficio hoy.',
-    revisit: 'Al superar 40 pedidos/mes sostenidos',
-  },
-  {
-    title: 'Publicidad paga (IG/Google Ads)',
-    why: 'Pagar tráfico hacia fichas sin descripciones ni reseñas es tirar plata. Primero la ficha convierte, después se compra tráfico.',
-    revisit: 'Con descripciones + reseñas en producción',
-  },
-  {
-    title: 'Automatización de carrito abandonado (Brevo)',
-    why: 'Requiere capturar contacto ANTES del salto a WhatsApp (pedido real). Esa pieza va primero; la automatización después.',
-    revisit: 'Tras implementar captura de pedido',
-  },
-  {
-    title: 'Subir precios a la banda Etsy',
-    why: 'Rompería el posicionamiento aprobado ("nunca la marca cara") y el mercado UY opaco no lo convalida. La mejor relación calidad-precio ES la estrategia.',
-  },
-  {
-    title: 'App móvil / multi-idioma / rediseño',
-    why: 'Cero evidencia de demanda. El sitio ya es rápido, mobile-first y está por encima del estándar del rubro.',
-  },
-  {
-    title: 'Programa de puntos formal',
-    why: 'Complejidad alta de mantener. Una tarjeta "-10% en tu próxima compra" dentro del paquete logra el 80% del efecto con 2% del esfuerzo.',
+    detail: 'El dominio de envío es nuevo y no coincide con la marca: algunos avisos pueden ir a spam.',
+    mitigation: 'Al comprar dahila.uy se envía desde el dominio propio y se arregla de raíz. Mientras: marcar "no es spam" y agendar el remitente.',
   },
 ]

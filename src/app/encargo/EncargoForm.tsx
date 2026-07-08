@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { dahila, Eyebrow, Field, TextInput, Button } from '@/components/ui/Primitives'
 import { EncargosDisponibles } from '@/components/EncargosDisponibles'
 import { submitEncargo } from './actions'
+import { subscribeToVipList } from '@/lib/subscribe'
 
 export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
   const router = useRouter()
@@ -14,6 +15,7 @@ export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
   const [email, setEmail] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
   const [message, setMessage] = useState('')
+  const [vipOptIn, setVipOptIn] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [trackingCode, setTrackingCode] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -138,6 +140,10 @@ export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
     startTransition(async () => {
       const res = await submitEncargo(fd)
       if (res.ok) {
+        // Alta en la lista VIP si la pidió — nunca bloquea el encargo.
+        if (vipOptIn && email.trim()) {
+          subscribeToVipList(email.trim(), 'encargo').catch(() => { /* best-effort */ })
+        }
         setTrackingCode(res.code ?? null)
         setSubmitted(true)
       } else {
@@ -199,6 +205,22 @@ export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
         <p style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, margin: '-14px 0 0' }}>
           Con uno de los dos alcanza.
         </p>
+
+        {email.trim() && (
+          <label style={{
+            display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer',
+            fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink700,
+            margin: '-8px 0 0', lineHeight: 1.5,
+          }}>
+            <input
+              type="checkbox"
+              checked={vipOptIn}
+              onChange={(e) => setVipOptIn(e.target.checked)}
+              style={{ marginTop: 2, width: 17, height: 17, accentColor: dahila.wine600, flexShrink: 0, cursor: 'pointer' }}
+            />
+            Quiero ver cada colección nueva 24 horas antes que el resto (lista VIP).
+          </label>
+        )}
 
         <Field label="Talle aproximado">
           <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>

@@ -73,6 +73,15 @@ const NAV_ITEMS = [
     ),
   },
   {
+    href: '/admin/cupones',
+    label: 'Cupones',
+    icon: (
+      <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-12-.75h.008v.008H4.5v-.008zm0-3h.008v.008H4.5v-.008zm0-3h.008v.008H4.5V11.25zm0-3h.008v.008H4.5V8.25zm0-3h.008v.008H4.5V5.25zm16.5 0v13.5A2.25 2.25 0 0118.75 21H5.25A2.25 2.25 0 013 18.75V5.25A2.25 2.25 0 015.25 3h13.5A2.25 2.25 0 0121 5.25z" />
+      </svg>
+    ),
+  },
+  {
     href: '/admin/encargos',
     label: 'Encargos',
     icon: (

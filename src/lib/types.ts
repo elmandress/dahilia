@@ -117,6 +117,26 @@ export interface CustomOrder {
   archived_at?: string | null;
 }
 
+// Cupón (vista completa del admin). Requires schema-cupones.sql.
+// El público nunca lee esta tabla: valida por RPC (ver src/lib/coupons.ts).
+export interface Coupon {
+  id: string;
+  code: string;
+  label: string | null;
+  kind: 'percent' | 'fixed' | 'free_shipping';
+  value: number | null;           // % (1-90) o monto UYU; null para envío gratis
+  min_subtotal_uyu: number | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  max_uses: number | null;
+  max_uses_per_customer: number | null;
+  product_ids: string[];
+  category_ids: string[];
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // Postulación de tejedora (página pública /tejedoras). Requires schema-tejedoras.sql.
 export interface WeaverApplication {
   id: string;

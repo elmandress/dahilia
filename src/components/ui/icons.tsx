@@ -17,7 +17,7 @@ export type IconName =
   | 'ruler' | 'flower' | 'package' | 'arrow-clockwise' | 'truck' | 'leaf'
   | 'hand-heart' | 'heart' | 'chat-circle' | 'check' | 'share-network' | 'caret-up'
   | 'instagram-logo' | 'whatsapp-logo' | 'envelope-simple' | 'gift' | 'star' | 'quotes'
-  | 'needle' | 'sparkle' | 'chat-text' | 'scissors'
+  | 'needle' | 'sparkle' | 'chat-text' | 'scissors' | 'tag'
 
 export const ICON_PATHS: Record<string, React.ReactNode> = {
   'magnifying-glass': (
@@ -55,6 +55,12 @@ export const ICON_PATHS: Record<string, React.ReactNode> = {
   ),
   minus: (
     <line x1="40" y1="128" x2="216" y2="128" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+  ),
+  tag: (
+    <>
+      <path d="M132,32H48A16,16,0,0,0,32,48v84a16,16,0,0,0,4.69,11.31l88,88a16,16,0,0,0,22.62,0l84-84a16,16,0,0,0,0-22.62l-88-88A16,16,0,0,0,132,32Z" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="84" cy="84" r="12" fill="currentColor" />
+    </>
   ),
   plus: (
     <>
