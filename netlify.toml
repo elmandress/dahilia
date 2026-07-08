@@ -13,7 +13,7 @@
 # descomentar este bloque y desplegar. Redirige TODO el tráfico del subdominio
 # netlify.app al dominio propio con 301 (preserva el SEO acumulado).
 # El resto de la migración es solo cambiar NEXT_PUBLIC_SITE_URL — ver el
-# runbook completo en README.md § "Migración a dominio propio".
+# runbook completo en README.md § "Migración a dahila.uy (dominio ya comprado — runbook v1.0)".
 #
 # [[redirects]]
 #   from = "https://dahila-crochet.netlify.app/*"
