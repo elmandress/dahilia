@@ -295,6 +295,26 @@ async function ProductPage({ slug }: { slug: string }) {
         applicableCountry: 'UY',
         returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
       },
+      // Merchant listings: destino + tiempos. El "handling" es el tejido de la
+      // pieza (semanas del producto → días); el tránsito es el courier en UY.
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'UY' },
+        ...(product.lead_time_weeks_min > 0 || product.lead_time_weeks_max > 0
+          ? {
+              deliveryTime: {
+                '@type': 'ShippingDeliveryTime',
+                handlingTime: {
+                  '@type': 'QuantitativeValue',
+                  minValue: (product.lead_time_weeks_min || product.lead_time_weeks_max) * 7,
+                  maxValue: (product.lead_time_weeks_max || product.lead_time_weeks_min) * 7,
+                  unitCode: 'DAY',
+                },
+                transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' },
+              },
+            }
+          : {}),
+      },
     },
   }
 

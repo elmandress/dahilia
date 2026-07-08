@@ -210,7 +210,12 @@ existe, usar *Cambio de dirección*.
 
 **7 · Google Business Profile / Merchant**: apuntar el sitio web a `https://dahila.uy`.
 
-**8 · Instagram**: link de la bio → `https://dahila.uy`.
+**8 · Bing Webmaster Tools** (5 min, gratis): importar el sitio desde Search Console o
+verificar `dahila.uy` y enviar el sitemap. Importa más de lo que parece: **ChatGPT y
+Copilot responden con el índice de Bing** — estar bien indexado ahí es visibilidad
+directa en respuestas de IA.
+
+**9 · Instagram**: link de la bio → `https://dahila.uy`.
 
 **Verificación final** (checklist de humo):
 - `https://dahila.uy` carga con candado (SSL) y `https://www.dahila.uy` redirige al apex.
