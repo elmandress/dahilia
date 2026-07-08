@@ -12,7 +12,7 @@ import { SizeGuide } from '@/components/SizeGuide'
 import { ShareButton } from '@/components/ShareButton'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import type { Product, Discount } from '@/lib/types'
-import { getEffectivePrice, getPrimaryPhoto, getScarcity, BLUR_DATA_URL } from '@/lib/types'
+import { getEffectivePrice, getPrimaryPhoto, getScarcity, readyDateEstimate, BLUR_DATA_URL } from '@/lib/types'
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 
@@ -291,7 +291,7 @@ export function ProductDetailsClient({
           {canBuy && (
             sizeAvailable ? (
               <Button variant="primary" size="lg" full onClick={handleAdd}>
-                {added ? '✓ Añadido' : 'Añadir al carrito'}
+                {added ? '✓ Agregado' : 'Agregar al carrito'}
               </Button>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -393,9 +393,14 @@ export function ProductDetailsClient({
             {(product.lead_time_weeks_min || product.lead_time_weeks_max) && (
               <li style={liStyle}>
                 <Icon name="arrow-clockwise" size={16} color={dahila.ink500}/>
-                {product.lead_time_weeks_min && product.lead_time_weeks_max
-                  ? `Plazo: ${product.lead_time_weeks_min}–${product.lead_time_weeks_max} semanas`
-                  : 'Plazo a coordinar'}
+                {(() => {
+                  // Urgencia honesta: fecha estimada concreta en vez de "N semanas"
+                  // abstractas — cada pieza se teje al encargarla, y eso es un plus.
+                  const estimate = readyDateEstimate(product.lead_time_weeks_min, product.lead_time_weeks_max)
+                  return estimate
+                    ? <>Se teje al encargar — si la pedís hoy, lista {estimate}</>
+                    : 'Plazo a coordinar'
+                })()}
               </li>
             )}
           </ul>
@@ -431,7 +436,7 @@ export function ProductDetailsClient({
               letterSpacing: '0.06em', textTransform: 'uppercase',
             }}
           >
-            {!sizeAvailable ? 'Sin stock' : added ? '✓ Añadido' : 'Añadir'}
+            {!sizeAvailable ? 'Sin stock' : added ? '✓ Agregado' : 'Agregar'}
           </button>
         </div>
       )}

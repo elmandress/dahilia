@@ -146,7 +146,7 @@ export function ProductCard({
               transition: `all 220ms ${dahila.ease}`,
               pointerEvents: hover ? 'auto' : 'none',
             }}>
-            {isAdding ? '✓ Añadido' : (onQuickView ? 'Vista rápida' : 'Agregar al carrito')}
+            {isAdding ? '✓ Agregado' : (onQuickView ? 'Vista rápida' : 'Agregar al carrito')}
           </div>
         )}
       </div>

@@ -7,3 +7,16 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# ── Migración a dahila.uy ─────────────────────────────────────
+# El día que el dominio esté activo en Netlify (Domain settings → Add domain),
+# descomentar este bloque y desplegar. Redirige TODO el tráfico del subdominio
+# netlify.app al dominio propio con 301 (preserva el SEO acumulado).
+# El resto de la migración es solo cambiar NEXT_PUBLIC_SITE_URL — ver el
+# runbook completo en README.md § "Migración a dominio propio".
+#
+# [[redirects]]
+#   from = "https://dahila-crochet.netlify.app/*"
+#   to = "https://dahila.uy/:splat"
+#   status = 301
+#   force = true

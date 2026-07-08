@@ -391,7 +391,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
         }}
       >
         {/* Cupón — disclosure discreto, mismo lenguaje que la nota de regalo */}
-        <div style={{ width: '100%', maxWidth: 420, alignSelf: 'flex-end', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+        <div className="cart-coupon" style={{ width: '100%', maxWidth: 420, alignSelf: 'flex-end', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
           {coupon ? (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end',
@@ -468,7 +468,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+        <div className="cart-totals" style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
           {couponDiscount > 0 && (
             <div style={{ display: 'flex', gap: 24, alignItems: 'baseline', fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700 }}>
               <span>Subtotal</span>
@@ -499,12 +499,16 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           )}
         </div>
 
-        <p style={{
-          fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500,
-          margin: 0, maxWidth: 360, textAlign: 'right',
+        {/* Qué pasa al tocar el botón — la duda #1 antes de un checkout por chat */}
+        <ol className="cart-steps" style={{
+          listStyle: 'none', margin: 0, padding: 0, maxWidth: 380,
+          display: 'flex', flexDirection: 'column', gap: 5, textAlign: 'right',
+          fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, lineHeight: 1.5,
         }}>
-          Coordinás stock, envío y pago directo con Anush por WhatsApp.
-        </p>
+          <li>1 · Se abre WhatsApp con tu pedido ya armado — no pagás nada todavía.</li>
+          <li>2 · Anush te confirma disponibilidad y fecha estimada.</li>
+          <li>3 · Elegís cómo pagar (transferencia o Mercado Pago) y cómo recibirlo.</li>
+        </ol>
 
         {/* Gift note toggle — opens a small textarea; content goes into WA message */}
         <div style={{ width: '100%', maxWidth: 420, alignSelf: 'flex-end' }}>

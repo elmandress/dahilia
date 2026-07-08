@@ -224,6 +224,23 @@ export function formatPrice(price: number): string {
   return `UYU ${price.toLocaleString('es-UY')}`;
 }
 
+// Fecha estimada de una pieza tejida a pedido, a partir del plazo en semanas.
+// Urgencia honesta: convierte el abstracto "2–6 semanas" en fechas concretas
+// ("entre el 22 de julio y el 19 de agosto"). Devuelve null sin datos de plazo.
+export function readyDateEstimate(minWeeks: number, maxWeeks: number): string | null {
+  const fmt = (weeks: number) =>
+    new Date(Date.now() + weeks * 7 * 86_400_000).toLocaleDateString('es-UY', {
+      day: 'numeric',
+      month: 'long',
+    });
+  if (minWeeks > 0 && maxWeeks > 0 && minWeeks !== maxWeeks) {
+    return `entre el ${fmt(minWeeks)} y el ${fmt(maxWeeks)}`;
+  }
+  const weeks = maxWeeks || minWeeks;
+  if (weeks > 0) return `alrededor del ${fmt(weeks)}`;
+  return null;
+}
+
 // Neutral placeholder for products without media. Beats reusing a real
 // photo from another product as a fallback (which is misleading) and lives
 // in /public so next/image can serve it normally.

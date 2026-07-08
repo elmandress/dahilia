@@ -14,22 +14,24 @@ import {
   PRICING_WHY, PRICING_RULES, HOUR_REFS, PRICE_TABLE, PRICING_PHASES, contribPerHour,
   VALUE_ACTIONS,
   WEAVER_MODELS, WEAVER_PIPELINE, WEAVER_SYSTEM,
-  CLASSES_INTRO, CLASSES_START, CLASSES_PRICING, CLASSES_LEVELS, CLASSES_COMMUNITY, CLASSES_FLYWHEEL,
+  CLASSES_INTRO, CLASSES_START, CLASSES_PRICING, CLASSES_LEVELS, CLASSES_SELLING, CLASSES_SESSION, CLASSES_SCALE, CLASSES_COMMUNITY, CLASSES_FLYWHEEL,
   DROP_CALENDAR, DROP_STAGES, DROP_BENCHMARKS,
   CHANNELS,
   NEXT_ACTIONS,
   RISKS,
   type TodoAction, type ActionItem, type PricePriority,
 } from './data'
+import Calculadora from './Calculadora'
 import './estrategia.css'
 
 const PROGRESS_KEY = 'estrategia_progress'
 
-type TabId = 'resumen' | 'precios' | 'tejedoras' | 'clases' | 'drops' | 'canales' | 'riesgos'
+type TabId = 'resumen' | 'precios' | 'calculadora' | 'tejedoras' | 'clases' | 'drops' | 'canales' | 'riesgos'
 
 const TABS: Array<[TabId, string]> = [
   ['resumen', 'Resumen'],
   ['precios', 'Precios'],
+  ['calculadora', 'Calculadora'],
   ['tejedoras', 'Tejedoras'],
   ['clases', 'Clases'],
   ['drops', 'Drops'],
@@ -419,6 +421,18 @@ export default function EstrategiaPage() {
         </section>
       )}
 
+      {/* ══ CALCULADORA ══ */}
+      {tab === 'calculadora' && (
+        <section aria-label="Calculadora de precios">
+          <SectionHead
+            kicker="Herramienta"
+            title="Calculadora de precios"
+            desc="Para decidir el precio de una pieza nueva o revisar una existente. Cargá los datos y te recomienda un precio con la cuenta clara — nada de números mágicos."
+          />
+          <Calculadora livePrices={livePrices} />
+        </section>
+      )}
+
       {/* ══ TEJEDORAS ══ */}
       {tab === 'tejedoras' && (
         <section aria-label="Tejedoras">
@@ -511,6 +525,39 @@ export default function EstrategiaPage() {
               <div key={l.level} className="est-card cream">
                 <h4>{l.level}</h4>
                 <p>{l.detail}</p>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead title="Cómo se vende cada ciclo" />
+          <div className="est-grid wide" style={{ marginBottom: '2rem' }}>
+            {CLASSES_SELLING.map((s, i) => (
+              <div key={s.slice(0, 20)} className="est-card">
+                <h4>Paso {i + 1}</h4>
+                <p>{s}</p>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            title="El guion de un encuentro de 2 horas"
+            desc="Para que enseñar no sea improvisar: el mismo esqueleto en todos los encuentros, cambia solo la técnica del proyecto."
+          />
+          <div className="est-timeline" style={{ marginBottom: '2rem' }}>
+            {CLASSES_SESSION.map((s) => (
+              <div key={s.time} className="est-timeline-item">
+                <div className="when">{s.time}</div>
+                <p className="body">{s.what}</p>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead title="Cómo escala (sin quemarte)" />
+          <div className="est-grid wide" style={{ marginBottom: '2rem' }}>
+            {CLASSES_SCALE.map((c) => (
+              <div key={c.title} className="est-card cream">
+                <h4>{c.title}</h4>
+                <p>{c.body}</p>
               </div>
             ))}
           </div>

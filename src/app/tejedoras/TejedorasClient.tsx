@@ -20,7 +20,7 @@ const PASOS: Array<[string, string, string]> = [
   ['1', 'Postulás', 'Nos contás tu experiencia y nos mostrás 2 o 3 trabajos tuyos. Las fotos son lo primero que miramos.'],
   ['2', 'Charlamos', 'Si tu estilo encaja, te escribimos por WhatsApp para conocerte y contarte cómo trabajamos.'],
   ['3', 'Muestra pagada', 'Tejés una pieza de prueba contra una ficha técnica (lana, aguja, medidas). La pagamos siempre, quede o no.'],
-  ['4', 'Primeros encargos', 'Arrancás con piezas simples y vas subiendo. Cada prenda que tejés lleva tu nombre.'],
+  ['4', 'Primeros encargos', 'Arrancás con piezas simples, con precio pactado antes de empezar, y vas subiendo a tu ritmo.'],
 ]
 
 const VALORAMOS = [

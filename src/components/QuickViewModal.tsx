@@ -169,7 +169,7 @@ export function QuickViewModal({
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
             {canBuy ? (
               <Button variant="primary" size="lg" full onClick={handleAdd}>
-                Añadir al carrito
+                Agregar al carrito
               </Button>
             ) : product.is_custom_only ? (
               <Button variant="primary" size="lg" full onClick={() => router.push('/encargo')}>

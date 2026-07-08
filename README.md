@@ -165,6 +165,28 @@ One-off data migration: [`database/precios-2026-07.sql`](./database/precios-2026
 
 To grant admin access, create a user in Supabase Auth (Authentication → Users → Add user). Any authenticated user has admin rights per the current RLS.
 
+### Migración a dominio propio (dahila.uy)
+
+Todo el sitio deriva sus URLs absolutas de una sola constante (`SITE_URL` en
+[`src/lib/env.ts`](./src/lib/env.ts)): canónicos, OpenGraph, JSON-LD, sitemap,
+robots, llms.txt, OG images y todos los links de los emails. El día del dominio:
+
+1. **Netlify** → Domain settings → agregar `dahila.uy` (+ `www` redirect) y esperar el SSL.
+2. **Variable**: `NEXT_PUBLIC_SITE_URL=https://dahila.uy` en Netlify → redeploy.
+3. **301**: descomentar el bloque `[[redirects]]` de [`netlify.toml`](./netlify.toml) → redeploy.
+   Verificar: `curl -I https://dahila-crochet.netlify.app/tienda` debe devolver 301 a `dahila.uy`.
+4. **Emails (Resend)**: verificar el dominio `send.dahila.uy` en Resend (DKIM/SPF/DMARC en el
+   DNS) y cambiar `EMAIL_FROM=Dahila Crochet <hola@send.dahila.uy>`. Arregla el spam de raíz
+   (hoy el nombre de la marca no coincide con el dominio de envío).
+5. **Google Search Console**: dar de alta la propiedad `dahila.uy`, enviar
+   `https://dahila.uy/sitemap.xml` y usar la herramienta de cambio de dirección desde la
+   propiedad vieja si estaba dada de alta.
+6. **Google Business Profile / Merchant**: apuntar el sitio al dominio nuevo.
+7. **Instagram**: link de la bio → `dahila.uy`.
+
+Nada del código hace referencia al subdominio de Netlify salvo el fallback de `SITE_URL`,
+así que no hay más cambios de código que estos.
+
 ### Environment variables
 
 ```bash

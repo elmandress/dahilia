@@ -220,8 +220,8 @@ export const WEAVER_MODELS: WeaverModel[] = [
   {
     name: 'Manos del Uruguay',
     where: 'Uruguay, desde 1968',
-    how: 'Cooperativas de artesanas que cobran por hora y por prenda terminada. Cada modelo tiene un patrón de referencia aprobado y una clasificación por horas (15/20/30 h). Cada prenda lleva el nombre y la firma de quien la tejió.',
-    takeaway: 'Tomamos: la ficha por modelo con horas estándar, el control de calidad central y el nombre de la tejedora en la prenda.',
+    how: 'Cooperativas de artesanas que cobran por hora y por prenda terminada. Cada modelo tiene un patrón de referencia aprobado y una clasificación por horas (15/20/30 h).',
+    takeaway: 'Tomamos: la ficha por modelo con horas estándar y el control de calidad central antes de vender.',
   },
   {
     name: 'Alabama Chanin',
@@ -232,8 +232,8 @@ export const WEAVER_MODELS: WeaverModel[] = [
   {
     name: 'Krochet Kids',
     where: 'Uganda y Perú',
-    how: 'Forman a sus tejedoras con un programa de 3 años con mentoría, pagan por encima del salario justo local, y cada gorro lleva la firma a mano de quien lo hizo — podés conocer su historia online.',
-    takeaway: 'Tomamos: formar gente es parte del negocio (tus clases), y la historia de quién lo tejió tiene valor de venta.',
+    how: 'Forman a sus tejedoras con un programa de 3 años con mentoría y pagan por encima del salario justo local.',
+    takeaway: 'Tomamos: formar gente es parte del negocio — tus clases son la escuela de tus futuras tejedoras.',
   },
   {
     name: 'Estándares Nest',
@@ -265,8 +265,8 @@ export const WEAVER_SYSTEM = [
     body: 'Por cada modelo: lana, aguja, medidas por talle, y fotos de "así sí / así no". Dos tejedoras con la misma ficha tejen igual. Sin ficha, cada una teje a su manera.',
   },
   {
-    title: 'El nombre en la prenda',
-    body: 'Cada pieza lleva quién la tejió, como Manos del Uruguay y Krochet Kids. Orgullo para ella, historia para la clienta, responsabilidad para todas.',
+    title: 'La etiqueta dice Dahila',
+    body: 'Todas las piezas — las tejas vos o la red — llevan la etiqueta Dahila y salen con el mismo estándar. La clienta compra la marca; la consistencia y el control de calidad son lo que la protege.',
   },
   {
     title: 'Errores y ritmos',
@@ -304,6 +304,39 @@ export const CLASSES_LEVELS = [
   { level: 'Nivel 1 — Tu primer accesorio', detail: 'De cero. En 4 encuentros cada alumna se va con una bandana o mini bufanda hecha por ella. Proyecto concreto, no "puntos sueltos": la gente vuelve cuando termina algo.' },
   { level: 'Nivel 2 — Tu primer top', detail: 'Para las que ya tejen. Un top simple con medidas de verdad: acá se aprende tensión pareja y talles — justo lo que necesita una futura tejedora.' },
   { level: 'Nivel 3 — Nivel Dahila', detail: 'Tejer una pieza del catálogo real con su ficha técnica. Es un curso Y una prueba: quien lo termina bien ya sabe trabajar a tu estándar.' },
+]
+
+/** Cómo se vende cada ciclo (repetible, sin inventar nada). */
+export const CLASSES_SELLING = [
+  'Anunciá el ciclo 2 semanas antes: fecha, cupos (4–6), qué se lleva puesta la alumna al terminar y precio claro. Primero a la lista VIP y al grupo de alumnas; al otro día, Instagram.',
+  'Mostrá resultados, no promesas: fotos de lo que tejieron las alumnas del ciclo anterior valen más que cualquier texto.',
+  '"Quedan 2 lugares" solo cuando es verdad — con cupos de 4–6 casi siempre lo es. La escasez honesta también vende clases.',
+  'Cerrá la inscripción con seña por Mercado Pago o transferencia: quien señó, va. Sin seña, la mitad no aparece.',
+  'Última semana: un video corto tuyo tejiendo el proyecto del ciclo. Es el anuncio y el contenido de la semana a la vez.',
+]
+
+/** Guion de un encuentro de 2 horas (para que enseñar no sea improvisar). */
+export const CLASSES_SESSION = [
+  { time: '0:00–0:15', what: 'Ronda de avances: cada una muestra lo que trajo. Se corrigen errores comunes para todas a la vez.' },
+  { time: '0:15–1:30', what: 'El paso nuevo del proyecto: lo mostrás lento, tejen con vos, pasás banco por banco. Una sola técnica nueva por encuentro.' },
+  { time: '1:30–1:50', what: 'Práctica libre con mate: vos corregís una por una. Acá se arma la comunidad — no lo apures.' },
+  { time: '1:50–2:00', what: 'La "tarea" hasta el próximo encuentro + foto grupal del avance (contenido listo para Instagram).' },
+]
+
+/** Cómo escala sin quemar a la dueña. */
+export const CLASSES_SCALE = [
+  {
+    title: 'Más grupos, mismo guion',
+    body: 'El ciclo documentado (proyecto + guion por encuentro) se repite sin re-inventarlo. Dos grupos por mes duplican el ingreso con el mismo material.',
+  },
+  {
+    title: 'Las avanzadas ayudan',
+    body: 'Una alumna de Nivel 3 puede asistirte en los grupos de Nivel 1 (a cambio de su ciclo gratis o una tarifa). Es su primer paso como parte de Dahila — y tu primera delegación.',
+  },
+  {
+    title: 'El tope lo pone tu agenda',
+    body: 'Clases = tu mejor $/hora, pero siguen consumiendo tus horas. El máximo sano: 2 ciclos en paralelo. Si hay más demanda, subí el precio antes que sumar horas.',
+  },
 ]
 
 export const CLASSES_COMMUNITY = [

@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
     return applyCartCookie(NextResponse.json({ cartId, items }), cartId, setCookie)
   } catch (e) {
     console.error('POST /api/cart', e)
-    return NextResponse.json({ error: 'No se pudo añadir al carrito.' }, { status: 500 })
+    return NextResponse.json({ error: 'No se pudo agregar al carrito.' }, { status: 500 })
   }
 }
 
