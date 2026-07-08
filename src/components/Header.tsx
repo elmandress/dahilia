@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { id: '/ofertas',     label: 'Ofertas', accent: true },
   { id: '/encargo',     label: 'A medida' },
   { id: '/atelier',     label: 'Sobre nosotros' },
+  { id: '/tejedoras',   label: 'Tejé con Dahila' },
   { id: '/contacto',    label: 'Contacto' },
 ]
 

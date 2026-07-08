@@ -2,7 +2,7 @@
 
 A production e-commerce platform built end-to-end for **[Dahila Crochet](https://www.instagram.com/dahila.crochet/)**, a Uruguayan artisan brand that hand-knits crochet garments to measure.
 
-🌐 **Live:** [dahila-crochet.netlify.app](https://dahila-crochet.netlify.app)
+🌐 **Live:** [dahila.uy](https://dahila.uy)
 📐 **Built by:** [SIAR](https://siaruy.netlify.app) — design & development studio · [@siar.uy](https://www.instagram.com/siar.uy/)
 
 ---
@@ -165,34 +165,66 @@ One-off data migration: [`database/precios-2026-07.sql`](./database/precios-2026
 
 To grant admin access, create a user in Supabase Auth (Authentication → Users → Add user). Any authenticated user has admin rights per the current RLS.
 
-### Migración a dominio propio (dahila.uy)
+### Migración a dahila.uy (dominio ya comprado — runbook v1.0)
 
 Todo el sitio deriva sus URLs absolutas de una sola constante (`SITE_URL` en
-[`src/lib/env.ts`](./src/lib/env.ts)): canónicos, OpenGraph, JSON-LD, sitemap,
-robots, llms.txt, OG images y todos los links de los emails. El día del dominio:
+[`src/lib/env.ts`](./src/lib/env.ts)): canónicos, OpenGraph, JSON-LD, sitemap, robots,
+llms.txt, OG images y todos los links de los emails. El código **ya tiene `https://dahila.uy`
+como identidad canónica** (fallback de `SITE_URL`). Pasos en orden — no saltear:
 
-1. **Netlify** → Domain settings → agregar `dahila.uy` (+ `www` redirect) y esperar el SSL.
-2. **Variable**: `NEXT_PUBLIC_SITE_URL=https://dahila.uy` en Netlify → redeploy.
-3. **301**: descomentar el bloque `[[redirects]]` de [`netlify.toml`](./netlify.toml) → redeploy.
-   Verificar: `curl -I https://dahila-crochet.netlify.app/tienda` debe devolver 301 a `dahila.uy`.
-4. **Emails (Resend)**: verificar el dominio `send.dahila.uy` en Resend (DKIM/SPF/DMARC en el
-   DNS) y cambiar `EMAIL_FROM=Dahila Crochet <hola@send.dahila.uy>`. Arregla el spam de raíz
-   (hoy el nombre de la marca no coincide con el dominio de envío).
-5. **Google Search Console**: dar de alta la propiedad `dahila.uy`, enviar
-   `https://dahila.uy/sitemap.xml` y usar la herramienta de cambio de dirección desde la
-   propiedad vieja si estaba dada de alta.
-6. **Google Business Profile / Merchant**: apuntar el sitio al dominio nuevo.
-7. **Instagram**: link de la bio → `dahila.uy`.
+**1 · DNS en NetUY** (panel de DNS del dominio):
 
-Nada del código hace referencia al subdominio de Netlify salvo el fallback de `SITE_URL`,
-así que no hay más cambios de código que estos.
+| Tipo | Nombre | Valor |
+|---|---|---|
+| A | `@` (apex, dahila.uy) | `75.2.60.5` (load balancer de Netlify) |
+| CNAME | `www` | `dahila-crochet.netlify.app` |
+
+**2 · Netlify** → Site → Domain management → *Add a domain* → `dahila.uy` (marcar
+`www.dahila.uy` como redirect al apex). Esperar a que el certificado SSL diga *Netlify
+managed* (minutos–horas tras propagar el DNS).
+
+**3 · Variables en Netlify** (Site settings → Environment variables) → redeploy:
+- `NEXT_PUBLIC_SITE_URL=https://dahila.uy`
+
+**4 · 301 del dominio viejo**: descomentar el bloque `[[redirects]]` de
+[`netlify.toml`](./netlify.toml), commit y push. Verificar:
+`curl -I https://dahila-crochet.netlify.app/tienda` → `301` con `Location: https://dahila.uy/tienda`.
+⚠️ No hacerlo antes de que el paso 2 esté verde, o el sitio redirige a un dominio sin SSL.
+
+**5 · Emails (Resend)**: en Resend → Domains → *Add domain* → `send.dahila.uy`.
+Resend muestra 3 registros para cargar en NetUY (los valores exactos los da su panel):
+
+| Tipo | Nombre | Valor (lo da Resend) |
+|---|---|---|
+| MX | `send` | `feedback-smtp.…amazonses.com` (prio 10) |
+| TXT | `send` | `v=spf1 include:amazonses.com ~all` (SPF) |
+| TXT | `resend._domainkey.send` | `p=…` (DKIM) |
+
+Más DMARC (recomendado): TXT en `_dmarc.send` = `v=DMARC1; p=none; rua=mailto:floralcrochet12@gmail.com`.
+Cuando Resend marque *Verified*: cambiar en Netlify `EMAIL_FROM=Dahila Crochet <hola@send.dahila.uy>`
+→ redeploy. Esto arregla el spam de raíz: marca y dominio de envío por fin coinciden.
+
+**6 · Google Search Console**: agregar propiedad *Dominio* `dahila.uy` (verificación por TXT
+en NetUY), enviar `https://dahila.uy/sitemap.xml`. Si la propiedad vieja del subdominio
+existe, usar *Cambio de dirección*.
+
+**7 · Google Business Profile / Merchant**: apuntar el sitio web a `https://dahila.uy`.
+
+**8 · Instagram**: link de la bio → `https://dahila.uy`.
+
+**Verificación final** (checklist de humo):
+- `https://dahila.uy` carga con candado (SSL) y `https://www.dahila.uy` redirige al apex.
+- `view-source:` de la home → `<link rel="canonical" href="https://dahila.uy/">` y OG con el dominio nuevo.
+- `https://dahila.uy/sitemap.xml` y `https://dahila.uy/robots.txt` muestran `dahila.uy` en todas las URLs.
+- Hacer un encargo de prueba → el email llega desde `hola@send.dahila.uy` y sus botones apuntan a `dahila.uy`.
+- `curl -I https://dahila-crochet.netlify.app` → 301 a `dahila.uy`.
 
 ### Environment variables
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
-NEXT_PUBLIC_SITE_URL=https://dahila-crochet.netlify.app    # optional
+NEXT_PUBLIC_SITE_URL=https://dahila.uy    # optional (default: dahila.uy)
 ```
 
 ---

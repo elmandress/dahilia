@@ -7,16 +7,18 @@ import { dahila, Icon } from './ui/Primitives'
 /**
  * Invitación discreta a la red de tejedoras.
  *
- * Diseño según la investigación NN/g sobre popups: NO es un modal — es una
- * tarjeta no-bloqueante abajo a la izquierda (WhatsAppFloat vive a la derecha),
- * aparece recién tras 25 s en el sitio o 60% de scroll (lo que ocurra primero),
- * tiene una X clara, y al cerrarla no vuelve a aparecer por 30 días.
- * Visitar /tejedoras también la silencia (el mensaje ya llegó).
+ * Formato según NN/g: NO es un modal — tarjeta no-bloqueante abajo a la
+ * izquierda (WhatsAppFloat vive a la derecha), X clara, y al cerrarla no
+ * vuelve por 30 días. Visitar /tejedoras también la silencia.
+ *
+ * Timing según el benchmark de Wisepops (+1.000M de impresiones): el disparo
+ * por tiempo a los 11–15 s es el que mejor convierte (6,45%); a los 21–30 s
+ * cae a 1,53% y el scroll ronda 2,1%. Un solo trigger a los 12 s — ni al
+ * entrar (intrusivo y penalizado por Google) ni tan tarde que ya se fue.
  */
 const STORAGE_KEY = 'dahila_weaver_cta'
 const SNOOZE_DAYS = 30
-const DELAY_MS = 25_000
-const SCROLL_TRIGGER = 0.6
+const DELAY_MS = 12_000
 
 function isSnoozed(): boolean {
   try {
@@ -46,22 +48,8 @@ export function WeaverCallout() {
 
   useEffect(() => {
     if (isSnoozed()) return
-    let shown = false
-    const reveal = () => {
-      if (shown) return
-      shown = true
-      setShow(true)
-    }
-    const timer = setTimeout(reveal, DELAY_MS)
-    const onScroll = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      if (max > 0 && window.scrollY / max >= SCROLL_TRIGGER) reveal()
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => {
-      clearTimeout(timer)
-      window.removeEventListener('scroll', onScroll)
-    }
+    const timer = setTimeout(() => setShow(true), DELAY_MS)
+    return () => clearTimeout(timer)
   }, [])
 
   // Solo en la vidriera: nunca en admin, carrito, encargo ni en la propia página.

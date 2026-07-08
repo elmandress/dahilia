@@ -487,7 +487,7 @@ export const NEXT_ACTIONS: TodoAction[] = [
   { id: 'mercadopago', label: 'Usar links de pago de Mercado Pago con cuotas', detail: 'Se arma en 2 minutos al cerrar cada venta por WhatsApp. Las cuotas hacen fácil el precio nuevo.', horizon: 'mes' },
   { id: 'cupon-vip', label: 'Crear el primer cupón para la lista VIP', detail: 'Un código de bienvenida chico (ej. 10%) da una razón concreta para anotarse. Se crea en Cupones.', horizon: 'mes' },
   { id: 'drop-verano', label: "Preparar el drop Verano '26", detail: 'Fotos, colección, cupón y el paso a paso de la pestaña Drops. Lanzamiento: noviembre.', horizon: 'trimestre' },
-  { id: 'dominio', label: 'Comprar dahila.uy', detail: 'Más confianza, mejores emails (hoy pueden caer en spam) y marca propia. El sitio ya está preparado para migrar.', horizon: 'trimestre' },
+  { id: 'dominio', label: 'Activar dahila.uy (¡ya está comprado!)', detail: 'Seguir el runbook del README: DNS en NetUY, dominio en Netlify, variable, redirect, emails desde send.dahila.uy y Search Console.', horizon: 'ya' },
   { id: 'precios-fase2', label: 'Segundo paso de precios', detail: 'Con el drop de verano, tops y bolsos suben hacia la meta de 12 meses (columna "12m" de la tabla).', horizon: 'trimestre' },
 ]
 
@@ -528,7 +528,7 @@ export const RISKS: Risk[] = [
   {
     title: 'Emails que caen en spam',
     severity: 'media',
-    detail: 'El dominio de envío es nuevo y no coincide con la marca: algunos avisos pueden ir a spam.',
-    mitigation: 'Al comprar dahila.uy se envía desde el dominio propio y se arregla de raíz. Mientras: marcar "no es spam" y agendar el remitente.',
+    detail: 'El dominio de envío actual no coincide con la marca: algunos avisos pueden ir a spam.',
+    mitigation: 'dahila.uy ya está comprado: al activar el envío desde send.dahila.uy (paso 5 del runbook) se arregla de raíz. Mientras: marcar "no es spam" y agendar el remitente.',
   },
 ]

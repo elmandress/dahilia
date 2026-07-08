@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useCart } from '@/components/CartProvider'
+import { EncargosDisponibles } from '@/components/EncargosDisponibles'
 import { ProductGallery } from '@/components/ProductGallery'
 import { ProductCard } from '@/components/ProductCard'
 import { RecentlyViewed } from '@/components/RecentlyViewed'
@@ -244,6 +245,11 @@ export function ProductDetailsClient({
               </div>
             </div>
           )}
+
+          {/* Cupos de encargo reales (CMS: encargos_cupos_*) — la agenda de
+              producción es la urgencia honesta de un taller a pedido. No
+              renderiza nada si Anush no la tiene activada. */}
+          {!isSoldOut && <EncargosDisponibles />}
 
           {product.is_custom_only && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

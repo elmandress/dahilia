@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Button, Icon } from '@/components/ui/Primitives'
-import { getPrimaryPhoto, formatPrice, getEffectivePrice, getFinalPrice, BLUR_DATA_URL } from '@/lib/types'
+import { getPrimaryPhoto, formatPrice, getEffectivePrice, getFinalPrice, readyDateEstimate, BLUR_DATA_URL } from '@/lib/types'
 import type { Product, Discount } from '@/lib/types'
 import { computeCouponEffect, type PublicCoupon } from '@/lib/coupons'
 import { PriceBlock } from '@/components/ui/PriceBlock'
@@ -23,12 +23,10 @@ interface Props {
   discounts?: Discount[]
 }
 
+// Misma urgencia honesta que el PDP: fecha estimada concreta, no "N semanas".
 function leadTimeLabel(min: number, max: number): string {
-  if (min > 0 && max > 0 && min !== max) return `Se teje en ${min}–${max} semanas`
-  if (min > 0 && max > 0 && min === max) return min === 1 ? 'Se teje en 1 semana' : `Se teje en ${min} semanas`
-  if (max > 0) return max === 1 ? 'Se teje en hasta 1 semana' : `Se teje en hasta ${max} semanas`
-  if (min > 0) return min === 1 ? 'Se teje en 1 semana' : `Se teje en ${min} semanas`
-  return ''
+  const estimate = readyDateEstimate(min, max)
+  return estimate ? `Se teje al encargar — lista ${estimate}` : ''
 }
 
 /** Build a clean, multi-line WhatsApp message from the cart contents. */
@@ -508,6 +506,9 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           <li>1 · Se abre WhatsApp con tu pedido ya armado — no pagás nada todavía.</li>
           <li>2 · Anush te confirma disponibilidad y fecha estimada.</li>
           <li>3 · Elegís cómo pagar (transferencia o Mercado Pago) y cómo recibirlo.</li>
+          <li style={{ marginTop: 4 }}>
+            <Link href="/info" style={{ color: dahila.ink500 }}>¿Dudas? Mirá envíos, cambios y cuidados →</Link>
+          </li>
         </ol>
 
         {/* Gift note toggle — opens a small textarea; content goes into WA message */}

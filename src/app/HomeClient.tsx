@@ -96,9 +96,11 @@ function val<K extends keyof HomeSettings>(s: HomeSettings, key: K, fallback: st
   return v && v.trim() !== '' ? v : fallback
 }
 
-export function HomeClient({ products, settings, discounts = [], testimonials = [] }: { products: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[] }) {
+export function HomeClient({ products, newest = [], settings, discounts = [], testimonials = [] }: { products: Product[]; newest?: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[] }) {
   const router = useRouter()
-  const featured = products.slice(0, 4)
+  // "Nuevo" = últimos publicados por fecha real de alta (con fallback al orden
+  // manual si la consulta dedicada no trajo nada).
+  const featured = newest.length > 0 ? newest : products.slice(0, 4)
   const accesorios = products.filter((p) => p.category?.slug === 'accesorios').slice(0, 4)
 
   const heroImage = val(settings, 'hero_image_url', '/photos/top-lace-parque.png')

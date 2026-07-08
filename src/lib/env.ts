@@ -21,7 +21,9 @@ export const SUPABASE_ANON_KEY = required(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dahila-crochet.netlify.app'
+// Identidad canónica de la marca (v1.0): dahila.uy. NEXT_PUBLIC_SITE_URL
+// puede sobrescribirla por entorno (previews de Netlify, desarrollo local).
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dahila.uy'
 
 // Studio / agency credit — surfaced in the footer and meta tags.
 export const STUDIO_NAME = 'SIAR'

@@ -9,7 +9,7 @@ export const revalidate = 3600
 export default async function Home() {
   const supabase = await createClient()
 
-  const [settingsRes, productsRes, discountsRes, testimonialsRes] = await Promise.all([
+  const [settingsRes, productsRes, newestRes, discountsRes, testimonialsRes] = await Promise.all([
     supabase.from('site_settings').select('*'),
     supabase
       .from('products')
@@ -17,6 +17,14 @@ export default async function Home() {
       .eq('status', 'active')
       .order('sort_order', { ascending: true })
       .limit(12),
+    // Sección "Nuevo" de la home: los últimos productos publicados de verdad
+    // (por fecha de alta), no los primeros del orden manual de la tienda.
+    supabase
+      .from('products')
+      .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*))')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(4),
     supabase.from('discounts').select('*').eq('active', true),
     Promise.resolve(
       supabase.from('testimonials').select('*').order('sort_order', { ascending: true })
@@ -28,10 +36,15 @@ export default async function Home() {
     {}
   )
 
-  const products = (productsRes.data ?? []).map((p) => {
-    const joined = (p.colors ?? []) as Array<{ color: Color | null }>
-    return { ...p, colors: joined.map((c) => c.color).filter((c): c is Color => !!c) }
-  }) as Product[]
+  const normalize = (rows: unknown[]) =>
+    rows.map((p) => {
+      const row = p as Product & { colors?: Array<{ color: Color | null }> }
+      const joined = (row.colors ?? []) as Array<{ color: Color | null }>
+      return { ...row, colors: joined.map((c) => c.color).filter((c): c is Color => !!c) }
+    }) as Product[]
+
+  const products = normalize(productsRes.data ?? [])
+  const newest = normalize(newestRes.data ?? [])
   const discounts = (discountsRes.data ?? []) as Discount[]
   const testimonials = ((testimonialsRes as { data: Testimonial[] | null }).data ?? []) as Testimonial[]
 
@@ -103,7 +116,7 @@ export default async function Home() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
         />
       )}
-      <HomeClient products={products} settings={settings} discounts={discounts} testimonials={testimonials} />
+      <HomeClient products={products} newest={newest} settings={settings} discounts={discounts} testimonials={testimonials} />
     </>
   )
 }
