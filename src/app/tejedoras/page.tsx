@@ -23,6 +23,6 @@ export default async function TejedorasPage() {
     .eq('key', 'contact_whatsapp_url')
     .maybeSingle()
 
-  const waUrl = (data?.value as string | undefined) || 'https://wa.me/59894605015'
+  const waUrl = (data?.value as string | undefined) || 'https://wa.me/59899850073'
   return <TejedorasClient whatsappUrl={waUrl} />
 }

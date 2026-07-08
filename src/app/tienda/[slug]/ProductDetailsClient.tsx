@@ -23,7 +23,7 @@ export function ProductDetailsClient({
   related = [],
   discounts = [],
   sizeGuideNote,
-  whatsappUrl = 'https://wa.me/59894605015',
+  whatsappUrl = 'https://wa.me/59899850073',
   shippingEstimate,
   trustItems,
   makerName = 'Anush',

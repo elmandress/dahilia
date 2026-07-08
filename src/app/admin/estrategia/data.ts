@@ -488,6 +488,7 @@ export const NEXT_ACTIONS: TodoAction[] = [
   { id: 'cupon-vip', label: 'Crear el primer cupón para la lista VIP', detail: 'Un código de bienvenida chico (ej. 10%) da una razón concreta para anotarse. Se crea en Cupones.', horizon: 'mes' },
   { id: 'drop-verano', label: "Preparar el drop Verano '26", detail: 'Fotos, colección, cupón y el paso a paso de la pestaña Drops. Lanzamiento: noviembre.', horizon: 'trimestre' },
   { id: 'dominio', label: 'Activar dahila.uy (¡ya está comprado!)', detail: 'Seguir el runbook del README: DNS en NetUY, dominio en Netlify, variable, redirect, emails desde send.dahila.uy y Search Console.', horizon: 'ya' },
+  { id: 'numero-nuevo', label: 'Propagar el número nuevo (099 850 073) fuera del sitio', detail: 'La web ya lo usa. Falta donde el sitio no llega: la app de WhatsApp Business (transferir el número), el link de la bio de Instagram, Google Business Profile, y tarjetas o packaging impresos con el número viejo.', horizon: 'ya' },
   { id: 'precios-fase2', label: 'Segundo paso de precios', detail: 'Con el drop de verano, tops y bolsos suben hacia la meta de 12 meses (columna "12m" de la tabla).', horizon: 'trimestre' },
 ]
 

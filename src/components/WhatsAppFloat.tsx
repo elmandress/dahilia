@@ -12,7 +12,7 @@ import { createClient } from '@/lib/supabase/client'
  */
 export function WhatsAppFloat() {
   const pathname = usePathname()
-  const [waUrl, setWaUrl] = useState('https://wa.me/59894605015')
+  const [waUrl, setWaUrl] = useState('https://wa.me/59899850073')
   const [enabled, setEnabled] = useState(false)
   const [visible, setVisible] = useState(true)
   const lastYRef = useRef(0)

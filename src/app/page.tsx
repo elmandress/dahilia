@@ -77,7 +77,7 @@ export default async function Home() {
   }
 
   // LocalBusiness — shows brand panel in Google with location, contact, links.
-  const waUrl = settings.contact_whatsapp_url || 'https://wa.me/59894605015'
+  const waUrl = settings.contact_whatsapp_url || 'https://wa.me/59899850073'
   const igUrl = settings.contact_instagram_url || 'https://www.instagram.com/dahila.crochet/'
   const localBusinessJsonLd = {
     '@context': 'https://schema.org',
@@ -87,7 +87,7 @@ export default async function Home() {
     url: SITE_URL,
     logo: `${SITE_URL}/isotype-color.png`,
     image: `${SITE_URL}/logo-full.jpg`,
-    telephone: settings.contact_whatsapp || '+598 94 605 015',
+    telephone: settings.contact_whatsapp || '+598 99 850 073',
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Montevideo',

@@ -22,8 +22,8 @@ interface Props {
 export default function ContactoClient({ settings }: Props) {
   const igLabel = settings.contact_instagram || '@dahila.crochet'
   const igUrl   = settings.contact_instagram_url || 'https://www.instagram.com/dahila.crochet/'
-  const waLabel = settings.contact_whatsapp || '+598 94 605 015'
-  const waUrl   = settings.contact_whatsapp_url || 'https://wa.me/59894605015'
+  const waLabel = settings.contact_whatsapp || '+598 99 850 073'
+  const waUrl   = settings.contact_whatsapp_url || 'https://wa.me/59899850073'
   const location = settings.contact_location || 'Montevideo, Uruguay'
 
   const CHANNELS: ContactChannel[] = [

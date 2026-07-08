@@ -102,7 +102,7 @@ const organizationJsonLd = {
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'customer service',
-    telephone: '+59894605015',
+    telephone: '+59899850073',
     availableLanguage: ['Spanish'],
   },
   // Store-wide return policy — piezas a medida no admiten cambios (coherente con

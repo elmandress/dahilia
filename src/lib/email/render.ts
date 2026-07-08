@@ -73,7 +73,7 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;c
         <p style="margin:0;">Dahila Crochet · Hecho a mano en Montevideo, Uruguay<br>
         <a href="${SITE_URL}" style="color:${C.wine};text-decoration:none;">${escapeHtml(host)}</a> ·
         <a href="https://www.instagram.com/dahila.crochet/" style="color:${C.wine};text-decoration:none;">@dahila.crochet</a> ·
-        <a href="https://wa.me/59894605015" style="color:${C.wine};text-decoration:none;">WhatsApp</a></p>
+        <a href="https://wa.me/59899850073" style="color:${C.wine};text-decoration:none;">WhatsApp</a></p>
       </td></tr>
     </table>
   </td></tr>

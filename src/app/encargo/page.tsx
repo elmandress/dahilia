@@ -21,5 +21,5 @@ export default async function EncargoPage() {
     .in('key', ['contact_whatsapp_url'])
 
   const waUrl = (data ?? []).find((r) => r.key === 'contact_whatsapp_url')?.value as string | undefined
-  return <EncargoForm whatsappUrl={waUrl || 'https://wa.me/59894605015'} />
+  return <EncargoForm whatsappUrl={waUrl || 'https://wa.me/59899850073'} />
 }

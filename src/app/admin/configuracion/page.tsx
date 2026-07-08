@@ -137,8 +137,8 @@ const SECTIONS = [
     title: 'Contacto',
     description: 'Cómo te encuentran los clientes. Visible en footer y página de contacto.',
     fields: [
-      { key: 'contact_whatsapp',     label: 'WhatsApp (visible)',         type: 'text', placeholder: '+598 94 605 015' },
-      { key: 'contact_whatsapp_url', label: 'WhatsApp link (wa.me/...)',  type: 'text', placeholder: 'https://wa.me/59894605015' },
+      { key: 'contact_whatsapp',     label: 'WhatsApp (visible)',         type: 'text', placeholder: '+598 99 850 073' },
+      { key: 'contact_whatsapp_url', label: 'WhatsApp link (wa.me/...)',  type: 'text', placeholder: 'https://wa.me/59899850073' },
       { key: 'contact_instagram',    label: 'Instagram (visible)',        type: 'text', placeholder: '@dahila.crochet' },
       { key: 'contact_instagram_url', label: 'Instagram link',            type: 'text', placeholder: 'https://www.instagram.com/dahila.crochet/' },
       { key: 'contact_location',     label: 'Ubicación',                  type: 'text' },

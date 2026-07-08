@@ -523,7 +523,7 @@ export function Header({ promo }: { promo?: PromoBar }) {
         </nav>
         <div style={{ padding: '16px 20px calc(env(safe-area-inset-bottom, 0px) + 16px)', borderTop: `1px solid ${dahila.border}`, display: 'flex', gap: 16 }}>
           <a href="https://www.instagram.com/dahila.crochet/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{ color: dahila.ink700 }}><Icon name="instagram-logo" size={20} /></a>
-          <a href="https://wa.me/59894605015" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" style={{ color: dahila.ink700 }}><Icon name="whatsapp-logo" size={20} /></a>
+          <a href="https://wa.me/59899850073" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" style={{ color: dahila.ink700 }}><Icon name="whatsapp-logo" size={20} /></a>
         </div>
       </aside>
     </>

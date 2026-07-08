@@ -192,7 +192,7 @@ export function Footer() {
             title="Contacto"
             items={[
               { label: '@dahila.crochet',         href: 'https://www.instagram.com/dahila.crochet/' },
-              { label: 'WhatsApp · 94 605 015',   href: 'https://wa.me/59894605015' },
+              { label: 'WhatsApp · 99 850 073',   href: 'https://wa.me/59899850073' },
             ]}
           />
         </div>

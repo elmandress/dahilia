@@ -132,8 +132,8 @@ INSERT INTO site_settings (key, value) VALUES
   ('faq_4_a',            'Como cada pieza se hace a medida, no aceptamos cambios. Por eso te acompaño durante todo el proceso.'),
 
   -- Contact (used by Header/Footer/Contacto/JSON-LD)
-  ('contact_whatsapp',   '+598 94 605 015'),
-  ('contact_whatsapp_url','https://wa.me/59894605015'),
+  ('contact_whatsapp',   '+598 99 850 073'),
+  ('contact_whatsapp_url','https://wa.me/59899850073'),
   ('contact_instagram',  '@dahila.crochet'),
   ('contact_instagram_url','https://www.instagram.com/dahila.crochet/'),
   ('contact_location',   'Montevideo, Uruguay'),

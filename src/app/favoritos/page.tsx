@@ -20,7 +20,7 @@ export default async function FavoritosPage() {
 
   const whatsappUrl =
     ((data ?? []).find((r) => r.key === 'contact_whatsapp_url')?.value as string | undefined) ||
-    'https://wa.me/59894605015'
+    'https://wa.me/59899850073'
 
   return <FavoritosClient whatsappUrl={whatsappUrl} />
 }

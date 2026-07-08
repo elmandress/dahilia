@@ -249,7 +249,7 @@ Things I deliberately scoped out for v1:
 ## Credits
 
 **Product:** [Dahila Crochet](https://www.instagram.com/dahila.crochet/) — Montevideo, Uruguay
-**Owner contact:** [WhatsApp +598 94 605 015](https://wa.me/59894605015) · [hola@dahila.uy](mailto:hola@dahila.uy)
+**Owner contact:** [WhatsApp +598 99 850 073](https://wa.me/59899850073) · [hola@dahila.uy](mailto:hola@dahila.uy)
 
 **Design & development:** [SIAR](https://siaruy.netlify.app) · [@siar.uy](https://www.instagram.com/siar.uy/)
 

@@ -22,8 +22,8 @@ export default async function TerminosPage() {
     (acc, curr) => ({ ...acc, [curr.key]: String(curr.value ?? '') }),
     {}
   )
-  const whatsapp = s.contact_whatsapp || '+598 94 605 015'
-  const waUrl = s.contact_whatsapp_url || 'https://wa.me/59894605015'
+  const whatsapp = s.contact_whatsapp || '+598 99 850 073'
+  const waUrl = s.contact_whatsapp_url || 'https://wa.me/59899850073'
   const igUrl = s.contact_instagram_url || 'https://www.instagram.com/dahila.crochet/'
   const year = new Date().getFullYear()
 

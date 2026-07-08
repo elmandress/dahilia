@@ -37,8 +37,8 @@ export default async function CarritoPage() {
 
   return (
     <CarritoClient
-      whatsappUrl={settings.contact_whatsapp_url || 'https://wa.me/59894605015'}
-      whatsappLabel={settings.contact_whatsapp || '+598 94 605 015'}
+      whatsappUrl={settings.contact_whatsapp_url || 'https://wa.me/59899850073'}
+      whatsappLabel={settings.contact_whatsapp || '+598 99 850 073'}
       featuredProducts={featured}
       discounts={discounts}
     />

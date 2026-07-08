@@ -224,7 +224,7 @@ async function ProductPage({ slug }: { slug: string }) {
   const discounts = (discountData ?? []) as Discount[]
   const getSetting = (k: string) => (settingsData ?? []).find((r) => r.key === k)?.value as string | undefined
   const sizeGuideNote = getSetting('size_guide_note')
-  const whatsappUrl = getSetting('contact_whatsapp_url') || 'https://wa.me/59894605015'
+  const whatsappUrl = getSetting('contact_whatsapp_url') || 'https://wa.me/59899850073'
   const shippingEstimate = getSetting('shipping_estimate')
   const trustItems = [
     { icon: 'truck',         text: getSetting('pdp_trust_1')?.trim() || 'Envío a todo Uruguay' },
