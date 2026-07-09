@@ -12,6 +12,8 @@ interface CartContextType {
   cartTotal: number
   discounts: Discount[]
   shippingEstimate: string
+  /** Aviso de lista de espera ("los pedidos nuevos empiezan en agosto"). Vacío = no mostrar. */
+  queueNote: string
   hasMounted: boolean
   isLoading: boolean
   drawerOpen: boolean
@@ -52,10 +54,12 @@ export function CartProvider({
   children,
   initialDiscounts = [],
   shippingEstimate = '',
+  queueNote = '',
 }: {
   children: React.ReactNode
   initialDiscounts?: Discount[]
   shippingEstimate?: string
+  queueNote?: string
 }) {
   const [items, setItems] = useState<CartItemWithProduct[]>([])
   // Seeded from the server layout so the very first paint already prices with
@@ -191,7 +195,7 @@ export function CartProvider({
 
   return (
     <CartContext.Provider value={{
-      items, cartCount, cartTotal, discounts, shippingEstimate, hasMounted, isLoading,
+      items, cartCount, cartTotal, discounts, shippingEstimate, queueNote, hasMounted, isLoading,
       drawerOpen, addError, openDrawer, closeDrawer, refresh,
       addToCart, updateQty, removeFromCart,
     }}>

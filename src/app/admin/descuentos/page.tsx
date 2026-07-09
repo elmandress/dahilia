@@ -3,11 +3,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import type { Discount, Category } from '@/lib/types'
+import type { Discount, Category, Product } from '@/lib/types'
+
+type DiscountedProduct = Pick<Product, 'id' | 'name' | 'status' | 'discount_percent' | 'discount_active'>
 
 export default function DescuentosAdminPage() {
   const [discounts, setDiscounts] = useState<Discount[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [productDiscounts, setProductDiscounts] = useState<DiscountedProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -21,13 +24,20 @@ export default function DescuentosAdminPage() {
     setError(null)
     try {
       const supabase = createClient()
-      const [dRes, cRes] = await Promise.all([
+      const [dRes, cRes, pRes] = await Promise.all([
         supabase.from('discounts').select('*').order('created_at', { ascending: false }),
         supabase.from('categories').select('*').order('sort_order'),
+        supabase
+          .from('products')
+          .select('id, name, status, discount_percent, discount_active')
+          .eq('discount_active', true)
+          .gt('discount_percent', 0)
+          .order('name'),
       ])
       if (dRes.error) throw dRes.error
       setDiscounts((dRes.data ?? []) as Discount[])
       setCategories((cRes.data ?? []) as Category[])
+      setProductDiscounts((pRes.data ?? []) as DiscountedProduct[])
     } catch (e) {
       console.error('Error cargando descuentos', e)
       setError('No se pudieron cargar los descuentos. Ejecutá database/schema-discounts.sql en Supabase.')
@@ -195,6 +205,46 @@ export default function DescuentosAdminPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Productos con descuento propio — se configuran en cada producto, pero
+          acá está la vista de conjunto para no perderles el rastro. */}
+      <div className="admin-card" style={{ marginTop: '1.5rem' }}>
+        <h3 style={{ margin: '0 0 0.5rem 0', fontWeight: 400, fontFamily: 'var(--font-display)' }}>
+          Productos con descuento propio
+        </h3>
+        <p style={{ margin: '0 0 1rem', fontSize: '0.82rem', color: '#888', lineHeight: 1.6 }}>
+          Estos productos tienen su propia rebaja, puesta desde su ficha. Si un producto además entra en una
+          regla de arriba, la tienda aplica automáticamente el descuento mayor de los dos.
+        </p>
+        {productDiscounts.length === 0 ? (
+          <div className="admin-empty"><p>Ningún producto tiene descuento propio ahora.</p></div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {productDiscounts.map((p) => (
+              <div key={p.id} style={{
+                display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+                padding: '10px 14px', border: '1px solid #eee', borderRadius: 10,
+              }}>
+                <span style={{
+                  fontFamily: 'var(--font-display)', fontSize: '1.15rem',
+                  color: '#B6314A', minWidth: 52,
+                }}>−{p.discount_percent}%</span>
+                <div style={{ flex: 1, minWidth: 140 }}>
+                  <strong style={{ fontSize: '0.9rem' }}>{p.name}</strong>
+                  {p.status !== 'active' && (
+                    <span style={{ marginLeft: 8, fontSize: '0.72rem', color: '#999' }}>
+                      ({p.status === 'draft' ? 'borrador' : 'agotado'} — no visible)
+                    </span>
+                  )}
+                </div>
+                <Link href={`/admin/productos/${p.id}`} className="admin-btn admin-btn-secondary admin-btn-sm">
+                  Editar
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

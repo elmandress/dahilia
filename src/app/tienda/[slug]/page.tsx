@@ -207,6 +207,7 @@ async function ProductPage({ slug }: { slug: string }) {
     supabase.from('discounts').select('*').eq('active', true),
     supabase.from('site_settings').select('key, value').in('key', [
       'size_guide_note', 'contact_whatsapp_url', 'shipping_estimate',
+      'queue_note_enabled', 'queue_note_text',
       'pdp_trust_1', 'pdp_trust_2', 'pdp_trust_3',
       'maker_name', 'maker_bio', 'maker_photo_url',
       'pdp_process_enabled',
@@ -226,6 +227,8 @@ async function ProductPage({ slug }: { slug: string }) {
   const sizeGuideNote = getSetting('size_guide_note')
   const whatsappUrl = getSetting('contact_whatsapp_url') || 'https://wa.me/59899850073'
   const shippingEstimate = getSetting('shipping_estimate')
+  // Aviso de lista de espera (misma semántica que el layout: ON salvo 'false').
+  const queueNote = getSetting('queue_note_enabled') !== 'false' ? (getSetting('queue_note_text') ?? '').trim() : ''
   const trustItems = [
     { icon: 'truck',         text: getSetting('pdp_trust_1')?.trim() || 'Envío a todo Uruguay' },
     { icon: 'hand-heart',    text: getSetting('pdp_trust_2')?.trim() || 'Hecho a mano' },
@@ -364,6 +367,7 @@ async function ProductPage({ slug }: { slug: string }) {
         sizeGuideNote={sizeGuideNote}
         whatsappUrl={whatsappUrl}
         shippingEstimate={shippingEstimate}
+        queueNote={queueNote}
         trustItems={trustItems}
         makerName={getSetting('maker_name') || 'Anush'}
         makerBio={getSetting('maker_bio') || ''}

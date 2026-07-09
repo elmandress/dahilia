@@ -153,6 +153,14 @@ const SECTIONS = [
     ],
   },
   {
+    title: 'Lista de espera (tiempo de entrega)',
+    description: 'Cuando tenés pedidos en cola, contalo acá: se muestra en cada producto (en lugar de la fecha estimada) y en el carrito, antes de que la clienta abra WhatsApp. Saber la espera ANTES de pedir genera confianza; descubrirla en el chat la rompe. Actualizalo cuando cambie la cola; si lo apagás o borrás el texto, vuelve la fecha estimada normal de cada producto.',
+    fields: [
+      { key: 'queue_note_enabled', label: '¿Mostrar el aviso de lista de espera?', type: 'toggle' },
+      { key: 'queue_note_text', label: 'Texto del aviso', type: 'text', placeholder: 'Por demanda, los pedidos nuevos entran a producción en agosto' },
+    ],
+  },
+  {
     title: 'Cupos de encargos semanales',
     description: 'Mostrá en la página de encargo cuántos lugares quedan. Actualización manual: subí "Tomados" cada vez que confirmás un pedido. Al empezar la semana, reseteá ambos desde acá. Si está apagado o el total es 0, no se muestra nada.',
     fields: [

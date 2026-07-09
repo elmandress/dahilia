@@ -129,6 +129,7 @@ export default async function RootLayout({
     supabase.from('discounts').select('*').eq('active', true),
     supabase.from('site_settings').select('key, value').in('key', [
       'shipping_estimate',
+      'queue_note_enabled', 'queue_note_text',
       'promo_bar_enabled', 'promo_bar_text', 'promo_bar_link', 'promo_bar_bg', 'promo_bar_fg',
     ]),
   ])
@@ -137,6 +138,9 @@ export default async function RootLayout({
     (acc, r) => ({ ...acc, [r.key as string]: String(r.value ?? '') }), {}
   )
   const shippingEstimate = settings.shipping_estimate ?? ''
+  // Aviso de lista de espera: visible salvo que la dueña lo apague, y solo si
+  // escribió el texto (misma semántica default-ON que los demás toggles del CMS).
+  const queueNote = settings.queue_note_enabled !== 'false' ? (settings.queue_note_text ?? '').trim() : ''
   const promo = {
     // Default ON unless the owner saved the literal string 'false'.
     enabled: settings.promo_bar_enabled !== 'false',
@@ -158,7 +162,7 @@ export default async function RootLayout({
       </head>
       <body>
         <a href="#contenido" className="skip-link">Saltar al contenido</a>
-        <CartProvider initialDiscounts={discounts} shippingEstimate={shippingEstimate}>
+        <CartProvider initialDiscounts={discounts} shippingEstimate={shippingEstimate} queueNote={queueNote}>
           <FavoritesProvider>
             <Header promo={promo} />
             <main id="contenido">

@@ -25,6 +25,7 @@ export function ProductDetailsClient({
   sizeGuideNote,
   whatsappUrl = 'https://wa.me/59899850073',
   shippingEstimate,
+  queueNote = '',
   trustItems,
   makerName = 'Anush',
   makerBio = '',
@@ -39,6 +40,8 @@ export function ProductDetailsClient({
   sizeGuideNote?: string
   whatsappUrl?: string
   shippingEstimate?: string
+  /** Aviso de lista de espera; cuando existe, reemplaza a la fecha estimada. */
+  queueNote?: string
   trustItems?: { icon: string; text: string }[]
   makerName?: string
   makerBio?: string
@@ -396,7 +399,13 @@ export function ProductDetailsClient({
               <Icon name="package" size={16} color={dahila.ink500}/>
               {shippingEstimate && shippingEstimate.trim() ? shippingEstimate : 'Envío a todo Uruguay'}
             </li>
-            {(product.lead_time_weeks_min || product.lead_time_weeks_max) && (
+            {queueNote ? (
+              // Lista de espera activa: manda sobre la fecha estimada del
+              // producto — prometer "lista en 3 semanas" con cola sería mentir.
+              <li style={liStyle}>
+                <Icon name="arrow-clockwise" size={16} color={dahila.ink500}/> {queueNote}
+              </li>
+            ) : (product.lead_time_weeks_min || product.lead_time_weeks_max) && (
               <li style={liStyle}>
                 <Icon name="arrow-clockwise" size={16} color={dahila.ink500}/>
                 {(() => {

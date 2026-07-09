@@ -78,7 +78,7 @@ function buildWhatsAppMessage(
 }
 
 export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProducts = [], discounts: serverDiscounts = [] }: Props) {
-  const { items, removeFromCart, updateQty, isLoading, discounts, shippingEstimate } = useCart()
+  const { items, removeFromCart, updateQty, isLoading, discounts, shippingEstimate, queueNote } = useCart()
   const router = useRouter()
   const [giftNote, setGiftNote] = useState('')
   const [showGiftNote, setShowGiftNote] = useState(false)
@@ -304,8 +304,10 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
                   <PriceBlock list={listPrice} final={price} size="md" />
                 </div>
-                {/* Lead time — shown only when the product has real data */}
-                {leadTimeLabel(item.product.lead_time_weeks_min, item.product.lead_time_weeks_max) && (
+                {/* Lead time — solo cuando hay dato real Y no hay lista de espera
+                    activa (el aviso global manda; prometer "lista en 3 semanas"
+                    con cola hasta agosto sería mentir). */}
+                {!queueNote && leadTimeLabel(item.product.lead_time_weeks_min, item.product.lead_time_weeks_max) && (
                   <div style={{
                     display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 2,
                     fontFamily: 'var(--font-sans)', fontSize: 11, color: '#8C8285',
@@ -496,6 +498,23 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
             </span>
           )}
         </div>
+
+        {/* Lista de espera — la expectativa de plazo se fija ANTES de abrir el
+            chat: nadie descubre en WhatsApp que su pedido empieza en un mes. */}
+        {queueNote && (
+          <div style={{
+            display: 'inline-flex', alignItems: 'flex-start', gap: 8, maxWidth: 380,
+            background: dahila.cream50, border: `1px solid ${dahila.border}`,
+            borderRadius: 10, padding: '10px 14px',
+            fontFamily: dahila.fontSans, fontSize: 12.5, color: dahila.ink700, lineHeight: 1.5,
+            textAlign: 'right',
+          }}>
+            <span style={{ flexShrink: 0, marginTop: 1 }}>
+              <Icon name="arrow-clockwise" size={15} color={dahila.ink500} />
+            </span>
+            <span>{queueNote}</span>
+          </div>
+        )}
 
         {/* Qué pasa al tocar el botón — la duda #1 antes de un checkout por chat */}
         <ol className="cart-steps" style={{
