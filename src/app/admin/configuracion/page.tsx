@@ -507,9 +507,27 @@ export default function ConfiguracionAdminPage() {
         </div>
       )}
 
+      {/* Índice: la página es larga (15 secciones) — estos chips saltan directo
+          a cada una, clave en el teléfono donde el scroll se hace eterno. */}
+      <nav aria-label="Secciones de configuración" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
+        {SECTIONS.map((section, i) => (
+          <a
+            key={section.title}
+            href={`#config-sec-${i}`}
+            style={{
+              fontSize: 12, color: '#4A4143', textDecoration: 'none',
+              border: '1px solid rgba(31,26,27,0.16)', borderRadius: 999,
+              padding: '6px 12px', background: '#fff', whiteSpace: 'nowrap',
+            }}
+          >
+            {section.title}
+          </a>
+        ))}
+      </nav>
+
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-        {SECTIONS.map((section) => (
-          <section key={section.title} className="admin-card">
+        {SECTIONS.map((section, sectionIndex) => (
+          <section key={section.title} id={`config-sec-${sectionIndex}`} className="admin-card" style={{ scrollMarginTop: 16 }}>
             <div style={{ marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #eee' }}>
               <h3 style={{ margin: 0, fontWeight: 400, fontSize: '1.1rem', fontFamily: 'var(--font-display)' }}>
                 {section.title}

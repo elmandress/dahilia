@@ -99,6 +99,7 @@ export default function EncargosPage() {
       return
     }
     setOrders((curr) => curr.map((o) => (o.id === id ? { ...o, admin_notes: notes } : o)))
+    setNotice('Notas guardadas.')
   }
 
   const setArchived = async (id: string, archived: boolean) => {

@@ -11,8 +11,9 @@ export default function AdminDashboardPage() {
     activeProducts: 0,
     draftProducts: 0,
     onOfferProducts: 0,
+    noDescriptionProducts: 0,
     newOrders: 0,
-    totalOrders: 0,
+    newWeavers: 0,
     activeCarts: 0,
     totalCollections: 0,
   })
@@ -22,11 +23,12 @@ export default function AdminDashboardPage() {
   const loadDashboard = useCallback(async () => {
     const supabase = createClient()
 
-    const [productsRes, ordersRes, countRes, newCountRes, cartsRes, collectionsRes] = await Promise.all([
-      supabase.from('products').select('id, status, discount_active, discount_percent'),
+    const [productsRes, ordersRes, newCountRes, weaversRes, cartsRes, collectionsRes] = await Promise.all([
+      supabase.from('products').select('id, status, discount_active, discount_percent, description'),
       supabase.from('custom_orders').select('*').order('created_at', { ascending: false }).limit(5),
-      supabase.from('custom_orders').select('*', { count: 'exact', head: true }),
       supabase.from('custom_orders').select('*', { count: 'exact', head: true }).eq('status', 'new'),
+      // Postulaciones nuevas (graceful — la tabla puede no existir todavía)
+      supabase.from('weaver_applications').select('id', { count: 'exact', head: true }).eq('status', 'new'),
       // Active carts: fetch cart_id values so we can count DISTINCT carts (not rows)
       supabase.from('cart_items').select('cart_id'),
       // Collections (graceful — table may not exist yet)
@@ -36,7 +38,7 @@ export default function AdminDashboardPage() {
     ])
 
     const products = (productsRes.data ?? []) as Array<
-      Pick<Product, 'id' | 'status' | 'discount_active' | 'discount_percent'>
+      Pick<Product, 'id' | 'status' | 'discount_active' | 'discount_percent' | 'description'>
     >
     const orders = (ordersRes.data ?? []) as CustomOrder[]
 
@@ -45,8 +47,9 @@ export default function AdminDashboardPage() {
       activeProducts: products.filter((p) => p.status === 'active').length,
       draftProducts: products.filter((p) => p.status === 'draft').length,
       onOfferProducts: products.filter((p) => p.discount_active && (p.discount_percent ?? 0) > 0).length,
+      noDescriptionProducts: products.filter((p) => p.status === 'active' && !(p.description ?? '').trim()).length,
       newOrders: newCountRes.count ?? orders.filter((o) => o.status === 'new').length,
-      totalOrders: countRes.count ?? orders.length,
+      newWeavers: weaversRes.error ? 0 : (weaversRes.count ?? 0),
       activeCarts: new Set(
         ((cartsRes.data ?? []) as Array<{ cart_id: string }>).map((r) => r.cart_id)
       ).size,
@@ -73,7 +76,7 @@ export default function AdminDashboardPage() {
     <>
       <div className="admin-page-header">
         <div>
-          <h2>Dashboard</h2>
+          <h2>Inicio</h2>
           <p>Resumen de tu tienda</p>
         </div>
       </div>
@@ -100,6 +103,28 @@ export default function AdminDashboardPage() {
         </Link>
       )}
 
+      {/* New weaver applications alert */}
+      {stats.newWeavers > 0 && (
+        <Link
+          href="/admin/tejedoras"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none',
+            background: '#FAF1DF', border: '1px solid rgba(143,59,83,0.25)',
+            borderRadius: 12, padding: '14px 18px', marginBottom: '1.25rem',
+          }}
+        >
+          <span style={{
+            background: '#8F3B53', color: '#fff', borderRadius: 999,
+            minWidth: 26, height: 26, display: 'inline-flex', alignItems: 'center',
+            justifyContent: 'center', fontSize: 13, fontWeight: 600,
+          }}>{stats.newWeavers}</span>
+          <span style={{ color: '#1F1A1B', fontSize: '0.95rem' }}>
+            {stats.newWeavers === 1 ? 'Tenés 1 postulación de tejedora sin revisar' : `Tenés ${stats.newWeavers} postulaciones de tejedoras sin revisar`}
+          </span>
+          <span style={{ marginLeft: 'auto', color: '#8F3B53', fontSize: '0.85rem' }}>Ver →</span>
+        </Link>
+      )}
+
       {/* Stats */}
       <div className="admin-stats-grid">
         <Link href="/admin/productos" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -117,10 +142,10 @@ export default function AdminDashboardPage() {
           <div className="stat-value">{stats.newOrders}</div>
           <div className="stat-sub">Sin responder</div>
         </Link>
-        <Link href="/admin/encargos" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <div className="stat-label">Total encargos</div>
-          <div className="stat-value">{stats.totalOrders}</div>
-          <div className="stat-sub">Histórico</div>
+        <Link href="/admin/productos" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className="stat-label">Sin descripción</div>
+          <div className="stat-value">{stats.noDescriptionProducts}</div>
+          <div className="stat-sub">{stats.noDescriptionProducts === 0 ? 'Todas las fichas tienen texto' : 'La mejora que más vende: escribirlas'}</div>
         </Link>
         <Link href="/admin/carritos" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-label">Carritos con ítems</div>
@@ -205,35 +230,11 @@ export default function AdminDashboardPage() {
             </svg>
             Ver encargos
           </Link>
-          <Link href="/admin/testimonios" className="admin-quick-action">
+          <Link href="/admin/tejedoras" className="admin-quick-action">
             <svg width="18" height="18" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
             </svg>
-            Testimonios
-          </Link>
-          <Link href="/admin/descuentos" className="admin-quick-action">
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
-            </svg>
-            Descuentos
-          </Link>
-          <Link href="/admin/colores" className="admin-quick-action">
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z" />
-            </svg>
-            Colores de lana
-          </Link>
-          <Link href="/admin/colecciones" className="admin-quick-action">
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-            </svg>
-            Colecciones
-          </Link>
-          <Link href="/admin/categorias" className="admin-quick-action">
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-            </svg>
-            Categorías
+            Tejedoras
           </Link>
           <Link href="/admin/configuracion" className="admin-quick-action">
             <svg width="18" height="18" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

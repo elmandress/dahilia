@@ -293,6 +293,14 @@ export default function ProductosPage() {
                           −{product.discount_percent}%
                         </span>
                       )}
+                      {product.status === 'active' && !(product.description ?? '').trim() && (
+                        <span
+                          title="Esta ficha no tiene descripción: es lo que más frena la venta y el SEO"
+                          style={{ marginLeft: '0.5rem', fontSize: '0.7rem', background: 'rgba(182,49,74,0.08)', border: '1px solid rgba(182,49,74,0.25)', padding: '0.1rem 0.4rem', borderRadius: '4px', color: '#B6314A' }}
+                        >
+                          sin descripción
+                        </span>
+                      )}
                       <br />
                       <span style={{ fontSize: '0.8rem', color: '#999' }}>/{product.slug}</span>
                     </td>

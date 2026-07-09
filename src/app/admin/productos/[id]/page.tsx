@@ -495,10 +495,9 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       }, 1000)
     } catch (err) {
       console.error('Supabase deletion failed', err)
-      setToast('No se pudo eliminar el producto.')
-      setTimeout(() => {
-        router.push('/admin/productos')
-      }, 1000)
+      // Si falla, el producto sigue existiendo: quedarse en la página y avisar
+      // (redirigir acá haría creer que se borró).
+      setError('No se pudo eliminar el producto. Probá de nuevo.')
     }
   }
 
@@ -515,7 +514,17 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       <div className="admin-page-header">
         <div>
           <h2>Editar producto</h2>
-          <p>Modificá los datos del producto o eliminalo</p>
+          <p>
+            Modificá los datos del producto o eliminalo
+            {status === 'active' && slug && (
+              <>
+                {' · '}
+                <a href={`/tienda/${slug}`} target="_blank" rel="noopener noreferrer" style={{ color: '#8F3B53' }}>
+                  Ver en la tienda ↗
+                </a>
+              </>
+            )}
+          </p>
         </div>
         <div className="admin-actions admin-actions-desktop" style={{ display: 'flex', gap: '8px' }}>
           <button
@@ -593,6 +602,10 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Escribí los detalles de la prenda..."
             />
+            <span className="field-hint">
+              La receta que vende: qué lana es, medidas reales, cómo calza, horas de tejido y con qué combina.
+              Sin este texto la ficha no convence, no aparece en Google y no la citan las IA.
+            </span>
           </div>
 
           <div className="admin-form-grid">
@@ -874,8 +887,10 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                         />
                         Stock
                       </label>
-                      <button className="admin-btn-icon danger" onClick={() => removeSize(s.tempId)}>
-                        🗑️
+                      <button className="admin-btn-icon danger" onClick={() => removeSize(s.tempId)} aria-label={`Quitar talle ${s.size || ''}`} title="Quitar talle">
+                        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
                       </button>
                     </div>
                   ))}

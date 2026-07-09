@@ -418,6 +418,10 @@ export default function NuevoProductoPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describí el producto..."
                 />
+                <span className="field-hint">
+                  La receta que vende: qué lana es, medidas reales, cómo calza, horas de tejido y con qué combina.
+                  Sin este texto la ficha no convence, no aparece en Google y no la citan las IA.
+                </span>
               </div>
             </div>
           </div>

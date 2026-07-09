@@ -63,7 +63,7 @@ export default function AdminLoginPage() {
       }}>
         <div className="login-brand" style={{ textAlign: 'center', marginBottom: 32 }}>
           <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 300, color: 'var(--ink-900)', fontSize: 32, margin: '0 0 8px' }}>Dahila Crochet</h1>
-          <p style={{ color: 'var(--ink-500)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Panel Oculto</p>
+          <p style={{ color: 'var(--ink-500)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Panel de administración</p>
         </div>
 
         {error && <div className="login-error" style={{ color: 'var(--danger)', fontSize: 13, marginBottom: 16, textAlign: 'center' }}>{error}</div>}
@@ -111,7 +111,7 @@ export default function AdminLoginPage() {
               textTransform: 'uppercase', letterSpacing: '0.06em', transition: 'all 0.2s'
             }}
           >
-            {loading ? 'Ingresando...' : 'Ingresar al sistema'}
+            {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
       </div>
