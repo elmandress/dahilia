@@ -163,3 +163,65 @@ En una frase: **enseñar es hoy el mejor negocio de su tiempo Y la fábrica de s
 4. **Primer drop "Verano '26"** con el playbook.
 5. **Sumar 1 tejedora** para bolsos/statement (donde la economía ya cierra), y construir `/tejedoras`.
 6. **Segundo paso de precios** (mes 4–5) junto al drop.
+
+---
+
+# ADDENDUM 2026-07-09 — revisión con el negocio en marcha
+
+**Contexto nuevo:** dahila.uy activo, emails funcionando, tabla HOY aplicada, pedidos hasta agosto, consultas constantes, un posible mayorista de ~20 bolsos y **la primera postulación espontánea de tejedora**. Se re-investigó el mercado (UY + región + estándares laborales). Donde este addendum contradice lo de arriba, **manda el addendum**.
+
+## A1. El miedo "¿y si subo y no compra nadie?" — veredicto: infundado, con datos
+
+1. **Microeconomía:** lista de espera de un mes + consultas constantes + un mayorista golpeando la puerta = **exceso de demanda**: el precio actual está *debajo* del precio de equilibrio. Subir el precio con cola no puede dejarte sin ventas; en el peor caso acorta la cola — y esas ventas "perdidas" son exactamente las que hoy no podés tejer. El riesgo de subir con lista de espera es ~cero; el riesgo real es el actual: la dueña trabajando a $34–58/h, menos de la mitad del **salario mínimo legal ($127/h desde jul 2026, SMN $25.383/mes)** y ~cuarta parte del **ingreso mediano uruguayo (~$200/h, ~$40.000/mes, INE)**.
+2. **Benchmark regional nuevo:** una marca indie argentina (Nacra) vende un top de crochet a mano a ARS 54.000 ≈ **UYU ~1.450** — lo que la tabla de Dahila recién alcanza a 12 meses. Brasil (Elo7: R$ 85–150 ≈ UYU 600–1.100) es más barato **porque sus salarios son más bajos** — no es referencia válida. Chile: tops a pedido CLP 10.000–25.000 ≈ UYU 420–1.050, mercado también de salarios menores al UY.
+3. **Indian bajó** (sweaters $799–1.199; cardigan de máquina $1.119): el cardigan Dahila ($1.290) ya quedó *arriba* de Indian y **no pasó nada** — la demanda siguió creciendo. Es la prueba práctica de que la regla vieja "techo = Indian" era demasiado conservadora. El techo de esta etapa: knitwear de marca ($1.500–3.500). Y entre la máquina y Manos ($4.000+) hay un **hueco de $1.500–4.000 sin ningún jugador de crochet a mano con marca en UY** — el espacio natural de Dahila a 2–3 años.
+4. **Psicología del precio** (Kahneman/anclaje, heurística precio-calidad, Hormozi "virtuous price cycle"): en categorías donde la calidad es difícil de evaluar, el precio ES la señal de calidad. A $890 el mercado lee "hobby"; a $1.400, "marca". Subir precios con mejoras visibles *aumenta* el valor percibido — la evidencia clásica (estudios de vino con precio manipulado) y toda la práctica premium van en la misma dirección.
+
+**Decisión recomendada:** adelantar el segundo paso (columna **12m**, ya aprobada como meta) **solo para las piezas que acumulen ≥1 mes de lista de espera**, sin esperar a noviembre. El resto sigue el plan (drop de verano). No se inventan precios nuevos: se usa la columna 12m existente. Regla permanente: **cola de un mes = escalón siguiente**.
+
+## A2. El salario mínimo como referencia: error conceptual (corregido)
+
+El SMN es un **piso legal de empleo**, no un precio de mercado del trabajo artesanal especializado. Referencias correctas, en orden:
+1. **Costo de reposición:** cuánto costaría pagarle a otra persona por hacerlo = tarifa tejedora ($150–250/h). Es el costo real del trabajo de la dueña.
+2. **Costo de oportunidad:** qué rinde esa hora en el mejor uso alternativo (clase: $291–500/h).
+3. **Demanda observada:** la lista de espera. Es el único "estudio de elasticidad" gratis y en tiempo real que existe.
+El SMN queda para lo único que sirve: **piso ético/legal absoluto al pagar a terceras** (estándar ETI/WFTO: el pago por pieza debe equivaler al menos al mínimo por hora).
+
+## A3. Metodología de precio artesanal (la fórmula de la casa)
+
+`precio = max(piso de viabilidad, precio de mercado objetivo)`, donde:
+- **Piso de viabilidad** = materiales + packaging + (horas estándar × tarifa de reposición $150/h) + margen de marca 15–25%, ÷ (1 − comisión de cobro). Es la calculadora del panel con tarifa 150 — **si el precio de mercado no llega al piso, el producto no se abarata: se mejora, se re-posiciona o se descataloga.**
+- **Precio de mercado objetivo** = posición elegida en la banda (hoy: arriba del emprendimiento informal, rozando el knitwear de marca; a 2–3 años: dentro del hueco $1.500–4.000).
+- **Corrector de demanda:** ≥1 mes de cola sostenida → subir un escalón (~+10–15%) esa pieza.
+
+## A4. Sistema de pago a tejedoras v2 (corrige el §4.d)
+
+**Corrección importante:** el informe de arriba sugería que "a $80/h los bolsos ya cierran". **$80/h está por debajo del mínimo legal — no es una opción.** Con piso ético $127/h y tarifa real $150/h, **hoy ninguna pieza delegada deja margen** (top 13 h: $1.950 de tejido + $280 lana > $990 de precio). Consecuencia estratégica: **primero suben los precios, después se delega** — el orden inverso quema plata. Los aumentos no son "para ganar más": son el prerequisito de la escala.
+
+El sistema (pago **por pieza**, nunca por hora real — evidencia Lazear/Safelite: pago por pieza = +20–44% de productividad, y la calidad se protege con QC, no con reloj):
+
+| Nivel | Tarifa/h estándar | Cómo se llega |
+|---|---|---|
+| Muestra (prueba pagada) | $150 | Postulación con fotos aprobadas |
+| Aprendiz | $150 | Muestra aprobada |
+| Asociada | $180 | 5 piezas seguidas sin retrabajos y en fecha |
+| Senior | $210–250 | Constancia + piezas complejas + puede hacer QC de otras |
+
+- **Pago por pieza = horas estándar de la ficha × tarifa del nivel.** Horas estándar con **buffer +30% al principio** (Manos estima 26 h de cooperativa por cada 20 h de una tejedora experta) que se va recortando al estabilizarse.
+- **Primera pieza de un modelo nuevo: +1–2 h** (curva de aprendizaje de la ficha).
+- **Modificadores:** urgencia (entrega antes del plazo estándar) +20% · temporada de drop +10% opcional para asegurar capacidad.
+- **Retrabajos:** error de tejido → se rehace sin pago extra (regla Alabama Chanin/Safelite, pactada por escrito ANTES); error de la ficha → lo paga Dahila normal. Reincidencia → baja de nivel o pausa.
+- **QC 100% centralizado** antes de pagar y de enviar; la velocidad es premio de la tejedora, la calidad es la barrera de la marca.
+- Escala: hasta ~8 tejedoras el QC lo hace la dueña; después, una senior hace QC de primera pasada y la dueña audita por muestreo. Registro en planilla simple; software recién con 5+ tejedoras activas.
+
+## A5. Pedido mayorista (política, para los 20 bolsos y los que vengan)
+
+- La norma internacional de wholesale (keystone: mayorista = 50% del retail) **presupone un retail construido con ese colchón — el de Dahila no lo tiene todavía**. Aplicarla hoy sería vender a pérdida de valor.
+- **Política Dahila 2026:** descuento por volumen **10–15% máximo** sobre precio de web · **seña 50%** antes de empezar · plazo realista (20 bolsos ≈ 140 h ≈ un mes de una persona) · si el comprador revende, que fije su propio precio hacia arriba, no hacia abajo del de la web.
+- Si exigen keystone: la respuesta es no (o "cuando el retail llegue a su meta de 12m, hablamos"). Un mayorista que solo funciona destruyendo tu margen no es un canal: es un cliente grande con descuento.
+
+## A6. Qué queda confirmado (sin cambios)
+
+Clases como mejor $/h de la dueña y pipeline de tejedoras (se refuerza: es también la fuente de tejedoras ya formadas al estándar) · drops con playbook · HOLD en bandana/mini bufandas · muestra pagada + ficha técnica + QC central · etiqueta DAHILA en todas las piezas · "todo aumento llega con una mejora" y nunca anunciar "subimos precios" (para encargos ya cotizados: **se respeta el precio cotizado** — grandfathering barato que compra confianza).
+
+**Fuentes nuevas:** [SMN jul 2026 (MTSS)](https://www.gub.uy/ministerio-trabajo-seguridad-social/comunicacion/noticias/salario-minimo-nacional-24572-desde-1o-enero-2026) · [ingreso mediano (ECH/INE via datosUruguay)](https://datosuruguay.com/ech/ingresos-personales) · [Indian tejidos](https://www.indian.com.uy/tejidos) · [Nacra AR](https://www.shopnacra.com.ar/productos/top-ada-tejido-puro-hilo-de-algodon/) · [Elo7 BR](https://www.elo7.com.br/lista/cropped-de-croche) · [Moda crochet by me](https://www.mitienda.uy/moda-crochet-by-me) · [WFTO Fair Payment](https://wfto.com/our-fair-trade-system/) · [Lazear, Performance Pay and Productivity (AER 2000)](https://www.aeaweb.org/articles?id=10.1257%2Faer.90.5.1346) · [wholesale handmade (Craftybase)](https://craftybase.com/blog/pricing-handmade-products-wholesale) · [$100M Offers (Hormozi)](https://www.goodreads.com/book/show/58612786-100m-offers).

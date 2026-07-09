@@ -252,7 +252,7 @@ export default function EstrategiaPage() {
             ))}
           </div>
 
-          <SectionHead title="Las 4 reglas de tus precios" />
+          <SectionHead title="Las 5 reglas de tus precios" />
           <div className="est-grid" style={{ marginBottom: '2rem' }}>
             {PRICING_RULES.map((r) => (
               <div key={r.title} className="est-card cream">

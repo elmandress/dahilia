@@ -31,7 +31,7 @@ export interface MarketBand {
 export const MARKET_BANDS: MarketBand[] = [
   { name: 'Emprendimientos informales', detail: 'ferias, DM de Instagram', min: 350, max: 850 },
   { name: 'Dahila', detail: 'a mano, con marca y a medida', min: 360, max: 1540, self: true },
-  { name: 'Ropa de máquina', detail: 'Indian, Zara, Mango', min: 899, max: 3500 },
+  { name: 'Ropa de máquina', detail: 'Indian, Zara, Mango', min: 799, max: 3500 },
   { name: 'Handmade internacional', detail: 'Etsy', min: 1200, max: 4000 },
   { name: 'Lujo artesanal', detail: 'Manos del Uruguay', min: 4000, max: 14000 },
 ]
@@ -50,8 +50,13 @@ export const MARKET_REFS: MarketRef[] = [
   },
   {
     name: 'Indian — tejido a máquina',
-    price: 'Cardigan $1.399',
-    lesson: 'Tu cardigan tejido a mano costaba MENOS que uno de máquina. Esa era la anomalía a corregir.',
+    price: 'Sweaters $799–1.199 (jul 2026)',
+    lesson: 'Tu cardigan ($1.290) ya cuesta más que uno de máquina de Indian — y está perfecto: lo hecho a mano no compite contra la máquina. La anomalía de 2025 quedó corregida.',
+  },
+  {
+    name: 'Marcas artesanales de la región',
+    price: 'Top indie argentino ~$1.450 (Nacra)',
+    lesson: 'Una marca chica argentina de crochet a mano cobra por un top lo que tu tabla recién alcanza a 12 meses. Brasil (Elo7, $600–1.100) es más barato porque sus sueldos lo son — no es tu referencia.',
   },
   {
     name: 'Etsy — handmade internacional',
@@ -61,7 +66,7 @@ export const MARKET_REFS: MarketRef[] = [
   {
     name: 'Manos del Uruguay',
     price: '$4.000–10.000+',
-    lesson: '"Hecho a mano en Uruguay" viste a marcas de lujo en Nueva York. El prestigio es real — usalo.',
+    lesson: '"Hecho a mano en Uruguay" viste a marcas de lujo en Nueva York. El prestigio es real — usalo. Y entre la máquina y Manos hay un hueco de $1.500–4.000 donde hoy no hay nadie.',
   },
   {
     name: 'El resto del mercado UY',
@@ -74,12 +79,12 @@ export const MARKET_REFS: MarketRef[] = [
 
 /** La explicación de fondo, en una frase. */
 export const PRICING_WHY =
-  'La regla es simple: mirá cuánto te queda por hora de trabajo en cada pieza (precio menos materiales, dividido las horas). Los bolsos te pagaban $67–104 la hora; los cardigans y sets, $34–44 — la mitad. Por eso suben primero las piezas de muchas horas: no porque "afuera cueste más", sino porque eran las que peor te pagaban a VOS.'
+  'La regla es simple: mirá cuánto te queda por hora de trabajo en cada pieza (precio menos materiales, dividido las horas). Los bolsos te pagaban $67–104 la hora; los cardigans y sets, $34–44 — menos de un tercio del salario mínimo legal ($127). Por eso suben primero las piezas de muchas horas: no porque "afuera cueste más", sino porque eran las que peor te pagaban a VOS.'
 
 export const PRICING_RULES = [
   {
-    title: 'Nunca ser la marca cara',
-    body: 'El techo es la ropa de máquina; jamás los precios de Etsy. Tu lugar: "hecho a mano al precio de casi-máquina".',
+    title: 'El techo sube con la marca',
+    body: 'Ya no es Indian (sus sweaters de máquina bajaron a $799–1.199 y no compiten con lo tuyo). El techo de esta etapa es el knitwear de marca ($1.500–3.500). Entre eso y Manos ($4.000+) no hay NADIE tejiendo a mano con marca: ese hueco es tu espacio para crecer.',
   },
   {
     title: 'Todo aumento llega con una mejora',
@@ -90,6 +95,10 @@ export const PRICING_RULES = [
     body: 'Un poncho de 19 horas no puede costar casi lo mismo que un top de 13. La escalera de precios sigue a las horas.',
   },
   {
+    title: 'La lista de espera manda',
+    body: 'Si una pieza junta más de un mes de cola, su precio de encargo sube al siguiente escalón (columna 12m) sin esperar la fecha del plan. La cola es la prueba de que el precio quedó corto — y una venta que igual no podías tejer no es una venta perdida.',
+  },
+  {
     title: 'La entrada queda barata a propósito',
     body: 'Bandana y mini bufandas no se tocan: son la puerta de entrada para probar la marca y hacer regalos.',
   },
@@ -97,8 +106,9 @@ export const PRICING_RULES = [
 
 /** Referencias del valor de una hora de trabajo en Uruguay (para decidir con contexto). */
 export const HOUR_REFS = [
-  { value: '$110', label: 'salario mínimo por hora en Uruguay', sub: 'el piso legal de referencia' },
-  { value: '$150–250', label: 'tarifa razonable para pagarle a una tejedora', sub: 'por hora estándar del modelo, a convenir y subir con la experiencia' },
+  { value: '$127', label: 'salario mínimo por hora en Uruguay', sub: 'desde julio 2026 ($25.383/mes ÷ 200 h). Es el piso legal — no una meta' },
+  { value: '~$200', label: 'gana por hora la mitad de los uruguayos que trabajan', sub: 'ingreso mediano ~$40.000/mes (INE). Tu vara real de comparación' },
+  { value: '$150–250', label: 'tarifa razonable para pagarle a una tejedora', sub: 'por hora estándar del modelo, según nivel — nunca menos que el mínimo' },
   { value: '$291–500', label: 'lo que vale una hora de clase de crochet', sub: 'precios reales publicados en Uruguay' },
 ]
 
@@ -170,7 +180,7 @@ export const PRICING_PHASES = [
   {
     when: 'Nov 2026',
     title: 'Segundo paso, con el drop de verano',
-    body: 'Tops y bolsos suben hacia la meta de 12 meses. La colección nueva es la razón del precio nuevo.',
+    body: 'Tops y bolsos suben hacia la meta de 12 meses. La colección nueva es la razón del precio nuevo. Para las piezas que YA juntan lista de espera de un mes o más, este paso se adelanta: la cola es evidencia suficiente, no hace falta esperar la fecha.',
     done: false,
   },
   {
@@ -254,7 +264,11 @@ export const WEAVER_PIPELINE = [
 export const WEAVER_SYSTEM = [
   {
     title: 'Cuánto y cómo pagar',
-    body: 'Precio por pieza = horas estándar del modelo × tarifa por hora acordada (referencia: $150–250/h). Se pacta ANTES de tejer y se paga al aprobar la pieza. La lana la ponés vos: controlás calidad y color.',
+    body: 'Precio por pieza = horas estándar de la ficha × tarifa según nivel: aprendiz $150/h, asociada $180/h, senior $210–250/h (el mínimo legal es $127/h — nunca menos, ni en la muestra). Se pacta ANTES de tejer y se paga al aprobar la pieza. La lana la ponés vos: controlás calidad y color.',
+  },
+  {
+    title: 'Los números, honestos',
+    body: 'A los precios de hoy, delegar una prenda grande da pérdida: un top de 13 h a $150/h son $1.950 solo de tejido. Por eso el orden es: primero suben los precios (columna 12m), después se delega — arrancando por bolsos y accesorios, que son las piezas donde antes van a cerrar los números. Delegar sin subir precios es regalar plata.',
   },
   {
     title: 'Control de calidad, sin excepciones',
@@ -270,7 +284,7 @@ export const WEAVER_SYSTEM = [
   },
   {
     title: 'Errores y ritmos',
-    body: 'Primer error: se corrige juntas con la ficha. Si se repite: piezas más simples por un tiempo. ¿Es prolija pero lenta? Dale modelos cortos, no la apures. ¿Rápida y prolija? Dale más y mejor.',
+    body: 'Primer error: se corrige juntas con la ficha. Si se repite: piezas más simples por un tiempo. La primera pieza de un modelo nuevo paga 1–2 horas extra — aprender la ficha también es trabajo. ¿Prolija pero lenta? Dale modelos cortos, no la apures. ¿Rápida y prolija? Dale más y mejor: al pagar por pieza, su velocidad es su premio.',
   },
   {
     title: 'Empezá con UNA',
@@ -487,7 +501,8 @@ export const NEXT_ACTIONS: TodoAction[] = [
   { id: 'mercadopago', label: 'Usar links de pago de Mercado Pago con cuotas', detail: 'Se arma en 2 minutos al cerrar cada venta por WhatsApp. Las cuotas hacen fácil el precio nuevo.', horizon: 'mes' },
   { id: 'cupon-vip', label: 'Crear el primer cupón para la lista VIP', detail: 'Un código de bienvenida chico (ej. 10%) da una razón concreta para anotarse. Se crea en Cupones.', horizon: 'mes' },
   { id: 'drop-verano', label: "Preparar el drop Verano '26", detail: 'Fotos, colección, cupón y el paso a paso de la pestaña Drops. Lanzamiento: noviembre.', horizon: 'trimestre' },
-  { id: 'dominio', label: 'Activar dahila.uy (¡ya está comprado!)', detail: 'Seguir el runbook del README: DNS en NetUY, dominio en Netlify, variable, redirect, emails desde send.dahila.uy y Search Console.', horizon: 'ya' },
+  { id: 'primera-postulante', label: 'Responder a la primera postulante de tejedoras', detail: 'El paso a paso está en la pestaña Tejedoras: charla por WhatsApp y después una muestra pagada contra ficha técnica. Sin apuro — la vara de calidad se pone desde la primera.', horizon: 'ya' },
+  { id: 'mayorista', label: 'Cotizar el pedido mayorista de bolsos con cabeza fría', detail: 'Regla: descuento máximo 10–15% sobre el precio de la web, seña del 50% antes de empezar y plazo realista (20 bolsos ≈ 140 horas ≈ un mes de tejido de una persona). Si piden mitad de precio, la respuesta es "no" — tu precio ya es el más justo del mercado.', horizon: 'ya' },
   { id: 'numero-nuevo', label: 'Propagar el número nuevo (099 850 073) fuera del sitio', detail: 'La web ya lo usa. Falta donde el sitio no llega: la app de WhatsApp Business (transferir el número), el link de la bio de Instagram, Google Business Profile, y tarjetas o packaging impresos con el número viejo.', horizon: 'ya' },
   { id: 'precios-fase2', label: 'Segundo paso de precios', detail: 'Con el drop de verano, tops y bolsos suben hacia la meta de 12 meses (columna "12m" de la tabla).', horizon: 'trimestre' },
 ]
@@ -527,9 +542,9 @@ export const RISKS: Risk[] = [
     mitigation: 'Muestra pagada + ficha técnica + revisar TODO antes de enviar. Nunca sale nada sin pasar por tus manos.',
   },
   {
-    title: 'Emails que caen en spam',
+    title: 'Decir que sí a todo por miedo',
     severity: 'media',
-    detail: 'El dominio de envío actual no coincide con la marca: algunos avisos pueden ir a spam.',
-    mitigation: 'dahila.uy ya está comprado: al activar el envío desde send.dahila.uy (paso 5 del runbook) se arregla de raíz. Mientras: marcar "no es spam" y agendar el remitente.',
+    detail: 'Con la demanda creciendo van a llegar pedidos grandes, apurados o con descuento exigido. Aceptarlos a cualquier precio vuelve a comprar trabajo a pérdida.',
+    mitigation: 'Toda propuesta pasa por la calculadora antes de responder: si no paga tu hora mejor que el promedio, se cotiza más caro o se dice que no. La lista de espera te da el poder de elegir.',
   },
 ]

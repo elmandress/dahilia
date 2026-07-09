@@ -107,7 +107,7 @@ export default function Calculadora({ livePrices }: Props) {
         {inputRow('calc-materials', 'Materiales (lana, botones…)', materials, setMaterials, '$')}
         {inputRow('calc-packaging', 'Packaging', packaging, setPackaging, '$', 'Bolsa, papel de seda, tarjeta.')}
         {inputRow('calc-others', 'Otros costos', others, setOthers, '$', 'Envío que absorbés, feria, etc.')}
-        {inputRow('calc-rate', 'Tu tarifa por hora', rate, setRate, '$/h', 'Referencia: $150–250. El mínimo nacional es ~$110.')}
+        {inputRow('calc-rate', 'Tu tarifa por hora', rate, setRate, '$/h', 'Referencia: $150–250. El mínimo nacional es ~$127 (jul 2026).')}
         {inputRow('calc-margin', 'Margen de marca', margin, setMargin, '%', 'Para reinvertir: fotos, lana de muestra, packaging mejor.')}
         {inputRow('calc-commission', 'Comisión de cobro', commission, setCommission, '%', 'Mercado Pago ~6%. Transferencia o efectivo: 0.')}
       </div>
