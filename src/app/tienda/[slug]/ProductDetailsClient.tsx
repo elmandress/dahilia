@@ -13,7 +13,7 @@ import { SizeGuide } from '@/components/SizeGuide'
 import { ShareButton } from '@/components/ShareButton'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import type { Product, Discount } from '@/lib/types'
-import { getEffectivePrice, getPrimaryPhoto, getScarcity, readyDateEstimate, BLUR_DATA_URL } from '@/lib/types'
+import { getEffectivePrice, getFinalPrice, getPrimaryPhoto, getScarcity, readyDateEstimate, formatPrice, BLUR_DATA_URL } from '@/lib/types'
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 import { track } from '@/lib/analytics'
@@ -22,7 +22,7 @@ export function ProductDetailsClient({
   product,
   discountPercent = 0,
   related = [],
-  relatedTitle,
+  lookComplements = [],
   discounts = [],
   sizeGuideNote,
   whatsappUrl = 'https://wa.me/59899850073',
@@ -39,8 +39,8 @@ export function ProductDetailsClient({
   product: Product
   discountPercent?: number
   related?: Product[]
-  /** Título del cross-sell calculado en el server ("Completá el look" cuando hay complementos). */
-  relatedTitle?: string
+  /** Complementos para la tira "Completá el look" del bloque de compra (máx 2). */
+  lookComplements?: Product[]
   discounts?: Discount[]
   sizeGuideNote?: string
   whatsappUrl?: string
@@ -178,10 +178,6 @@ export function ProductDetailsClient({
             )}
           </div>
 
-          <p style={{ fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: 0 }}>
-            {product.description || 'Tejida a mano. Empieza cuando vos confirmás colores y medida.'}
-          </p>
-
           {/* Colour palette — these are the tones Anush can work this piece in.
               Selecting is coordinated over WhatsApp, so this is informational. */}
           {product.colors && product.colors.length > 0 && (
@@ -207,11 +203,6 @@ export function ProductDetailsClient({
               </div>
             </div>
           )}
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-            <FavoriteButton productId={product.id} variant="inline" />
-            <ShareButton title={`${product.name} — Dahila Crochet`} text={`Mirá esta prenda de Dahila: ${product.name}`} />
-          </div>
 
           {!isSoldOut && !product.is_custom_only && (
             <div>
@@ -351,6 +342,83 @@ export function ProductDetailsClient({
             </div>
           )}
 
+          {/* Trust strip — pegado al CTA, donde muere la ansiedad de compra */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+            {trust.map(({ icon, text }) => (
+              <span key={text} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500,
+                letterSpacing: '0.02em',
+              }}>
+                <Icon name={icon} size={14} color={dahila.ink500} /> {text}
+              </span>
+            ))}
+          </div>
+
+          {/* Completá el look — 2 complementos discretos, DESPUÉS del CTA
+              (Baymard: el cross-sell nunca compite con la acción principal). */}
+          {lookComplements.length > 0 && (
+            <div style={{
+              borderTop: `1px solid ${dahila.border}`, paddingTop: 14,
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <span style={{
+                fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
+                textTransform: 'uppercase', color: dahila.ink500,
+              }}>
+                Completá el look
+              </span>
+              {lookComplements.map((p) => {
+                const cPhoto = getPrimaryPhoto(p)
+                const cFinal = getFinalPrice(p, undefined, discounts)
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/tienda/${p.slug}`}
+                    onClick={() => track('look_click', { from: product.slug, to: p.slug })}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none',
+                    }}
+                  >
+                    <span style={{
+                      position: 'relative', width: 46, height: 56, flexShrink: 0,
+                      borderRadius: 8, overflow: 'hidden', background: dahila.cream50, display: 'block',
+                    }}>
+                      <Image src={cPhoto} alt={p.name} fill sizes="46px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+                    </span>
+                    <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <span style={{
+                        fontFamily: dahila.fontDisplay, fontSize: 14, color: dahila.ink900, lineHeight: 1.25,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>{p.name}</span>
+                      <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700 }}>
+                        {formatPrice(cFinal)}
+                      </span>
+                    </span>
+                    <span aria-hidden style={{ color: dahila.ink300, display: 'inline-flex' }}>
+                      <Icon name="caret-right" size={14} />
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Descripción — abajo del bloque de compra: quien ya decidió no la
+              necesita; quien duda la encuentra enseguida. */}
+          <p style={{
+            fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, lineHeight: 1.7,
+            color: dahila.ink700, margin: 0,
+            borderTop: `1px solid ${dahila.border}`, paddingTop: 16,
+          }}>
+            {product.description || 'Tejida a mano. Empieza cuando vos confirmás colores y medida.'}
+          </p>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+            <FavoriteButton productId={product.id} variant="inline" />
+            <ShareButton title={`${product.name} — Dahila Crochet`} text={`Mirá esta prenda de Dahila: ${product.name}`} />
+          </div>
+
           {/* Maker bio — who made this piece; builds trust for artisan brands */}
           {makerBio.trim().length > 0 && (
             <div style={{
@@ -373,22 +441,6 @@ export function ProductDetailsClient({
               </div>
             </div>
           )}
-
-          {/* Trust strip — reduces purchase anxiety near the CTA */}
-          <div style={{
-            display: 'flex', flexWrap: 'wrap', gap: 12,
-            paddingTop: 14, marginTop: 2,
-          }}>
-            {trust.map(({ icon, text }) => (
-              <span key={text} style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500,
-                letterSpacing: '0.02em',
-              }}>
-                <Icon name={icon} size={14} color={dahila.ink500} /> {text}
-              </span>
-            ))}
-          </div>
 
           <ul style={{
             margin: '6px 0 0', padding: 0, listStyle: 'none',
@@ -475,10 +527,9 @@ export function ProductDetailsClient({
       {/* Related products — cross-sell con título contextual */}
       {related.length > 0 && (() => {
         const sameCollection = related.some((p) => p.collection_id && p.collection_id === product.collection_id)
-        const fallbackTitle = sameCollection && product.collection?.name
+        const sectionTitle = sameCollection && product.collection?.name
           ? `De la colección ${product.collection.name}`
           : 'También tejemos'
-        const sectionTitle = relatedTitle ?? fallbackTitle
         return (
         <section style={{ marginTop: 88 }}>
           <h2 style={{

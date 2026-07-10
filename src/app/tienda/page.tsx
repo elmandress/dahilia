@@ -4,6 +4,7 @@ import type { Product, Category, Color, Discount } from '@/lib/types'
 import { getPrimaryPhoto, getFinalPrice } from '@/lib/types'
 import { SITE_URL } from '@/lib/env'
 import { TiendaClient } from './TiendaClient'
+import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 3600
 
@@ -12,7 +13,8 @@ export const metadata: Metadata = {
   description: 'Tops, cardigans, bolsos y sets tejidos a mano en Montevideo, con precios claros. Cada pieza se puede pedir en tu talle y tus colores. Envío a todo Uruguay.',
   alternates: { canonical: '/tienda' },
   openGraph: {
-    title: 'Ropa de crochet hecha a mano en Uruguay | Dahila Crochet',
+    ...OG_BASE,
+    title: 'Ropa de crochet hecha a mano en Uruguay',
     description: 'Tops, cardigans, bolsos y sets tejidos a mano en Montevideo, con precios claros. Envío a todo Uruguay.',
     url: '/tienda',
   },

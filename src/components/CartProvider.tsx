@@ -36,6 +36,31 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 // fires and refetches from the server.
 const SYNC_KEY = 'dahila_cart_sync'
 
+// Resiliencia: última copia buena del carrito en localStorage. Si Supabase
+// (vía /api/cart) está caído, el carrito se hidrata desde acá en modo solo
+// lectura — la clienta ve sus piezas y el checkout por WhatsApp (que arma el
+// mensaje en el cliente) sigue funcionando. Una caída de la base no debería
+// costar una venta que ya estaba decidida.
+const SNAPSHOT_KEY = 'dahila_cart_snapshot'
+
+function saveSnapshot(items: CartItemWithProduct[]) {
+  try {
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(items))
+  } catch {
+    // Modo privado / storage lleno: el snapshot es best-effort.
+  }
+}
+
+function loadSnapshot(): CartItemWithProduct[] {
+  try {
+    const raw = localStorage.getItem(SNAPSHOT_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? (parsed as CartItemWithProduct[]) : []
+  } catch {
+    return []
+  }
+}
+
 async function jsonOrThrow(res: Response): Promise<{ items: CartItemWithProduct[] }> {
   if (!res.ok) {
     let detail = ''
@@ -84,8 +109,13 @@ export function CartProvider({
       const res = await fetch('/api/cart', { credentials: 'include' })
       const data = await jsonOrThrow(res)
       setItems(data.items || [])
+      saveSnapshot(data.items || [])
     } catch (e) {
       console.error('Cart fetch failed', e)
+      // Base caída: servir la última copia buena para que el pedido no se
+      // pierda (el checkout por WhatsApp no necesita la base para nada).
+      const snapshot = loadSnapshot()
+      if (snapshot.length > 0) setItems(snapshot)
     } finally {
       setIsLoading(false)
       setHasMounted(true)
@@ -148,6 +178,7 @@ export function CartProvider({
       })
       const data = await jsonOrThrow(res)
       setItems(data.items || [])
+      saveSnapshot(data.items || [])
       pingOtherTabs()
       // En /carrito el ítem aparece en la lista ahí mismo — abrir el drawer
       // encima sería redundante; el caller lo apaga con { openDrawer: false }.
@@ -172,6 +203,7 @@ export function CartProvider({
       })
       const data = await jsonOrThrow(res)
       setItems(data.items || [])
+      saveSnapshot(data.items || [])
       pingOtherTabs()
     } catch (e) {
       console.error('updateQty failed', e)
@@ -186,6 +218,7 @@ export function CartProvider({
       })
       const data = await jsonOrThrow(res)
       setItems(data.items || [])
+      saveSnapshot(data.items || [])
       pingOtherTabs()
     } catch (e) {
       console.error('removeFromCart failed', e)

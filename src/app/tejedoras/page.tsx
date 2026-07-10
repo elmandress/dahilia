@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import TejedorasClient from './TejedorasClient'
+import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 3600
 
@@ -10,7 +11,8 @@ export const metadata: Metadata = {
     'Sumate a la red de tejedoras de Dahila Crochet. Trabajá desde casa, a tu ritmo, con pago por pieza aprobada y materiales incluidos. Postulate hoy.',
   alternates: { canonical: '/tejedoras' },
   openGraph: {
-    title: 'Tejé con Dahila | Dahila Crochet',
+    ...OG_BASE,
+    title: 'Tejé con Dahila — trabajá desde casa',
     description:
       'Trabajá desde casa, a tu ritmo, con pago por pieza aprobada y materiales incluidos.',
     url: '/tejedoras',

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { mediaPath } from '@/lib/media'
+import { mediaPath, prepareImageForUpload, STORAGE_CACHE_SECONDS } from '@/lib/media'
 
 // All keys the CMS surfaces. The DB may contain extras (e.g. legacy)
 // — we preserve them on save by passing through whatever loaded.
@@ -191,7 +191,7 @@ const SECTIONS = [
     fields: [
       { key: 'size_guide_note',  label: 'Nota de la tabla de talles', type: 'textarea' },
       { key: 'shipping_estimate', label: 'Envío — línea corta (se muestra en producto y carrito)', type: 'text', placeholder: 'Montevideo $200 · Interior por agencia' },
-      { key: 'free_shipping_threshold', label: 'Envío gratis desde (monto en $, vacío = apagado)', type: 'text', placeholder: '1400' },
+      { key: 'free_shipping_threshold', label: 'Envío gratis desde (monto en $, vacío = apagado)', type: 'text', placeholder: '1600' },
       { key: 'pdp_trust_1', label: 'Garantía 1 (en cada producto)', type: 'text', placeholder: 'Envío a todo Uruguay' },
       { key: 'pdp_trust_2', label: 'Garantía 2 (en cada producto)', type: 'text', placeholder: 'Hecho a mano' },
       { key: 'pdp_trust_3', label: 'Garantía 3 (en cada producto)', type: 'text', placeholder: 'Coordinás por WhatsApp' },
@@ -210,10 +210,12 @@ type FieldType = 'text' | 'textarea' | 'image' | 'hero' | 'toggle' | 'color'
 // Nombre de archivo descriptivo (ver lib/media.ts) — solo subidas nuevas.
 async function uploadToMedia(file: File, hint: string): Promise<string> {
   const supabase = createClient()
-  const path = mediaPath('site', hint || 'sitio', file.name)
+  // Comprimida antes de subir + caché de 1 año (ver lib/media.ts, control de egress).
+  const prepared = await prepareImageForUpload(file)
+  const path = mediaPath('site', hint || 'sitio', `f.${prepared.ext}`)
   const { error: upErr } = await supabase.storage
     .from('media')
-    .upload(path, file, { cacheControl: '3600', upsert: false })
+    .upload(path, prepared.blob, { cacheControl: STORAGE_CACHE_SECONDS, contentType: prepared.contentType, upsert: false })
   if (upErr) throw upErr
   const { data: pub } = supabase.storage.from('media').getPublicUrl(path)
   return pub.publicUrl

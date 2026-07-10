@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { Product, Discount } from '@/lib/types'
 import { getFinalPrice, getEffectivePrice } from '@/lib/types'
 import { OfertasClient } from './OfertasClient'
+import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 1800
 
@@ -11,7 +12,8 @@ export const metadata: Metadata = {
   description: 'Piezas de crochet con descuento real, tejidas una por una en Montevideo. Pocas unidades de cada modelo — cuando se van, se van. Envío a todo Uruguay.',
   alternates: { canonical: '/ofertas' },
   openGraph: {
-    title: 'Ofertas en prendas tejidas a mano | Dahila Crochet',
+    ...OG_BASE,
+    title: 'Ofertas en prendas tejidas a mano',
     description: 'Piezas de crochet con descuento real, tejidas una por una en Montevideo. Pocas unidades de cada modelo.',
     url: '/ofertas',
   },

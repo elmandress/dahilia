@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback, useRef, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { slugify, mediaPath } from '@/lib/media'
+import { slugify, mediaPath, prepareImageForUpload, STORAGE_CACHE_SECONDS } from '@/lib/media'
+import { draftDescription } from '@/lib/description-draft'
 import type { Category, Color, Collection, Product, ProductMedia, ProductSize, ProductColor } from '@/lib/types'
 
 type LoadedProductColor = Partial<ProductColor> & { color_id?: string; color?: { id: string } }
@@ -200,9 +201,14 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       if (!isVideo && !isImage) continue
 
       const tempId = `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`
+      // Comprimir ANTES de subir (≤1600px, JPEG): una foto de celular de 4 MB
+      // baja a ~300 KB y todo el egress del storage se achica en proporción.
+      const prepared = isImage
+        ? await prepareImageForUpload(file)
+        : { blob: file as Blob, ext: (file.name.split('.').pop() || 'mp4').toLowerCase(), contentType: file.type }
       // Nombre descriptivo (ver lib/media.ts): el nombre del producto viaja
       // en el archivo — señal para Google Images. Solo subidas nuevas.
-      const filePath = mediaPath('products', name || 'producto', file.name)
+      const filePath = mediaPath('products', name || 'producto', `f.${prepared.ext}`)
 
       const entry: MediaEntry = {
         tempId,
@@ -220,8 +226,9 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
 
       const { data, error: uploadError } = await supabase.storage
         .from('media')
-        .upload(filePath, file, {
-          cacheControl: '3600',
+        .upload(filePath, prepared.blob, {
+          cacheControl: STORAGE_CACHE_SECONDS,
+          contentType: prepared.contentType,
           upsert: false,
         })
 
@@ -596,6 +603,25 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Escribí los detalles de la prenda..."
             />
+            {/* Borrador honesto: usa solo nombre/categoría/talles/colores reales
+                (ver lib/description-draft.ts) — nunca inventa materiales ni
+                medidas. Aparece solo con el campo vacío: no pisa texto escrito. */}
+            {!description.trim() && name.trim() !== '' && (
+              <button
+                type="button"
+                className="admin-btn admin-btn-secondary admin-btn-sm"
+                style={{ alignSelf: 'flex-start', marginTop: 6 }}
+                onClick={() => setDescription(draftDescription({
+                  name,
+                  categorySlug: categories.find((c) => c.id === categoryId)?.slug ?? null,
+                  hasSizes: sizes.length > 0,
+                  hasColors: selectedColors.length > 0,
+                  isCustomOnly,
+                }))}
+              >
+                ✨ Generar borrador para editar
+              </button>
+            )}
             <span className="field-hint">
               La receta que vende: qué lana es, medidas reales, cómo calza, horas de tejido y con qué combina.
               Sin este texto la ficha no convence, no aparece en Google y no la citan las IA.

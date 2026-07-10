@@ -410,71 +410,64 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
       </div>
 
       {/* "Sumale un detalle" — cross-sell calmo: piezas chicas que viajan en el
-          mismo envío. Un solo toque cuando la pieza es de talle único; si tiene
-          talles, lleva a la ficha para elegirlo. */}
+          mismo envío. Sin caja ni fondo: una continuación silenciosa de la
+          lista, con el mismo lenguaje visual que las filas del carrito.
+          Un solo toque cuando la pieza es de talle único; si tiene talles,
+          lleva a la ficha para elegirlo. */}
       {addonSuggestions.length > 0 && (
-        <section aria-label="Piezas chicas para sumar" style={{
-          marginTop: 28, padding: '18px 20px',
-          background: dahila.cream50, border: `1px solid ${dahila.border}`, borderRadius: 12,
-        }}>
+        <section aria-label="Piezas chicas para sumar" style={{ marginTop: 22 }}>
           <p style={{
-            fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.16em',
-            textTransform: 'uppercase', color: dahila.ink500, margin: '0 0 14px',
+            fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.2em',
+            textTransform: 'uppercase', color: dahila.ink500, margin: '0 0 12px',
           }}>
-            Sumale un detalle — viaja en el mismo envío
+            Sumale un detalle · viaja en el mismo envío
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="cart-addons" style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
             {addonSuggestions.map((p) => {
               const photo = getPrimaryPhoto(p)
-              const list = getEffectivePrice(p)
               const price = getFinalPrice(p, undefined, discounts)
               const availableSizes = (p.sizes ?? []).filter((s) => s.available)
               const oneTap = availableSizes.length <= 1
               const justAdded = addedAddonId === p.id
               return (
-                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                   <Link href={`/tienda/${p.slug}`} aria-label={`Ver ${p.name}`} style={{
-                    position: 'relative', width: 52, height: 62, flexShrink: 0,
-                    borderRadius: 8, overflow: 'hidden', background: '#fff', display: 'block',
+                    position: 'relative', width: 44, height: 54, flexShrink: 0,
+                    borderRadius: 6, overflow: 'hidden', background: dahila.cream50, display: 'block',
                   }}>
-                    <Image src={photo} alt={p.name} fill sizes="52px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+                    <Image src={photo} alt={p.name} fill sizes="44px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
                   </Link>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ minWidth: 0 }}>
                     <Link href={`/tienda/${p.slug}`} style={{
-                      fontFamily: dahila.fontDisplay, fontSize: 15, color: dahila.ink900,
-                      textDecoration: 'none', display: 'block', lineHeight: 1.25,
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      fontFamily: dahila.fontDisplay, fontSize: 14, color: dahila.ink900,
+                      textDecoration: 'none', display: 'block', lineHeight: 1.2,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150,
                     }}>
                       {p.name}
                     </Link>
-                    <PriceBlock list={list} final={price} size="sm" align="start" />
+                    {oneTap ? (
+                      <button
+                        onClick={() => handleAddonAdd(p)}
+                        disabled={justAdded}
+                        aria-label={`Agregar ${p.name} al carrito por ${formatPrice(price)}`}
+                        style={{
+                          background: 'transparent', border: 'none', padding: '2px 0', cursor: justAdded ? 'default' : 'pointer',
+                          fontFamily: dahila.fontSans, fontSize: 12,
+                          color: justAdded ? '#1E8449' : dahila.wine600,
+                          textDecoration: justAdded ? 'none' : 'underline', textUnderlineOffset: 3,
+                        }}
+                      >
+                        {justAdded ? '✓ Sumado' : `+ Agregar · ${formatPrice(price)}`}
+                      </button>
+                    ) : (
+                      <Link href={`/tienda/${p.slug}`} style={{
+                        fontFamily: dahila.fontSans, fontSize: 12, color: dahila.wine600,
+                        textDecoration: 'underline', textUnderlineOffset: 3, display: 'inline-block', padding: '2px 0',
+                      }}>
+                        {`Elegir talle · ${formatPrice(price)}`}
+                      </Link>
+                    )}
                   </div>
-                  {oneTap ? (
-                    <button
-                      onClick={() => handleAddonAdd(p)}
-                      disabled={justAdded}
-                      aria-label={`Agregar ${p.name} al carrito`}
-                      style={{
-                        background: 'transparent', color: dahila.ink900,
-                        border: `1px solid ${dahila.borderStrong}`, borderRadius: 999,
-                        padding: '9px 16px', cursor: justAdded ? 'default' : 'pointer',
-                        fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 500,
-                        letterSpacing: '0.05em', whiteSpace: 'nowrap', minHeight: 38,
-                      }}
-                    >
-                      {justAdded ? '✓ Sumado' : '+ Agregar'}
-                    </button>
-                  ) : (
-                    <Link href={`/tienda/${p.slug}`} style={{
-                      fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 500,
-                      letterSpacing: '0.05em', color: dahila.ink900, whiteSpace: 'nowrap',
-                      border: `1px solid ${dahila.borderStrong}`, borderRadius: 999,
-                      padding: '9px 16px', textDecoration: 'none', display: 'inline-flex',
-                      alignItems: 'center', minHeight: 38, boxSizing: 'border-box',
-                    }}>
-                      Elegir talle
-                    </Link>
-                  )}
                 </div>
               )
             })}

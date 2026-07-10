@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { SITE_URL } from '@/lib/env'
+import { botImageUrl } from '@/lib/media'
 
 export const revalidate = 3600
 
@@ -94,7 +95,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ...(p.updated_at ? { lastModified: new Date(p.updated_at) } : {}),
         changeFrequency: 'weekly' as const,
         priority: p.status === 'active' ? 0.8 : 0.7,
-        ...(photo ? { images: [photo] } : {}),
+        // Vía /_next/image: el image-sitemap mandaba a Googlebot-Image al
+        // original de varios MB en supabase.co (egress). Ahora baja ~100 KB
+        // desde dahila.uy, cacheado por Netlify.
+        ...(photo ? { images: [botImageUrl(SITE_URL, photo)] } : {}),
       }
     })
 

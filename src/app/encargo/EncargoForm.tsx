@@ -263,6 +263,30 @@ export default function EncargoForm({ whatsappUrl, encargosCupos }: { whatsappUr
             fontFamily: dahila.fontSans, fontSize: 13,
           }}>
             {error}
+            {/* Resiliencia: si el guardado falló (base caída, sin red), el
+                encargo no muere — WhatsApp con el pedido ya escrito es la
+                salida que no depende de ningún servicio nuestro. Solo se
+                ofrece cuando el formulario estaba completo (no en errores
+                de validación, que se arreglan en el propio form). */}
+            {name.trim() && (whatsapp.trim() || email.trim()) && (
+              <a
+                href={`${whatsappUrl.replace(/\/+$/, '')}?text=${encodeURIComponent(
+                  `Hola Anush! Intenté mandar un encargo por la web y no pasó. Soy ${name.trim()}.\n` +
+                  `Tipo de prenda: ${tipo || 'a definir'}\nTalle: ${talle || 'a definir'}\n` +
+                  (message.trim() ? `Idea: ${message.trim()}\n` : '') +
+                  '¿Lo coordinamos por acá?'
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 10,
+                  fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500, color: '#1E8449',
+                  textDecoration: 'underline', textUnderlineOffset: 3,
+                }}
+              >
+                Mandalo directo por WhatsApp — ya va escrito →
+              </a>
+            )}
           </div>
         )}
 

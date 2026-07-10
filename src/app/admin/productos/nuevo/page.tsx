@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { slugify, mediaPath } from '@/lib/media'
+import { slugify, mediaPath, prepareImageForUpload, STORAGE_CACHE_SECONDS } from '@/lib/media'
+import { draftDescription } from '@/lib/description-draft'
 import type { Category, Color, Collection } from '@/lib/types'
 
 interface SizeEntry {
@@ -105,9 +106,15 @@ export default function NuevoProductoPage() {
       if (!isVideo && !isImage) continue
 
       const tempId = `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`
+      // Comprimir ANTES de subir (≤1600px, JPEG) — ver lib/media.ts: el
+      // egress de Supabase se paga por byte descargado, y el byte más barato
+      // es el que nunca se sube.
+      const prepared = isImage
+        ? await prepareImageForUpload(file)
+        : { blob: file as Blob, ext: (file.name.split('.').pop() || 'mp4').toLowerCase(), contentType: file.type }
       // Nombre descriptivo (ver lib/media.ts): el nombre del producto viaja
       // en el archivo — señal para Google Images. Solo subidas nuevas.
-      const filePath = mediaPath('products', name || 'producto', file.name)
+      const filePath = mediaPath('products', name || 'producto', `f.${prepared.ext}`)
 
       // Add placeholder entry
       const entry: MediaEntry = {
@@ -127,8 +134,9 @@ export default function NuevoProductoPage() {
       // Upload to Supabase Storage
       const { data, error: uploadError } = await supabase.storage
         .from('media')
-        .upload(filePath, file, {
-          cacheControl: '3600',
+        .upload(filePath, prepared.blob, {
+          cacheControl: STORAGE_CACHE_SECONDS,
+          contentType: prepared.contentType,
           upsert: false,
         })
 
@@ -412,6 +420,25 @@ export default function NuevoProductoPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describí el producto..."
                 />
+                {/* Borrador honesto (lib/description-draft.ts): solo datos
+                    reales del producto, nunca materiales ni medidas inventadas.
+                    Solo con el campo vacío — no pisa texto escrito. */}
+                {!description.trim() && name.trim() !== '' && (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-secondary admin-btn-sm"
+                    style={{ alignSelf: 'flex-start', marginTop: 6 }}
+                    onClick={() => setDescription(draftDescription({
+                      name,
+                      categorySlug: categories.find((c) => c.id === categoryId)?.slug ?? null,
+                      hasSizes: sizes.length > 0,
+                      hasColors: selectedColors.length > 0,
+                      isCustomOnly,
+                    }))}
+                  >
+                    ✨ Generar borrador para editar
+                  </button>
+                )}
                 <span className="field-hint">
                   La receta que vende: qué lana es, medidas reales, cómo calza, horas de tejido y con qué combina.
                   Sin este texto la ficha no convence, no aparece en Google y no la citan las IA.

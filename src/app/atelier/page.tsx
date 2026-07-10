@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { dahila, Eyebrow } from '@/components/ui/Primitives'
 import { SITE_URL } from '@/lib/env'
+import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 3600
 
@@ -11,7 +12,8 @@ export const metadata: Metadata = {
   description: 'Conocé a Anush y el taller de Montevideo donde nace cada pieza: lana elegida a mano, tu medida real y tejido sin apuro. Así se hace lo que ninguna máquina puede.',
   alternates: { canonical: '/atelier' },
   openGraph: {
-    title: 'Quién teje tus prendas — el taller | Dahila Crochet',
+    ...OG_BASE,
+    title: 'Quién teje tus prendas — el taller',
     description: 'Conocé a Anush y el taller de Montevideo donde nace cada pieza: lana elegida a mano, tu medida real y tejido sin apuro.',
     url: '/atelier',
   },

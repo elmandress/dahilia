@@ -11,6 +11,7 @@ import { WeaverCallout } from '@/components/WeaverCallout'
 import { AnalyticsScript } from '@/components/AnalyticsScript'
 import { ClarityScript } from '@/components/ClarityScript'
 import { SITE_URL, SUPABASE_STORAGE_ORIGIN } from '@/lib/env'
+import { OG_BASE } from '@/lib/og'
 import { createClient } from '@/lib/supabase/server'
 import type { Discount } from '@/lib/types'
 import './globals.css'
@@ -59,12 +60,10 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    type: 'website',
-    locale: 'es_UY',
+    ...OG_BASE,
     url: SITE_URL,
     title: 'Dahila Crochet — tejido a mano en Uruguay, a tu medida',
     description: 'Cada prenda se teje especialmente para vos: tu talle, tus colores. Envío a todo Uruguay.',
-    siteName: 'Dahila',
     images: [
       {
         url: '/logo-full.jpg',

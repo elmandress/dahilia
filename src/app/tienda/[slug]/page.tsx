@@ -8,6 +8,8 @@ import { ProductDetailsClient } from './ProductDetailsClient'
 import { getEncargosCuposState } from '@/components/EncargosDisponibles'
 import { TiendaClient } from '../TiendaClient'
 import { SITE_URL } from '@/lib/env'
+import { OG_BASE } from '@/lib/og'
+import { botImageUrl } from '@/lib/media'
 
 export const revalidate = 3600
 
@@ -69,7 +71,15 @@ export async function generateMetadata({
       title,
       description: desc,
       alternates: { canonical: `/tienda/${slug}` },
-      openGraph: { title: `${title} | Dahila Crochet`, description: desc, url: `${SITE_URL}/tienda/${slug}` },
+      // og:title sin "| Dahila Crochet": la marca ya viaja en og:site_name
+      // (OG_BASE) y duplicarla desperdicia los ~65 caracteres del preview.
+      openGraph: {
+        ...OG_BASE,
+        title,
+        description: desc,
+        url: `${SITE_URL}/tienda/${slug}`,
+        images: [{ url: `${SITE_URL}/tienda/${slug}/og`, width: 1200, height: 630, alt: title, type: 'image/jpeg' }],
+      },
     }
   }
 
@@ -101,16 +111,22 @@ export async function generateMetadata({
     title: `${product.name} — tejido a mano, a tu medida`,
     description,
     alternates: { canonical: `/tienda/${product.slug}` },
-    // Sin `openGraph.images`/`twitter` acá a propósito: la tarjeta diseñada
-    // de opengraph-image.tsx (misma carpeta) es la única fuente de imagen
-    // para compartir — evita dos <meta og:image> compitiendo (una con la
-    // foto cruda del producto, otra con la tarjeta de marca). X/Twitter cae
-    // solo al og:image cuando no hay twitter:image propio.
+    // La imagen para compartir es la tarjeta JPEG de ./og (ver og/route.tsx:
+    // la convención opengraph-image.tsx generaba un PNG de ~915 KB que
+    // WhatsApp descartaba). X/Twitter cae solo al og:image cuando no hay
+    // twitter:image propio.
     openGraph: {
-      type: 'website',
-      title: `${product.name} — tejido a mano, a tu medida | Dahila Crochet`,
+      ...OG_BASE,
+      title: `${product.name} — tejido a mano, a tu medida`,
       description,
       url: `${SITE_URL}/tienda/${product.slug}`,
+      images: [{
+        url: `${SITE_URL}/tienda/${product.slug}/og`,
+        width: 1200,
+        height: 630,
+        alt: `${product.name} — Dahila Crochet`,
+        type: 'image/jpeg',
+      }],
     },
   }
 }
@@ -202,7 +218,7 @@ async function CategoryPage({ slug, category }: { slug: string; category: Catego
 async function ProductPage({ slug }: { slug: string }) {
   const supabase = await createClient()
 
-  const [{ data }, { data: discountData }, { data: settingsData }] = await Promise.all([
+  const [{ data, error: productError }, { data: discountData }, { data: settingsData }] = await Promise.all([
     supabase
       .from('products')
       .select(`
@@ -253,6 +269,11 @@ async function ProductPage({ slug }: { slug: string }) {
     encargos_cupos_label: getSetting('encargos_cupos_label') || '',
   })
 
+  // Distinguir "no existe" de "la base falló": con un error de Supabase,
+  // devolver notFound() haría que ISR REEMPLACE la página buena cacheada por
+  // un 404 (y Google la desindexe). Lanzar mantiene la versión anterior viva
+  // — el sitio sobrevive a una caída de la base sirviendo catálogo stale.
+  if (productError) throw new Error(`Supabase falló al cargar /tienda/${slug}: ${productError.message}`)
   if (!product) notFound()
 
   const { data: relatedData } = await supabase
@@ -290,20 +311,25 @@ async function ProductPage({ slug }: { slug: string }) {
         prefRank(a) - prefRank(b)
     )
   const similar = relatedAll.filter((p) => p.category_id && p.category_id === product.category_id)
-  const related = [...complements.slice(0, 2), ...similar.slice(0, 2)]
+  // La tira del bloque de compra se lleva los 2 mejores complementos; el grid
+  // de abajo arma sus 4 con similares + los complementos que siguen, sin
+  // repetir lo que la tira ya mostró.
+  const lookComplements = complements.slice(0, 2)
+  const related = [...similar.slice(0, 2), ...complements.slice(2, 4)]
   for (const p of relatedAll) {
     if (related.length >= 4) break
-    if (!related.some((r) => r.id === p.id)) related.push(p)
+    if (!related.some((r) => r.id === p.id) && !lookComplements.some((c) => c.id === p.id)) related.push(p)
   }
-  const relatedTitle = complements.length > 0 ? 'Completá el look' : undefined
 
   const photo = getPrimaryPhoto(product)
-  const absolutePhoto = photo.startsWith('http') ? photo : `${SITE_URL}${photo}`
   // Full image set → richer Product structured data (Google can show several).
+  // Vía /_next/image (botImageUrl): Googlebot-Image descarga ~100 KB desde
+  // dahila.uy en vez del original de varios MB desde supabase.co — el JSON-LD
+  // era una de las 3 canillas del egress de Supabase (ver lib/media.ts).
   const galleryImages = (product.media ?? [])
     .filter((m) => m.type === 'image')
-    .map((m) => (m.url.startsWith('http') ? m.url : `${SITE_URL}${m.url}`))
-  const schemaImages = galleryImages.length > 0 ? galleryImages : [absolutePhoto]
+    .map((m) => botImageUrl(SITE_URL, m.url))
+  const schemaImages = galleryImages.length > 0 ? galleryImages : [botImageUrl(SITE_URL, photo)]
   const finalPrice = getFinalPrice(product, undefined, discounts)
 
   // Price validity one year out — keeps Google Merchant / rich-results parsing
@@ -398,7 +424,7 @@ async function ProductPage({ slug }: { slug: string }) {
         product={product}
         discountPercent={resolveDiscountPercent(product, discounts)}
         related={related}
-        relatedTitle={relatedTitle}
+        lookComplements={lookComplements}
         discounts={discounts}
         sizeGuideNote={sizeGuideNote}
         whatsappUrl={whatsappUrl}

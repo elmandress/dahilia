@@ -2,19 +2,21 @@ import { ImageResponse } from 'next/og'
 import { createClient } from '@/lib/supabase/server'
 import { getFinalPrice, getEffectivePrice } from '@/lib/types'
 import type { Product } from '@/lib/types'
+import { SITE_URL } from '@/lib/env'
+import { botImageUrl } from '@/lib/media'
 
-export const alt = 'Dahila Crochet'
-export const size = { width: 1200, height: 630 }
-export const contentType = 'image/png'
+export const OG_SIZE = { width: 1200, height: 630 }
 
 // Tarjeta social de producto — el "escaparate" que viaja por WhatsApp e
 // Instagram. Diseño tipo Shopify: foto grande a sangre, marca arriba, nombre
 // protagonista, precio como chip (con descuento cuando existe) y la promesa
 // de la marca al pie. Reglas de Satori: todo div con más de un hijo lleva
 // display flex explícito, y el texto interpolado va en un solo template.
-export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
-  // Next 16: `params` es una Promise también en los archivos de metadata.
-  const { slug } = await params
+//
+// Vive en un módulo propio (no en opengraph-image.tsx) porque la sirve la
+// ruta ./og, que convierte el PNG de Satori a JPEG: la misma tarjeta pasó de
+// ~915 KB a ~10× menos, y WhatsApp descarta imágenes OG pesadas o lentas.
+export async function renderProductOgCard(slug: string): Promise<ImageResponse> {
   const supabase = await createClient()
   const { data } = await supabase
     .from('products')
@@ -38,12 +40,19 @@ export default async function Image({ params }: { params: Promise<{ slug: string
       ).data as { name: string; description: string | null } | null
 
   const name = product?.name ?? category?.name ?? 'Dahila Crochet'
-  const desc =
-    product?.description ?? category?.description ?? 'Tejido a mano, hecho en Uruguay.'
-  const photo =
+  const rawDesc =
+    (product?.description ?? category?.description ?? 'Tejido a mano, hecho en Uruguay.').replace(/\s+/g, ' ').trim()
+  // Corte en el último espacio (no a mitad de palabra) + elipsis cuando sigue.
+  const desc = rawDesc.length > 120
+    ? `${rawDesc.slice(0, 120).replace(/\s+\S*$/, '')}…`
+    : rawDesc
+  // La foto entra por /_next/image (640px, ~50 KB): Satori descargaba el
+  // original de varios MB desde Supabase en cada render de la tarjeta.
+  const rawPhoto =
     product?.media?.find((m) => m.is_primary)?.url ||
     product?.media?.[0]?.url ||
     null
+  const photo = rawPhoto ? botImageUrl(SITE_URL, rawPhoto, 640) : null
 
   // Precio final (descuento por producto incluido) + precio de lista tachado
   // cuando hay rebaja — la tarjeta cuenta la oferta sin abrir el link.
@@ -130,7 +139,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
                 display: 'flex',
               }}
             >
-              {desc.replace(/\s+/g, ' ').slice(0, 120)}
+              {desc}
             </div>
             {finalPrice > 0 ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 6 }}>
@@ -179,6 +188,6 @@ export default async function Image({ params }: { params: Promise<{ slug: string
         </div>
       </div>
     ),
-    size
+    OG_SIZE
   )
 }

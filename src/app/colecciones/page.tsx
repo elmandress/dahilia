@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import type { Collection } from '@/lib/types'
 import { dahila, Eyebrow } from '@/components/ui/Primitives'
+import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 300
 
@@ -12,10 +13,10 @@ export const metadata: Metadata = {
   description: 'Cada colección sale en cantidades chicas — es crochet tejido a mano en Montevideo. Mirá la actual, y anotate para ver la próxima antes que nadie.',
   alternates: { canonical: '/colecciones' },
   openGraph: {
-    title: 'Colecciones tejidas a mano, por temporada | Dahila Crochet',
+    ...OG_BASE,
+    title: 'Colecciones tejidas a mano, por temporada',
     description: 'Cada colección sale en cantidades chicas — es crochet tejido a mano en Montevideo.',
     url: '/colecciones',
-    type: 'website',
   },
 }
 

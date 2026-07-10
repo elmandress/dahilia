@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import EncargoForm from './EncargoForm'
 import { getEncargosCuposState } from '@/components/EncargosDisponibles'
+import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 3600
 
@@ -12,7 +13,8 @@ export const metadata: Metadata = {
   description: 'Contanos qué tenés en mente: Anush te responde con opciones, materiales y presupuesto, sin compromiso. Tu talle exacto, tus colores — tejido a mano en Montevideo.',
   alternates: { canonical: '/encargo' },
   openGraph: {
-    title: 'Encargá tu prenda de crochet a medida | Dahila Crochet',
+    ...OG_BASE,
+    title: 'Encargá tu prenda de crochet a medida',
     description: 'Contanos qué tenés en mente: te respondemos con opciones, materiales y presupuesto, sin compromiso.',
     url: '/encargo',
   },

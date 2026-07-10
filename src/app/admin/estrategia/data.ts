@@ -213,7 +213,7 @@ export const VALUE_ACTIONS: ActionItem[] = [
   { id: 'vp-etiqueta', label: 'Etiqueta "Dahila" cosida', detail: 'La marca viaja con la prenda para siempre.' },
   { id: 'vp-qr', label: 'QR a un video del tejido en el packaging', detail: '30 segundos de esa pieza naciendo. La historia sube lo que la gente paga con gusto.' },
   { id: 'vp-sorpresa', label: 'Regalito sorpresa en pedidos grandes', detail: 'Un mini accesorio → fotos espontáneas en redes → boca a boca gratis.' },
-  { id: 'vp-bundle', label: 'Combos "completá el look" + envío gratis desde $1.400', detail: 'Sube el ticket sin bajar el precio de nada.' },
+  { id: 'vp-bundle', label: 'Combos "completá el look" + envío gratis desde $1.600', detail: 'Sube el ticket sin bajar el precio de nada. El umbral está calculado para que una prenda + un accesorio lo crucen (y el accesorio paga el envío solo). Se prende en Configuración → "Envío gratis desde"; subirlo a $2.000 recién cuando los precios lleguen a la columna 12m.' },
 ]
 
 // ─── Tejedoras ───────────────────────────────────────────────

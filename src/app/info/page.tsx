@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { dahila, Eyebrow } from '@/components/ui/Primitives'
 import { SITE_URL } from '@/lib/env'
+import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 3600
 
@@ -10,7 +11,8 @@ export const metadata: Metadata = {
   description: 'Todo claro antes de comprar: cómo llega tu pedido a cualquier punto de Uruguay, cómo pagás (transferencia o Mercado Pago) y cómo cuidar una prenda tejida a mano.',
   alternates: { canonical: '/info' },
   openGraph: {
-    title: 'Envíos, pagos y cuidados de tu prenda | Dahila Crochet',
+    ...OG_BASE,
+    title: 'Envíos, pagos y cuidados de tu prenda',
     description: 'Cómo llega tu pedido, cómo pagás y cómo cuidar una prenda tejida a mano.',
     url: `${SITE_URL}/info`,
   },

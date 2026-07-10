@@ -503,6 +503,12 @@ a.prose-link:hover {
   }
   /* Hide "Ordenar por" label to save space */
   .tienda-sort-label { display: none !important; }
+  /* "Viste hace poco": en desktop es una fila cómoda; en un teléfono sus
+     ~200px empujaban la primera prenda fuera del primer viewport. Miniaturas
+     más chicas y menos aire — sigue siendo tocable (72px de ancho + gap). */
+  .tienda-recent { margin-bottom: 20px !important; }
+  .tienda-recent-item { width: 72px !important; }
+  .tienda-recent-thumb { width: 72px !important; height: 88px !important; }
 }
 
 /* ============================================================

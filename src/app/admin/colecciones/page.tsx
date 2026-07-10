@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { slugify, mediaPath } from '@/lib/media'
+import { slugify, mediaPath, prepareImageForUpload, STORAGE_CACHE_SECONDS } from '@/lib/media'
 import type { Collection } from '@/lib/types'
 
 // Estados del ciclo de un drop (ver database/drops-2026-07.sql). El estado es
@@ -38,9 +38,13 @@ function stateFields(s: CollectionState) {
 
 async function uploadCover(file: File, nameHint: string): Promise<string> {
   const supabase = createClient()
+  // Comprimida antes de subir + caché de 1 año (ver lib/media.ts, control de egress).
+  const prepared = await prepareImageForUpload(file)
   // Nombre de archivo descriptivo (ver lib/media.ts) — solo subidas nuevas.
-  const path = mediaPath('collections', nameHint || 'coleccion', file.name)
-  const { error } = await supabase.storage.from('media').upload(path, file, { cacheControl: '3600', upsert: false })
+  const path = mediaPath('collections', nameHint || 'coleccion', `f.${prepared.ext}`)
+  const { error } = await supabase.storage.from('media').upload(path, prepared.blob, {
+    cacheControl: STORAGE_CACHE_SECONDS, contentType: prepared.contentType, upsert: false,
+  })
   if (error) throw error
   return supabase.storage.from('media').getPublicUrl(path).data.publicUrl
 }

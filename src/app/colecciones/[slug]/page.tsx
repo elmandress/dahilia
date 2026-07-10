@@ -8,6 +8,7 @@ import { getFinalPrice } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
 import { dahila, Eyebrow } from '@/components/ui/Primitives'
 import { SITE_URL } from '@/lib/env'
+import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 300
 
@@ -22,10 +23,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     description: desc,
     alternates: { canonical: `/colecciones/${slug}` },
     openGraph: {
-      title: `${data.name} | Dahila Crochet`,
+      ...OG_BASE,
+      title: `${data.name} — colección tejida a mano`,
       description: desc,
       url: `${SITE_URL}/colecciones/${slug}`,
-      type: 'website',
       ...(data.cover_url ? { images: [{ url: data.cover_url, alt: data.name }] } : {}),
     },
   }
@@ -35,13 +36,16 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
   const { slug } = await params
   const supabase = await createClient()
 
-  const { data: col } = await supabase
+  const { data: col, error: colError } = await supabase
     .from('collections')
     .select('*')
     .eq('slug', slug)
     .eq('published', true)
     .maybeSingle()
 
+  // Error de la base ≠ colección inexistente: lanzar mantiene la versión ISR
+  // cacheada viva en vez de reemplazarla por un 404 (mismo patrón que la PDP).
+  if (colError) throw new Error(`Supabase falló al cargar /colecciones/${slug}: ${colError.message}`)
   if (!col) notFound()
   const collection = col as Collection
 

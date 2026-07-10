@@ -25,7 +25,7 @@ function RecentlyViewedStrip() {
   if (items.length < 2) return null
 
   return (
-    <section style={{ marginBottom: 40 }}>
+    <section className="tienda-recent" style={{ marginBottom: 40 }}>
       <div style={{
         fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.18em',
         textTransform: 'uppercase', color: dahila.ink500, marginBottom: 16,
@@ -40,12 +40,13 @@ function RecentlyViewedStrip() {
           <Link
             key={p.slug}
             href={`/tienda/${p.slug}`}
+            className="tienda-recent-item"
             style={{
               flexShrink: 0, width: 100, textDecoration: 'none', color: 'inherit',
               scrollSnapAlign: 'start',
             }}
           >
-            <div style={{
+            <div className="tienda-recent-thumb" style={{
               position: 'relative', width: 100, height: 124,
               borderRadius: 8, overflow: 'hidden', background: dahila.cream50, marginBottom: 6,
             }}>
