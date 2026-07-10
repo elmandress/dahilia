@@ -3,8 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState, useTransition } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState, useTransition } from 'react'
 import { dahila } from './ui/Primitives'
 import { STUDIO_INSTAGRAM, STUDIO_URL } from '@/lib/env'
 import { subscribeToVipList } from '@/lib/subscribe'
@@ -97,7 +96,7 @@ function VipSignup() {
                 fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, color: dahila.ink900,
                 background: 'transparent', border: 'none',
                 borderBottom: `1px solid ${dahila.borderStrong}`,
-                padding: '10px 0 8px', outline: 'none', minWidth: 220,
+                padding: '10px 0 8px', minWidth: 220,
               }}
             />
             <button
@@ -125,23 +124,8 @@ function VipSignup() {
   )
 }
 
-export function Footer() {
+export function Footer({ tagline = 'Prendas tejidas a mano, a tu medida, desde Montevideo.' }: { tagline?: string }) {
   const pathname = usePathname()
-  const [tagline, setTagline] = useState('Prendas tejidas a mano, a tu medida, desde Montevideo.')
-
-  useEffect(() => {
-    const supabase = createClient()
-    supabase
-      .from('site_settings')
-      .select('value')
-      .eq('key', 'brand_short_intro')
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.value && String(data.value).trim()) {
-          setTagline(String(data.value).trim())
-        }
-      })
-  }, [])
 
   if (pathname.startsWith('/admin')) return null
 

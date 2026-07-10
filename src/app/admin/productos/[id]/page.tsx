@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { slugify, mediaPath } from '@/lib/media'
 import type { Category, Color, Collection, Product, ProductMedia, ProductSize, ProductColor } from '@/lib/types'
 
 type LoadedProductColor = Partial<ProductColor> & { color_id?: string; color?: { id: string } }
@@ -35,14 +36,6 @@ interface MediaEntry {
   file?: File
 }
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
 
 export default function EditarProductoPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
@@ -207,8 +200,9 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       if (!isVideo && !isImage) continue
 
       const tempId = `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`
-      const ext = file.name.split('.').pop()
-      const filePath = `products/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+      // Nombre descriptivo (ver lib/media.ts): el nombre del producto viaja
+      // en el archivo — señal para Google Images. Solo subidas nuevas.
+      const filePath = mediaPath('products', name || 'producto', file.name)
 
       const entry: MediaEntry = {
         tempId,
@@ -247,7 +241,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
         )
       )
     }
-  }, [mediaEntries.length])
+  }, [mediaEntries.length, name])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()

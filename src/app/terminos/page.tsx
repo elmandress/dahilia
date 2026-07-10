@@ -28,7 +28,7 @@ export default async function TerminosPage() {
   const year = new Date().getFullYear()
 
   return (
-    <main style={{ maxWidth: 760, margin: '0 auto', padding: '48px 24px 96px' }}>
+    <div style={{ maxWidth: 760, margin: '0 auto', padding: '48px 24px 96px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 48 }}>
         <Eyebrow>Legal</Eyebrow>
         <h1 style={{
@@ -228,7 +228,7 @@ export default async function TerminosPage() {
           </p>
         </div>
       </div>
-    </main>
+    </div>
   )
 }
 

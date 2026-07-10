@@ -25,6 +25,10 @@ export const SUPABASE_ANON_KEY = required(
 // puede sobrescribirla por entorno (previews de Netlify, desarrollo local).
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dahila.uy'
 
+// Origin del storage de Supabase (fotos de producto, hero) — usado para el
+// <link rel="preconnect"> del layout raíz.
+export const SUPABASE_STORAGE_ORIGIN = new URL(SUPABASE_URL).origin
+
 // Studio / agency credit — surfaced in the footer and meta tags.
 export const STUDIO_NAME = 'SIAR'
 export const STUDIO_URL = 'https://siaruy.netlify.app'

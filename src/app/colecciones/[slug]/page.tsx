@@ -100,7 +100,7 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
       />
-    <main style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px 80px' }}>
+    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px 80px' }}>
       <nav style={{ display: 'flex', gap: 6, fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 24 }}>
         <Link href="/" style={{ color: 'inherit', textDecoration: 'none' }}>Inicio</Link>
         <span>/</span>
@@ -113,7 +113,7 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
       <div style={{ position: 'relative', borderRadius: 18, overflow: 'hidden', background: dahila.cream100, marginBottom: 40 }}>
         {collection.cover_url ? (
           <div className="hero-frame" style={{ position: 'relative', height: 'clamp(260px, 42vh, 420px)' }}>
-            <Image src={collection.cover_url} alt={collection.name} fill priority sizes="100vw" style={{ objectFit: 'cover' }} />
+            <Image src={collection.cover_url} alt={collection.name} fill fetchPriority="high" loading="eager" quality={90} sizes="100vw" style={{ objectFit: 'cover' }} />
             <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(31,26,27,0.55), rgba(31,26,27,0) 60%)' }} />
             <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 'clamp(20px, 4vw, 40px)', color: '#fff' }}>
               <Eyebrow style={{ color: 'rgba(255,255,255,0.85)' }}>Colección</Eyebrow>
@@ -145,7 +145,7 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
           ))}
         </div>
       )}
-    </main>
+    </div>
     </>
   )
 }

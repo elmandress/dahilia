@@ -19,7 +19,7 @@ import {
  */
 export function CartDrawer() {
   const {
-    items, cartTotal, discounts, shippingEstimate, drawerOpen, closeDrawer, updateQty, removeFromCart,
+    items, cartTotal, discounts, shippingEstimate, freeShippingThreshold, drawerOpen, closeDrawer, updateQty, removeFromCart,
   } = useCart()
   const pathname = usePathname()
   const router = useRouter()
@@ -194,6 +194,18 @@ export function CartDrawer() {
                   <Icon name="truck" size={14} color={dahila.ink500} /> {shippingEstimate}
                 </p>
               )}
+              {/* Umbral de envío gratis — un renglón honesto, sin barras ni apuro. */}
+              {freeShippingThreshold > 0 && (
+                cartTotal >= freeShippingThreshold ? (
+                  <p style={{ fontFamily: dahila.fontSans, fontSize: 12, color: '#1E8449', margin: 0 }}>
+                    ✓ Envío gratis — tu pedido supera los {formatPrice(freeShippingThreshold)}
+                  </p>
+                ) : (
+                  <p style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, margin: 0 }}>
+                    Te faltan {formatPrice(freeShippingThreshold - cartTotal)} para el envío gratis
+                  </p>
+                )
+              )}
               <p style={{ fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500, margin: 0 }}>
                 Coordinás envío y pago con Anush por WhatsApp.
               </p>
@@ -218,5 +230,6 @@ export function CartDrawer() {
 
 const qtyBtn: React.CSSProperties = {
   background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink900,
-  padding: 0, width: 18, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+  padding: 0, width: 30, height: 30, minWidth: 30, minHeight: 30,
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
 }

@@ -44,7 +44,7 @@ export default function ContactoClient({ settings }: Props) {
   ]
 
   return (
-    <main style={{ maxWidth: 880, margin: '0 auto', padding: '60px 24px 0', textAlign: 'center' }}>
+    <div style={{ maxWidth: 880, margin: '0 auto', padding: '60px 24px 0', textAlign: 'center' }}>
       <Eyebrow>Contacto</Eyebrow>
       <h1 style={{
         fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(32px, 5vw, 56px)',
@@ -90,6 +90,6 @@ export default function ContactoClient({ settings }: Props) {
       }}>
         {location}
       </p>
-    </main>
+    </div>
   )
 }

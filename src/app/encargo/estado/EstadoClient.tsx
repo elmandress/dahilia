@@ -107,7 +107,7 @@ export function EstadoClient() {
   }, [params])
 
   return (
-    <main style={{ maxWidth: 520, margin: '0 auto', padding: '48px 24px 80px' }}>
+    <div style={{ maxWidth: 520, margin: '0 auto', padding: '48px 24px 80px' }}>
       <Eyebrow>Seguimiento</Eyebrow>
       <h1 style={{
         fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(28px, 5vw, 40px)',
@@ -141,6 +141,6 @@ export function EstadoClient() {
       )}
 
       {result && result.found && <StatusView result={result} />}
-    </main>
+    </div>
   )
 }

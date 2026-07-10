@@ -24,6 +24,11 @@ export function TestimonialsStrip({ items }: { items: Testimonial[] }) {
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => setCurrent((c) => (c + 1) % count), 5000)
   }
+  // Con el cursor encima, la rotación se pausa: que el texto cambie mientras
+  // se está leyendo es el anti-patrón clásico de los carruseles automáticos.
+  const pauseTimer = () => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+  }
 
   useEffect(() => {
     if (count > 1) resetTimer()
@@ -36,19 +41,22 @@ export function TestimonialsStrip({ items }: { items: Testimonial[] }) {
   const item = items[current]
 
   return (
-    <section style={{ maxWidth: 880, margin: '88px auto 0', padding: '0 24px' }}>
+    <section className="home-section" style={{ maxWidth: 880, margin: '88px auto 0', padding: '0 24px' }}>
       <div style={{ textAlign: 'center', marginBottom: 36 }}>
         <Eyebrow>Lo que dicen</Eyebrow>
       </div>
 
-      <div style={{
-        position: 'relative',
-        background: dahila.cream50,
-        borderRadius: 20,
-        padding: 'clamp(32px, 5vw, 52px)',
-        textAlign: 'center',
-        border: `1px solid ${dahila.border}`,
-      }}>
+      <div
+        onMouseEnter={pauseTimer}
+        onMouseLeave={() => { if (count > 1) resetTimer() }}
+        style={{
+          position: 'relative',
+          background: dahila.cream50,
+          borderRadius: 20,
+          padding: 'clamp(32px, 5vw, 52px)',
+          textAlign: 'center',
+          border: `1px solid ${dahila.border}`,
+        }}>
         {/* Quote icon */}
         <div style={{ color: dahila.wine600, marginBottom: 18, display: 'flex', justifyContent: 'center' }}>
           <Icon name="quotes" size={28} color={dahila.wine600} />

@@ -2,35 +2,18 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { track } from '@/lib/analytics'
 
 /**
  * Floating WhatsApp button — visible on all public pages except /admin and /carrito.
  * Hides on scroll-down, reappears on scroll-up (doesn't compete with sticky CTAs).
- * Number/URL comes from site_settings so Anush can update it from the admin.
- * Toggle with `whatsapp_float_enabled` key.
+ * `enabled`/`waUrl` come from the root layout's server-side settings fetch
+ * (avoids a second client-side round-trip to Supabase on every page load).
  */
-export function WhatsAppFloat() {
+export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: string }) {
   const pathname = usePathname()
-  const [waUrl, setWaUrl] = useState('https://wa.me/59899850073')
-  const [enabled, setEnabled] = useState(false)
   const [visible, setVisible] = useState(true)
   const lastYRef = useRef(0)
-
-  useEffect(() => {
-    const supabase = createClient()
-    supabase
-      .from('site_settings')
-      .select('key, value')
-      .in('key', ['whatsapp_float_enabled', 'contact_whatsapp_url'])
-      .then(({ data }) => {
-        const s = (data ?? []).reduce<Record<string, string>>(
-          (acc, r) => ({ ...acc, [r.key]: String(r.value ?? '') }), {}
-        )
-        if (s.contact_whatsapp_url?.trim()) setWaUrl(s.contact_whatsapp_url.trim())
-        setEnabled(s.whatsapp_float_enabled === 'true')
-      })
-  }, [])
 
   // Use a ref for lastY so the scroll handler is stable (registered once, not
   // re-added on every scroll tick as it was when lastY lived in state).
@@ -71,11 +54,16 @@ export function WhatsAppFloat() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Consultar por WhatsApp"
+      onClick={() => track('whatsapp_click', { source: 'float' })}
       style={{
         position: 'fixed',
         bottom: 28,
         right: 24,
-        zIndex: 900,
+        // Mismo escalón que los otros botones flotantes de esquina
+        // (BackToTop/WeaverCallout=40-45) — no arriba de drawers/modales
+        // (90-200) ni de la barra sticky del PDP en mobile (45), que si no
+        // queda tapada por esta burbuja justo donde está "Agregar".
+        zIndex: 40,
         width: 52,
         height: 52,
         borderRadius: 999,

@@ -49,7 +49,7 @@ function RecentlyViewedStrip() {
               position: 'relative', width: 100, height: 124,
               borderRadius: 8, overflow: 'hidden', background: dahila.cream50, marginBottom: 6,
             }}>
-              <Image src={p.photo} alt={p.name} fill quality={75} sizes="100px"
+              <Image src={p.photo} alt={p.name} fill quality={82} sizes="100px"
                 placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
             </div>
             <div style={{ fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink900, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -211,6 +211,11 @@ export function TiendaClient({
     (maxPrice !== null && maxPrice < priceBounds.max ? 1 : 0) +
     (onlyDiscount ? 1 : 0)
 
+  // "Limpiar filtros" también debe aparecer cuando lo único activo es una
+  // búsqueda (en mobile el input está oculto: sin esto, un ?q= del buscador
+  // del header dejaría la grilla filtrada sin ninguna forma visible de volver).
+  const hasActiveCriteria = activeFilterCount > 0 || search.trim().length > 0
+
   const clearAll = () => {
     setFilter('todo')
     setColorIds([])
@@ -232,8 +237,8 @@ export function TiendaClient({
         : 'Colección'
 
   return (
-    <main style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 28 }}>
+    <div className="tienda-page" style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
+      <div className="tienda-head" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 28 }}>
         <Eyebrow>Tienda</Eyebrow>
         <h1 style={{
           fontFamily: dahila.fontDisplay, fontWeight: 300,
@@ -264,8 +269,10 @@ export function TiendaClient({
 
         {/* Row 2: search + sort + filter toggle */}
         <div className="tienda-toolbar-actions" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Search */}
-          <div style={{
+          {/* Search — en mobile se oculta (.tienda-toolbar-search): duplica el
+              buscador del header, que queda a un tap, y su fila entera de 40px
+              es el mayor espacio recuperable antes de la primera prenda. */}
+          <div className="tienda-toolbar-search" style={{
             position: 'relative', display: 'flex', alignItems: 'center',
             borderBottom: `1px solid ${dahila.borderStrong}`, minWidth: 160,
           }}>
@@ -276,7 +283,7 @@ export function TiendaClient({
               onChange={(e) => setSearch(e.target.value)}
               aria-label="Buscar prendas"
               style={{
-                border: 'none', outline: 'none', background: 'transparent',
+                border: 'none', background: 'transparent',
                 fontFamily: dahila.fontSans, fontSize: 14, width: '100%',
                 padding: '8px 24px 8px 0', color: dahila.ink900,
               }}
@@ -413,14 +420,16 @@ export function TiendaClient({
         </div>
       )}
 
-      {/* Results meta */}
-      <div style={{
+      {/* Results meta — en mobile solo aparece con filtros/búsqueda activos
+          (.has-criteria): con el catálogo completo a la vista, el conteo no
+          paga la fila que ocupa antes de la primera prenda. */}
+      <div className={`tienda-meta${hasActiveCriteria ? ' has-criteria' : ''}`} style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         marginBottom: 24, paddingBottom: 16, borderBottom: `1px solid ${dahila.border}`,
         fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700,
       }}>
         <span>{filtered.length} {filtered.length === 1 ? 'prenda' : 'prendas'}</span>
-        {activeFilterCount > 0 && (
+        {hasActiveCriteria && (
           <button
             onClick={clearAll}
             style={{
@@ -476,6 +485,6 @@ export function TiendaClient({
           onClose={() => setQuickView(null)}
         />
       )}
-    </main>
+    </div>
   )
 }

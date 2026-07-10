@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { ProductCard } from '@/components/ProductCard'
+import { DropTeaser } from '@/components/DropTeaser'
 import { TestimonialsStrip } from '@/components/TestimonialsStrip'
 import type { Product, Discount } from '@/lib/types'
 import type { Testimonial } from '@/components/TestimonialsStrip'
@@ -87,7 +88,9 @@ export type HomeSettings = Partial<Record<
   | 'faq_2_q' | 'faq_2_a'
   | 'faq_3_q' | 'faq_3_a'
   | 'faq_4_q' | 'faq_4_a'
-  | 'atelier_note_enabled' | 'atelier_note_text' | 'atelier_note_cta_label' | 'atelier_note_cta_link',
+  | 'faq_5_q' | 'faq_5_a'
+  | 'atelier_note_enabled' | 'atelier_note_text' | 'atelier_note_cta_label' | 'atelier_note_cta_link'
+  | 'drop_enabled' | 'drop_name' | 'drop_date' | 'drop_teaser' | 'drop_image_url' | 'drop_collection_slug',
   string
 >>
 
@@ -96,7 +99,7 @@ function val<K extends keyof HomeSettings>(s: HomeSettings, key: K, fallback: st
   return v && v.trim() !== '' ? v : fallback
 }
 
-export function HomeClient({ products, newest = [], settings, discounts = [], testimonials = [] }: { products: Product[]; newest?: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[] }) {
+export function HomeClient({ products, newest = [], settings, discounts = [], testimonials = [], dropCollectionHref = null }: { products: Product[]; newest?: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[]; dropCollectionHref?: string | null }) {
   const router = useRouter()
   // "Nuevo" = últimos publicados por fecha real de alta (con fallback al orden
   // manual si la consulta dedicada no trajo nada).
@@ -132,6 +135,13 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
     image: val(settings, 'home_banner_image_url', ''),
   }
 
+  // Bloque "Próximo drop" — misma semántica que la promo bar y queue_note:
+  // ON salvo que la dueña lo apague ('false'), y solo si cargó el nombre.
+  // (El toggle del admin muestra una clave sin valor como prendida — leer
+  // `=== 'true'` acá haría que el bloque nunca aparezca aunque el panel
+  // diga "Sí, mostrar".)
+  const showDrop = settings.drop_enabled !== 'false' && val(settings, 'drop_name', '').trim().length > 0
+
   const faqItems: [string, string][] = [
     [val(settings, 'faq_1_q', '¿Cuánto tarda un encargo?'),
      val(settings, 'faq_1_a', 'Depende del modelo. Te aviso cuando empiezo y cuando está lista.')],
@@ -141,10 +151,12 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
      val(settings, 'faq_3_a', 'Bajo consulta. Trabajé con clientas en Argentina, Brasil y España — escribime y vemos costos.')],
     [val(settings, 'faq_4_q', '¿Aceptan devoluciones?'),
      val(settings, 'faq_4_a', 'Como cada pieza se hace a medida, no aceptamos cambios. Por eso te acompaño durante todo el proceso.')],
+    [val(settings, 'faq_5_q', '¿Dahila se escribe con H? ¿Es lo mismo que Dalia o Dahlia?'),
+     val(settings, 'faq_5_a', 'Sí — somos Dahila Crochet. Mucha gente nos busca como "Dalia" o "Dahlia" y llega igual: es la misma marca, hecha a mano en Montevideo.')],
   ]
 
   return (
-    <main>
+    <div>
       {/* HERO */}
       <section className="hero" style={{ position: 'relative', background: '#fff' }}>
         <div className="hero-frame" style={{ position: 'relative', overflow: 'hidden' }}>
@@ -191,7 +203,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
               }}>
                 {val(settings, 'hero_title', 'Tejido con tiempo.')}
               </h1>
-              <Button variant="primary" size="lg" onClick={() => router.push('/tienda')}>
+              <Button variant="primary" size="lg" href="/tienda">
                 {val(settings, 'hero_cta', 'Ver tienda')}
               </Button>
             </div>
@@ -238,7 +250,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
           <Link href="/tienda" style={{
             fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
             letterSpacing: '0.06em', color: dahila.ink700, textDecoration: 'none',
-          }}>Ver más →</Link>
+          }}>Ver toda la colección →</Link>
         </div>
 
         <div className="product-grid" style={{
@@ -250,8 +262,19 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
         </div>
       </section>
 
+      {/* PRÓXIMO DROP — countdown + captura VIP; ver DropTeaser.tsx */}
+      {showDrop && (
+        <DropTeaser
+          name={val(settings, 'drop_name', '')}
+          dateIso={val(settings, 'drop_date', '')}
+          teaser={val(settings, 'drop_teaser', '')}
+          imageUrl={val(settings, 'drop_image_url', '')}
+          collectionHref={dropCollectionHref}
+        />
+      )}
+
       {/* PROCESS STRIP */}
-      <section style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
+      <section className="home-section" style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
         <div className="process" style={{
           background: dahila.cream100,
           borderRadius: 16,
@@ -275,7 +298,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
 
       {/* PROMO BANNER — optional, editable from the admin. Image + copy + CTA. */}
       {showBanner && (
-        <section style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
+        <section className="home-section" style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
           <div className="home-banner" style={{
             display: 'grid', gridTemplateColumns: banner.image ? '1.1fr 1fr' : '1fr',
             background: dahila.cream100, borderRadius: 20, overflow: 'hidden',
@@ -309,7 +332,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
               )}
               {banner.ctaLabel && (
                 <div style={{ marginTop: 8 }}>
-                  <Button variant="primary" onClick={() => router.push(banner.ctaLink)}>{banner.ctaLabel}</Button>
+                  <Button variant="primary" href={banner.ctaLink}>{banner.ctaLabel}</Button>
                 </div>
               )}
             </div>
@@ -319,7 +342,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
 
       {/* ACCESORIOS */}
       {accesorios.length > 0 && (
-        <section style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
+        <section className="home-section" style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
           <h2 style={{
             fontFamily: dahila.fontDisplay, fontWeight: 300,
             fontSize: 22, letterSpacing: '0.08em', textTransform: 'uppercase',
@@ -337,7 +360,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
       )}
 
       {/* SPLIT — About */}
-      <section style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
+      <section className="home-section" style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
         <div className="split" style={{
           display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 56, alignItems: 'center',
         }}>
@@ -370,7 +393,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
               {val(settings, 'about_body', 'En Dahila tejemos a crochet prendas únicas, sin apuro y con vos.')}
             </p>
             <div style={{ marginTop: 6 }}>
-              <Button variant="secondary" onClick={() => router.push('/atelier')}>
+              <Button variant="secondary" href="/atelier">
                 {val(settings, 'about_cta', 'Conocé más')}
               </Button>
             </div>
@@ -384,7 +407,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
       {/* ESTA SEMANA EN EL TALLER — nota de Anush, humaniza la marca.
           Solo aparece si atelier_note_enabled === 'true' Y hay texto. */}
       {settings.atelier_note_enabled === 'true' && settings.atelier_note_text?.trim() && (
-        <section style={{ maxWidth: 760, margin: '88px auto 0', padding: '0 24px' }}>
+        <section className="home-section" style={{ maxWidth: 760, margin: '88px auto 0', padding: '0 24px' }}>
           <div style={{
             background: dahila.cream100,
             borderRadius: 20,
@@ -405,7 +428,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
             </p>
             {settings.atelier_note_cta_label?.trim() && settings.atelier_note_cta_link?.trim() && (
               <div>
-                <Button variant="secondary" onClick={() => router.push(settings.atelier_note_cta_link!)}>
+                <Button variant="secondary" href={settings.atelier_note_cta_link}>
                   {settings.atelier_note_cta_label}
                 </Button>
               </div>
@@ -415,7 +438,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
       )}
 
       {/* FAQ */}
-      <section style={{ maxWidth: 880, margin: '88px auto 0', padding: '0 24px' }}>
+      <section className="home-section" style={{ maxWidth: 880, margin: '88px auto 0', padding: '0 24px' }}>
         <h2 style={{
           fontFamily: dahila.fontDisplay, fontWeight: 300,
           fontSize: 22, letterSpacing: '0.08em', textTransform: 'uppercase',
@@ -424,6 +447,6 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
         <FAQ items={faqItems}/>
       </section>
 
-    </main>
+    </div>
   )
 }

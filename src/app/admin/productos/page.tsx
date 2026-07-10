@@ -57,6 +57,9 @@ export default function ProductosPage() {
 
     if (!error) {
       setProducts(products.filter(p => p.id !== id))
+    } else {
+      console.error('delete product failed', error)
+      alert('No se pudo eliminar el producto. Probá de nuevo en un momento.')
     }
     setDeleteId(null)
   }

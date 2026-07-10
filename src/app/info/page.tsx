@@ -6,12 +6,12 @@ import { SITE_URL } from '@/lib/env'
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'Información',
-  description: 'Envíos, cambios, cuidados de las prendas, pagos y cómo encargar a medida en Dahila Crochet.',
+  title: 'Envíos, pagos y cuidados de tu prenda',
+  description: 'Todo claro antes de comprar: cómo llega tu pedido a cualquier punto de Uruguay, cómo pagás (transferencia o Mercado Pago) y cómo cuidar una prenda tejida a mano.',
   alternates: { canonical: '/info' },
   openGraph: {
-    title: 'Información | Dahila Crochet',
-    description: 'Envíos, cambios, cuidados, pagos y encargos a medida.',
+    title: 'Envíos, pagos y cuidados de tu prenda | Dahila Crochet',
+    description: 'Cómo llega tu pedido, cómo pagás y cómo cuidar una prenda tejida a mano.',
     url: `${SITE_URL}/info`,
   },
 }
@@ -57,7 +57,7 @@ export default async function InfoPage() {
   )
 
   return (
-    <main style={{ maxWidth: 760, margin: '0 auto', padding: '48px 24px 96px' }}>
+    <div style={{ maxWidth: 760, margin: '0 auto', padding: '48px 24px 96px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 40 }}>
         <Eyebrow>Información</Eyebrow>
         <h1 style={{
@@ -85,6 +85,6 @@ export default async function InfoPage() {
           )
         })}
       </div>
-    </main>
+    </div>
   )
 }

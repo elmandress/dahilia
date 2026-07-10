@@ -1,13 +1,20 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { dahila } from './ui/Primitives'
+
+export interface EncargosCuposState {
+  enabled: boolean
+  total: number
+  taken: number
+  label: string
+}
 
 /**
  * Shows how many custom order slots are open this week.
  * Completely optional — if `encargos_cupos_enabled` is false or the number
  * is 0, nothing renders. Honest scarcity, not fake urgency.
+ *
+ * `state` is fetched server-side by the page (same site_settings round-trip
+ * that already loads shipping/queue copy) and passed down — no client fetch
+ * here, so this doesn't add its own Supabase round-trip on mount.
  *
  * CMS keys:
  *   encargos_cupos_enabled  — 'true' | 'false'
@@ -15,37 +22,8 @@ import { dahila } from './ui/Primitives'
  *   encargos_cupos_taken    — e.g. '2'
  *   encargos_cupos_label    — optional override text
  */
-export function EncargosDisponibles() {
-  const [state, setState] = useState<{
-    enabled: boolean
-    total: number
-    taken: number
-    label: string
-  } | null>(null)
-
-  useEffect(() => {
-    const supabase = createClient()
-    supabase
-      .from('site_settings')
-      .select('key, value')
-      .in('key', [
-        'encargos_cupos_enabled',
-        'encargos_cupos_total',
-        'encargos_cupos_taken',
-        'encargos_cupos_label',
-      ])
-      .then(({ data }) => {
-        const s = (data ?? []).reduce<Record<string, string>>(
-          (acc, r) => ({ ...acc, [r.key]: String(r.value ?? '') }), {}
-        )
-        const enabled = s.encargos_cupos_enabled === 'true'
-        const total = parseInt(s.encargos_cupos_total || '0', 10)
-        const taken = parseInt(s.encargos_cupos_taken || '0', 10)
-        setState({ enabled, total, taken, label: s.encargos_cupos_label || '' })
-      })
-  }, [])
-
-  if (!state || !state.enabled || state.total <= 0) return null
+export function EncargosDisponibles({ state }: { state: EncargosCuposState }) {
+  if (!state.enabled || state.total <= 0) return null
 
   const available = Math.max(0, state.total - state.taken)
 
@@ -89,4 +67,13 @@ export function EncargosDisponibles() {
       {text}
     </div>
   )
+}
+
+export function getEncargosCuposState(settings: Record<string, string>): EncargosCuposState {
+  return {
+    enabled: settings.encargos_cupos_enabled === 'true',
+    total: parseInt(settings.encargos_cupos_total || '0', 10),
+    taken: parseInt(settings.encargos_cupos_taken || '0', 10),
+    label: settings.encargos_cupos_label || '',
+  }
 }

@@ -44,7 +44,7 @@ export function OfertasClient({
   }, [products, discounts])
 
   return (
-    <main style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
+    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: products.length > 0 ? 20 : 28 }}>
         <Eyebrow>Tienda</Eyebrow>
         <h1 style={{
@@ -124,6 +124,6 @@ export function OfertasClient({
       {quickView && (
         <QuickViewModal product={quickView} discounts={discounts} onClose={() => setQuickView(null)} />
       )}
-    </main>
+    </div>
   )
 }

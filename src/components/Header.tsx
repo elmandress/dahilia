@@ -40,7 +40,11 @@ export interface PromoBar {
   fg: string
 }
 
-export function Header({ promo }: { promo?: PromoBar }) {
+export function Header({ promo, showOfertas = true }: { promo?: PromoBar; showOfertas?: boolean }) {
+  // "Ofertas" es un ítem estacional: el layout lo prende solo cuando hay
+  // descuentos vigentes. Sin ofertas, un ítem permanente en rojo entrena a
+  // ignorarlo (o peor: a esperar el descuento para comprar).
+  const navItems = showOfertas ? NAV_ITEMS : NAV_ITEMS.filter((it) => it.id !== '/ofertas')
   const [open, setOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [searchVal, setSearchVal] = useState('')
@@ -174,7 +178,8 @@ export function Header({ promo }: { promo?: PromoBar }) {
             aria-controls="mobile-menu"
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
-              width: 26, height: 26, alignItems: 'center', justifyContent: 'center',
+              width: 34, height: 34, minWidth: 34, minHeight: 34,
+              alignItems: 'center', justifyContent: 'center',
               color: dahila.ink900,
             }}
           >
@@ -194,7 +199,7 @@ export function Header({ promo }: { promo?: PromoBar }) {
 
           {/* Center-left: horizontal nav (desktop) */}
           <nav className="nav-desktop" aria-label="Principal" style={{ display: 'flex', gap: 26, flex: 1 }}>
-            {NAV_ITEMS.map((it) => {
+            {navItems.map((it) => {
               const base = it.id.split('?')[0]
               const on = !it.id.includes('?') && pathname === base
               const accentColor = it.accent ? '#B6314A' : (on ? dahila.ink900 : dahila.ink700)
@@ -254,7 +259,7 @@ export function Header({ promo }: { promo?: PromoBar }) {
                     autoFocus
                     aria-label="Buscar prendas"
                     style={{
-                      background: 'transparent', border: 'none', outline: 'none',
+                      background: 'transparent', border: 'none',
                       fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink900,
                       width: 160,
                     }}
@@ -317,14 +322,14 @@ export function Header({ promo }: { promo?: PromoBar }) {
                 )}
               </div>
             ) : (
-              <button onClick={() => setShowSearch(true)} style={{ ...iconBtn, width: 26, height: 26 }} aria-label="Buscar">
+              <button onClick={() => setShowSearch(true)} style={{ ...iconBtn, width: 34, height: 34, minWidth: 34, minHeight: 34 }} aria-label="Buscar">
                 <Icon name="magnifying-glass" size={20}/>
               </button>
             )}
 
             <Link
               href="/favoritos"
-              style={{ ...iconBtn, position: 'relative', width: 26, height: 26, color: dahila.ink900, textDecoration: 'none' }}
+              style={{ ...iconBtn, position: 'relative', width: 34, height: 34, minWidth: 34, minHeight: 34, color: dahila.ink900, textDecoration: 'none' }}
               aria-label={`Favoritos${showFavBadge ? ` (${favCount})` : ''}`}
             >
               <Icon name="heart" size={20}/>
@@ -332,7 +337,7 @@ export function Header({ promo }: { promo?: PromoBar }) {
                 <span
                   aria-hidden="true"
                   style={{
-                    position: 'absolute', top: -5, right: -7,
+                    position: 'absolute', top: -1, right: -3,
                     minWidth: 17, height: 17, borderRadius: 999,
                     background: dahila.ink900, color: '#fff',
                     fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 500,
@@ -346,7 +351,7 @@ export function Header({ promo }: { promo?: PromoBar }) {
 
             <button
               onClick={openDrawer}
-              style={{ ...iconBtn, position: 'relative', width: 26, height: 26 }}
+              style={{ ...iconBtn, position: 'relative', width: 34, height: 34, minWidth: 34, minHeight: 34 }}
               aria-label={`Abrir carrito${showBadge ? ` (${cartCount})` : ''}`}
             >
               <Icon name="shopping-bag" size={20}/>
@@ -356,7 +361,7 @@ export function Header({ promo }: { promo?: PromoBar }) {
                   aria-hidden="true"
                   className="cart-badge-pop"
                   style={{
-                    position: 'absolute', top: -5, right: -7,
+                    position: 'absolute', top: -1, right: -3,
                     minWidth: 17, height: 17, borderRadius: 999,
                     background: '#B6314A', color: '#fff',
                     fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 500,
@@ -420,15 +425,18 @@ export function Header({ promo }: { promo?: PromoBar }) {
                 Descubrir
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <li><Link href="/ofertas" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: '#B6314A' }}>Ofertas</Link></li>
+                {showOfertas && (
+                  <li><Link href="/ofertas" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: '#B6314A' }}>Ofertas</Link></li>
+                )}
+                <li><Link href="/colecciones" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>Colecciones</Link></li>
                 <li><Link href="/encargo" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>Encargo a medida</Link></li>
                 <li><Link href="/atelier" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>Sobre nosotros</Link></li>
               </ul>
             </div>
 
-            {/* Featured promo tile */}
+            {/* Featured promo tile — con ofertas activas manda ahí; si no, a la colección */}
             <Link
-              href="/ofertas"
+              href={showOfertas ? '/ofertas' : '/tienda'}
               onClick={() => setMegaOpen(false)}
               style={{
                 position: 'relative', display: 'block',
@@ -441,7 +449,7 @@ export function Header({ promo }: { promo?: PromoBar }) {
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(31,26,27,0.55), rgba(31,26,27,0))' }} />
                 <div style={{ position: 'absolute', left: 16, bottom: 14, color: '#fff' }}>
                   <div style={{ fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', opacity: 0.9 }}>Temporada</div>
-                  <div style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 22 }}>Ver ofertas →</div>
+                  <div style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 22 }}>{showOfertas ? 'Ver ofertas →' : 'Ver la colección →'}</div>
                 </div>
               </div>
             </Link>
@@ -493,21 +501,39 @@ export function Header({ promo }: { promo?: PromoBar }) {
           </button>
         </div>
         <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 20px 16px', display: 'flex', flexDirection: 'column' }}>
-          {NAV_ITEMS.map((it) => {
+          {navItems.map((it) => {
             const base = it.id.split('?')[0]
             const on = !it.id.includes('?') && pathname === base
             return (
-              <Link key={it.id} href={it.id} onClick={() => setOpen(false)} style={{
-                textDecoration: 'none',
-                fontFamily: dahila.fontSans, fontSize: 16, fontWeight: it.accent ? 500 : (on ? 500 : 300),
-                color: it.accent ? '#B6314A' : dahila.ink900, textAlign: 'left', padding: '15px 0',
-                letterSpacing: '0.04em',
-                borderBottom: `1px solid ${dahila.border}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              }}>
-                <span>{it.label}</span>
-                {on && <span aria-hidden style={{ width: 6, height: 6, borderRadius: 999, background: it.accent ? '#B6314A' : dahila.ink900 }} />}
-              </Link>
+              <div key={it.id} style={{ borderBottom: `1px solid ${dahila.border}` }}>
+                <Link href={it.id} onClick={() => setOpen(false)} style={{
+                  textDecoration: 'none',
+                  fontFamily: dahila.fontSans, fontSize: 16, fontWeight: it.accent ? 500 : (on ? 500 : 300),
+                  color: it.accent ? '#B6314A' : dahila.ink900, textAlign: 'left', padding: '15px 0',
+                  letterSpacing: '0.04em',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}>
+                  <span>{it.label}</span>
+                  {on && <span aria-hidden style={{ width: 6, height: 6, borderRadius: 999, background: it.accent ? '#B6314A' : dahila.ink900 }} />}
+                </Link>
+                {/* Categorías bajo "Tienda" — paridad con el mega-menú de
+                    desktop: desde Instagram (mobile) una categoría queda a
+                    2 taps en vez de obligar a scrollear la tienda entera. */}
+                {it.mega && (
+                  <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 10 }}>
+                    {MEGA_CATEGORIES.map((c) => (
+                      <Link key={c.slug} href={`/tienda/${c.slug}`} onClick={() => setOpen(false)} style={{
+                        textDecoration: 'none',
+                        fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300,
+                        color: dahila.ink700, padding: '7px 0 7px 14px',
+                        letterSpacing: '0.03em',
+                      }}>
+                        {c.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             )
           })}
           <Link href="/favoritos" onClick={() => setOpen(false)} style={{

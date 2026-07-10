@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import TejedorasClient from './TejedorasClient'
 
+export const revalidate = 3600
+
 export const metadata: Metadata = {
   title: 'Tejé con Dahila — red de tejedoras',
   description:

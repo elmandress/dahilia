@@ -8,12 +8,12 @@ import { TiendaClient } from './TiendaClient'
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'Tienda',
-  description: 'Colección actual de prendas tejidas a crochet — tops, cardigans, accesorios y sets.',
+  title: 'Ropa de crochet hecha a mano en Uruguay',
+  description: 'Tops, cardigans, bolsos y sets tejidos a mano en Montevideo, con precios claros. Cada pieza se puede pedir en tu talle y tus colores. Envío a todo Uruguay.',
   alternates: { canonical: '/tienda' },
   openGraph: {
-    title: 'Tienda | Dahila Crochet',
-    description: 'Colección actual de prendas tejidas a crochet — tops, cardigans, accesorios y sets.',
+    title: 'Ropa de crochet hecha a mano en Uruguay | Dahila Crochet',
+    description: 'Tops, cardigans, bolsos y sets tejidos a mano en Montevideo, con precios claros. Envío a todo Uruguay.',
     url: '/tienda',
   },
 }

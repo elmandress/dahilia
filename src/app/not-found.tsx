@@ -25,7 +25,7 @@ export default async function NotFound() {
   }
 
   return (
-    <main style={{ maxWidth: 1100, margin: '0 auto', padding: '96px 24px 64px' }}>
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '96px 24px 64px' }}>
       <div style={{ textAlign: 'center', maxWidth: 560, margin: '0 auto' }}>
         <span className="eyebrow" style={{ color: 'var(--ink-500)' }}>Error 404</span>
         <h1 style={{
@@ -73,6 +73,6 @@ export default async function NotFound() {
           </div>
         </section>
       )}
-    </main>
+    </div>
   )
 }

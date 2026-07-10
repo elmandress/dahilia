@@ -11,6 +11,7 @@ import { computeCouponEffect, type PublicCoupon } from '@/lib/coupons'
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import Image from 'next/image'
 import { SITE_URL } from '@/lib/env'
+import { track } from '@/lib/analytics'
 
 // Recuerda el código ingresado entre recargas (se re-valida siempre contra el
 // servidor al montar — nunca se confía en lo guardado).
@@ -35,7 +36,9 @@ function buildWhatsAppMessage(
   discounts: ReturnType<typeof useCart>['discounts'],
   total: number,
   giftNote?: string,
-  coupon?: { code: string; discount: number; freeShipping: boolean } | null
+  coupon?: { code: string; discount: number; freeShipping: boolean } | null,
+  /** Umbral de envío gratis alcanzado (monto en UYU); null si no aplica. */
+  freeShippingOver?: number | null
 ): string {
   const lines: string[] = []
   lines.push('Hola Anush! Quiero coordinar este pedido:')
@@ -65,6 +68,8 @@ function buildWhatsAppMessage(
   }
   if (coupon?.freeShipping) {
     lines.push(`Cupón ${coupon.code}: envío gratis`)
+  } else if (freeShippingOver) {
+    lines.push(`Envío gratis (pedido arriba de ${formatPrice(freeShippingOver)})`)
   }
   lines.push(`Total: ${formatPrice(total)}`)
   if (giftNote) {
@@ -78,7 +83,7 @@ function buildWhatsAppMessage(
 }
 
 export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProducts = [], discounts: serverDiscounts = [] }: Props) {
-  const { items, removeFromCart, updateQty, isLoading, discounts, shippingEstimate, queueNote } = useCart()
+  const { items, removeFromCart, updateQty, addToCart, isLoading, discounts, shippingEstimate, freeShippingThreshold, queueNote } = useCart()
   const router = useRouter()
   const [giftNote, setGiftNote] = useState('')
   const [showGiftNote, setShowGiftNote] = useState(false)
@@ -115,6 +120,39 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
   const couponDiscount = couponEffect && !couponEffect.blocked ? couponEffect.discount : 0
   const freeShipping = !!(couponEffect && !couponEffect.blocked && couponEffect.freeShipping)
   const total = Math.max(0, subtotal - couponDiscount)
+  // Umbral de envío gratis del sitio (independiente del cupón). Se calcula
+  // sobre el total final para no prometer de más si un cupón baja el monto.
+  const overThreshold = freeShippingThreshold > 0 && total >= freeShippingThreshold
+  const missingForFree = freeShippingThreshold > 0 ? Math.max(0, freeShippingThreshold - total) : 0
+
+  // "Sumale un detalle": cross-sell silencioso de piezas chicas (Baymard: los
+  // add-ons del carrito deben ser complementos baratos, nunca otra prenda que
+  // compita con la que ya está). Prioriza categorías que NO están en el carrito.
+  const ADDON_MAX_UYU = 800
+  const cartProductIds = new Set(items.map((i) => i.product_id))
+  const cartCategoryIds = new Set(items.map((i) => i.product?.category_id).filter(Boolean))
+  const addonSuggestions = featuredProducts
+    .filter((p) =>
+      !cartProductIds.has(p.id) &&
+      !p.is_custom_only &&
+      (p.base_price_uyu ?? 0) > 0 &&
+      getFinalPrice(p, undefined, discounts) <= ADDON_MAX_UYU
+    )
+    .sort((a, b) =>
+      Number(cartCategoryIds.has(a.category_id ?? '')) - Number(cartCategoryIds.has(b.category_id ?? '')) ||
+      getFinalPrice(a, undefined, discounts) - getFinalPrice(b, undefined, discounts)
+    )
+    .slice(0, 3)
+  const [addedAddonId, setAddedAddonId] = useState<string | null>(null)
+
+  const handleAddonAdd = async (p: Product) => {
+    const avail = (p.sizes ?? []).filter((s) => s.available)
+    const size = avail.length > 0 ? avail[0].size : 'Único'
+    setAddedAddonId(p.id)
+    await addToCart(p, size, 1, { openDrawer: false })
+    track('cart_addon_add', { product: p.slug })
+    setTimeout(() => setAddedAddonId(null), 2000)
+  }
 
   const applyCoupon = () => {
     const code = couponInput.trim()
@@ -171,18 +209,24 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
     }
     const message = buildWhatsAppMessage(
       items, discounts, total, giftNote.trim(),
-      coupon ? { code: coupon.code, discount: couponDiscount, freeShipping } : null
+      coupon ? { code: coupon.code, discount: couponDiscount, freeShipping } : null,
+      overThreshold ? freeShippingThreshold : null
     )
     // wa.me supports `?text=` query param. encodeURIComponent handles the rest.
     // Strip any trailing slash from the base URL so we can append cleanly.
     const base = whatsappUrl.replace(/\/+$/, '')
     const url = `${base}?text=${encodeURIComponent(message)}`
-    window.open(url, '_blank', 'noopener,noreferrer')
+    track('order_sent', { items: items.length, total })
+    // Con cupón hay un fetch (await) antes de llegar acá, y iOS Safari suele
+    // bloquear window.open fuera del gesto original — si lo bloquea, navegamos
+    // en la misma pestaña: wa.me abre la app igual y la venta no se pierde.
+    const win = window.open(url, '_blank', 'noopener,noreferrer')
+    if (!win) window.location.assign(url)
   }
 
   if (isLoading) {
     return (
-      <main style={{ maxWidth: 880, margin: '0 auto', padding: '40px 24px 80px' }}>
+      <div style={{ maxWidth: 880, margin: '0 auto', padding: '40px 24px 80px' }}>
         <div className="sk-shimmer" style={{ width: 60, height: 11, borderRadius: 4 }} />
         <div className="sk-shimmer" style={{ width: 200, height: 44, borderRadius: 6, marginTop: 12, marginBottom: 40 }} />
         {[1, 2].map((i) => (
@@ -195,13 +239,13 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
             </div>
           </div>
         ))}
-      </main>
+      </div>
     )
   }
 
   if (items.length === 0) {
     return (
-      <main style={{ maxWidth: 880, margin: '0 auto', padding: '80px 24px' }}>
+      <div style={{ maxWidth: 880, margin: '0 auto', padding: '80px 24px' }}>
         <div style={{ textAlign: 'center', marginBottom: featuredProducts.length > 0 ? 56 : 0 }}>
           <div style={{ marginBottom: 20, color: dahila.ink300 }}>
             <Icon name="shopping-bag" size={44} />
@@ -229,7 +273,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
               gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
               gap: 20,
             }}>
-              {featuredProducts.map((p) => {
+              {featuredProducts.slice(0, 4).map((p) => {
                 const photo = getPrimaryPhoto(p)
                 const price = getFinalPrice(p, undefined, serverDiscounts)
                 return (
@@ -246,7 +290,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                         src={photo}
                         alt={p.name}
                         fill
-                        quality={80}
+                        quality={82}
                         sizes="(max-width: 600px) 50vw, 220px"
                         placeholder="blur"
                         blurDataURL={BLUR_DATA_URL}
@@ -265,12 +309,12 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
             </div>
           </div>
         )}
-      </main>
+      </div>
     )
   }
 
   return (
-    <main style={{ maxWidth: 880, margin: '0 auto', padding: '40px 24px 80px' }}>
+    <div style={{ maxWidth: 880, margin: '0 auto', padding: '40px 24px 80px' }}>
       <Eyebrow>Tu pedido</Eyebrow>
       <h1 style={{
         fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(32px, 5vw, 48px)',
@@ -334,7 +378,8 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                       background: 'transparent', border: 'none', padding: 0,
                       cursor: item.qty <= 1 ? 'default' : 'pointer',
                       color: item.qty <= 1 ? dahila.ink300 : dahila.ink900,
-                      width: 22, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      width: 30, height: 30, minWidth: 30, minHeight: 30,
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   ><Icon name="minus" size={12} /></button>
                   <span style={{ fontFamily: dahila.fontSans, fontSize: 14, minWidth: 14, textAlign: 'center' }}>{item.qty}</span>
@@ -346,7 +391,8 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                       background: 'transparent', border: 'none', padding: 0,
                       cursor: item.qty >= 20 ? 'default' : 'pointer',
                       color: item.qty >= 20 ? dahila.ink300 : dahila.ink900,
-                      width: 22, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      width: 30, height: 30, minWidth: 30, minHeight: 30,
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   ><Icon name="plus" size={12} /></button>
                 </div>
@@ -362,6 +408,79 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           )
         })}
       </div>
+
+      {/* "Sumale un detalle" — cross-sell calmo: piezas chicas que viajan en el
+          mismo envío. Un solo toque cuando la pieza es de talle único; si tiene
+          talles, lleva a la ficha para elegirlo. */}
+      {addonSuggestions.length > 0 && (
+        <section aria-label="Piezas chicas para sumar" style={{
+          marginTop: 28, padding: '18px 20px',
+          background: dahila.cream50, border: `1px solid ${dahila.border}`, borderRadius: 12,
+        }}>
+          <p style={{
+            fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.16em',
+            textTransform: 'uppercase', color: dahila.ink500, margin: '0 0 14px',
+          }}>
+            Sumale un detalle — viaja en el mismo envío
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {addonSuggestions.map((p) => {
+              const photo = getPrimaryPhoto(p)
+              const list = getEffectivePrice(p)
+              const price = getFinalPrice(p, undefined, discounts)
+              const availableSizes = (p.sizes ?? []).filter((s) => s.available)
+              const oneTap = availableSizes.length <= 1
+              const justAdded = addedAddonId === p.id
+              return (
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <Link href={`/tienda/${p.slug}`} aria-label={`Ver ${p.name}`} style={{
+                    position: 'relative', width: 52, height: 62, flexShrink: 0,
+                    borderRadius: 8, overflow: 'hidden', background: '#fff', display: 'block',
+                  }}>
+                    <Image src={photo} alt={p.name} fill sizes="52px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+                  </Link>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <Link href={`/tienda/${p.slug}`} style={{
+                      fontFamily: dahila.fontDisplay, fontSize: 15, color: dahila.ink900,
+                      textDecoration: 'none', display: 'block', lineHeight: 1.25,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {p.name}
+                    </Link>
+                    <PriceBlock list={list} final={price} size="sm" align="start" />
+                  </div>
+                  {oneTap ? (
+                    <button
+                      onClick={() => handleAddonAdd(p)}
+                      disabled={justAdded}
+                      aria-label={`Agregar ${p.name} al carrito`}
+                      style={{
+                        background: 'transparent', color: dahila.ink900,
+                        border: `1px solid ${dahila.borderStrong}`, borderRadius: 999,
+                        padding: '9px 16px', cursor: justAdded ? 'default' : 'pointer',
+                        fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 500,
+                        letterSpacing: '0.05em', whiteSpace: 'nowrap', minHeight: 38,
+                      }}
+                    >
+                      {justAdded ? '✓ Sumado' : '+ Agregar'}
+                    </button>
+                  ) : (
+                    <Link href={`/tienda/${p.slug}`} style={{
+                      fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 500,
+                      letterSpacing: '0.05em', color: dahila.ink900, whiteSpace: 'nowrap',
+                      border: `1px solid ${dahila.borderStrong}`, borderRadius: 999,
+                      padding: '9px 16px', textDecoration: 'none', display: 'inline-flex',
+                      alignItems: 'center', minHeight: 38, boxSizing: 'border-box',
+                    }}>
+                      Elegir talle
+                    </Link>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Reassurance strip */}
       <div style={{
@@ -447,7 +566,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                     fontFamily: dahila.fontSans, fontSize: 13, letterSpacing: '0.08em',
                     color: dahila.ink900, background: dahila.cream50,
                     border: `1px solid ${dahila.borderStrong}`, borderRadius: 8,
-                    padding: '10px 12px', outline: 'none', width: 150, textTransform: 'uppercase',
+                    padding: '10px 12px', width: 150, textTransform: 'uppercase',
                   }}
                 />
                 <Button variant="secondary" size="sm" onClick={applyCoupon} disabled={couponPending}>
@@ -492,9 +611,21 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
               {formatPrice(total)}
             </span>
           </div>
-          {freeShipping && (
+          {freeShipping ? (
             <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: '#1E8449' }}>
               Tu cupón incluye envío gratis
+            </span>
+          ) : overThreshold ? (
+            <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: '#1E8449' }}>
+              ✓ Envío gratis — tu pedido supera los {formatPrice(freeShippingThreshold)}
+            </span>
+          ) : missingForFree > 0 ? (
+            <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500 }}>
+              Te faltan {formatPrice(missingForFree)} para el envío gratis — el costo exacto te lo paso por WhatsApp
+            </span>
+          ) : (
+            <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500 }}>
+              El envío no está incluido — te paso el costo exacto por WhatsApp según tu zona
             </span>
           )}
         </div>
@@ -560,7 +691,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                 style={{
                   fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink900,
                   background: dahila.cream50, border: `1px solid ${dahila.borderStrong}`,
-                  borderRadius: 8, padding: '10px 12px', resize: 'none', outline: 'none',
+                  borderRadius: 8, padding: '10px 12px', resize: 'none',
                   width: '100%', boxSizing: 'border-box',
                 }}
               />
@@ -612,6 +743,6 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           Coordinar por WhatsApp
         </button>
       </div>
-    </main>
+    </div>
   )
 }

@@ -258,7 +258,16 @@ a.prose-link:hover {
   .atelier-split    { grid-template-columns: 1fr !important; gap: 28px !important; }
   .numbers          { grid-template-columns: 1fr !important; gap: 0 !important; }
   .photo-strip      { grid-template-columns: 1fr 1fr !important; }
-  .producto-thumbs  { grid-template-columns: 1fr 1fr 1fr !important; }
+  /* auto-fill en vez de un conteo fijo — con 4 o 5 fotos (el caso más común)
+     un grid de exactamente 3 columnas dejaba un resto de 1-2 miniaturas
+     solas en la fila siguiente. auto-fill acomoda las que entren por fila
+     sin resto incómodo, sea cual sea la cantidad de fotos. */
+  .producto-thumbs  { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)) !important; }
+  /* Las secciones del home usaban 88px fijos entre bloques (pensado para
+     desktop) — en un teléfono son ~530px de aire puro sumando las 6-7
+     secciones, antes de llegar a nada. Se reduce a un espaciado que sigue
+     separando visualmente sin convertir el scroll en puro vacío. */
+  .home-section     { margin-top: 48px !important; }
 }
 
 /* iPhone 13 mini and smaller (~ 375-480px) — tighten paddings & type */
@@ -281,8 +290,10 @@ a.prose-link:hover {
   .brand-mark         { width: 30px !important; height: 30px !important; }
   .header-actions     { gap: 14px !important; }
   .announce-bar       { font-size: 10px !important; letter-spacing: 0.06em !important; padding: 7px 12px !important; }
-  /* Inline search input shrinks so it never overflows on small phones */
-  .header-search input { width: 110px !important; }
+  /* Inline search input: ancho mínimo legible (110px con texto de 16px
+     apenas mostraba ~9 caracteres — no alcanzaba para ver lo que se escribe,
+     ej. "cardigan celeste"). Crece con flex en vez de un ancho fijo chico. */
+  .header-search input { width: auto !important; flex: 1 1 auto !important; min-width: 160px !important; }
 }
 
 /* Header navigation: full horizontal nav stays visible on laptops and up.
@@ -328,7 +339,18 @@ a.prose-link:hover {
    ============================================================ */
 @media (hover: none) and (pointer: coarse) {
   button, a[role="button"], .icon-button {
-    min-height: 36px;
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* iOS Safari zooms the viewport when a focused input's font-size is under
+   16px — jarring right before a shopper is about to check out. Every text
+   input on the site stays under that on purpose (design), so raise it back
+   to 16px only on touch/mobile, where the zoom actually happens. */
+@media (max-width: 720px) {
+  input, select, textarea {
+    font-size: 16px;
   }
 }
 
@@ -421,11 +443,45 @@ a.prose-link:hover {
    Tienda toolbar — 2-row layout on mobile so it never squishes
    ============================================================ */
 @media (max-width: 640px) {
+  /* La cabecera de la tienda ocupaba ~40% de la pantalla de un teléfono antes
+     del primer producto (padding 40px + título + dos filas de controles de
+     44px + fila de conteo). Se compacta todo el bloque: menos aire arriba,
+     controles de 40px (el espaciado entre chips mantiene el área de toque
+     efectiva) y márgenes menores. El objetivo: que la primera fila de
+     prendas asome en el primer viewport. */
+  .tienda-page { padding-top: 18px !important; }
+  .tienda-head { margin-bottom: 12px !important; gap: 2px !important; }
+  /* El eyebrow "Tienda" sobre el título es contexto repetido (la clienta ya
+     sabe dónde está); en un teléfono, esos ~24px valen más en productos. */
+  .tienda-head > span:first-child { display: none !important; }
+  .tienda-head h1 { font-size: 24px !important; }
+  /* La fila de conteo solo aparece con filtros o búsqueda activos. */
+  .tienda-meta { display: none !important; }
+  .tienda-meta.has-criteria {
+    display: flex !important;
+  }
+  .tienda-toolbar-cats button {
+    min-height: 40px !important;
+    padding: 6px 13px !important;
+  }
+  .tienda-toolbar-actions > button {
+    min-height: 40px !important;
+    padding: 7px 11px !important;
+  }
+  /* El buscador de la toolbar duplica el del header (a un tap) — se oculta y
+     su fila se la reparten el orden (crece) y el botón Filtrar. */
+  .tienda-toolbar-search { display: none !important; }
+  .tienda-toolbar-actions select { padding: 7px 8px !important; flex: 1 1 auto; min-width: 0; }
+  .tienda-meta {
+    margin-bottom: 16px !important;
+    padding-bottom: 10px !important;
+  }
   /* Outer wrapper: become a column so cats sit above actions */
   .tienda-toolbar {
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 10px !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
   }
   /* Category chips: horizontal scroll, no wrap, hide scrollbar */
   .tienda-toolbar-cats {

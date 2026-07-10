@@ -251,6 +251,18 @@ export const WEAVER_MODELS: WeaverModel[] = [
     how: 'La organización que escribió las reglas del trabajo artesanal domiciliario: la consistencia no sale del talento individual sino de estándares documentados, muestras de "aceptable / no aceptable" y revisión antes de enviar.',
     takeaway: 'Tomamos: documentar todo. La calidad la pone tu estándar escrito y tu revisión final, no la suerte.',
   },
+  {
+    name: 'The Citizenry',
+    where: 'EE. UU. + talleres en 20 países',
+    how: 'Marca de deco premium que produce todo con talleres artesanos: paga el doble del salario justo certificado, co-diseña cada colección con el taller y lo audita la World Fair Trade Organization. Vende caro justamente PORQUE puede contar todo eso.',
+    takeaway: 'Tomamos: pagar bien no es un costo, es el argumento de venta. "Quién la tejió y en cuántas horas" es parte del valor de la pieza — contalo.',
+  },
+  {
+    name: 'SOKO',
+    where: 'Kenia',
+    how: 'Miles de artesanas independientes coordinadas por celular (su "fábrica virtual"): cada una produce en su casa, los pedidos se asignan según reputación y cumplimiento, y cobran 25–35% del precio final de venta (la industria tradicional paga 2–3%).',
+    takeaway: 'Tomamos: el historial manda — a la tejedora constante se le asigna más y mejor trabajo. Y no hace falta software: tu WhatsApp es tu fábrica virtual.',
+  },
 ]
 
 export const WEAVER_PIPELINE = [
@@ -267,8 +279,8 @@ export const WEAVER_SYSTEM = [
     body: 'Precio por pieza = horas estándar de la ficha × tarifa según nivel: aprendiz $150/h, asociada $180/h, senior $210–250/h (el mínimo legal es $127/h — nunca menos, ni en la muestra). Se pacta ANTES de tejer y se paga al aprobar la pieza. La lana la ponés vos: controlás calidad y color.',
   },
   {
-    title: 'Los números, honestos',
-    body: 'A los precios de hoy, delegar una prenda grande da pérdida: un top de 13 h a $150/h son $1.950 solo de tejido. Por eso el orden es: primero suben los precios (columna 12m), después se delega — arrancando por bolsos y accesorios, que son las piezas donde antes van a cerrar los números. Delegar sin subir precios es regalar plata.',
+    title: 'Los números, honestos (y la cuenta que decide)',
+    body: 'La cuenta antes de delegar cualquier modelo: horas medidas × tarifa + lana ≤ 70% del precio de venta — el 30% restante paga tu control de calidad, el diseño y la marca. Ojo: con las horas de la tabla, hoy casi ninguna pieza pasa esa cuenta, ni siquiera a precios de 12 meses. Pero las horas de la tabla son TUS horas, que incluyen diseñar y resolver: una tejedora repitiendo el mismo modelo con ficha tarda bastante menos (un bolso "de 7 h" puede ser 4 en producción pura). Por eso la muestra pagada SE CRONOMETRA: además de filtro de calidad es tu dato real de costos. Delegá solo modelos donde la cuenta cierre con horas medidas; si no cierra, o el precio de esa pieza está corto o ese modelo todavía no es delegable.',
   },
   {
     title: 'Control de calidad, sin excepciones',
@@ -288,7 +300,19 @@ export const WEAVER_SYSTEM = [
   },
   {
     title: 'Empezá con UNA',
-    body: 'Una sola tejedora, para bolsos y accesorios (donde los números ya cierran). Vos seguís con las piezas grandes. Sumás otra recién cuando la primera es constante.',
+    body: 'Una sola tejedora, arrancando por bolsos y accesorios (los modelos donde la cuenta cierra antes). Vos seguís con las piezas grandes. Sumás la segunda recién cuando la primera es constante Y tenés cola de pedidos que no llegás a tejer — la demanda contrata, no el entusiasmo.',
+  },
+  {
+    title: 'Postulante menor de 18: se puede, con INAU',
+    body: 'En Uruguay se puede trabajar desde los 15 años, pero SIEMPRE con el carné laboral adolescente de INAU (gratis, en las direcciones departamentales) más autorización firmada de madre/padre, carné de salud vigente y constancia de estudios. Tope legal: 6 horas por día y 36 semanales, sin interferir con el liceo. Para la postulante de 15: la charla inicial es con ella Y una persona adulta responsable; después la muestra pagada de una pieza chica (bandana o mini tote, cronometrada como siempre); si aprueba, el carné de INAU se tramita ANTES de encargarle trabajo regular. Y paga lo mismo por pieza que cualquier tejedora — la edad no descuenta tarifa. Tener los papeles en regla no es burocracia: protege a la marca y la protege a ella. Que su primera experiencia laboral sea contigo puede ser lo mejor que le pase — hacelo bien.',
+  },
+  {
+    title: 'El control final, en 4 puntos',
+    body: 'Antes de enviar, cada pieza pasa por: (1) medidas contra la ficha (±1,5 cm), (2) tensión comparada con tu muestra maestra, (3) terminaciones y costuras miradas del revés, (4) etiqueta Dahila cosida + tarjeta de cuidado. Cuatro minutos por pieza que protegen todo lo demás.',
+  },
+  {
+    title: 'Cuando sean tres o más: la referente',
+    body: 'El modelo de los grandes (Manos, SOKO): tu tejedora más constante pasa a ser la "referente" — recibe las piezas de las demás, hace el primer control contra la ficha y a vos solo llega lo dudoso. Se le paga ese rol (por pieza revisada o tarifa senior). Es el único camino para que el control de calidad no seas siempre vos.',
   },
 ]
 
@@ -363,6 +387,26 @@ export const CLASSES_COMMUNITY = [
 export const CLASSES_FLYWHEEL =
   'El círculo completo: las clases pagan tu hora mejor que tejer → las mejores alumnas del Nivel 3 pasan a la muestra pagada → las que aprueban tejen para la marca → vos tejés menos y diseñás más → hay más piezas para los drops → los drops traen más clientas y más alumnas. Cada vuelta empuja la siguiente.'
 
+/** De dónde salen las alumnas — el embudo, con lo que ya existe. */
+export const CLASSES_FUNNEL = [
+  {
+    step: 'De clienta a alumna',
+    detail: 'El mensaje del día 7 ("¿cómo te quedó?") es también la invitación natural: "¿sabías que enseño a tejer? El próximo ciclo arranca tal fecha". Quien ya ama su prenda quiere saber hacerla.',
+  },
+  {
+    step: 'De Instagram a la lista de espera',
+    detail: 'Cada video de proceso termina igual: "¿querés aprender? Anotate en la lista de espera de clases". La lista junta interesadas todo el año — cuando abrís ciclo, ya tenés a quién avisarle primero.',
+  },
+  {
+    step: 'De alumna a alumna que trae',
+    detail: '"Anotate con una amiga: $200 de descuento cada una." En grupos de 4–6, una amiga llena la mitad del cupo — y de paso aprenden juntas, que es la mitad del encanto.',
+  },
+  {
+    step: 'De alumna a tejedora',
+    detail: 'El Nivel 3 ES tu selección: quien termina una pieza del catálogo con su ficha ya demostró tensión, medidas y prolijidad. A las mejores les ofrecés la muestra pagada — el pipeline de tejedoras se alimenta solo.',
+  },
+]
+
 // ─── Drops ───────────────────────────────────────────────────
 
 export interface DropEvent {
@@ -419,6 +463,30 @@ export const DROP_BENCHMARKS = [
   { value: '90%+', label: 'de la gente LEE una difusión de WhatsApp', sub: 'el email ronda el 20% de apertura' },
   { value: '4–7%', label: 'compra desde una difusión bien hecha', sub: 'hasta 15–20% si la lista es de clientas' },
   { value: '4–6', label: 'difusiones por mes, máximo', sub: 'más que eso quema la lista; separá 3+ días' },
+]
+
+/** La maquinaria del sitio para cada drop (existe desde jul 2026 — solo hay que usarla). */
+export const DROP_SITE_TOOLS = [
+  {
+    step: 'Prender el teaser',
+    detail: '3 semanas antes: Configuración → "Próximo drop" (nombre, fecha, texto y foto). El home muestra la cuenta regresiva y junta emails para la lista VIP solo.',
+  },
+  {
+    step: 'Colección en "Próximamente"',
+    detail: 'Creá la colección con su portada y dejala en estado Próximamente: aparece en /colecciones como adelanto, sin que se pueda entrar todavía.',
+  },
+  {
+    step: '24 h antes: "Solo con link"',
+    detail: 'Cambiá el estado a Solo con link y mandá el link a la lista VIP (email) y a la difusión de clientas. Ellas ven y compran primero; el resto todavía no la encuentra.',
+  },
+  {
+    step: 'Día D: Publicada',
+    detail: 'Estado Publicada + anuncio en Instagram. El bloque del home pasa solo a "Ya está online" con botón directo a la colección.',
+  },
+  {
+    step: 'Después',
+    detail: 'Apagá el teaser (o dejalo mientras quede stock), cerrá el cupón del drop y anotá qué se agotó y qué no — eso decide la próxima colección.',
+  },
 ]
 
 // ─── Canales ─────────────────────────────────────────────────
@@ -483,6 +551,198 @@ export const CHANNELS: Channel[] = [
   },
 ]
 
+// ─── Instagram: el playbook del momento ──────────────────────
+// Contexto (jul 2026): reels de 19–20.000 reproducciones con ~2.900 seguidores,
+// ~900 likes, ~60 comentarios y ~1.000 seguidoras nuevas en 2 días — y ya es el
+// tercer video arriba de 20.000. Fuentes: señales de ranking confirmadas por
+// Instagram (watch time, envíos por DM, likes por alcance — Mosseri 2025/26),
+// guías 2026 de Buffer/Hootsuite/Later y benchmarks de comment-to-DM.
+
+export const IG_WHY_WORKING = [
+  {
+    title: 'El algoritmo te está eligiendo — entendé por qué',
+    body: 'Un reel de 19.000 vistas con 2.900 seguidores significa que ~6 de cada 7 personas que lo vieron NO te seguían: Instagram lo mostró a desconocidas y la respuesta fue tan buena que lo siguió empujando. Las 3 señales que más pesan: cuánto tiempo miran (sobre todo los primeros 3 segundos), cuántas lo ENVÍAN por DM a una amiga (vale 3–5 veces más que un like) y likes por alcance. Tus videos de proceso retienen — eso es lo que está funcionando.',
+  },
+  {
+    title: 'Las cuentas chicas tienen ventaja — usala ahora',
+    body: 'Instagram le da a las cuentas de menos de 10.000 seguidores un techo de descubrimiento MÁS alto (prueba el contenido con no-seguidores para compensar la falta de historial). Esta ventana es ahora: 3–4 reels por semana mientras dura la racha, siempre contenido original grabado para Instagram (los reposts con marca de agua pierden 40–60% de distribución). Repetí el FORMATO de los videos que explotaron con otra pieza — el formato ganador es un molde, no una casualidad.',
+  },
+  {
+    title: '1.000 seguidoras nuevas de un reel es tasa de elite',
+    body: 'Convertir ~5% de las vistas en seguidores (lo típico es 1–2%) confirma que el perfil también está haciendo su trabajo: quien llega, se queda. Cuidá esa primera impresión: bio con link directo a la tienda, highlights que respondan Precios / Envíos / Cómo encargar, y los mejores reels fijados arriba.',
+  },
+  {
+    title: 'El KPI de negocio no son las vistas',
+    body: 'La única métrica que paga cuentas: cuántas personas escriben por WhatsApp cada semana y cuántas compran. Anotalo todas las semanas junto a las vistas — si las vistas suben y los chats no, el problema está en el puente (bio, CTA, highlights), no en el contenido.',
+  },
+]
+
+/** Qué hacer en las primeras 24 h de cada reel que despega (checklist). */
+export const IG_VIRAL_CHECKLIST = [
+  'Fijá un comentario tuyo con el link directo a la pieza del video ("La tenés acá → dahila.uy/tienda/..."). El caption no permite links; los comentarios sí — y el fijado es lo primero que se lee.',
+  'Respondé TODOS los comentarios el primer día. Cada respuesta es una señal de conversación para el algoritmo y duplica los comentarios del reel. Con ~60 se responde a mano; si pasás de 200 por reel, recién ahí mirá ManyChat (automatiza el "te lo mando por DM").',
+  'Invitá al DM: "¿La querés en tu talle? Comentá LINK y te lo mando". El link por DM convierte más que el link en bio (un paso en vez de tres) — y los envíos por DM son la señal que más empuja el reel.',
+  'Subilo a Stories con sticker de link a la pieza. Historias y reel se retroalimentan las primeras horas.',
+  'Guardá en una nota el gancho, la duración y la pieza del video: ese formato se repite con otra prenda en 1–2 semanas.',
+  'Aprovechá la ola: al día siguiente publicá el "detrás" del mismo video (la pieza terminada, cómo se encarga, la lana). Quien llegó ayer todavía está caliente.',
+]
+
+/** La rutina semanal de medición (15 minutos, gratis). */
+export const IG_WEEKLY = [
+  'Meta Business Suite (gratis, es la fuente oficial): por cada reel mirá la RETENCIÓN al segundo 3 (si se caen ahí, el gancho falló), % promedio visto, envíos, visitas al perfil que generó y seguidores nuevos. Compará entre tus propios videos, no contra nadie más.',
+  'Anotá en una planilla simple: reel, vistas, envíos, seguidores nuevos, chats de WhatsApp de la semana, ventas. Cuatro semanas de eso valen más que cualquier herramienta paga.',
+  'Metricool (plan gratis, 1 marca): sirve para programar posts y ver el mejor horario. Suficiente y de sobra para esta etapa.',
+  'Not Just Analytics / Buffer / otras: no hacen falta hoy — miden lo mismo que Meta Business Suite con menos detalle o pagando. La plata de herramientas está mejor en lana y packaging.',
+]
+
+// ─── Google Merchant Center ────────────────────────────────────
+// Investigado jul 2026: Uruguay es uno de los 58 países con Google Shopping
+// habilitado. Es gratis, complementa el canal "Google" de arriba y el sitio
+// ya cumple todo lo técnico que pide (precio, stock, marca, fotos en el
+// Product schema) — falta solo el paso de cuenta. Fuentes: Google Merchant
+// Center Help ("Free listings for products", "Benefits of free local
+// listings") y Search Central.
+
+export const MERCHANT_WHY =
+  'Es gratis y usa lo que el sitio ya tiene: aparecer con foto y precio en la pestaña Shopping de Google, en Google Imágenes y en Maps (si está atado al Perfil de Negocio) — más lugares donde te encuentra alguien que ya está por comprar. No reemplaza a Instagram ni es un chorro de ventas garantizado: es un canal extra, gratis, que se prepara una vez y queda funcionando solo. Google también tiene un sello "Pequeña empresa" que ayuda a diferenciarte de las tiendas grandes. Y si algún día se quiere invertir en Google Ads/Shopping, Merchant Center es el paso obligatorio previo — armarlo ahora no se pierde.'
+
+export const MERCHANT_STEPS = [
+  { step: 'Verificar el sitio en Search Console', detail: 'Si ya se hizo como parte de la migración a dahila.uy, este paso ya está — confirmar en search.google.com/search-console que la propiedad "Dominio: dahila.uy" existe y está verificada.' },
+  { step: 'Crear la cuenta en Merchant Center', detail: 'Gratis, en business.google.com/merchant. Usar la misma cuenta de Google que Search Console.' },
+  { step: 'Vincular Merchant Center con Search Console', detail: 'Se hace desde Configuración → Herramientas empresariales, en un par de clics una vez que ambas cuentas existen.' },
+  { step: 'Activar "usar datos estructurados del sitio"', detail: 'En vez de subir un archivo de productos a mano, Merchant Center puede leer directo el precio/stock/marca que el sitio ya publica en cada ficha (Product schema) — cero trabajo técnico extra.' },
+  { step: 'Activar "Listados gratuitos" para Uruguay', detail: 'Dentro de Merchant Center, en el programa de listados gratuitos, elegir Uruguay como país de venta.' },
+  { step: 'Activar el atributo "Pequeña empresa"', detail: 'Si aparece disponible para la cuenta — es el sello que ayuda a diferenciarse de las tiendas grandes en los resultados.' },
+  { step: 'Revisar el Diagnóstico a los pocos días', detail: 'Merchant Center avisa si algún producto tiene un error (precio que no coincide, falta imagen, etc.) antes de que eso baje la visibilidad del resto.' },
+]
+
+// ─── Clientas: recompra, referidos y fidelización ────────────
+// Fuentes: benchmarks 2026 de repeat purchase (Finsi/Rivo), programas de
+// referidos double-sided (Voucherify/Extole/impact.com) y campañas de
+// cumpleaños (Experian/Drip). Diseñado sobre lo que YA existe: WhatsApp
+// Business, el módulo Cupones y la lista VIP — nada que instalar.
+
+export const LOYALTY_INTRO =
+  'Conseguir una clienta nueva cuesta caro: contenido, alcance, tiempo. Que una que ya te ama vuelva o traiga una amiga cuesta un mensaje. Una tienda online promedio hace el 25–30% de sus ventas con clientas que repiten — y las tuyas, que recibieron una pieza con su nombre escrito a mano, tienen más razones que nadie para volver. Todo este sistema se opera con etiquetas de WhatsApp Business y el módulo de Cupones.'
+
+export const LOYALTY_BENCHMARKS = [
+  { value: '25–30%', label: 'de las ventas de una tienda promedio son recompra', sub: 'las mejores pasan el 40%. Hoy no lo medimos — el registro de ventas es el paso 1' },
+  { value: '2,3×', label: 'más se comparte un código cuando ganan las DOS', sub: 'beneficio doble (clienta + amiga) vs. beneficio para una sola, medido en miles de tiendas' },
+  { value: '+19%', label: 'más recompra tienen las clientas que llegaron referidas', sub: 'benchmark de marcas de ropa: la amiga de una clienta es tu mejor clienta nueva' },
+  { value: '342%', label: 'más ingresos genera un mensaje de cumpleaños', sub: 'vs. una promo normal (Experian). Y el 45% compra en su mes si recibe el saludo' },
+]
+
+/** La escalera: qué pasa con una clienta después de cada compra. */
+export const LOYALTY_LADDER = [
+  {
+    step: 'Primera compra',
+    detail: 'El packaging de regalo y la tarjeta a mano hacen el trabajo. Antes de despedirte: "¿te sumo a la lista de clientas? Los drops los ves 24 h antes" — y pedile solo el MES de cumpleaños.',
+  },
+  {
+    step: 'A los 7 días',
+    detail: '"¿Cómo te quedó?" por WhatsApp + pedile una foto con la prenda puesta. Esa foto es tu prueba social de la ficha del producto y su momento de sentirse parte.',
+  },
+  {
+    step: 'A los 30 días',
+    detail: 'Mandale su cupón AMIGA-(su nombre): 15% para REGALAR. No es un descuento para ella — es un regalo que ella le hace a una amiga. Por eso se comparte.',
+  },
+  {
+    step: 'Segunda compra',
+    detail: 'Ya es clienta frecuente: etiqueta "frecuente" en WhatsApp Business y entra a la difusión que ve los drops antes. El beneficio es acceso, no descuento.',
+  },
+  {
+    step: 'Tercera compra o dos amigas traídas',
+    detail: 'VIP de verdad: un mini accesorio sorpresa en su próximo pedido (¡sin avisarle antes!) y primer lugar cuando hay lista de espera. A esta altura no compra prendas: defiende la marca.',
+  },
+]
+
+/** El programa AMIGA — referidos con el motor de cupones existente. */
+export const REFERRAL_RULES = [
+  {
+    title: 'El código lleva su nombre',
+    body: 'AMIGA-SOFI, AMIGA-CARLA… Se crea en Cupones: 15%, tope 3 usos, 1 por clienta. Un código con tu nombre se regala con orgullo; un "REFERIDO10" genérico no lo comparte nadie.',
+  },
+  {
+    title: 'Ganan las dos',
+    body: 'La amiga estrena su 15% en la primera compra; cuando el código se usa, la que lo regaló gana un mini accesorio o $200 en su próximo pedido. El beneficio doble duplica lo compartido (2,3× según datos de miles de tiendas).',
+  },
+  {
+    title: 'Los usos se ven en el panel',
+    body: 'En Cupones cada código muestra sus canjes: ahí ves quién trajo amigas, sin planillas. Cuando un AMIGA- llega al tope, avisale y dale su premio — ese mensaje ES el momento de fidelización.',
+  },
+  {
+    title: 'Regalo antes que porcentaje',
+    body: 'El premio de la que refiere es un accesorio tejido, no plata: te cuesta 3–5 horas de tejido por cada ~3 clientas nuevas y refuerza justo lo que vendés. El descuento se lo lleva la amiga, que todavía no conocía la marca.',
+  },
+  {
+    title: 'Cumpleaños: solo el mes',
+    body: 'Pedir el día completo es más dato del que necesitás. Con el mes alcanza: etiqueta "cumple-marzo" en WhatsApp Business y el 1° de cada mes mandás el saludo + CUMPLE-(nombre) (15%, vence a fin de mes). Es el mensaje con mejor retorno que existe.',
+  },
+  {
+    title: 'Nada de esto necesita software nuevo',
+    body: 'Etiquetas de WhatsApp Business + Cupones + la lista VIP del footer. Probalo a mano con 10 clientas contentas; se automatiza el día que el volumen lo pida, no antes.',
+  },
+]
+
+/** Recetario de cupones — cada campaña con su receta exacta en /admin/cupones. */
+export interface CouponRecipe {
+  name: string
+  when: string
+  how: string
+}
+
+export const COUPON_RECIPES: CouponRecipe[] = [
+  {
+    name: 'BIENVENIDA10',
+    when: 'En el mensaje de bienvenida a la lista VIP',
+    how: '10% · 1 uso por clienta · sin vencimiento · todo el catálogo. Es la razón concreta para anotarse a la lista.',
+  },
+  {
+    name: 'AMIGA-(NOMBRE)',
+    when: 'Se lo regalás a cada clienta ~30 días después de su compra',
+    how: '15% · tope 3 usos en total · 1 por clienta. Cuando se agota, la que lo regaló gana su premio (accesorio o $200).',
+  },
+  {
+    name: 'GRACIAS-(NOMBRE)',
+    when: 'Para reactivar a una clienta que hace meses no compra',
+    how: '$200 fijos · 1 uso · vence en 60 días. El monto fijo se siente regalo; el porcentaje se siente promoción.',
+  },
+  {
+    name: 'CUMPLE-(NOMBRE)',
+    when: 'El 1° del mes, a las etiquetadas con ese mes',
+    how: '15% · 1 uso · vence a fin de mes. El vencimiento corto es la urgencia honesta.',
+  },
+  {
+    name: 'VERANO26 (el del drop)',
+    when: 'Solo durante las primeras 48 h del lanzamiento',
+    how: '10% · vence a las 48 h · alcance: los productos de la colección (se tildan al crear el cupón). Premia a las que llegan temprano sin rebajar el resto del catálogo.',
+  },
+  {
+    name: 'MAMA27 / NAVIDAD26',
+    when: 'Las fechas de regalo del calendario de drops',
+    how: 'Monto fijo o % chico · con inicio y fin · tope de usos total. Mejor sobre accesorios: son el regalo típico y el margen aguanta.',
+  },
+]
+
+export const COUPON_PRINCIPLES = [
+  {
+    title: 'El techo es 15%',
+    body: 'Tu margen es tejido a mano: 20–30% de descuento es regalar horas de trabajo. Si con 15% algo no se mueve, el problema no es el precio — es la foto, el texto o la pieza.',
+  },
+  {
+    title: 'Nunca encimado con ofertas',
+    body: 'El cupón se aplica sobre el precio final, descuentos de la tienda incluidos — se suman. Regla simple: cuando hay ofertas activas, no repartas cupones de %. Una herramienta por vez.',
+  },
+  {
+    title: 'Todo cupón tiene un porqué decible en voz alta',
+    body: '"Porque es tu cumpleaños", "porque trajiste una amiga", "porque llegaste temprano al drop". Un descuento sin razón le enseña a la gente que el precio de lista es mentira.',
+  },
+  {
+    title: '"1 por clienta" es por dispositivo',
+    body: 'Sin cuentas de usuario, el tope por clienta se controla por el navegador. Para códigos nominales alcanza de sobra; no es una caja fuerte y no hace falta que lo sea.',
+  },
+]
+
 // ─── Para hacer (checklist persistente) ──────────────────────
 
 export type ActionHorizon = 'ya' | 'mes' | 'trimestre'
@@ -501,11 +761,19 @@ export const NEXT_ACTIONS: TodoAction[] = [
   { id: 'mercadopago', label: 'Usar links de pago de Mercado Pago con cuotas', detail: 'Se arma en 2 minutos al cerrar cada venta por WhatsApp. Las cuotas hacen fácil el precio nuevo.', horizon: 'mes' },
   { id: 'cupon-vip', label: 'Crear el primer cupón para la lista VIP', detail: 'Un código de bienvenida chico (ej. 10%) da una razón concreta para anotarse. Se crea en Cupones.', horizon: 'mes' },
   { id: 'drop-verano', label: "Preparar el drop Verano '26", detail: 'Fotos, colección, cupón y el paso a paso de la pestaña Drops. Lanzamiento: noviembre.', horizon: 'trimestre' },
-  { id: 'primera-postulante', label: 'Responder a la primera postulante de tejedoras', detail: 'El paso a paso está en la pestaña Tejedoras: charla por WhatsApp y después una muestra pagada contra ficha técnica. Sin apuro — la vara de calidad se pone desde la primera.', horizon: 'ya' },
+  { id: 'primera-postulante', label: 'Responder a la primera postulante (15 años) — con INAU', detail: 'El paso a paso está en Tejedoras → "Postulante menor de 18": charla con ella Y una persona adulta responsable, muestra pagada cronometrada (bandana o mini tote), y carné laboral de INAU tramitado ANTES del trabajo regular. La ternura y los papeles en regla no se pelean: van juntas.', horizon: 'ya' },
   { id: 'lista-espera', label: 'Escribir el aviso de lista de espera', detail: 'En Configuración → "Lista de espera": ej. "Los pedidos nuevos entran a producción en agosto". La clienta lo ve en cada producto y en el carrito ANTES de escribirte — saberlo antes genera confianza, descubrirlo en el chat la rompe. Actualizalo cuando cambie la cola.', horizon: 'ya' },
-  { id: 'mayorista', label: 'Cotizar el pedido mayorista de bolsos con cabeza fría', detail: 'Regla: descuento máximo 10–15% sobre el precio de la web, seña del 50% antes de empezar y plazo realista (20 bolsos ≈ 140 horas ≈ un mes de tejido de una persona). Si piden mitad de precio, la respuesta es "no" — tu precio ya es el más justo del mercado.', horizon: 'ya' },
+  { id: 'mayorista', label: 'Cotizar el pedido mayorista de bolsos con cabeza fría', detail: 'Los bolsos a precio de lista ya son de tus mejores $/hora — el descuento mayorista máximo es 10%, con seña del 50% y entrega escalonada (20 bolsos ≈ 140 horas ≈ 5 semanas de una persona). Si piden mitad de precio, la respuesta es "no": cada hora tejiendo bolsos baratos es una hora que no teje pedidos que pagan más. Bonus: 20 piezas idénticas y simples son el encargo perfecto para estrenar la red de tejedoras — con la cuenta de la pestaña Tejedoras hecha antes.', horizon: 'ya' },
   { id: 'numero-nuevo', label: 'Propagar el número nuevo (099 850 073) fuera del sitio', detail: 'La web ya lo usa. Falta donde el sitio no llega: la app de WhatsApp Business (transferir el número), el link de la bio de Instagram, Google Business Profile, y tarjetas o packaging impresos con el número viejo.', horizon: 'ya' },
+  { id: 'precios-cola-12m', label: 'Aplicar YA la columna 12m a las piezas con cola', detail: 'La regla ya estaba escrita: pieza con más de un mes de lista de espera sube al precio de 12 meses sin esperar noviembre. Con pedidos hasta agosto, esa condición se cumple HOY para todo lo que tiene cola. Subilo desde Productos y acompañalo con la mejora visible (packaging). Una venta que igual no podías tejer no es una venta perdida.', horizon: 'ya' },
+  { id: 'medicion-on', label: 'Prender la medición del sitio (30 min, gratis)', detail: 'Dos cuentas gratis: Umami Cloud (cloud.umami.is) y Microsoft Clarity (clarity.microsoft.com). Matías pega 3 variables en Netlify y el sitio empieza a contar solo el embudo completo: visita → producto → carrito → WhatsApp, más grabaciones de sesión para ver dónde se traban. Hoy el negocio vuela a ciegas: no sabemos qué producto convierte ni dónde se caen las clientas.', horizon: 'ya' },
+  { id: 'ig-checklist-viral', label: 'Usar el checklist de reel viral en el próximo que despegue', detail: 'Comentario fijado con el link a la pieza, responder todos los comentarios el primer día, "comentá LINK y te lo mando por DM", y anotar el formato ganador. El playbook completo está en la pestaña Canales.', horizon: 'ya' },
   { id: 'precios-fase2', label: 'Segundo paso de precios', detail: 'Con el drop de verano, tops y bolsos suben hacia la meta de 12 meses (columna "12m" de la tabla).', horizon: 'trimestre' },
+  { id: 'merchant-center', label: 'Activar Google Merchant Center', detail: 'Gratis, ~30 minutos. El paso a paso está en la pestaña Canales, debajo de "Google". El sitio ya tiene todo lo técnico listo — solo falta el paso de cuenta.', horizon: 'mes' },
+  { id: 'bing-webmaster', label: 'Registrar el sitio en Bing Webmaster Tools', detail: 'Gratis, ~15 minutos (bing.com/webmasters, se puede importar directo desde Search Console). Importa más de lo que suena: ChatGPT busca con el índice de Bing — estar bien indexada ahí es la vía más directa a que la IA recomiende Dahila.', horizon: 'mes' },
+  { id: 'etiquetas-clientas', label: 'Etiquetar a las clientas en WhatsApp Business', detail: 'Dos etiquetas por clienta: "frecuente" (2+ compras) y su mes de cumpleaños. Son la base de los referidos, el cumple y el acceso anticipado — 2 minutos por clienta. El sistema completo está en la pestaña Clientas.', horizon: 'mes' },
+  { id: 'cupon-amiga', label: 'Crear los primeros cupones AMIGA-(nombre)', detail: 'Elegí 5 clientas contentas y mandale a cada una su código para regalar (15%, 3 usos). La receta exacta está en la pestaña Clientas.', horizon: 'mes' },
+  { id: 'drop-site', label: 'Probar la maquinaria de drops del sitio', detail: 'Antes del drop de verano: Configuración → "Próximo drop" (countdown + captura VIP en el home) y una colección en estado "Próximamente". El paso a paso está en la pestaña Drops.', horizon: 'trimestre' },
 ]
 
 // ─── Riesgos ─────────────────────────────────────────────────

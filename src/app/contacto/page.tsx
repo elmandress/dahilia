@@ -6,12 +6,12 @@ import { SITE_URL } from '@/lib/env'
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'Contacto',
-  description: 'Escribime por WhatsApp o Instagram. Te respondo cuanto antes.',
+  title: 'Contacto — hablás directo con quien teje',
+  description: 'Escribinos por WhatsApp o Instagram: te responde Anush, la persona que va a tejer tu prenda. Consultas de talles, colores, encargos y envíos a todo Uruguay.',
   alternates: { canonical: '/contacto' },
   openGraph: {
-    title: 'Contacto | Dahila Crochet',
-    description: 'Escribime por WhatsApp o Instagram. Te respondo cuanto antes.',
+    title: 'Contacto — hablás directo con quien teje | Dahila Crochet',
+    description: 'Te responde Anush, la persona que va a tejer tu prenda. Consultas de talles, colores, encargos y envíos.',
     url: `${SITE_URL}/contacto`,
   },
 }

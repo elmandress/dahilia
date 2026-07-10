@@ -3,11 +3,11 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { dahila, Eyebrow, Field, TextInput, Button } from '@/components/ui/Primitives'
-import { EncargosDisponibles } from '@/components/EncargosDisponibles'
+import { EncargosDisponibles, type EncargosCuposState } from '@/components/EncargosDisponibles'
 import { submitEncargo } from './actions'
 import { subscribeToVipList } from '@/lib/subscribe'
 
-export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
+export default function EncargoForm({ whatsappUrl, encargosCupos }: { whatsappUrl: string; encargosCupos: EncargosCuposState }) {
   const router = useRouter()
   const [tipo, setTipo] = useState('Cardigan')
   const [talle, setTalle] = useState('M')
@@ -26,7 +26,7 @@ export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
       `Hola! Acabo de mandar un encargo desde la web${name ? ` (soy ${name})` : ''}. Quería sumar algo más.`
     )
     return (
-      <main style={{ maxWidth: 560, margin: '0 auto', padding: '96px 24px', textAlign: 'center' }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '96px 24px', textAlign: 'center' }}>
         <Eyebrow>Encargo recibido</Eyebrow>
         <h1 style={{
           fontFamily: dahila.fontDisplay, fontWeight: 300,
@@ -118,7 +118,7 @@ export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
           </a>
           <Button variant="secondary" onClick={() => router.push('/tienda')}>Ver la tienda</Button>
         </div>
-      </main>
+      </div>
     )
   }
 
@@ -153,7 +153,7 @@ export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
   }
 
   return (
-    <main style={{ maxWidth: 720, margin: '0 auto', padding: '40px 24px 0' }}>
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 24px 0' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 36 }}>
         <Eyebrow>Encargos a medida</Eyebrow>
         <h1 style={{
@@ -169,7 +169,7 @@ export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
         }}>
           ¿Ya hiciste un encargo? Seguí su estado con tu código →
         </button>
-        <EncargosDisponibles />
+        <EncargosDisponibles state={encargosCupos} />
       </div>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }} noValidate>
@@ -247,7 +247,7 @@ export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
               fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, color: dahila.ink900,
               background: 'transparent', border: 'none',
               borderBottom: `1px solid ${dahila.borderStrong}`,
-              padding: '10px 0 8px', outline: 'none', resize: 'vertical',
+              padding: '10px 0 8px', resize: 'vertical',
               width: '100%', boxSizing: 'border-box',
             }}
           />
@@ -270,6 +270,6 @@ export default function EncargoForm({ whatsappUrl }: { whatsappUrl: string }) {
           {isPending ? 'Enviando...' : 'Enviar encargo'}
         </Button>
       </form>
-    </main>
+    </div>
   )
 }

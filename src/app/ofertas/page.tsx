@@ -7,12 +7,12 @@ import { OfertasClient } from './OfertasClient'
 export const revalidate = 1800
 
 export const metadata: Metadata = {
-  title: 'Ofertas',
-  description: 'Prendas de crochet con descuento. Hecho a mano en Uruguay.',
+  title: 'Ofertas en prendas tejidas a mano',
+  description: 'Piezas de crochet con descuento real, tejidas una por una en Montevideo. Pocas unidades de cada modelo — cuando se van, se van. Envío a todo Uruguay.',
   alternates: { canonical: '/ofertas' },
   openGraph: {
-    title: 'Ofertas | Dahila Crochet',
-    description: 'Prendas de crochet con descuento. Hecho a mano en Uruguay.',
+    title: 'Ofertas en prendas tejidas a mano | Dahila Crochet',
+    description: 'Piezas de crochet con descuento real, tejidas una por una en Montevideo. Pocas unidades de cada modelo.',
     url: '/ofertas',
   },
 }

@@ -1,6 +1,6 @@
 export default function HomeLoading() {
   return (
-    <main>
+    <div>
       <section style={{ position: 'relative' }}>
         <div
           className="sk-shimmer"
@@ -56,6 +56,6 @@ export default function HomeLoading() {
           .home-skeleton-grid { grid-template-columns: 1fr 1fr !important; gap: 14px !important; }
         }
       `}</style>
-    </main>
+    </div>
   )
 }

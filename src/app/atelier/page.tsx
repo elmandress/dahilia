@@ -2,16 +2,17 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { dahila, Eyebrow } from '@/components/ui/Primitives'
+import { SITE_URL } from '@/lib/env'
 
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'Sobre nosotros',
-  description: 'Quiénes estamos detrás de Dahila Crochet. Tejido a mano en Uruguay, con lana natural y prendas únicas a medida.',
+  title: 'Quién teje tus prendas — el taller',
+  description: 'Conocé a Anush y el taller de Montevideo donde nace cada pieza: lana elegida a mano, tu medida real y tejido sin apuro. Así se hace lo que ninguna máquina puede.',
   alternates: { canonical: '/atelier' },
   openGraph: {
-    title: 'Sobre nosotros | Dahila Crochet',
-    description: 'Quiénes estamos detrás de Dahila Crochet. Tejido a mano en Uruguay, con lana natural y prendas únicas a medida.',
+    title: 'Quién teje tus prendas — el taller | Dahila Crochet',
+    description: 'Conocé a Anush y el taller de Montevideo donde nace cada pieza: lana elegida a mano, tu medida real y tejido sin apuro.',
     url: '/atelier',
   },
 }
@@ -54,8 +55,27 @@ export default async function AtelierPage() {
     val('atelier_photo_3', '/photos/bufanda-verde.png'),
   ]
 
+  // Person (Anush) enlazada a la Organization del layout vía worksFor — la
+  // entidad "quién está detrás" que los motores de respuesta (ChatGPT,
+  // Perplexity, Gemini) usan para citar marcas chicas con confianza. Datos
+  // reales y estables, nada inventado.
+  const personJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: 'Anush',
+    jobTitle: 'Tejedora y fundadora',
+    description: 'Artesana de crochet. Teje a mano, a medida, cada pieza de Dahila Crochet desde Montevideo, Uruguay.',
+    knowsAbout: ['crochet', 'tejido a mano', 'ropa a medida', 'slow fashion'],
+    worksFor: { '@type': 'Organization', name: 'Dahila Crochet', url: SITE_URL },
+    url: `${SITE_URL}/atelier`,
+  }
+
   return (
-    <main style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
+    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+      />
       <div className="atelier-split" style={{
         display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: 64, alignItems: 'center',
       }}>
@@ -137,6 +157,6 @@ export default async function AtelierPage() {
           ))}
         </div>
       </section>
-    </main>
+    </div>
   )
 }

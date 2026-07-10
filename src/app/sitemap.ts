@@ -23,17 +23,19 @@ export const revalidate = 3600
  *   0.5  Info, atelier, terminos
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date()
-
+  // Sin lastModified en las rutas estáticas A PROPÓSITO: poner "ahora" en cada
+  // regeneración es el anti-patrón que Google documenta — solo usa lastmod si
+  // es "consistently accurate", y detectar fechas infladas hace que lo ignore
+  // para TODO el sitio, incluidos los productos (que sí llevan updated_at real).
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${SITE_URL}/`,          lastModified: now, changeFrequency: 'weekly',  priority: 1    },
-    { url: `${SITE_URL}/tienda`,    lastModified: now, changeFrequency: 'daily',   priority: 0.9  },
-    { url: `${SITE_URL}/encargo`,   lastModified: now, changeFrequency: 'monthly', priority: 0.6  },
-    { url: `${SITE_URL}/atelier`,   lastModified: now, changeFrequency: 'monthly', priority: 0.5  },
-    { url: `${SITE_URL}/info`,      lastModified: now, changeFrequency: 'monthly', priority: 0.5  },
-    { url: `${SITE_URL}/contacto`,  lastModified: now, changeFrequency: 'monthly', priority: 0.6  },
-    { url: `${SITE_URL}/tejedoras`, lastModified: now, changeFrequency: 'monthly', priority: 0.5  },
-    { url: `${SITE_URL}/terminos`,  lastModified: now, changeFrequency: 'yearly',  priority: 0.3  },
+    { url: `${SITE_URL}/`,          changeFrequency: 'weekly',  priority: 1    },
+    { url: `${SITE_URL}/tienda`,    changeFrequency: 'daily',   priority: 0.9  },
+    { url: `${SITE_URL}/encargo`,   changeFrequency: 'monthly', priority: 0.6  },
+    { url: `${SITE_URL}/atelier`,   changeFrequency: 'monthly', priority: 0.5  },
+    { url: `${SITE_URL}/info`,      changeFrequency: 'monthly', priority: 0.5  },
+    { url: `${SITE_URL}/contacto`,  changeFrequency: 'monthly', priority: 0.6  },
+    { url: `${SITE_URL}/tejedoras`, changeFrequency: 'monthly', priority: 0.5  },
+    { url: `${SITE_URL}/terminos`,  changeFrequency: 'yearly',  priority: 0.3  },
   ]
 
   try {
@@ -49,9 +51,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .from('categories')
         .select('slug, updated_at')
         .order('sort_order', { ascending: true }),
+      // select('*') a propósito: filtrar `unlisted` acá exigiría que la columna
+      // exista (drops-2026-07.sql); traer todo y filtrar en JS tolera una DB
+      // sin migrar (undefined = false).
       supabase
         .from('collections')
-        .select('slug, updated_at')
+        .select('*')
         .eq('published', true)
         .order('sort_order', { ascending: true }),
       supabase.from('discounts').select('id').eq('active', true).limit(1),
@@ -70,7 +75,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // landing pages Google indexes for queries like "cardigans crochet uruguay".
     const categoryRoutes: MetadataRoute.Sitemap = (categoriesRes.data ?? []).map((c) => ({
       url: `${SITE_URL}/tienda/${c.slug}`,
-      lastModified: c.updated_at ? new Date(c.updated_at) : now,
+      // lastmod solo cuando hay fecha real (mismo criterio que arriba).
+      ...(c.updated_at ? { lastModified: new Date(c.updated_at) } : {}),
       changeFrequency: 'weekly' as const,
       priority: 0.85,
     }))
@@ -85,34 +91,42 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
       return {
         url: `${SITE_URL}/tienda/${p.slug}`,
-        lastModified: p.updated_at ? new Date(p.updated_at) : now,
+        ...(p.updated_at ? { lastModified: new Date(p.updated_at) } : {}),
         changeFrequency: 'weekly' as const,
         priority: p.status === 'active' ? 0.8 : 0.7,
         ...(photo ? { images: [photo] } : {}),
       }
     })
 
-    // Collection / lookbook pages
-    const collectionRoutes: MetadataRoute.Sitemap = (collectionsRes.data ?? []).map((c) => ({
-      url: `${SITE_URL}/colecciones/${c.slug}`,
-      lastModified: c.updated_at ? new Date(c.updated_at) : now,
-      changeFrequency: 'weekly' as const,
-      priority: 0.75,
-    }))
+    // Collection / lookbook pages. Las "solo con link" (unlisted, acceso
+    // anticipado VIP) no se publicitan a Google.
+    const collectionsData = (collectionsRes.data ?? []) as Array<{
+      slug: string
+      updated_at: string | null
+      unlisted?: boolean
+    }>
+    const collectionRoutes: MetadataRoute.Sitemap = collectionsData
+      .filter((c) => !c.unlisted)
+      .map((c) => ({
+        url: `${SITE_URL}/colecciones/${c.slug}`,
+        ...(c.updated_at ? { lastModified: new Date(c.updated_at) } : {}),
+        changeFrequency: 'weekly' as const,
+        priority: 0.75,
+      }))
 
     // Hub pages that would otherwise be empty/thin — only advertise them to
     // Google when there is real content behind them.
     const hasOffers =
       (discountsRes.data ?? []).length > 0 ||
       productsData.some((p) => p.discount_active && (p.discount_percent ?? 0) > 0)
-    const hasCollections = (collectionsRes.data ?? []).length > 0
+    const hasCollections = collectionRoutes.length > 0
 
     const conditionalHubs: MetadataRoute.Sitemap = [
       ...(hasOffers
-        ? [{ url: `${SITE_URL}/ofertas`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.75 }]
+        ? [{ url: `${SITE_URL}/ofertas`, changeFrequency: 'daily' as const, priority: 0.75 }]
         : []),
       ...(hasCollections
-        ? [{ url: `${SITE_URL}/colecciones`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 }]
+        ? [{ url: `${SITE_URL}/colecciones`, changeFrequency: 'weekly' as const, priority: 0.7 }]
         : []),
     ]
 

@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function ProductNotFound() {
   return (
-    <main
+    <div
       style={{
         maxWidth: 560,
         margin: '0 auto',
@@ -73,6 +73,6 @@ export default function ProductNotFound() {
           Encargo a medida
         </Link>
       </div>
-    </main>
+    </div>
   )
 }

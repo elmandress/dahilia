@@ -14,9 +14,12 @@ import {
   PRICING_WHY, PRICING_RULES, HOUR_REFS, PRICE_TABLE, PRICING_PHASES, contribPerHour,
   VALUE_ACTIONS,
   WEAVER_MODELS, WEAVER_PIPELINE, WEAVER_SYSTEM,
-  CLASSES_INTRO, CLASSES_START, CLASSES_PRICING, CLASSES_LEVELS, CLASSES_SELLING, CLASSES_SESSION, CLASSES_SCALE, CLASSES_COMMUNITY, CLASSES_FLYWHEEL,
-  DROP_CALENDAR, DROP_STAGES, DROP_BENCHMARKS,
+  CLASSES_INTRO, CLASSES_START, CLASSES_PRICING, CLASSES_LEVELS, CLASSES_SELLING, CLASSES_SESSION, CLASSES_SCALE, CLASSES_COMMUNITY, CLASSES_FLYWHEEL, CLASSES_FUNNEL,
+  DROP_CALENDAR, DROP_STAGES, DROP_BENCHMARKS, DROP_SITE_TOOLS,
+  LOYALTY_INTRO, LOYALTY_BENCHMARKS, LOYALTY_LADDER, REFERRAL_RULES, COUPON_RECIPES, COUPON_PRINCIPLES,
   CHANNELS,
+  IG_WHY_WORKING, IG_VIRAL_CHECKLIST, IG_WEEKLY,
+  MERCHANT_WHY, MERCHANT_STEPS,
   NEXT_ACTIONS,
   RISKS,
   type TodoAction, type ActionItem, type PricePriority,
@@ -26,7 +29,7 @@ import './estrategia.css'
 
 const PROGRESS_KEY = 'estrategia_progress'
 
-type TabId = 'resumen' | 'precios' | 'calculadora' | 'tejedoras' | 'clases' | 'drops' | 'canales' | 'riesgos'
+type TabId = 'resumen' | 'precios' | 'calculadora' | 'tejedoras' | 'clases' | 'clientas' | 'drops' | 'canales' | 'riesgos'
 
 const TABS: Array<[TabId, string]> = [
   ['resumen', 'Resumen'],
@@ -34,6 +37,7 @@ const TABS: Array<[TabId, string]> = [
   ['calculadora', 'Calculadora'],
   ['tejedoras', 'Tejedoras'],
   ['clases', 'Clases'],
+  ['clientas', 'Clientas'],
   ['drops', 'Drops'],
   ['canales', 'Canales'],
   ['riesgos', 'Riesgos'],
@@ -571,7 +575,98 @@ export default function EstrategiaPage() {
             ))}
           </div>
 
+          <SectionHead
+            title="De dónde salen las alumnas (el embudo)"
+            desc="Cada canal que ya existe alimenta las clases sin trabajo extra."
+          />
+          <div className="est-pipeline" style={{ marginBottom: '2rem' }}>
+            {CLASSES_FUNNEL.map((s, i) => (
+              <div key={s.step} className="est-pipeline-step">
+                <span className="num">{i + 1}</span>
+                <div className="step">{s.step}</div>
+                <div className="detail">{s.detail}</div>
+              </div>
+            ))}
+          </div>
+
           <div className="est-callout"><strong>El círculo virtuoso.</strong> {CLASSES_FLYWHEEL}</div>
+        </section>
+      )}
+
+      {/* ══ CLIENTAS ══ */}
+      {tab === 'clientas' && (
+        <section aria-label="Clientas">
+          <SectionHead
+            kicker="Recompra, referidos y fidelización"
+            title="Que cada clienta valga por tres"
+          />
+          <div className="est-callout" style={{ marginBottom: '2rem' }}>{LOYALTY_INTRO}</div>
+
+          <SectionHead title="Los números reales (para decidir sin humo)" />
+          <div className="est-stats" style={{ marginBottom: '2rem' }}>
+            {LOYALTY_BENCHMARKS.map((b) => (
+              <div key={b.label} className="est-stat">
+                <div className="value wine">{b.value}</div>
+                <div className="label">{b.label}</div>
+                <div className="sub">{b.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            title="La escalera de la clienta"
+            desc="Qué pasa después de cada compra. Cinco pasos, todos por WhatsApp, ninguno automático — por ahora así está bien."
+          />
+          <div className="est-pipeline" style={{ marginBottom: '2rem' }}>
+            {LOYALTY_LADDER.map((s, i) => (
+              <div key={s.step} className="est-pipeline-step">
+                <span className="num">{i + 1}</span>
+                <div className="step">{s.step}</div>
+                <div className="detail">{s.detail}</div>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead title="Las reglas del programa AMIGA (y los cumpleaños)" />
+          <div className="est-grid wide" style={{ marginBottom: '2rem' }}>
+            {REFERRAL_RULES.map((r) => (
+              <div key={r.title} className="est-card">
+                <h4>{r.title}</h4>
+                <p>{r.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            title="El recetario de cupones"
+            desc="Cada campaña con su receta exacta. Todos se crean en el módulo Cupones — nada nuevo que aprender."
+          />
+          <div className="est-grid wide" style={{ marginBottom: '1rem' }}>
+            {COUPON_RECIPES.map((r) => (
+              <div key={r.name} className="est-card cream">
+                <div className="est-card-top">
+                  <h4 style={{ letterSpacing: '0.04em' }}>{r.name}</h4>
+                </div>
+                <p style={{ marginBottom: 8, fontSize: '0.8rem', color: '#8F3B53', fontWeight: 500 }}>{r.when}</p>
+                <p>{r.how}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginBottom: '2rem' }}>
+            <Link href="/admin/cupones" className="admin-btn admin-btn-secondary admin-btn-sm">
+              Ir a crear cupones →
+            </Link>
+          </div>
+
+          <SectionHead title="Las 4 reglas de oro de los descuentos" />
+          <div className="est-grid wide">
+            {COUPON_PRINCIPLES.map((r) => (
+              <div key={r.title} className="est-card">
+                <h4>{r.title}</h4>
+                <p>{r.body}</p>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
@@ -611,6 +706,20 @@ export default function EstrategiaPage() {
             ))}
           </div>
 
+          <SectionHead
+            title="La maquinaria del sitio, paso a paso"
+            desc="El sitio ya tiene todo listo para cada drop: countdown en el home, captura VIP y los estados de colección. Así se usa:"
+          />
+          <div className="est-pipeline" style={{ marginBottom: '2rem' }}>
+            {DROP_SITE_TOOLS.map((s, i) => (
+              <div key={s.step} className="est-pipeline-step">
+                <span className="num">{i + 1}</span>
+                <div className="step">{s.step}</div>
+                <div className="detail">{s.detail}</div>
+              </div>
+            ))}
+          </div>
+
           <SectionHead title="Los números reales (para planificar sin humo)" />
           <div className="est-stats">
             {DROP_BENCHMARKS.map((b) => (
@@ -644,6 +753,60 @@ export default function EstrategiaPage() {
                   <p className="why">{c.why}</p>
                   <p className="action"><strong>Hacé esto:</strong> {c.action}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            kicker="Instagram está explotando — que no se escape"
+            title="Por qué están funcionando tus reels"
+            desc="Reels de 19–20.000 vistas con 2.900 seguidores no son suerte: son señales del algoritmo respondiendo a tu contenido. Esto es lo que está pasando y cómo aprovecharlo."
+          />
+          <div className="est-grid wide" style={{ marginBottom: '2rem' }}>
+            {IG_WHY_WORKING.map((c) => (
+              <div key={c.title} className="est-card">
+                <h4>{c.title}</h4>
+                <p>{c.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            title="El checklist del reel que despega"
+            desc="Las primeras 24 horas de un reel viral valen más que la semana entera. Cuando uno pase de 5.000 vistas, esto — en orden:"
+          />
+          <div className="est-pipeline" style={{ marginBottom: '2rem' }}>
+            {IG_VIRAL_CHECKLIST.map((s, i) => (
+              <div key={s.slice(0, 24)} className="est-pipeline-step">
+                <span className="num">{i + 1}</span>
+                <div className="detail">{s}</div>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            title="La rutina de medición (15 minutos por semana)"
+            desc="Con lo gratis alcanza y sobra. Lo importante no es la herramienta: es mirar los mismos números todas las semanas."
+          />
+          <div className="est-grid wide" style={{ marginBottom: '2rem' }}>
+            {IG_WEEKLY.map((s) => (
+              <div key={s.slice(0, 24)} className="est-card">
+                <p>{s}</p>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            kicker="Del canal Google, cuando llegue el momento"
+            title="Google Merchant Center"
+            desc={MERCHANT_WHY}
+          />
+          <div className="est-pipeline">
+            {MERCHANT_STEPS.map((s, i) => (
+              <div key={s.step} className="est-pipeline-step">
+                <span className="num">{i + 1}</span>
+                <div className="step">{s.step}</div>
+                <div className="detail">{s.detail}</div>
               </div>
             ))}
           </div>

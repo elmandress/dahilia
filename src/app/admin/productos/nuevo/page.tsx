@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { slugify, mediaPath } from '@/lib/media'
 import type { Category, Color, Collection } from '@/lib/types'
 
 interface SizeEntry {
@@ -25,14 +26,6 @@ interface MediaEntry {
   file?: File
 }
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
 
 export default function NuevoProductoPage() {
   const router = useRouter()
@@ -112,8 +105,9 @@ export default function NuevoProductoPage() {
       if (!isVideo && !isImage) continue
 
       const tempId = `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`
-      const ext = file.name.split('.').pop()
-      const filePath = `products/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+      // Nombre descriptivo (ver lib/media.ts): el nombre del producto viaja
+      // en el archivo — señal para Google Images. Solo subidas nuevas.
+      const filePath = mediaPath('products', name || 'producto', file.name)
 
       // Add placeholder entry
       const entry: MediaEntry = {
@@ -155,7 +149,7 @@ export default function NuevoProductoPage() {
         )
       )
     }
-  }, [mediaEntries.length])
+  }, [mediaEntries.length, name])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()

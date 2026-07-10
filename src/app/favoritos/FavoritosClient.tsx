@@ -25,17 +25,17 @@ export function FavoritosClient({ whatsappUrl }: { whatsappUrl: string }) {
   // (no flash of "vacío" before the fetch resolves).
   if (!hasMounted) {
     return (
-      <main style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 80px' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 80px' }}>
         <Eyebrow>Favoritos</Eyebrow>
         <h1 style={headingStyle}>Tus favoritos</h1>
         <p style={{ fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink500 }}>Cargando…</p>
-      </main>
+      </div>
     )
   }
 
   if (count === 0) {
     return (
-      <main style={{ maxWidth: 560, margin: '0 auto', padding: '96px 24px', textAlign: 'center' }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '96px 24px', textAlign: 'center' }}>
         <span style={{
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           width: 64, height: 64, borderRadius: 999, background: dahila.cream100, color: dahila.wine600,
@@ -48,12 +48,12 @@ export function FavoritosClient({ whatsappUrl }: { whatsappUrl: string }) {
           Tocá el corazón en las piezas que te gusten y las vas a encontrar acá.
         </p>
         <Button variant="primary" size="lg" onClick={() => router.push('/tienda')}>Explorar la tienda</Button>
-      </main>
+      </div>
     )
   }
 
   return (
-    <main style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 80px' }}>
+    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 80px' }}>
       <div style={{
         display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
         gap: 16, flexWrap: 'wrap', marginBottom: 32,
@@ -92,7 +92,7 @@ export function FavoritosClient({ whatsappUrl }: { whatsappUrl: string }) {
       <p style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink500, marginTop: 32 }}>
         ¿Buscás algo más? <Link href="/tienda" style={{ color: dahila.wine600 }}>Seguí explorando la tienda →</Link>
       </p>
-    </main>
+    </div>
   )
 }
 

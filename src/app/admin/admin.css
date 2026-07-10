@@ -236,6 +236,10 @@
 
   .admin-mobile-save-bar { display: flex; align-items: center; }
   .admin-actions-desktop { display: none !important; }
+  /* Configuración ya trae su propio botón "Guardar" sticky al final del
+     formulario largo — en mobile se reemplaza por la barra fija de arriba
+     (siempre a mano) para no mostrar dos botones de guardar. */
+  .config-desktop-save { display: none !important; }
 
   /* Add bottom padding so the sticky bar doesn't cover the last card. */
   .admin-content { padding-bottom: 90px !important; }

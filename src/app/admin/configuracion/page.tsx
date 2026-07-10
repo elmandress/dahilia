@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { mediaPath } from '@/lib/media'
 
 // All keys the CMS surfaces. The DB may contain extras (e.g. legacy)
 // — we preserve them on save by passing through whatever loaded.
@@ -50,6 +51,18 @@ const SECTIONS = [
       { key: 'home_banner_cta_label', label: 'Texto del botón', type: 'text', placeholder: 'Ver la colección' },
       { key: 'home_banner_cta_link',  label: 'Link del botón', type: 'text', placeholder: '/tienda' },
       { key: 'home_banner_image_url', label: 'Foto', type: 'image' },
+    ],
+  },
+  {
+    title: 'Próximo drop',
+    description: 'El bloque de expectativa del home: nombre del drop, cuenta regresiva y captura para la lista VIP ("lo ves 24 horas antes"). Prendelo unas 3 semanas antes de cada lanzamiento (el paso a paso vive en Estrategia → Drops). Cuando la fecha pasa, el bloque cambia solo a "Ya está online" con un botón a la colección.',
+    fields: [
+      { key: 'drop_enabled', label: '¿Mostrar el bloque del próximo drop?', type: 'toggle' },
+      { key: 'drop_name', label: 'Nombre del drop', type: 'text', placeholder: "Verano '26" },
+      { key: 'drop_date', label: 'Fecha y hora del lanzamiento (hora de Uruguay)', type: 'text', placeholder: '2026-11-15 10:00' },
+      { key: 'drop_teaser', label: 'Texto de expectativa', type: 'textarea', placeholder: 'Bikinis, salidas de playa y tops nuevos — pocas unidades de cada uno, tejidas una por una.' },
+      { key: 'drop_image_url', label: 'Foto del adelanto (opcional)', type: 'image' },
+      { key: 'drop_collection_slug', label: 'Slug de la colección (opcional)', type: 'text', placeholder: 'verano-26' },
     ],
   },
   {
@@ -121,7 +134,7 @@ const SECTIONS = [
   },
   {
     title: 'Preguntas frecuentes',
-    description: 'Las 4 preguntas que aparecen al final del home.',
+    description: 'Las 5 preguntas que aparecen al final del home.',
     fields: [
       { key: 'faq_1_q', label: 'Pregunta 1', type: 'text' },
       { key: 'faq_1_a', label: 'Respuesta 1', type: 'textarea' },
@@ -131,6 +144,8 @@ const SECTIONS = [
       { key: 'faq_3_a', label: 'Respuesta 3', type: 'textarea' },
       { key: 'faq_4_q', label: 'Pregunta 4', type: 'text' },
       { key: 'faq_4_a', label: 'Respuesta 4', type: 'textarea' },
+      { key: 'faq_5_q', label: 'Pregunta 5', type: 'text' },
+      { key: 'faq_5_a', label: 'Respuesta 5', type: 'textarea' },
     ],
   },
   {
@@ -176,6 +191,7 @@ const SECTIONS = [
     fields: [
       { key: 'size_guide_note',  label: 'Nota de la tabla de talles', type: 'textarea' },
       { key: 'shipping_estimate', label: 'Envío — línea corta (se muestra en producto y carrito)', type: 'text', placeholder: 'Montevideo $200 · Interior por agencia' },
+      { key: 'free_shipping_threshold', label: 'Envío gratis desde (monto en $, vacío = apagado)', type: 'text', placeholder: '1400' },
       { key: 'pdp_trust_1', label: 'Garantía 1 (en cada producto)', type: 'text', placeholder: 'Envío a todo Uruguay' },
       { key: 'pdp_trust_2', label: 'Garantía 2 (en cada producto)', type: 'text', placeholder: 'Hecho a mano' },
       { key: 'pdp_trust_3', label: 'Garantía 3 (en cada producto)', type: 'text', placeholder: 'Coordinás por WhatsApp' },
@@ -191,10 +207,10 @@ const SECTIONS = [
 type FieldType = 'text' | 'textarea' | 'image' | 'hero' | 'toggle' | 'color'
 
 // Shared upload helper used by both the simple image field and the hero banner.
-async function uploadToMedia(file: File): Promise<string> {
+// Nombre de archivo descriptivo (ver lib/media.ts) — solo subidas nuevas.
+async function uploadToMedia(file: File, hint: string): Promise<string> {
   const supabase = createClient()
-  const ext = file.name.split('.').pop() || 'jpg'
-  const path = `site/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+  const path = mediaPath('site', hint || 'sitio', file.name)
   const { error: upErr } = await supabase.storage
     .from('media')
     .upload(path, file, { cacheControl: '3600', upsert: false })
@@ -244,7 +260,7 @@ function HeroBannerEditor({
     setError(null)
     setUploading(true)
     try {
-      onUrl(await uploadToMedia(file))
+      onUrl(await uploadToMedia(file, 'portada-hero'))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al subir')
     } finally {
@@ -332,7 +348,7 @@ function HeroBannerEditor({
   )
 }
 
-function ImageUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+function ImageUploader({ value, onChange, hint }: { value: string; onChange: (url: string) => void; hint?: string }) {
   const fileInput = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -341,7 +357,7 @@ function ImageUploader({ value, onChange }: { value: string; onChange: (url: str
     setError(null)
     setUploading(true)
     try {
-      onChange(await uploadToMedia(file))
+      onChange(await uploadToMedia(file, hint || 'sitio'))
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error al subir'
       setError(msg)
@@ -533,7 +549,7 @@ export default function ConfiguracionAdminPage() {
         ))}
       </nav>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <form id="config-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
         {SECTIONS.map((section, sectionIndex) => (
           <section key={section.title} id={`config-sec-${sectionIndex}`} className="admin-card" style={{ scrollMarginTop: 16 }}>
             <div style={{ marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #eee' }}>
@@ -601,7 +617,7 @@ export default function ConfiguracionAdminPage() {
                       </div>
                     )}
                     {fieldType === 'image' && (
-                      <ImageUploader value={value} onChange={(v) => update(field.key, v)} />
+                      <ImageUploader value={value} onChange={(v) => update(field.key, v)} hint={field.key.replace(/_(image_)?url$/, '')} />
                     )}
                     {fieldType === 'hero' && (
                       <HeroBannerEditor
@@ -619,6 +635,7 @@ export default function ConfiguracionAdminPage() {
         ))}
 
         <div
+          className="config-desktop-save"
           style={{
             position: 'sticky',
             bottom: 0,
@@ -640,6 +657,21 @@ export default function ConfiguracionAdminPage() {
           </button>
         </div>
       </form>
+
+      {/* Formulario largo (15 secciones) — en el teléfono, guardar desde la
+          punta de abajo del scroll normal quedaba lejos de mano. Mismo botón
+          "Guardar", solo que fijo abajo también en mobile. */}
+      <div className="admin-mobile-save-bar">
+        <button
+          type="submit"
+          form="config-form"
+          className="admin-btn admin-btn-primary"
+          disabled={saving}
+          style={{ flex: 1 }}
+        >
+          {saving ? 'Guardando...' : 'Guardar cambios'}
+        </button>
+      </div>
     </div>
   )
 }

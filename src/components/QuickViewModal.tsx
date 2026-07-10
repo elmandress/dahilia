@@ -29,7 +29,11 @@ export function QuickViewModal({
 }) {
   const router = useRouter()
   const { addToCart } = useCart()
-  const [talle, setTalle] = useState<string>(product.sizes?.[0]?.size || 'Único')
+  // Mismo criterio que el PDP: arrancar en el primer talle DISPONIBLE, no en
+  // el primero de la lista (que puede estar agotado y dejaría el botón
+  // "Agregar" apuntando a un talle sin stock).
+  const firstAvailable = product.sizes?.find((s) => s.available)?.size
+  const [talle, setTalle] = useState<string>(firstAvailable || product.sizes?.[0]?.size || 'Único')
 
   const photo = getPrimaryPhoto(product)
   const listPrice = getEffectivePrice(product, talle)

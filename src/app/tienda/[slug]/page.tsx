@@ -5,8 +5,8 @@ import type { Metadata } from 'next'
 import type { Product, Category, Color, Discount } from '@/lib/types'
 import { getPrimaryPhoto, getFinalPrice, resolveDiscountPercent } from '@/lib/types'
 import { ProductDetailsClient } from './ProductDetailsClient'
+import { getEncargosCuposState } from '@/components/EncargosDisponibles'
 import { TiendaClient } from '../TiendaClient'
-import Link from 'next/link'
 import { SITE_URL } from '@/lib/env'
 
 export const revalidate = 3600
@@ -58,14 +58,18 @@ export async function generateMetadata({
     .maybeSingle()
 
   if (cat) {
+    // CTR: keyword exacto ("cardigans de crochet") + beneficio concreto en la
+    // descripción — no una definición de la página. Backlinko (4M resultados):
+    // el keyword exacto en el title rinde +24% de clicks que una variante.
+    const title = `${cat.name} de crochet, tejidos a mano`
     const desc =
       cat.description ||
-      `${cat.name} tejidos a crochet, hechos a mano y a medida en Montevideo. Encontrá tu ${cat.name.toLowerCase()} ideal en Dahila Crochet.`
+      `${cat.name} hechos a mano en Montevideo, en tu talle y tus colores. Precios claros, envío a todo Uruguay — y si querés algo distinto, se teje a medida para vos.`
     return {
-      title: cat.name,
+      title,
       description: desc,
       alternates: { canonical: `/tienda/${slug}` },
-      openGraph: { title: `${cat.name} | Dahila Crochet`, description: desc, url: `${SITE_URL}/tienda/${slug}` },
+      openGraph: { title: `${title} | Dahila Crochet`, description: desc, url: `${SITE_URL}/tienda/${slug}` },
     }
   }
 
@@ -79,27 +83,34 @@ export async function generateMetadata({
   const product = data as Product | null
   if (!product) return { title: 'Producto no encontrado', robots: { index: false, follow: false } }
 
-  const photoRaw = getPrimaryPhoto(product)
-  const photoUrl = photoRaw.startsWith('http') ? photoRaw : `${SITE_URL}${photoRaw}`
-  const description = product.description || `Comprar ${product.name} a medida en Dahila Crochet.`
-  const ogImage = { url: photoUrl, width: 1200, height: 1500, alt: product.name }
+  // CTR de la ficha: el title lleva el diferencial ("tejido a mano, a tu
+  // medida") y la descripción VENDE — precio incluido cuando existe (los
+  // estudios de e-commerce coinciden: precio/beneficio en el snippet trae
+  // clicks calificados; la genérica "Comprar X" no le da razones a nadie).
+  // getFinalPrice sin reglas de lote: el precio exacto ya viaja en el schema.
+  const finalPrice = getFinalPrice(product)
+  const priceBit = finalPrice > 0 ? `UYU ${finalPrice.toLocaleString('es-UY')}, ` : ''
+  const valueLine = `Tejido a mano en Montevideo — ${priceBit}a tu talle y en tus colores. Envío a todo Uruguay.`
+  const ownDesc = (product.description ?? '').replace(/\s+/g, ' ').trim()
+  const ownDescCut = ownDesc.length > 90 ? `${ownDesc.slice(0, 87).trimEnd()}…` : ownDesc
+  const description = ownDesc
+    ? `${ownDescCut}${/[.!?…]$/.test(ownDescCut) ? '' : '.'} ${valueLine}`
+    : `${product.name}: ${valueLine}`
 
   return {
-    title: product.name,
+    title: `${product.name} — tejido a mano, a tu medida`,
     description,
     alternates: { canonical: `/tienda/${product.slug}` },
+    // Sin `openGraph.images`/`twitter` acá a propósito: la tarjeta diseñada
+    // de opengraph-image.tsx (misma carpeta) es la única fuente de imagen
+    // para compartir — evita dos <meta og:image> compitiendo (una con la
+    // foto cruda del producto, otra con la tarjeta de marca). X/Twitter cae
+    // solo al og:image cuando no hay twitter:image propio.
     openGraph: {
       type: 'website',
-      title: `${product.name} | Dahila Crochet`,
+      title: `${product.name} — tejido a mano, a tu medida | Dahila Crochet`,
       description,
       url: `${SITE_URL}/tienda/${product.slug}`,
-      images: [ogImage],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${product.name} | Dahila Crochet`,
-      description,
-      images: [photoUrl],
     },
   }
 }
@@ -214,6 +225,7 @@ async function ProductPage({ slug }: { slug: string }) {
       'pdp_process_step_1_icon', 'pdp_process_step_1_label', 'pdp_process_step_1_body',
       'pdp_process_step_2_icon', 'pdp_process_step_2_label', 'pdp_process_step_2_body',
       'pdp_process_step_3_icon', 'pdp_process_step_3_label', 'pdp_process_step_3_body',
+      'encargos_cupos_enabled', 'encargos_cupos_total', 'encargos_cupos_taken', 'encargos_cupos_label',
     ]),
   ])
 
@@ -234,6 +246,12 @@ async function ProductPage({ slug }: { slug: string }) {
     { icon: 'hand-heart',    text: getSetting('pdp_trust_2')?.trim() || 'Hecho a mano' },
     { icon: 'whatsapp-logo', text: getSetting('pdp_trust_3')?.trim() || 'Coordinás por WhatsApp' },
   ].filter((t) => t.text.length > 0)
+  const encargosCupos = getEncargosCuposState({
+    encargos_cupos_enabled: getSetting('encargos_cupos_enabled') || '',
+    encargos_cupos_total: getSetting('encargos_cupos_total') || '',
+    encargos_cupos_taken: getSetting('encargos_cupos_taken') || '',
+    encargos_cupos_label: getSetting('encargos_cupos_label') || '',
+  })
 
   if (!product) notFound()
 
@@ -243,11 +261,41 @@ async function ProductPage({ slug }: { slug: string }) {
     .eq('status', 'active')
     .neq('id', product.id)
     .order('sort_order', { ascending: true })
-    .limit(8)
+    .limit(24)
 
   const relatedAll = (relatedData ?? []) as Product[]
-  const sameCategory = relatedAll.filter((p) => p.category_id && p.category_id === product.category_id)
-  const related = (sameCategory.length >= 2 ? sameCategory : relatedAll).slice(0, 4)
+  // "Completá el look": otro top al lado de un top compite por la misma venta;
+  // un bolso o un accesorio al lado de un top la agranda. Por eso la fila mezcla
+  // 2 piezas que COMPLEMENTAN (otra categoría, priorizando los pares que se usan
+  // juntos y la misma colección) + 2 similares para quien busca alternativas.
+  const COMPLEMENT_PREFS: Record<string, string[]> = {
+    tops: ['bolsos', 'faldas', 'sets', 'accesorios'],
+    cardigans: ['tops', 'accesorios', 'bolsos'],
+    sets: ['bolsos', 'accesorios', 'cardigans'],
+    faldas: ['tops', 'accesorios', 'bolsos'],
+    bolsos: ['tops', 'accesorios', 'sets'],
+    accesorios: ['cardigans', 'tops', 'bolsos'],
+  }
+  const prefs = COMPLEMENT_PREFS[product.category?.slug ?? ''] ?? []
+  const prefRank = (p: Product) => {
+    const i = prefs.indexOf(p.category?.slug ?? '')
+    return i === -1 ? prefs.length : i
+  }
+  const complements = relatedAll
+    .filter((p) => p.category_id && p.category_id !== product.category_id)
+    .sort(
+      (a, b) =>
+        Number(!!b.collection_id && b.collection_id === product.collection_id) -
+          Number(!!a.collection_id && a.collection_id === product.collection_id) ||
+        prefRank(a) - prefRank(b)
+    )
+  const similar = relatedAll.filter((p) => p.category_id && p.category_id === product.category_id)
+  const related = [...complements.slice(0, 2), ...similar.slice(0, 2)]
+  for (const p of relatedAll) {
+    if (related.length >= 4) break
+    if (!related.some((r) => r.id === p.id)) related.push(p)
+  }
+  const relatedTitle = complements.length > 0 ? 'Completá el look' : undefined
 
   const photo = getPrimaryPhoto(product)
   const absolutePhoto = photo.startsWith('http') ? photo : `${SITE_URL}${photo}`
@@ -273,8 +321,10 @@ async function ProductPage({ slug }: { slug: string }) {
     name: product.name,
     ...(product.description ? { description: product.description } : {}),
     image: schemaImages,
+    // Sin `mpn`: son piezas hechas a mano, una por una — no existe un número
+    // de parte de fabricante real, y reusar el UUID interno ahí es dato
+    // de relleno que Google no puede aprovechar. `sku` (el id interno) alcanza.
     sku: product.id,
-    mpn: product.id,
     brand: { '@type': 'Brand', name: 'Dahila Crochet' },
     ...(product.category ? { category: product.category.name } : {}),
     ...(product.material ? { material: product.material } : {}),
@@ -340,22 +390,7 @@ async function ProductPage({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="container" style={{ paddingBottom: '4rem' }}>
-      <nav className="breadcrumbs hide-mobile" aria-label="Migas de pan">
-        <Link href="/">Inicio</Link>
-        <span className="breadcrumbs__sep">/</span>
-        <Link href="/tienda">Tienda</Link>
-        {product.category && (
-          <>
-            <span className="breadcrumbs__sep">/</span>
-            {/* Clean category URL — /tienda/cardigans instead of ?cat= */}
-            <Link href={`/tienda/${product.category.slug}`}>{product.category.name}</Link>
-          </>
-        )}
-        <span className="breadcrumbs__sep">/</span>
-        <span style={{ color: 'var(--fg)' }}>{product.name}</span>
-      </nav>
-
+    <div style={{ paddingBottom: '4rem' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
@@ -363,6 +398,7 @@ async function ProductPage({ slug }: { slug: string }) {
         product={product}
         discountPercent={resolveDiscountPercent(product, discounts)}
         related={related}
+        relatedTitle={relatedTitle}
         discounts={discounts}
         sizeGuideNote={sizeGuideNote}
         whatsappUrl={whatsappUrl}
@@ -378,6 +414,7 @@ async function ProductPage({ slug }: { slug: string }) {
           { icon: getSetting('pdp_process_step_2_icon') || 'scissors',   label: getSetting('pdp_process_step_2_label') || 'Elegimos juntas', body: getSetting('pdp_process_step_2_body') || 'Te muestro las lanas disponibles y confirmamos todos los detalles.' },
           { icon: getSetting('pdp_process_step_3_icon') || 'needle',     label: getSetting('pdp_process_step_3_label') || 'Te lo tejo',      body: getSetting('pdp_process_step_3_body') || 'Trabajo en tu prenda y te aviso cuando está lista para enviar.' },
         ].filter((s) => s.label.trim())}
+        encargosCupos={encargosCupos}
       />
     </div>
   )

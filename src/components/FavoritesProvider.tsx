@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import type { Product } from '@/lib/types'
 import { Icon } from './ui/Primitives'
 
@@ -146,10 +146,12 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => { await fetchFavorites() }, [fetchFavorites])
 
+  const value = useMemo(() => ({
+    items, ids, count: ids.size, hasMounted, isFavorite, toggle, refresh,
+  }), [items, ids, hasMounted, isFavorite, toggle, refresh])
+
   return (
-    <FavoritesContext.Provider value={{
-      items, ids, count: ids.size, hasMounted, isFavorite, toggle, refresh,
-    }}>
+    <FavoritesContext.Provider value={value}>
       {children}
       <FavoriteToast show={toast} />
     </FavoritesContext.Provider>

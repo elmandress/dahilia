@@ -16,12 +16,15 @@ export default async function CarritoPage() {
   const supabase = await createClient()
   const [settingsRes, featuredRes, discountsRes] = await Promise.all([
     supabase.from('site_settings').select('key, value').in('key', ['contact_whatsapp_url', 'contact_whatsapp']),
+    // Pool amplio: el estado vacío muestra los primeros 4; con carrito lleno,
+    // el módulo "Sumale un detalle" filtra de acá piezas chicas (≤ $800) de
+    // categorías que no están todavía en el pedido.
     supabase
       .from('products')
       .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*))')
       .eq('status', 'active')
       .order('sort_order', { ascending: true })
-      .limit(4),
+      .limit(24),
     supabase.from('discounts').select('*').eq('active', true),
   ])
 

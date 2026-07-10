@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useCart } from '@/components/CartProvider'
-import { EncargosDisponibles } from '@/components/EncargosDisponibles'
+import { EncargosDisponibles, type EncargosCuposState } from '@/components/EncargosDisponibles'
 import { ProductGallery } from '@/components/ProductGallery'
 import { ProductCard } from '@/components/ProductCard'
 import { RecentlyViewed } from '@/components/RecentlyViewed'
@@ -16,11 +16,13 @@ import type { Product, Discount } from '@/lib/types'
 import { getEffectivePrice, getPrimaryPhoto, getScarcity, readyDateEstimate, BLUR_DATA_URL } from '@/lib/types'
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
+import { track } from '@/lib/analytics'
 
 export function ProductDetailsClient({
   product,
   discountPercent = 0,
   related = [],
+  relatedTitle,
   discounts = [],
   sizeGuideNote,
   whatsappUrl = 'https://wa.me/59899850073',
@@ -32,10 +34,13 @@ export function ProductDetailsClient({
   makerPhoto = '',
   processEnabled = false,
   processSteps = [],
+  encargosCupos,
 }: {
   product: Product
   discountPercent?: number
   related?: Product[]
+  /** Título del cross-sell calculado en el server ("Completá el look" cuando hay complementos). */
+  relatedTitle?: string
   discounts?: Discount[]
   sizeGuideNote?: string
   whatsappUrl?: string
@@ -48,6 +53,7 @@ export function ProductDetailsClient({
   makerPhoto?: string
   processEnabled?: boolean
   processSteps?: { icon: string; label: string; body: string }[]
+  encargosCupos: EncargosCuposState
 }) {
   const trust = trustItems && trustItems.length > 0 ? trustItems : [
     { icon: 'truck', text: 'Envío a todo Uruguay' },
@@ -60,6 +66,8 @@ export function ProductDetailsClient({
   const firstAvailable = product.sizes?.find((s) => s.available)?.size
   const [talle, setTalle] = useState<string>(firstAvailable || product.sizes?.[0]?.size || 'Único')
   const [added, setAdded] = useState(false)
+
+  useEffect(() => { track('product_view', { product: product.slug }) }, [product.slug])
 
   // Is the currently selected size in stock? (Products with no size rows are
   // treated as available — they're single-size pieces.)
@@ -100,7 +108,7 @@ export function ProductDetailsClient({
   }
 
   return (
-    <main style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px 0' }}>
+    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px 0' }}>
       <nav aria-label="Breadcrumb" style={{
         display: 'flex', gap: 6, fontFamily: dahila.fontSans, fontSize: 11,
         color: dahila.ink500, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 28,
@@ -252,7 +260,7 @@ export function ProductDetailsClient({
           {/* Cupos de encargo reales (CMS: encargos_cupos_*) — la agenda de
               producción es la urgencia honesta de un taller a pedido. No
               renderiza nada si Anush no la tiene activada. */}
-          {!isSoldOut && <EncargosDisponibles />}
+          {!isSoldOut && <EncargosDisponibles state={encargosCupos} />}
 
           {product.is_custom_only && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -418,6 +426,14 @@ export function ProductDetailsClient({
                 })()}
               </li>
             )}
+            <li style={liStyle}>
+              <Icon name="check" size={16} color={dahila.ink500}/>
+              Hecho a tu medida — por eso no aceptamos cambios, pero te acompaño en todo el proceso para que quede perfecta.
+            </li>
+            <li style={liStyle}>
+              <Icon name="tag" size={16} color={dahila.ink500}/>
+              Pagás por transferencia o Mercado Pago, coordinado por WhatsApp — nada se cobra hasta que confirmemos todo.
+            </li>
           </ul>
 
           {product.care_instructions && (
@@ -459,9 +475,10 @@ export function ProductDetailsClient({
       {/* Related products — cross-sell con título contextual */}
       {related.length > 0 && (() => {
         const sameCollection = related.some((p) => p.collection_id && p.collection_id === product.collection_id)
-        const relatedTitle = sameCollection && product.collection?.name
+        const fallbackTitle = sameCollection && product.collection?.name
           ? `De la colección ${product.collection.name}`
           : 'También tejemos'
+        const sectionTitle = relatedTitle ?? fallbackTitle
         return (
         <section style={{ marginTop: 88 }}>
           <h2 style={{
@@ -470,7 +487,7 @@ export function ProductDetailsClient({
             color: dahila.ink900, margin: '0 0 28px', paddingBottom: 12,
             borderBottom: `1px solid ${dahila.border}`,
           }}>
-            {relatedTitle}
+            {sectionTitle}
           </h2>
           <div className="tienda-grid" style={{
             display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22, rowGap: 44,
@@ -492,7 +509,7 @@ export function ProductDetailsClient({
         }}
       />
 
-    </main>
+    </div>
   )
 }
 

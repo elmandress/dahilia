@@ -81,7 +81,7 @@ export default function AdminLoginPage() {
               autoFocus
               autoComplete="email"
               style={{
-                border: '1px solid var(--border-strong)', padding: '12px 14px', borderRadius: 8, fontSize: 14, outline: 'none'
+                border: '1px solid var(--border-strong)', padding: '12px 14px', borderRadius: 8, fontSize: 14
               }}
             />
           </div>
@@ -97,7 +97,7 @@ export default function AdminLoginPage() {
               required
               autoComplete="current-password"
               style={{
-                border: '1px solid var(--border-strong)', padding: '12px 14px', borderRadius: 8, fontSize: 14, outline: 'none'
+                border: '1px solid var(--border-strong)', padding: '12px 14px', borderRadius: 8, fontSize: 14
               }}
             />
           </div>

@@ -2,21 +2,44 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { slugify, mediaPath } from '@/lib/media'
 import type { Collection } from '@/lib/types'
 
-function slugify(s: string) {
-  return s
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
+// Estados del ciclo de un drop (ver database/drops-2026-07.sql). El estado es
+// la vista amigable de las 3 columnas booleanas.
+type CollectionState = 'borrador' | 'proximamente' | 'anticipada' | 'publicada'
+
+const STATE_LABEL: Record<CollectionState, string> = {
+  borrador: 'Borrador (oculta)',
+  proximamente: 'Próximamente (teaser)',
+  anticipada: 'Solo con link (acceso VIP)',
+  publicada: 'Publicada',
 }
 
-async function uploadCover(file: File): Promise<string> {
+const STATE_HELP: Record<CollectionState, string> = {
+  borrador: 'No existe para el público.',
+  proximamente: 'La portada aparece en /colecciones con la etiqueta "Próximamente", sin poder entrar. Para las semanas de expectativa.',
+  anticipada: 'La página funciona pero no aparece en listados ni en Google. Mandale el link a la lista VIP 24 h antes del lanzamiento.',
+  publicada: 'Visible en todo el sitio.',
+}
+
+function stateOf(c: Collection): CollectionState {
+  if (c.published) return c.unlisted ? 'anticipada' : 'publicada'
+  return c.coming_soon ? 'proximamente' : 'borrador'
+}
+
+function stateFields(s: CollectionState) {
+  return {
+    published: s === 'publicada' || s === 'anticipada',
+    coming_soon: s === 'proximamente',
+    unlisted: s === 'anticipada',
+  }
+}
+
+async function uploadCover(file: File, nameHint: string): Promise<string> {
   const supabase = createClient()
-  const ext = file.name.split('.').pop() || 'jpg'
-  const path = `collections/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+  // Nombre de archivo descriptivo (ver lib/media.ts) — solo subidas nuevas.
+  const path = mediaPath('collections', nameHint || 'coleccion', file.name)
   const { error } = await supabase.storage.from('media').upload(path, file, { cacheControl: '3600', upsert: false })
   if (error) throw error
   return supabase.storage.from('media').getPublicUrl(path).data.publicUrl
@@ -35,11 +58,11 @@ export default function ColeccionesAdminPage() {
   const [slug, setSlug] = useState('')
   const [description, setDescription] = useState('')
   const [coverUrl, setCoverUrl] = useState('')
-  const [published, setPublished] = useState(true)
+  const [estado, setEstado] = useState<CollectionState>('publicada')
 
   const resetForm = () => {
     setEditingId(null)
-    setName(''); setSlug(''); setDescription(''); setCoverUrl(''); setPublished(true)
+    setName(''); setSlug(''); setDescription(''); setCoverUrl(''); setEstado('publicada')
   }
 
   const startEdit = (c: Collection) => {
@@ -48,7 +71,7 @@ export default function ColeccionesAdminPage() {
     setSlug(c.slug)
     setDescription(c.description || '')
     setCoverUrl(c.cover_url || '')
-    setPublished(c.published)
+    setEstado(stateOf(c))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -76,7 +99,7 @@ export default function ColeccionesAdminPage() {
     setError(null)
     setUploading(true)
     try {
-      onDone(await uploadCover(file))
+      onDone(await uploadCover(file, name))
     } catch (e) {
       console.error(e)
       setError('No se pudo subir la portada.')
@@ -93,7 +116,8 @@ export default function ColeccionesAdminPage() {
     try {
       const supabase = createClient()
       const row = {
-        name, slug: finalSlug, description: description || null, cover_url: coverUrl || null, published,
+        name, slug: finalSlug, description: description || null, cover_url: coverUrl || null,
+        ...stateFields(estado),
       }
       const { error: err } = editingId
         ? await supabase.from('collections').update({ ...row, updated_at: new Date().toISOString() }).eq('id', editingId)
@@ -103,7 +127,7 @@ export default function ColeccionesAdminPage() {
       resetForm()
     } catch (e) {
       console.error(e)
-      setError('No se pudo guardar. Verificá que el slug no esté repetido.')
+      setError('No se pudo guardar. Verificá que el slug no esté repetido — y si usaste "Próximamente" o "Solo con link", que esté ejecutado database/drops-2026-07.sql.')
     }
   }
 
@@ -116,7 +140,7 @@ export default function ColeccionesAdminPage() {
       await load()
     } catch (e) {
       console.error(e)
-      setError('No se pudieron guardar los cambios.')
+      setError('No se pudieron guardar los cambios. Si cambiaste a "Próximamente" o "Solo con link", verificá que esté ejecutado database/drops-2026-07.sql.')
     }
   }
 
@@ -182,10 +206,15 @@ export default function ColeccionesAdminPage() {
               )}
               <input type="file" accept="image/*" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCover(f, setCoverUrl); e.target.value = '' }} />
             </div>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
-              <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} style={{ width: 18, height: 18 }} />
-              Publicada (visible en el sitio)
-            </label>
+            <div className="admin-field">
+              <label>Estado</label>
+              <select value={estado} onChange={(e) => setEstado(e.target.value as CollectionState)}>
+                {(Object.keys(STATE_LABEL) as CollectionState[]).map((s) => (
+                  <option key={s} value={s}>{STATE_LABEL[s]}</option>
+                ))}
+              </select>
+              <p style={{ fontSize: '0.78rem', color: '#888', margin: '6px 0 0', lineHeight: 1.5 }}>{STATE_HELP[estado]}</p>
+            </div>
             <div style={{ display: 'flex', gap: 8, marginTop: '0.5rem' }}>
               <button type="submit" className="admin-btn admin-btn-primary" disabled={uploading}>
                 {uploading ? 'Subiendo…' : editingId ? 'Guardar cambios' : 'Crear colección'}
@@ -222,13 +251,17 @@ export default function ColeccionesAdminPage() {
                       </td>
                       <td><strong>{c.name}</strong><br /><span style={{ fontSize: '0.75rem', color: '#888' }}>/colecciones/{c.slug}</span></td>
                       <td>
-                        <button
-                          className={`admin-btn admin-btn-sm ${c.published ? 'admin-btn-primary' : 'admin-btn-secondary'}`}
-                          onClick={() => patch(c.id, { published: !c.published })}
-                          title="Cambiar visibilidad"
+                        <select
+                          value={stateOf(c)}
+                          onChange={(e) => patch(c.id, stateFields(e.target.value as CollectionState))}
+                          aria-label={`Estado de ${c.name}`}
+                          title={STATE_HELP[stateOf(c)]}
+                          style={{ fontSize: '0.8rem', padding: '6px 8px' }}
                         >
-                          {c.published ? 'Publicada' : 'Oculta'}
-                        </button>
+                          {(Object.keys(STATE_LABEL) as CollectionState[]).map((s) => (
+                            <option key={s} value={s}>{STATE_LABEL[s]}</option>
+                          ))}
+                        </select>
                       </td>
                       <td style={{ textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', gap: 4 }}>

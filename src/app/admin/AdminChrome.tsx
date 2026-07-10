@@ -261,9 +261,9 @@ export default function AdminChrome({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main content */}
-      <main className="admin-content">
+      <div className="admin-content">
         {children}
-      </main>
+      </div>
     </div>
   )
 }

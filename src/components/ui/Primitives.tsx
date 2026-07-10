@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { ICON_PATHS, ICON_PATHS_FILL } from './icons'
 
 // Dahila — minimal primitives (v2)
@@ -39,9 +40,12 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'cream' | 'ghost'
   size?: 'sm' | 'md' | 'lg'
   full?: boolean
+  /** Con href el botón es un <Link> real (navegable con Ctrl+click, rastreable,
+      correcto semánticamente). Para navegación usá esto, no onClick+router. */
+  href?: string
 }
 
-export function Button({ variant = 'primary', size = 'md', children, onClick, full = false, style, disabled, ...rest }: ButtonProps) {
+export function Button({ variant = 'primary', size = 'md', children, onClick, full = false, style, disabled, href, ...rest }: ButtonProps) {
   const [hover, setHover] = useState(false)
   const base: React.CSSProperties = {
     fontFamily: dahila.fontSans,
@@ -81,13 +85,28 @@ export function Button({ variant = 'primary', size = 'md', children, onClick, fu
       ...(hover && !disabled && { color: dahila.wine600 }),
     },
   }
+  const mergedStyle = { ...base, ...sizes[size], ...variants[variant], ...style }
+
+  if (href && !disabled) {
+    return (
+      <Link
+        href={href}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        style={{ ...mergedStyle, textDecoration: 'none' }}
+      >
+        {children}
+      </Link>
+    )
+  }
+
   return (
     <button
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       disabled={disabled}
-      style={{ ...base, ...sizes[size], ...variants[variant], ...style }}
+      style={mergedStyle}
       {...rest}
     >
       {children}
@@ -169,7 +188,6 @@ export function TextInput({ placeholder, value, onChange, type = 'text' }: { pla
         border: 'none',
         borderBottom: `1px solid ${focus ? dahila.ink900 : dahila.borderStrong}`,
         padding: '10px 0 8px',
-        outline: 'none',
         transition: `all 160ms ${dahila.ease}`,
       }}
     />

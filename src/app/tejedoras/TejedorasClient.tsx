@@ -54,7 +54,7 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
       `Hola! Acabo de postularme como tejedora desde la web${name ? ` (soy ${name})` : ''}.`
     )
     return (
-      <main style={{ maxWidth: 560, margin: '0 auto', padding: '96px 24px', textAlign: 'center' }}>
+      <div style={{ maxWidth: 560, margin: '0 auto', padding: '96px 24px', textAlign: 'center' }}>
         <Eyebrow>Postulación recibida</Eyebrow>
         <h1 style={{
           fontFamily: dahila.fontDisplay, fontWeight: 300,
@@ -82,7 +82,7 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
           </a>
           <Button variant="secondary" onClick={() => router.push('/tienda')}>Conocer la tienda</Button>
         </div>
-      </main>
+      </div>
     )
   }
 
@@ -128,7 +128,7 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
   })
 
   return (
-    <main style={{ maxWidth: 720, margin: '0 auto', padding: '40px 24px 0' }}>
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 24px 0' }}>
       {/* Hero */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 40 }}>
         <Eyebrow>Tejé con Dahila</Eyebrow>
@@ -274,7 +274,7 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
               fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, color: dahila.ink900,
               background: 'transparent', border: 'none',
               borderBottom: `1px solid ${dahila.borderStrong}`,
-              padding: '10px 0 8px', outline: 'none', resize: 'vertical',
+              padding: '10px 0 8px', resize: 'vertical',
               width: '100%', boxSizing: 'border-box',
             }}
           />
@@ -297,6 +297,6 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
           {isPending ? 'Enviando...' : 'Enviar postulación'}
         </Button>
       </form>
-    </main>
+    </div>
   )
 }

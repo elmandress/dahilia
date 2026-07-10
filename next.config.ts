@@ -6,13 +6,31 @@ const isProd = process.env.NODE_ENV === 'production'
 // retained because Next renders style attributes that nonces don't cover.
 // Fonts are self-hosted by next/font and icons are inline SVG, so we no longer
 // need fonts.googleapis.com, fonts.gstatic.com or cdn.jsdelivr.net in the CSP.
+// Analytics: los hosts de Umami (AnalyticsScript) y Clarity (ClarityScript)
+// entran a la CSP AUTOMÁTICAMENTE cuando sus env vars existen en el build —
+// setear la variable en Netlify y redeployar alcanza; sin variable, la CSP
+// queda igual de cerrada que siempre.
+const umamiOrigin = (() => {
+  try {
+    return process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL
+      ? new URL(process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL).origin
+      : ''
+  } catch {
+    return ''
+  }
+})()
+const clarityEnabled = Boolean(process.env.NEXT_PUBLIC_CLARITY_ID)
+const analyticsScriptSrc = [umamiOrigin, clarityEnabled ? 'https://www.clarity.ms' : '']
+  .filter(Boolean).join(' ')
+const analyticsConnectSrc = [umamiOrigin, clarityEnabled ? 'https://*.clarity.ms https://c.bing.com' : '']
+  .filter(Boolean).join(' ')
 const cspHeader = `
   default-src 'self';
-  script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"};
+  script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}${analyticsScriptSrc ? ' ' + analyticsScriptSrc : ''};
   style-src 'self' 'unsafe-inline';
   img-src 'self' blob: data: https://*.supabase.co;
   font-src 'self' data:;
-  connect-src 'self' https://*.supabase.co wss://*.supabase.co;
+  connect-src 'self' https://*.supabase.co wss://*.supabase.co${analyticsConnectSrc ? ' ' + analyticsConnectSrc : ''};
   object-src 'none';
   base-uri 'self';
   form-action 'self';

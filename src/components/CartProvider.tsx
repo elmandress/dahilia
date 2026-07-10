@@ -1,8 +1,9 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import type { CartItem, Product, Discount } from '@/lib/types'
 import { getFinalPrice } from '@/lib/types'
+import { track } from '@/lib/analytics'
 
 type CartItemWithProduct = CartItem & { product: Product }
 
@@ -12,6 +13,8 @@ interface CartContextType {
   cartTotal: number
   discounts: Discount[]
   shippingEstimate: string
+  /** Umbral de envío gratis en UYU (site_settings.free_shipping_threshold). 0 = apagado. */
+  freeShippingThreshold: number
   /** Aviso de lista de espera ("los pedidos nuevos empiezan en agosto"). Vacío = no mostrar. */
   queueNote: string
   hasMounted: boolean
@@ -21,7 +24,7 @@ interface CartContextType {
   openDrawer: () => void
   closeDrawer: () => void
   refresh: () => Promise<void>
-  addToCart: (product: Product, size: string, qty: number) => Promise<void>
+  addToCart: (product: Product, size: string, qty: number, opts?: { openDrawer?: boolean }) => Promise<void>
   updateQty: (itemId: string, qty: number) => Promise<void>
   removeFromCart: (itemId: string) => Promise<void>
 }
@@ -54,11 +57,13 @@ export function CartProvider({
   children,
   initialDiscounts = [],
   shippingEstimate = '',
+  freeShippingThreshold = 0,
   queueNote = '',
 }: {
   children: React.ReactNode
   initialDiscounts?: Discount[]
   shippingEstimate?: string
+  freeShippingThreshold?: number
   queueNote?: string
 }) {
   const [items, setItems] = useState<CartItemWithProduct[]>([])
@@ -133,7 +138,7 @@ export function CartProvider({
     await fetchCart()
   }, [fetchCart])
 
-  const addToCart = useCallback(async (product: Product, size: string, qty: number) => {
+  const addToCart = useCallback(async (product: Product, size: string, qty: number, opts?: { openDrawer?: boolean }) => {
     try {
       const res = await fetch('/api/cart', {
         method: 'POST',
@@ -144,7 +149,10 @@ export function CartProvider({
       const data = await jsonOrThrow(res)
       setItems(data.items || [])
       pingOtherTabs()
-      setDrawerOpen(true)
+      // En /carrito el ítem aparece en la lista ahí mismo — abrir el drawer
+      // encima sería redundante; el caller lo apaga con { openDrawer: false }.
+      if (opts?.openDrawer !== false) setDrawerOpen(true)
+      track('add_to_cart', { product: product.slug, size, qty })
     } catch (e) {
       console.error('addToCart failed', e)
       // Surface the error so the user knows the add failed.
@@ -193,12 +201,18 @@ export function CartProvider({
     return sum + (getFinalPrice(item.product, item.size, discounts) * item.qty)
   }, 0)
 
+  const value = useMemo(() => ({
+    items, cartCount, cartTotal, discounts, shippingEstimate, freeShippingThreshold, queueNote, hasMounted, isLoading,
+    drawerOpen, addError, openDrawer, closeDrawer, refresh,
+    addToCart, updateQty, removeFromCart,
+  }), [
+    items, cartCount, cartTotal, discounts, shippingEstimate, freeShippingThreshold, queueNote, hasMounted, isLoading,
+    drawerOpen, addError, openDrawer, closeDrawer, refresh,
+    addToCart, updateQty, removeFromCart,
+  ])
+
   return (
-    <CartContext.Provider value={{
-      items, cartCount, cartTotal, discounts, shippingEstimate, queueNote, hasMounted, isLoading,
-      drawerOpen, addError, openDrawer, closeDrawer, refresh,
-      addToCart, updateQty, removeFromCart,
-    }}>
+    <CartContext.Provider value={value}>
       {children}
       {/* Error toast when add-to-cart fails (network error or product unavailable) */}
       <div

@@ -51,6 +51,13 @@ export interface Collection {
   description: string | null;
   cover_url: string | null;
   published: boolean;
+  // Estados de drop. Requieren database/drops-2026-07.sql; opcionales para que
+  // nada rompa si la columna todavía no existe (undefined = false).
+  //   coming_soon: portada visible en /colecciones como "Próximamente", sin link.
+  //   unlisted: página activa pero fuera de listados/sitemap ("solo con link",
+  //   el acceso anticipado de la lista VIP).
+  coming_soon?: boolean;
+  unlisted?: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
