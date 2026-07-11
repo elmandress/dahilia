@@ -562,9 +562,34 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
         </div>
       )}
 
+      {/* Índice de secciones — mismo patrón que Configuración: en el teléfono
+          el formulario es una sola columna larga y estos chips ahorran el
+          scroll hasta "Talles" o "Fotos". */}
+      <nav aria-label="Secciones del producto" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
+        {[
+          ['#prod-sec-general', 'Información'],
+          ['#prod-sec-fotos', 'Fotos'],
+          ['#prod-sec-talles', 'Talles y precios'],
+          ['#prod-sec-colores', 'Colores'],
+          ['#prod-sec-specs', 'Especificaciones'],
+        ].map(([href, label]) => (
+          <a
+            key={href}
+            href={href}
+            style={{
+              fontSize: 12, color: '#4A4143', textDecoration: 'none',
+              border: '1px solid rgba(31,26,27,0.16)', borderRadius: 999,
+              padding: '6px 12px', background: '#fff', whiteSpace: 'nowrap',
+            }}
+          >
+            {label}
+          </a>
+        ))}
+      </nav>
+
       <div className="admin-form-grid">
         {/* Left Side: Main Details */}
-        <div className="admin-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div id="prod-sec-general" className="admin-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', scrollMarginTop: 16 }}>
           <h3 style={{ margin: '0 0 0.5rem 0', fontWeight: 400, fontFamily: 'var(--font-display)' }}>Información general</h3>
           
           <div className="admin-field">
@@ -707,7 +732,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                   onChange={(e) => setDiscountActive(e.target.checked)}
                   style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                 />
-                <span style={{ fontSize: '0.85rem', color: '#555' }}>Mostrar precio rebajado en la tienda</span>
+                <span style={{ fontSize: '0.85rem', color: '#4A4143' }}>Mostrar precio rebajado en la tienda</span>
               </div>
             </div>
           </div>
@@ -721,7 +746,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                 onChange={(e) => setIsCustomOnly(e.target.checked)}
                 style={{ width: '18px', height: '18px', cursor: 'pointer' }}
               />
-              <span style={{ fontSize: '0.9rem', color: '#555' }}>
+              <span style={{ fontSize: '0.9rem', color: '#4A4143' }}>
                 Habilitar solo para cotizar (oculta el flujo estándar de carrito)
               </span>
             </div>
@@ -732,8 +757,8 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           
           {/* Media Manager */}
-          <div className="admin-card">
-            <h3 style={{ margin: '0 0 1rem 0', fontWeight: 400, fontFamily: 'var(--font-display)' }}>Fotos y Videos</h3>
+          <div id="prod-sec-fotos" className="admin-card" style={{ scrollMarginTop: 16 }}>
+            <h3 style={{ margin: '0 0 1rem 0', fontWeight: 400, fontFamily: 'var(--font-display)' }}>Fotos y videos</h3>
             
             <div
               className={`admin-dropzone ${dragOver ? 'dragover' : ''}`}
@@ -765,7 +790,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                 value={urlInput}
                 onChange={e => setUrlInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addByUrl(urlInput))}
-                style={{ flex: 1, padding: '7px 10px', borderRadius: 6, border: '1px solid #ddd', fontSize: '0.85rem', fontFamily: 'var(--font-sans)' }}
+                style={{ flex: 1, padding: '7px 10px', borderRadius: 6, border: '1px solid rgba(31,26,27,0.18)', fontSize: '0.85rem', fontFamily: 'var(--font-sans)' }}
               />
               <button
                 type="button"
@@ -789,9 +814,9 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                 <div style={{ background: '#fff', borderRadius: 12, padding: 24, maxWidth: 780, width: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ margin: 0, fontWeight: 400, fontFamily: 'var(--font-display)' }}>Fotos en Storage ({storageFiles.length})</h3>
-                    <button type="button" onClick={() => setShowStoragePicker(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 20, color: '#555' }}>✕</button>
+                    <button type="button" onClick={() => setShowStoragePicker(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 20, color: '#4A4143' }}>✕</button>
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#888' }}>Hacé clic en una foto para agregarla a este producto.</p>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#8C8285' }}>Hacé clic en una foto para agregarla a este producto.</p>
                   <div style={{ overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 8 }}>
                     {storageFiles.map(url => {
                       const already = mediaEntries.some(m => m.url === url)
@@ -803,7 +828,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                           style={{
                             position: 'relative', aspectRatio: '1', border: already ? '2px solid #4ade80' : '2px solid transparent',
                             borderRadius: 8, overflow: 'hidden', padding: 0, cursor: already ? 'default' : 'pointer',
-                            background: '#f5f5f5', opacity: already ? 0.6 : 1,
+                            background: '#EDE9EA', opacity: already ? 0.6 : 1,
                           }}
                           title={url.split('/').pop()}
                         >
@@ -869,16 +894,16 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
 
           {/* Sizes and pricing */}
           {!isCustomOnly && (
-            <div className="admin-card">
+            <div id="prod-sec-talles" className="admin-card" style={{ scrollMarginTop: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <h3 style={{ margin: 0, fontWeight: 400, fontFamily: 'var(--font-display)' }}>Talles y precios</h3>
                 <button className="admin-btn admin-btn-secondary admin-btn-sm" onClick={addSize}>
-                  + Agregar Talle
+                  + Agregar talle
                 </button>
               </div>
 
               {sizes.length === 0 ? (
-                <div style={{ fontSize: '0.85rem', color: '#888', textAlign: 'center', padding: '1rem' }}>
+                <div style={{ fontSize: '0.85rem', color: '#8C8285', textAlign: 'center', padding: '1rem' }}>
                   Usará precio base único para todos los talles
                 </div>
               ) : (
@@ -890,14 +915,14 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                         value={s.size}
                         onChange={(e) => updateSize(s.tempId, 'size', e.target.value)}
                         placeholder="Ej. M"
-                        style={{ width: '80px', padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd' }}
+                        style={{ width: '80px', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(31,26,27,0.18)' }}
                       />
                       <input
                         type="number"
                         value={s.price_uyu}
                         onChange={(e) => updateSize(s.tempId, 'price_uyu', e.target.value)}
                         placeholder="Precio (opcional)"
-                        style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd' }}
+                        style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(31,26,27,0.18)' }}
                       />
                       <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', cursor: 'pointer' }}>
                         <input
@@ -920,10 +945,10 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           )}
 
           {/* Color pickers */}
-          <div className="admin-card">
-            <h3 style={{ margin: '0 0 1rem 0', fontWeight: 400, fontFamily: 'var(--font-display)' }}>Colores Disponibles</h3>
+          <div id="prod-sec-colores" className="admin-card" style={{ scrollMarginTop: 16 }}>
+            <h3 style={{ margin: '0 0 1rem 0', fontWeight: 400, fontFamily: 'var(--font-display)' }}>Colores disponibles</h3>
             {colors.length === 0 ? (
-              <div style={{ fontSize: '0.85rem', color: '#888' }}>
+              <div style={{ fontSize: '0.85rem', color: '#8C8285' }}>
                 No hay colores creados. Configuralos en la sección de Colores.
               </div>
             ) : (
@@ -946,7 +971,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           </div>
 
           {/* Details (Lead times / Care) */}
-          <div className="admin-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div id="prod-sec-specs" className="admin-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', scrollMarginTop: 16 }}>
             <h3 style={{ margin: 0, fontWeight: 400, fontFamily: 'var(--font-display)' }}>Especificaciones</h3>
             
             <div className="admin-form-grid">

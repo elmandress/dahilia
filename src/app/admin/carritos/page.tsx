@@ -92,13 +92,13 @@ export default function CarritosAdminPage() {
             <article key={g.cartId} className="admin-card">
               <header style={{
                 display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between',
-                alignItems: 'baseline', paddingBottom: 10, borderBottom: '1px solid #eee', marginBottom: 12,
+                alignItems: 'baseline', paddingBottom: 10, borderBottom: '1px solid rgba(31,26,27,0.10)', marginBottom: 12,
               }}>
                 <div>
                   <strong style={{ fontSize: '0.95rem' }}>
                     {g.items.reduce((s, it) => s + it.qty, 0)} {g.items.reduce((s, it) => s + it.qty, 0) === 1 ? 'prenda' : 'prendas'}
                   </strong>
-                  <span style={{ fontSize: '0.78rem', color: '#888', marginLeft: 8 }}>
+                  <span style={{ fontSize: '0.78rem', color: '#8C8285', marginLeft: 8 }}>
                     Última actividad: {new Date(g.lastActivity).toLocaleString('es-UY', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -116,7 +116,7 @@ export default function CarritosAdminPage() {
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '0.9rem', color: '#1F1A1B' }}>{it.product.name}</div>
-                      <div style={{ fontSize: '0.8rem', color: '#888' }}>Talle {it.size} · x{it.qty}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#8C8285' }}>Talle {it.size} · x{it.qty}</div>
                     </div>
                     <div style={{ fontSize: '0.88rem', color: '#1F1A1B' }}>
                       {formatPrice(getFinalPrice(it.product, it.size, discounts) * it.qty)}
@@ -127,7 +127,7 @@ export default function CarritosAdminPage() {
                     <div style={{ width: 44, height: 54, borderRadius: 6, background: '#FAF1DF', flexShrink: 0 }} />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '0.85rem', color: '#B6314A' }}>Producto eliminado</div>
-                      <div style={{ fontSize: '0.8rem', color: '#888' }}>Talle {it.size} · x{it.qty}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#8C8285' }}>Talle {it.size} · x{it.qty}</div>
                     </div>
                   </div>
                 ))}

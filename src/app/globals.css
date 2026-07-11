@@ -116,6 +116,11 @@ html, body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   margin: 0;
+  /* Ningún desborde accidental puede convertirse en scroll horizontal de la
+     página (rompe la composición en mobile). `clip` y no `hidden`: hidden
+     crearía un contenedor de scroll y rompería position:sticky. Los carruseles
+     legítimos scrollean dentro de su propio contenedor (overflow-x: auto). */
+  overflow-x: clip;
 }
 
 h1, .h1 {
@@ -175,24 +180,11 @@ p, .body {
   color: var(--fg-muted);
 }
 
-/* Default anchor styles: only show underline on .prose contexts.
-   Logos, nav, cards rely on tight typography and would break with a
-   global border-bottom. Opt-in pattern. */
+/* Anchors reset: logos, nav y cards manejan su propio subrayado inline.
+   (El patrón opt-in .prose/.prose-link se retiró: nunca se usó.) */
 a {
   color: inherit;
   text-decoration: none;
-}
-.prose a,
-a.prose-link {
-  color: var(--fg);
-  border-bottom: 1px solid var(--border-strong);
-  transition: color var(--dur-fast) var(--ease-out-soft),
-              border-color var(--dur-fast) var(--ease-out-soft);
-}
-.prose a:hover,
-a.prose-link:hover {
-  color: var(--brand-pink);
-  border-color: var(--brand-pink);
 }
 
 ::selection { background: var(--cream-100); color: var(--ink-900); }
@@ -279,11 +271,9 @@ a.prose-link:hover {
   /* Cart row: stack image+info above qty controls */
   .cart-row           { flex-wrap: wrap !important; gap: 16px !important; }
   .cart-row-controls  { width: 100% !important; justify-content: space-between !important; }
-  .cart-subtotal      { align-items: flex-start !important; text-align: left !important; }
-  /* Coupon, totals and next-steps: left-aligned like the rest on small phones */
-  .cart-coupon        { align-self: stretch !important; align-items: flex-start !important; }
-  .cart-totals        { align-items: flex-start !important; }
-  .cart-steps         { text-align: left !important; }
+  /* El resumen ahora es una tarjeta (cart-summary) ya alineada a la izquierda
+     en todos los tamaños — las viejas correcciones de alineación se fueron
+     con el layout derecho que corregían. */
   /* Header: tighter padding, smaller wordmark */
   .site-header-inner  { padding: 12px 14px !important; gap: 12px !important; }
   .brand-wordmark     { font-size: 18px !important; letter-spacing: 0.16em !important; }
@@ -369,6 +359,15 @@ a.prose-link:hover {
   .quickview-img  { aspect-ratio: 16/12 !important; }
 }
 
+/* PDP en teléfonos: el nombre a 38px fijos (medida de desktop) ocupaba hasta
+   3 líneas con nombres largos; 30px mantiene la jerarquía Fraunces sin comerse
+   el primer viewport. El gap uniforme de 20px de la columna baja a 16px: en
+   una sola columna, menos aire entre bloques = precio, talle y CTA juntos. */
+@media (max-width: 480px) {
+  .producto-detail h1 { font-size: 30px !important; }
+  .producto-detail { gap: 16px !important; }
+}
+
 /* Product detail sticky add-to-cart (mobile only) */
 .pdp-sticky-bar {
   display: none;
@@ -391,6 +390,43 @@ a.prose-link:hover {
   }
   /* Leave room so the sticky bar never covers page content/footer */
   main:has(.pdp-sticky-bar) { padding-bottom: 84px; }
+}
+
+/* ============================================================
+   Carrito: dos columnas con resumen sticky en desktop.
+   El total y el botón de WhatsApp quedan siempre a la vista — en la
+   versión anterior había que scrollear todo el carrito para comprar.
+   ============================================================ */
+.cart-layout { display: flex; flex-direction: column; gap: 28px; }
+@media (min-width: 900px) {
+  .cart-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 48px;
+    align-items: start;
+  }
+  .cart-summary { position: sticky; top: 90px; }
+}
+
+/* Barra fija del carrito en mobile (total + CTA), como la pdp-sticky-bar. */
+.cart-sticky-bar { display: none; }
+@media (max-width: 720px) {
+  .cart-sticky-bar {
+    display: flex;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 45;
+    padding: 10px 16px calc(env(safe-area-inset-bottom, 0px) + 10px);
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -8px 22px -14px rgba(31,26,27,0.22);
+  }
+  main:has(.cart-sticky-bar) { padding-bottom: 84px; }
 }
 
 /* Cart badge "pop" — a single subtle bounce when the count changes (the badge
@@ -455,6 +491,16 @@ a.prose-link:hover {
      sabe dónde está); en un teléfono, esos ~24px valen más en productos. */
   .tienda-head > span:first-child { display: none !important; }
   .tienda-head h1 { font-size: 24px !important; }
+  /* Intro de categoría: máx. 2 líneas en mobile — orienta sin empujar la
+     primera prenda fuera del viewport. El texto completo queda en desktop
+     (y para el crawler, que lee el HTML entero igual). */
+  .tienda-cat-desc {
+    font-size: 13px !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
   /* La fila de conteo solo aparece con filtros o búsqueda activos. */
   .tienda-meta { display: none !important; }
   .tienda-meta.has-criteria {
@@ -483,15 +529,31 @@ a.prose-link:hover {
     gap: 8px !important;
     margin-bottom: 12px !important;
   }
-  /* Category chips: horizontal scroll, no wrap, hide scrollbar */
+  /* Category chips: carrusel full-bleed con snap (patrón Zara/COS/App Store).
+     La fila corre de borde a borde de la PANTALLA (márgenes negativos que
+     compensan el padding de .tienda-page), así el chip cortado queda en el
+     borde físico — señal universal de "hay más" — y nunca a mitad del área
+     de contenido, donde se lee como desborde roto. El fade del borde derecho
+     (mask) refuerza la pista; el padding extra derecho garantiza que, al
+     llegar al final, el fade caiga sobre aire y no sobre el último chip. */
   .tienda-toolbar-cats {
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
-    padding-bottom: 4px;
+    margin-left: -24px;
+    margin-right: -24px;
+    padding: 2px 40px 6px 24px;
+    scroll-padding-left: 24px;
+    scroll-snap-type: x proximity;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 28px), transparent 100%);
   }
   .tienda-toolbar-cats::-webkit-scrollbar { display: none; }
+  .tienda-toolbar-cats > button {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
   /* Actions row: search takes remaining space */
   .tienda-toolbar-actions {
     flex-wrap: nowrap !important;

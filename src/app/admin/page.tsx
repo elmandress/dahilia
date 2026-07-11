@@ -191,7 +191,7 @@ export default function AdminDashboardPage() {
                     <td>
                       <strong>{order.customer_name}</strong>
                       <br />
-                      <span style={{ fontSize: '0.8rem', color: '#888' }}>{order.customer_email}</span>
+                      <span style={{ fontSize: '0.8rem', color: '#8C8285' }}>{order.customer_email}</span>
                     </td>
                     <td>{order.garment_type}</td>
                     <td>
@@ -203,7 +203,7 @@ export default function AdminDashboardPage() {
                         {order.status === 'cancelled' && 'Cancelado'}
                       </span>
                     </td>
-                    <td style={{ fontSize: '0.85rem', color: '#888' }}>
+                    <td style={{ fontSize: '0.85rem', color: '#8C8285' }}>
                       {new Date(order.created_at).toLocaleDateString('es-UY')}
                     </td>
                   </tr>

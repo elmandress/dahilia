@@ -188,7 +188,7 @@ export default function ColoresAdminPage() {
                   type="color" 
                   value={hex} 
                   onChange={(e) => setHex(e.target.value)} 
-                  style={{ width: '48px', height: '38px', padding: '0', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer' }}
+                  style={{ width: '48px', height: '38px', padding: '0', border: '1px solid rgba(31,26,27,0.18)', borderRadius: '4px', cursor: 'pointer' }}
                 />
                 <input 
                   type="text" 
@@ -248,7 +248,7 @@ export default function ColoresAdminPage() {
                             <button 
                               onClick={() => moveOrder(i, 'up')} 
                               disabled={i === 0}
-                              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '10px', color: '#888' }}
+                              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '10px', color: '#8C8285' }}
                               title="Subir"
                             >
                               ▲
@@ -256,7 +256,7 @@ export default function ColoresAdminPage() {
                             <button 
                               onClick={() => moveOrder(i, 'down')} 
                               disabled={i === colors.length - 1}
-                              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '10px', color: '#888' }}
+                              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '10px', color: '#8C8285' }}
                               title="Bajar"
                             >
                               ▼
@@ -289,7 +289,7 @@ export default function ColoresAdminPage() {
                               type="color" 
                               value={editHex} 
                               onChange={(e) => setEditHex(e.target.value)} 
-                              style={{ width: '32px', height: '24px', padding: 0, border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer' }}
+                              style={{ width: '32px', height: '24px', padding: 0, border: '1px solid rgba(31,26,27,0.18)', borderRadius: '4px', cursor: 'pointer' }}
                             />
                             <input 
                               type="text" 
@@ -300,7 +300,7 @@ export default function ColoresAdminPage() {
                             />
                           </div>
                         ) : (
-                          <code style={{ fontSize: '0.85rem', background: '#f5f5f5', padding: '2px 6px', borderRadius: '4px' }}>{col.hex}</code>
+                          <code style={{ fontSize: '0.85rem', background: '#EDE9EA', padding: '2px 6px', borderRadius: '4px' }}>{col.hex}</code>
                         )}
                       </td>
                       <td style={{ textAlign: 'right' }}>

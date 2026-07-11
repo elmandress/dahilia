@@ -8,16 +8,33 @@ import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 300
 
-export const metadata: Metadata = {
-  title: 'Colecciones tejidas a mano, por temporada',
-  description: 'Cada colección sale en cantidades chicas — es crochet tejido a mano en Montevideo. Mirá la actual, y anotate para ver la próxima antes que nadie.',
-  alternates: { canonical: '/colecciones' },
-  openGraph: {
-    ...OG_BASE,
+// Metadata dinámica por una sola razón: mientras no haya NINGUNA colección
+// visible (publicada o teaser), la página es thin content y va noindex —
+// misma filosofía que su exclusión condicional del sitemap. Cuando llegue el
+// primer drop, vuelve a indexarse sola.
+export async function generateMetadata(): Promise<Metadata> {
+  let hasVisible = false
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase.from('collections').select('*').limit(12)
+    hasVisible = (data ?? []).some((c) => {
+      const col = c as Collection
+      return (col.published && !col.unlisted) || (!col.published && col.coming_soon)
+    })
+  } catch { /* sin base: dejamos el default indexable */ hasVisible = true }
+
+  return {
     title: 'Colecciones tejidas a mano, por temporada',
-    description: 'Cada colección sale en cantidades chicas — es crochet tejido a mano en Montevideo.',
-    url: '/colecciones',
-  },
+    description: 'Cada colección sale en cantidades chicas — es crochet tejido a mano en Montevideo. Mirá la actual, y anotate para ver la próxima antes que nadie.',
+    alternates: { canonical: '/colecciones' },
+    ...(hasVisible ? {} : { robots: { index: false, follow: true } }),
+    openGraph: {
+      ...OG_BASE,
+      title: 'Colecciones tejidas a mano, por temporada',
+      description: 'Cada colección sale en cantidades chicas — es crochet tejido a mano en Montevideo.',
+      url: '/colecciones',
+    },
+  }
 }
 
 export default async function ColeccionesPage() {

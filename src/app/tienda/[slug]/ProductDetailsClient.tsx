@@ -102,6 +102,18 @@ export function ProductDetailsClient({
     setTimeout(() => setAdded(false), 2200)
   }
 
+  // "Completá el look" con un toque (solo piezas de talle único). No abre el
+  // drawer: la clienta sigue en esta ficha, el badge del header ya confirma.
+  const [addedLookId, setAddedLookId] = useState<string | null>(null)
+  const handleLookAdd = async (p: Product) => {
+    const avail = (p.sizes ?? []).filter((s) => s.available)
+    const size = avail.length > 0 ? avail[0].size : 'Único'
+    setAddedLookId(p.id)
+    await addToCart(p, size, 1, { openDrawer: false })
+    track('look_add', { from: product.slug, to: p.slug })
+    setTimeout(() => setAddedLookId(null), 2200)
+  }
+
   const crumb = {
     background: 'none', border: 'none', color: 'inherit', cursor: 'pointer',
     padding: 0, fontFamily: 'inherit', fontSize: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' as const,
@@ -322,6 +334,7 @@ export function ProductDetailsClient({
                 href={restockUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => track('restock_click', { product: product.slug })}
                 style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
                   background: '#25D366', color: '#fff', textDecoration: 'none',
@@ -355,8 +368,22 @@ export function ProductDetailsClient({
             ))}
           </div>
 
-          {/* Completá el look — 2 complementos discretos, DESPUÉS del CTA
-              (Baymard: el cross-sell nunca compite con la acción principal). */}
+          {/* Descripción — abajo del bloque de compra: quien ya decidió no la
+              necesita; quien duda la encuentra enseguida (y ANTES del
+              cross-sell: primero se termina de vender esta pieza). */}
+          <p style={{
+            fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, lineHeight: 1.7,
+            color: dahila.ink700, margin: 0,
+            borderTop: `1px solid ${dahila.border}`, paddingTop: 16,
+          }}>
+            {product.description || 'Tejida a mano. Empieza cuando vos confirmás colores y medida.'}
+          </p>
+
+          {/* Completá el look — 2 complementos discretos, después del CTA y de
+              la descripción (Baymard: el cross-sell nunca compite con la acción
+              principal). Mismo gesto que "Sumale un detalle" del carrito: las
+              piezas de talle único se agregan con un toque, sin salir del PDP;
+              las que tienen talles llevan a su ficha a elegirlo. */}
           {lookComplements.length > 0 && (
             <div style={{
               borderTop: `1px solid ${dahila.border}`, paddingTop: 14,
@@ -366,53 +393,69 @@ export function ProductDetailsClient({
                 fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
                 textTransform: 'uppercase', color: dahila.ink500,
               }}>
-                Completá el look
+                Completá el look · viaja en el mismo envío
               </span>
               {lookComplements.map((p) => {
                 const cPhoto = getPrimaryPhoto(p)
                 const cFinal = getFinalPrice(p, undefined, discounts)
+                const cAvail = (p.sizes ?? []).filter((s) => s.available)
+                const oneTap = !p.is_custom_only && p.status === 'active' && cAvail.length <= 1
+                const justAdded = addedLookId === p.id
                 return (
-                  <Link
-                    key={p.id}
-                    href={`/tienda/${p.slug}`}
-                    onClick={() => track('look_click', { from: product.slug, to: p.slug })}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none',
-                    }}
-                  >
-                    <span style={{
-                      position: 'relative', width: 46, height: 56, flexShrink: 0,
-                      borderRadius: 8, overflow: 'hidden', background: dahila.cream50, display: 'block',
-                    }}>
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <Link
+                      href={`/tienda/${p.slug}`}
+                      onClick={() => track('look_click', { from: product.slug, to: p.slug })}
+                      aria-label={`Ver ${p.name}`}
+                      style={{
+                        position: 'relative', width: 46, height: 56, flexShrink: 0,
+                        borderRadius: 8, overflow: 'hidden', background: dahila.cream50, display: 'block',
+                      }}
+                    >
                       <Image src={cPhoto} alt={p.name} fill sizes="46px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
-                    </span>
+                    </Link>
                     <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      <span style={{
-                        fontFamily: dahila.fontDisplay, fontSize: 14, color: dahila.ink900, lineHeight: 1.25,
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>{p.name}</span>
-                      <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700 }}>
-                        {formatPrice(cFinal)}
-                      </span>
+                      <Link
+                        href={`/tienda/${p.slug}`}
+                        onClick={() => track('look_click', { from: product.slug, to: p.slug })}
+                        style={{
+                          fontFamily: dahila.fontDisplay, fontSize: 14, color: dahila.ink900, lineHeight: 1.25,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: 'none',
+                        }}
+                      >{p.name}</Link>
+                      {oneTap ? (
+                        <button
+                          onClick={() => handleLookAdd(p)}
+                          disabled={justAdded}
+                          aria-label={`Agregar ${p.name} al carrito por ${formatPrice(cFinal)}`}
+                          style={{
+                            background: 'transparent', border: 'none', padding: '2px 0',
+                            cursor: justAdded ? 'default' : 'pointer', alignSelf: 'flex-start',
+                            fontFamily: dahila.fontSans, fontSize: 12,
+                            color: justAdded ? '#1E8449' : dahila.wine600,
+                            textDecoration: justAdded ? 'none' : 'underline', textUnderlineOffset: 3,
+                          }}
+                        >
+                          {justAdded ? '✓ Sumado al carrito' : `+ Agregar · ${formatPrice(cFinal)}`}
+                        </button>
+                      ) : (
+                        <Link
+                          href={`/tienda/${p.slug}`}
+                          onClick={() => track('look_click', { from: product.slug, to: p.slug })}
+                          style={{
+                            fontFamily: dahila.fontSans, fontSize: 12, color: dahila.wine600,
+                            textDecoration: 'underline', textUnderlineOffset: 3, alignSelf: 'flex-start', padding: '2px 0',
+                          }}
+                        >
+                          {`Elegir talle · ${formatPrice(cFinal)}`}
+                        </Link>
+                      )}
                     </span>
-                    <span aria-hidden style={{ color: dahila.ink300, display: 'inline-flex' }}>
-                      <Icon name="caret-right" size={14} />
-                    </span>
-                  </Link>
+                  </div>
                 )
               })}
             </div>
           )}
-
-          {/* Descripción — abajo del bloque de compra: quien ya decidió no la
-              necesita; quien duda la encuentra enseguida. */}
-          <p style={{
-            fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, lineHeight: 1.7,
-            color: dahila.ink700, margin: 0,
-            borderTop: `1px solid ${dahila.border}`, paddingTop: 16,
-          }}>
-            {product.description || 'Tejida a mano. Empieza cuando vos confirmás colores y medida.'}
-          </p>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
             <FavoriteButton productId={product.id} variant="inline" />

@@ -245,7 +245,7 @@ export default function AdminCuponesPage() {
       {tableMissing ? (
         <div className="admin-card">
           <h3 style={{ marginTop: 0, fontSize: '1rem' }}>Falta un paso de configuración</h3>
-          <p style={{ color: '#666', fontSize: '0.9rem', lineHeight: 1.6 }}>
+          <p style={{ color: '#4A4143', fontSize: '0.9rem', lineHeight: 1.6 }}>
             La tabla de cupones todavía no existe. Ejecutá <code>database/schema-cupones.sql</code> en el
             SQL Editor de Supabase (1 minuto) y recargá esta página.
           </p>
@@ -394,7 +394,7 @@ export default function AdminCuponesPage() {
                   {categories.map((c) => (
                     <label key={c.id} style={{
                       display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.85rem',
-                      border: '1px solid #ddd', borderRadius: 999, padding: '6px 12px', cursor: 'pointer',
+                      border: '1px solid rgba(31,26,27,0.18)', borderRadius: 999, padding: '6px 12px', cursor: 'pointer',
                       background: draft.category_ids.includes(c.id) ? '#FAF1DF' : '#fff',
                     }}>
                       <input
@@ -412,7 +412,7 @@ export default function AdminCuponesPage() {
                 <div style={{
                   display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
                   gap: 6, marginBottom: '0.75rem', maxHeight: 260, overflowY: 'auto',
-                  border: '1px solid #eee', borderRadius: 8, padding: 10,
+                  border: '1px solid rgba(31,26,27,0.10)', borderRadius: 8, padding: 10,
                 }}>
                   {products.map((p) => (
                     <label key={p.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', cursor: 'pointer' }}>
@@ -482,9 +482,9 @@ export default function AdminCuponesPage() {
                         <tr key={c.id} style={!c.active || expired ? { opacity: 0.55 } : undefined}>
                           <td>
                             <strong style={{ letterSpacing: '0.04em' }}>{c.code}</strong>
-                            {c.label && <><br /><span style={{ fontSize: '0.75rem', color: '#999' }}>{c.label}</span></>}
+                            {c.label && <><br /><span style={{ fontSize: '0.75rem', color: '#8C8285' }}>{c.label}</span></>}
                           </td>
-                          <td>{couponSummary(c)}{c.min_subtotal_uyu ? <><br /><span style={{ fontSize: '0.75rem', color: '#999' }}>mín. ${c.min_subtotal_uyu.toLocaleString('es-UY')}</span></> : null}</td>
+                          <td>{couponSummary(c)}{c.min_subtotal_uyu ? <><br /><span style={{ fontSize: '0.75rem', color: '#8C8285' }}>mín. ${c.min_subtotal_uyu.toLocaleString('es-UY')}</span></> : null}</td>
                           <td>{scopeLabel}</td>
                           <td style={{ fontSize: '0.85rem' }}>{couponWindow(c)}</td>
                           <td>{used}{c.max_uses ? ` / ${c.max_uses}` : ''}</td>
@@ -510,7 +510,7 @@ export default function AdminCuponesPage() {
                   </tbody>
                 </table>
               </div>
-              <p style={{ fontSize: '0.78rem', color: '#999', marginTop: 10, marginBottom: 0 }}>
+              <p style={{ fontSize: '0.78rem', color: '#8C8285', marginTop: 10, marginBottom: 0 }}>
                 “Usos” cuenta cada vez que alguien finalizó su pedido por WhatsApp con el cupón puesto.
                 Confirmá el cupón al cobrar — el mensaje de WhatsApp lo trae detallado.
               </p>

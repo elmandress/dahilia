@@ -171,6 +171,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           setCouponInput('')
           setShowCoupon(false)
           sessionStorage.setItem(COUPON_STORAGE_KEY, (res.coupon as PublicCoupon).code)
+          track('coupon_applied', { code: (res.coupon as PublicCoupon).code })
         } else {
           setCouponError(res.error || 'No pudimos validar el cupón.')
         }
@@ -314,13 +315,19 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
   }
 
   return (
-    <div style={{ maxWidth: 880, margin: '0 auto', padding: '40px 24px 80px' }}>
+    <div style={{ maxWidth: 1120, margin: '0 auto', padding: '40px 24px 80px' }}>
       <Eyebrow>Tu pedido</Eyebrow>
       <h1 style={{
         fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(32px, 5vw, 48px)',
         lineHeight: 1.05, letterSpacing: '-0.02em', color: dahila.ink900, margin: '12px 0 40px',
       }}>Tu carrito</h1>
 
+      {/* Dos columnas en desktop (≥900px): piezas a la izquierda, resumen
+          sticky a la derecha — el total y el botón quedan siempre a la vista
+          (patrón COS/Mejuri). En mobile vuelve a una columna y la barra fija
+          de abajo cumple ese rol. */}
+      <div className="cart-layout">
+      <div className="cart-main">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         {items.filter((i) => !!i.product).map((item) => {
           const photo = getPrimaryPhoto(item.product)
@@ -495,18 +502,28 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
         ))}
       </div>
 
-      <div
-        className="cart-subtotal"
+      </div>{/* /cart-main */}
+
+      <aside
+        className="cart-subtotal cart-summary"
+        aria-label="Resumen del pedido"
         style={{
-          marginTop: 28,
-          display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 14,
+          display: 'flex', flexDirection: 'column', gap: 14,
+          background: dahila.cream50, border: `1px solid ${dahila.border}`,
+          borderRadius: 14, padding: '22px 22px 24px',
         }}
       >
+        <h2 style={{
+          fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 400,
+          letterSpacing: '0.2em', textTransform: 'uppercase',
+          color: dahila.ink500, margin: 0,
+        }}>Resumen</h2>
+
         {/* Cupón — disclosure discreto, mismo lenguaje que la nota de regalo */}
-        <div className="cart-coupon" style={{ width: '100%', maxWidth: 420, alignSelf: 'flex-end', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+        <div className="cart-coupon" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
           {coupon ? (
             <div style={{
-              display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end',
+              display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
               fontFamily: dahila.fontSans, fontSize: 13,
             }}>
               <span style={{
@@ -527,7 +544,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                 Quitar
               </button>
               {couponEffect?.blocked && (
-                <span role="alert" style={{ width: '100%', textAlign: 'right', fontSize: 12, color: '#7a1e2f' }}>
+                <span role="alert" style={{ width: '100%', fontSize: 12, color: '#7a1e2f' }}>
                   {couponEffect.blocked}
                 </span>
               )}
@@ -546,7 +563,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
               ¿Tenés un cupón?
             </button>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   value={couponInput}
@@ -557,7 +574,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                   autoFocus
                   style={{
                     fontFamily: dahila.fontSans, fontSize: 13, letterSpacing: '0.08em',
-                    color: dahila.ink900, background: dahila.cream50,
+                    color: dahila.ink900, background: '#fff',
                     border: `1px solid ${dahila.borderStrong}`, borderRadius: 8,
                     padding: '10px 12px', width: 150, textTransform: 'uppercase',
                   }}
@@ -572,7 +589,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                 </button>
               </div>
               {couponError && (
-                <span role="alert" style={{ fontFamily: dahila.fontSans, fontSize: 12, color: '#7a1e2f', maxWidth: 300, textAlign: 'right' }}>
+                <span role="alert" style={{ fontFamily: dahila.fontSans, fontSize: 12, color: '#7a1e2f', maxWidth: 300 }}>
                   {couponError}
                 </span>
               )}
@@ -580,20 +597,23 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           )}
         </div>
 
-        <div className="cart-totals" style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+        <div className="cart-totals" style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
           {couponDiscount > 0 && (
-            <div style={{ display: 'flex', gap: 24, alignItems: 'baseline', fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700 }}>
               <span>Subtotal</span>
               <span>{formatPrice(subtotal)}</span>
             </div>
           )}
           {couponDiscount > 0 && (
-            <div style={{ display: 'flex', gap: 24, alignItems: 'baseline', fontFamily: dahila.fontSans, fontSize: 13, color: '#1E8449' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontFamily: dahila.fontSans, fontSize: 13, color: '#1E8449' }}>
               <span>Cupón {coupon?.code}</span>
               <span>−{formatPrice(couponDiscount)}</span>
             </div>
           )}
-          <div style={{ display: 'flex', gap: 48, alignItems: 'baseline' }}>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+            borderTop: `1px solid ${dahila.border}`, paddingTop: 10, marginTop: couponDiscount > 0 ? 4 : 0,
+          }}>
             <span style={{
               fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink700,
               textTransform: 'uppercase', letterSpacing: '0.06em',
@@ -623,39 +643,8 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           )}
         </div>
 
-        {/* Lista de espera — la expectativa de plazo se fija ANTES de abrir el
-            chat: nadie descubre en WhatsApp que su pedido empieza en un mes. */}
-        {queueNote && (
-          <div style={{
-            display: 'inline-flex', alignItems: 'flex-start', gap: 8, maxWidth: 380,
-            background: dahila.cream50, border: `1px solid ${dahila.border}`,
-            borderRadius: 10, padding: '10px 14px',
-            fontFamily: dahila.fontSans, fontSize: 12.5, color: dahila.ink700, lineHeight: 1.5,
-            textAlign: 'right',
-          }}>
-            <span style={{ flexShrink: 0, marginTop: 1 }}>
-              <Icon name="arrow-clockwise" size={15} color={dahila.ink500} />
-            </span>
-            <span>{queueNote}</span>
-          </div>
-        )}
-
-        {/* Qué pasa al tocar el botón — la duda #1 antes de un checkout por chat */}
-        <ol className="cart-steps" style={{
-          listStyle: 'none', margin: 0, padding: 0, maxWidth: 380,
-          display: 'flex', flexDirection: 'column', gap: 5, textAlign: 'right',
-          fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, lineHeight: 1.5,
-        }}>
-          <li>1 · Se abre WhatsApp con tu pedido ya armado — no pagás nada todavía.</li>
-          <li>2 · Anush te confirma disponibilidad y fecha estimada.</li>
-          <li>3 · Elegís cómo pagar (transferencia o Mercado Pago) y cómo recibirlo.</li>
-          <li style={{ marginTop: 4 }}>
-            <Link href="/info" style={{ color: dahila.ink500 }}>¿Dudas? Mirá envíos, cambios y cuidados →</Link>
-          </li>
-        </ol>
-
         {/* Gift note toggle — opens a small textarea; content goes into WA message */}
-        <div style={{ width: '100%', maxWidth: 420, alignSelf: 'flex-end' }}>
+        <div style={{ width: '100%' }}>
           {!showGiftNote ? (
             <button
               type="button"
@@ -683,7 +672,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                 placeholder='Ej: "Con cariño para vos 🧶"'
                 style={{
                   fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink900,
-                  background: dahila.cream50, border: `1px solid ${dahila.borderStrong}`,
+                  background: '#fff', border: `1px solid ${dahila.borderStrong}`,
                   borderRadius: 8, padding: '10px 12px', resize: 'none',
                   width: '100%', boxSizing: 'border-box',
                 }}
@@ -719,7 +708,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
             letterSpacing: '0.06em',
             textTransform: 'uppercase',
             cursor: 'pointer',
-            minWidth: 280,
+            width: '100%',
             boxShadow: '0 8px 22px -10px rgba(37,211,102,0.6)',
             transition: 'transform 160ms cubic-bezier(0.22,0.61,0.36,1), box-shadow 160ms',
           }}
@@ -734,6 +723,65 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
         >
           <Icon name="whatsapp-logo" weight="fill" size={20} color="#fff" />
           Coordinar por WhatsApp
+        </button>
+
+        {/* Lista de espera — la expectativa de plazo se fija acá, pegada al
+            botón: nadie descubre en WhatsApp que su pedido empieza en un mes. */}
+        {queueNote && (
+          <div style={{
+            display: 'flex', alignItems: 'flex-start', gap: 8,
+            background: '#fff', border: `1px solid ${dahila.border}`,
+            borderRadius: 10, padding: '10px 14px',
+            fontFamily: dahila.fontSans, fontSize: 12.5, color: dahila.ink700, lineHeight: 1.5,
+          }}>
+            <span style={{ flexShrink: 0, marginTop: 1 }}>
+              <Icon name="arrow-clockwise" size={15} color={dahila.ink500} />
+            </span>
+            <span>{queueNote}</span>
+          </div>
+        )}
+
+        {/* Qué pasa al tocar el botón — la duda #1 antes de un checkout por chat */}
+        <ol className="cart-steps" style={{
+          listStyle: 'none', margin: 0, padding: 0,
+          display: 'flex', flexDirection: 'column', gap: 5,
+          fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, lineHeight: 1.5,
+        }}>
+          <li>1 · Se abre WhatsApp con tu pedido ya armado — no pagás nada todavía.</li>
+          <li>2 · Anush te confirma disponibilidad y fecha estimada.</li>
+          <li>3 · Elegís cómo pagar (transferencia o Mercado Pago) y cómo recibirlo.</li>
+          <li style={{ marginTop: 4 }}>
+            <Link href="/info" style={{ color: dahila.ink500 }}>¿Dudas? Mirá envíos, cambios y cuidados →</Link>
+          </li>
+        </ol>
+      </aside>
+      </div>{/* /cart-layout */}
+
+      {/* Barra fija mobile: total + CTA siempre a un toque (mismo patrón que
+          la pdp-sticky-bar). En desktop no existe — el resumen sticky cumple. */}
+      <div className="cart-sticky-bar">
+        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15, minWidth: 0 }}>
+          <span style={{ fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: dahila.ink500 }}>
+            Total
+          </span>
+          <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 20, color: dahila.ink900 }}>
+            {formatPrice(total)}
+          </span>
+        </div>
+        <button
+          onClick={handleCheckout}
+          aria-label={`Coordinar pedido por WhatsApp con ${whatsappLabel}`}
+          style={{
+            flex: 1, marginLeft: 16,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            background: '#25D366', color: '#fff', border: 'none',
+            borderRadius: 10, padding: '14px 18px', cursor: 'pointer',
+            fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
+            letterSpacing: '0.05em', textTransform: 'uppercase',
+          }}
+        >
+          <Icon name="whatsapp-logo" weight="fill" size={18} color="#fff" />
+          Coordinar
         </button>
       </div>
     </div>

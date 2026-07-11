@@ -80,6 +80,16 @@ export async function generateMetadata({
         url: `${SITE_URL}/tienda/${slug}`,
         images: [{ url: `${SITE_URL}/tienda/${slug}/og`, width: 1200, height: 630, alt: title, type: 'image/jpeg' }],
       },
+      // Twitter explícito: sin esto, la página HEREDA el twitter:title genérico
+      // del layout y la twitter-image de la SECCIÓN /tienda (la convención de
+      // archivo cascadea a los segmentos hijos) — en X/Discord/Slack la
+      // categoría compartida mostraba la tarjeta genérica de la tienda.
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description: desc,
+        images: [`${SITE_URL}/tienda/${slug}/og`],
+      },
     }
   }
 
@@ -127,6 +137,15 @@ export async function generateMetadata({
         alt: `${product.name} — Dahila Crochet`,
         type: 'image/jpeg',
       }],
+    },
+    // Twitter explícito — mismo motivo que en la rama de categoría: sin esto,
+    // X/Discord/Slack mostraban el título del layout y la twitter-image de
+    // /tienda en vez de la foto y el precio de ESTE producto.
+    twitter: {
+      card: 'summary_large_image',
+      title: `${product.name} — tejido a mano, a tu medida`,
+      description,
+      images: [`${SITE_URL}/tienda/${product.slug}/og`],
     },
   }
 }

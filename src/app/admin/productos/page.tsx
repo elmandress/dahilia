@@ -223,7 +223,7 @@ export default function ProductosPage() {
         </select>
       </div>
 
-      <p style={{ fontSize: '0.8rem', color: '#888', margin: '0 0 12px' }}>
+      <p style={{ fontSize: '0.8rem', color: '#8C8285', margin: '0 0 12px' }}>
         {reorderEnabled
           ? `Arrastrá las filas para cambiar el orden en la tienda.${savingOrder ? ' Guardando…' : ''}`
           : 'Quitá los filtros para poder reordenar.'}
@@ -305,7 +305,7 @@ export default function ProductosPage() {
                         </span>
                       )}
                       <br />
-                      <span style={{ fontSize: '0.8rem', color: '#999' }}>/{product.slug}</span>
+                      <span style={{ fontSize: '0.8rem', color: '#8C8285' }}>/{product.slug}</span>
                     </td>
                     <td className="col-hide-mobile">{product.category?.name || '—'}</td>
                     <td>{product.base_price_uyu ? formatPrice(product.base_price_uyu) : '—'}</td>
@@ -321,7 +321,7 @@ export default function ProductosPage() {
                             cursor: 'pointer', border: 'none', borderRadius: 999,
                             padding: '0.25rem 0.7rem', fontSize: '0.75rem', fontWeight: 500,
                             background: product.status === 'active' ? '#e8f5e9' : '#f0f0f0',
-                            color: product.status === 'active' ? '#2e7d32' : '#888',
+                            color: product.status === 'active' ? '#2e7d32' : '#8C8285',
                           }}
                         >
                           {product.status === 'active' ? 'Activo' : 'Borrador'}

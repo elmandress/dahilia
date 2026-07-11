@@ -269,7 +269,7 @@ export default function CategoriasAdminPage() {
                             <button 
                               onClick={() => moveOrder(i, 'up')} 
                               disabled={i === 0}
-                              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '10px', color: '#888' }}
+                              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '10px', color: '#8C8285' }}
                               title="Subir"
                             >
                               ▲
@@ -277,7 +277,7 @@ export default function CategoriasAdminPage() {
                             <button 
                               onClick={() => moveOrder(i, 'down')} 
                               disabled={i === categories.length - 1}
-                              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '10px', color: '#888' }}
+                              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '10px', color: '#8C8285' }}
                               title="Bajar"
                             >
                               ▼
@@ -303,14 +303,14 @@ export default function CategoriasAdminPage() {
                               type="text" 
                               value={editSlug} 
                               onChange={(e) => setEditSlug(e.target.value)} 
-                              style={{ padding: '4px 8px', fontSize: '0.8rem', color: '#666' }} 
+                              style={{ padding: '4px 8px', fontSize: '0.8rem', color: '#4A4143' }} 
                               required 
                             />
                           </div>
                         ) : (
                           <div>
                             <strong>{cat.name}</strong><br/>
-                            <span style={{ fontSize: '0.75rem', color: '#888' }}>/{cat.slug}</span>
+                            <span style={{ fontSize: '0.75rem', color: '#8C8285' }}>/{cat.slug}</span>
                           </div>
                         )}
                       </td>
@@ -322,7 +322,7 @@ export default function CategoriasAdminPage() {
                             style={{ padding: '4px 8px', fontSize: '0.85rem', width: '100%', minHeight: '60px' }} 
                           />
                         ) : (
-                          <span style={{ fontSize: '0.85rem', color: '#666' }}>{cat.description || '-'}</span>
+                          <span style={{ fontSize: '0.85rem', color: '#4A4143' }}>{cat.description || '-'}</span>
                         )}
                       </td>
                       <td style={{ textAlign: 'right' }}>

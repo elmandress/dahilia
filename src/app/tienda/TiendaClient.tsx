@@ -9,6 +9,7 @@ import type { Product, Category, Color, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
 import { getFinalPrice, BLUR_DATA_URL } from '@/lib/types'
 import { dahila, Eyebrow, Chip, Icon } from '@/components/ui/Primitives'
+import { track } from '@/lib/analytics'
 
 /** Reads recently-viewed from localStorage and shows a strip above the grid. */
 function RecentlyViewedStrip() {
@@ -104,6 +105,20 @@ export function TiendaClient({
   initialOnlyOffers?: boolean
 }) {
   const router = useRouter()
+
+  // Carrusel de categorías (mobile): al aterrizar en /tienda/bolsos desde el
+  // mega-menú, el chip activo puede quedar fuera de pantalla a la derecha —
+  // se trae a la vista una sola vez al montar, sin animación (es estado
+  // inicial, no un cambio que haya que dramatizar).
+  const catsRailRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const rail = catsRailRef.current
+    if (!rail || rail.scrollWidth <= rail.clientWidth) return
+    const active = rail.querySelector<HTMLElement>('[aria-pressed="true"]')
+    if (!active) return
+    const overflowRight = active.offsetLeft + active.offsetWidth - rail.clientWidth
+    if (overflowRight > 0) rail.scrollLeft = overflowRight + 40
+  }, []) // solo al montar: después la clienta controla el scroll
 
   const [filter, setFilter] = useState(initialFilter || 'todo')
   const [search, setSearch] = useState(initialSearch || '')
@@ -230,12 +245,8 @@ export function TiendaClient({
     setColorIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]))
   }
 
-  const heading =
-    filter !== 'todo'
-      ? categories.find((c) => c.slug === filter)?.name || 'Colección'
-      : onlyDiscount
-        ? 'Ofertas'
-        : 'Colección'
+  const activeCategory = filter !== 'todo' ? categories.find((c) => c.slug === filter) : undefined
+  const heading = activeCategory?.name || (filter !== 'todo' ? 'Colección' : onlyDiscount ? 'Ofertas' : 'Colección')
 
   return (
     <div className="tienda-page" style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
@@ -248,6 +259,17 @@ export function TiendaClient({
         }}>
           {heading}
         </h1>
+        {/* Intro de categoría (COS/Zara): 1-2 frases editables desde el admin
+            (categories.description). Es copy indexable que responde "qué hay
+            acá" — la descripción ya alimentaba el <meta>; ahora también se ve. */}
+        {activeCategory?.description?.trim() && (
+          <p className="tienda-cat-desc" style={{
+            fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, lineHeight: 1.65,
+            color: dahila.ink700, margin: '2px 0 0', maxWidth: 560,
+          }}>
+            {activeCategory.description}
+          </p>
+        )}
       </div>
 
       {/* Toolbar: category chips + search + sort + filter toggle
@@ -258,8 +280,8 @@ export function TiendaClient({
         display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'center',
         justifyContent: 'space-between', marginBottom: 18,
       }}>
-        {/* Row 1: category chips — horizontal scroll on mobile */}
-        <div className="tienda-toolbar-cats" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {/* Row 1: category chips — full-bleed snap carousel on mobile */}
+        <div ref={catsRailRef} className="tienda-toolbar-cats" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <Chip on={filter === 'todo'} onClick={() => setFilter('todo')}>Todo</Chip>
           {categories.map((c) => (
             <Chip key={c.id} on={filter === c.slug} onClick={() => setFilter(c.slug)}>
@@ -473,7 +495,7 @@ export function TiendaClient({
               key={p.id}
               product={p}
               discounts={discounts}
-              onQuickView={() => setQuickView(p)}
+              onQuickView={() => { track('quickview_open', { product: p.slug }); setQuickView(p) }}
             />
           ))}
         </div>

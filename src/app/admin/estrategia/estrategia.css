@@ -13,7 +13,7 @@
   overflow-x: auto;
   padding: 0.75rem 0;
   margin-bottom: 1.25rem;
-  background: linear-gradient(#f8f8f8 85%, rgba(248,248,248,0));
+  background: linear-gradient(#FCFAF6 85%, rgba(248,248,248,0));
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -125,7 +125,7 @@
   color: #5c5556;
   line-height: 1.65;
 }
-.est-card.cream { background: #FAF7F0; }
+.est-card.cream { background: #FCFAF6; }
 .est-card .est-card-top {
   display: flex;
   justify-content: space-between;
@@ -163,7 +163,7 @@
 }
 .est-stat .sub {
   font-size: 0.74rem;
-  color: #999;
+  color: #8C8285;
   margin-top: 4px;
 }
 
@@ -202,7 +202,7 @@
 .est-bands { display: flex; flex-direction: column; gap: 12px; }
 .est-band { display: grid; grid-template-columns: 1fr; gap: 4px; align-items: center; }
 .est-band .name { font-size: 0.82rem; color: #4A4143; font-weight: 500; line-height: 1.3; }
-.est-band .name small { font-weight: 400; color: #999; font-size: 0.72rem; margin-left: 6px; }
+.est-band .name small { font-weight: 400; color: #8C8285; font-size: 0.72rem; margin-left: 6px; }
 .est-band .track {
   position: relative;
   height: 24px;
@@ -241,7 +241,7 @@
 .est-price-table td, .est-price-table th { white-space: nowrap; }
 .est-price-table .up { color: #1E8449; font-weight: 600; }
 .est-price-table .name-cell { max-width: 250px; white-space: normal; }
-.est-price-table .name-cell small { display: block; color: #999; font-size: 0.72rem; line-height: 1.4; margin-left: 16px; }
+.est-price-table .name-cell small { display: block; color: #8C8285; font-size: 0.72rem; line-height: 1.4; margin-left: 16px; }
 
 /* ---------- Tarjetas de precio (móvil) ---------- */
 .est-price-cards { display: flex; flex-direction: column; gap: 8px; }
@@ -265,7 +265,7 @@
   margin-top: 6px;
   flex-wrap: wrap;
 }
-.est-price-card .was { color: #999; text-decoration: line-through; font-size: 0.85rem; }
+.est-price-card .was { color: #8C8285; text-decoration: line-through; font-size: 0.85rem; }
 .est-price-card .arrow { color: #C9C2C4; }
 .est-price-card .now { font-size: 1.1rem; font-weight: 650; color: #1E8449; }
 .est-price-card .target { font-size: 0.78rem; color: #8F3B53; font-weight: 500; }
@@ -275,7 +275,7 @@
   flex-wrap: wrap;
   margin-top: 6px;
   font-size: 0.75rem;
-  color: #888;
+  color: #8C8285;
 }
 .est-price-card .pnote { margin-top: 6px; font-size: 0.75rem; color: #A37B53; line-height: 1.5; }
 
@@ -361,8 +361,8 @@
 }
 .est-check .txt { flex: 1; }
 .est-check .txt .t { font-size: 0.9rem; font-weight: 500; color: #1F1A1B; }
-.est-check .txt .d { font-size: 0.8rem; color: #888; line-height: 1.55; margin-top: 2px; }
-.est-check.done .txt .t { text-decoration: line-through; color: #999; }
+.est-check .txt .d { font-size: 0.8rem; color: #8C8285; line-height: 1.55; margin-top: 2px; }
+.est-check.done .txt .t { text-decoration: line-through; color: #8C8285; }
 .est-check.done .txt .d { color: #bbb; }
 
 /* ---------- Drops ---------- */
@@ -519,14 +519,14 @@
 .est-calc-field .suffix {
   flex-shrink: 0;
   font-size: 0.8rem;
-  color: #999;
+  color: #8C8285;
   min-width: 26px;
 }
 .est-calc-field .hint {
   display: block;
   margin-top: 4px;
   font-size: 0.72rem;
-  color: #999;
+  color: #8C8285;
   line-height: 1.45;
 }
 

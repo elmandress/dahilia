@@ -86,7 +86,7 @@ export default function TestimoniosPage() {
             {editing.id ? 'Editar' : 'Nuevo testimonio'}
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, color: '#444' }}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, color: '#4A4143' }}>
               Testimonio *
               <textarea
                 rows={3}
@@ -94,39 +94,39 @@ export default function TestimoniosPage() {
                 value={editing.text || ''}
                 onChange={(e) => setEditing({ ...editing, text: e.target.value })}
                 placeholder='Ej: "El cardigan quedó hermoso, exactamente lo que pedí."'
-                style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 13, resize: 'vertical', fontFamily: 'inherit' }}
+                style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(31,26,27,0.18)', fontSize: 13, resize: 'vertical', fontFamily: 'inherit' }}
               />
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, color: '#444' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, color: '#4A4143' }}>
                 Nombre *
                 <input
                   type="text"
                   value={editing.author || ''}
                   onChange={(e) => setEditing({ ...editing, author: e.target.value })}
                   placeholder="Valentina"
-                  style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 13 }}
+                  style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(31,26,27,0.18)', fontSize: 13 }}
                 />
               </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, color: '#444' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, color: '#4A4143' }}>
                 Ubicación (opcional)
                 <input
                   type="text"
                   value={editing.location || ''}
                   onChange={(e) => setEditing({ ...editing, location: e.target.value })}
                   placeholder="Montevideo"
-                  style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 13 }}
+                  style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(31,26,27,0.18)', fontSize: 13 }}
                 />
               </label>
             </div>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, color: '#444', maxWidth: 160 }}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, color: '#4A4143', maxWidth: 160 }}>
               Orden
               <input
                 type="number"
                 min={0}
                 value={editing.sort_order ?? 0}
                 onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })}
-                style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 13 }}
+                style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(31,26,27,0.18)', fontSize: 13 }}
               />
             </label>
           </div>
@@ -150,11 +150,11 @@ export default function TestimoniosPage() {
           {items.map((item) => (
             <div key={item.id} className="admin-card" style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 14, color: '#333', margin: '0 0 8px', lineHeight: 1.55 }}>
+                <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 14, color: '#1F1A1B', margin: '0 0 8px', lineHeight: 1.55 }}>
                   &quot;{item.text}&quot;
                 </p>
-                <div style={{ fontSize: 12, color: '#888' }}>
-                  <strong style={{ color: '#555' }}>{item.author}</strong>
+                <div style={{ fontSize: 12, color: '#8C8285' }}>
+                  <strong style={{ color: '#4A4143' }}>{item.author}</strong>
                   {item.location && <> — {item.location}</>}
                   <span style={{ marginLeft: 12, opacity: 0.6 }}>orden: {item.sort_order}</span>
                 </div>

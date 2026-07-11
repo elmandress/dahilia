@@ -346,17 +346,17 @@ export default function EncargosPage() {
                   style={{
                     display: 'flex', flexWrap: 'wrap', gap: 12,
                     justifyContent: 'space-between', alignItems: 'baseline',
-                    paddingBottom: 10, borderBottom: '1px solid #eee', marginBottom: 12,
+                    paddingBottom: 10, borderBottom: '1px solid rgba(31,26,27,0.10)', marginBottom: 12,
                   }}
                 >
                   <div>
                     <strong style={{ fontSize: '1rem', color: '#1F1A1B' }}>{order.customer_name}</strong>
-                    <div style={{ fontSize: '0.78rem', color: '#888', marginTop: 2, letterSpacing: '0.02em' }}>
+                    <div style={{ fontSize: '0.78rem', color: '#8C8285', marginTop: 2, letterSpacing: '0.02em' }}>
                       {new Date(order.created_at).toLocaleDateString('es-UY', {
                         day: '2-digit', month: 'short', year: 'numeric',
                       })}
                       {order.tracking_code && (
-                        <> · <span style={{ fontFamily: 'monospace', color: '#555' }}>{order.tracking_code}</span></>
+                        <> · <span style={{ fontFamily: 'monospace', color: '#4A4143' }}>{order.tracking_code}</span></>
                       )}
                     </div>
                   </div>
@@ -371,7 +371,7 @@ export default function EncargosPage() {
                   rowGap: 6, columnGap: 14,
                   margin: 0, fontSize: '0.88rem',
                 }}>
-                  <dt style={{ color: '#888', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.08em' }}>Pedido</dt>
+                  <dt style={{ color: '#8C8285', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.08em' }}>Pedido</dt>
                   <dd style={{ margin: 0 }}>
                     <strong>{order.garment_type}</strong>
                     {order.size && <> · Talle <strong>{order.size}</strong></>}
@@ -379,14 +379,14 @@ export default function EncargosPage() {
 
                   {order.color_preference && (
                     <>
-                      <dt style={{ color: '#888', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.08em' }}>Color</dt>
+                      <dt style={{ color: '#8C8285', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.08em' }}>Color</dt>
                       <dd style={{ margin: 0 }}>{order.color_preference}</dd>
                     </>
                   )}
 
                   {order.message && (
                     <>
-                      <dt style={{ color: '#888', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.08em' }}>Mensaje</dt>
+                      <dt style={{ color: '#8C8285', textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.08em' }}>Mensaje</dt>
                       <dd style={{
                         margin: 0, background: '#FAF1DF', padding: '8px 10px',
                         borderRadius: 8, fontSize: '0.85rem', lineHeight: 1.55,
@@ -400,7 +400,7 @@ export default function EncargosPage() {
 
                 <div style={{
                   display: 'flex', flexWrap: 'wrap', gap: 8,
-                  marginTop: 14, paddingTop: 12, borderTop: '1px solid #eee',
+                  marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(31,26,27,0.10)',
                   alignItems: 'center',
                 }}>
                   {waLink && (
@@ -415,7 +415,7 @@ export default function EncargosPage() {
                     </a>
                   )}
                   {order.customer_email && (
-                    <span style={{ fontSize: '0.75rem', color: '#888' }} title={order.customer_email}>
+                    <span style={{ fontSize: '0.75rem', color: '#8C8285' }} title={order.customer_email}>
                       {order.customer_email}
                     </span>
                   )}
@@ -450,7 +450,7 @@ export default function EncargosPage() {
                       <label
                         style={{
                           display: 'inline-flex', alignItems: 'center', gap: 6,
-                          fontSize: '0.78rem', color: '#666',
+                          fontSize: '0.78rem', color: '#4A4143',
                         }}
                       >
                         Estado
@@ -459,7 +459,7 @@ export default function EncargosPage() {
                           onChange={(e) => updateStatus(order.id, e.target.value as CustomOrder['status'])}
                           style={{
                             padding: '6px 10px', fontSize: '0.85rem',
-                            borderRadius: 8, border: '1px solid #ddd',
+                            borderRadius: 8, border: '1px solid rgba(31,26,27,0.18)',
                           }}
                         >
                           {STATUS_OPTIONS.map((s) => (
@@ -472,7 +472,7 @@ export default function EncargosPage() {
                 </div>
 
                 <details style={{ marginTop: 12 }}>
-                  <summary style={{ cursor: 'pointer', fontSize: '0.78rem', color: '#666' }}>
+                  <summary style={{ cursor: 'pointer', fontSize: '0.78rem', color: '#4A4143' }}>
                     Notas internas {order.admin_notes ? '(•)' : ''}
                   </summary>
                   <textarea
@@ -483,7 +483,7 @@ export default function EncargosPage() {
                     style={{
                       width: '100%', marginTop: 8,
                       padding: 10, fontSize: '0.85rem',
-                      border: '1px solid #ddd', borderRadius: 8,
+                      border: '1px solid rgba(31,26,27,0.18)', borderRadius: 8,
                       resize: 'vertical',
                     }}
                   />

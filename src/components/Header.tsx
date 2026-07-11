@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCart } from './CartProvider'
+import { track } from '@/lib/analytics'
 import { useFavorites } from './FavoritesProvider'
 import { useScrollLock } from '@/lib/scroll-lock'
 import { dahila, Icon } from './ui/Primitives'
@@ -40,11 +41,15 @@ export interface PromoBar {
   fg: string
 }
 
-export function Header({ promo, showOfertas = true }: { promo?: PromoBar; showOfertas?: boolean }) {
-  // "Ofertas" es un ítem estacional: el layout lo prende solo cuando hay
-  // descuentos vigentes. Sin ofertas, un ítem permanente en rojo entrena a
-  // ignorarlo (o peor: a esperar el descuento para comprar).
-  const navItems = showOfertas ? NAV_ITEMS : NAV_ITEMS.filter((it) => it.id !== '/ofertas')
+export function Header({ promo, showOfertas = true, showColecciones = true }: { promo?: PromoBar; showOfertas?: boolean; showColecciones?: boolean }) {
+  // "Ofertas" y "Colecciones" son ítems estacionales: el layout los prende
+  // solo cuando hay contenido real detrás (descuentos vigentes / colecciones
+  // publicadas o teaser de drop). Un ítem permanente hacia una página vacía
+  // entrena a ignorar la navegación.
+  const navItems = NAV_ITEMS.filter((it) =>
+    (showOfertas || it.id !== '/ofertas') &&
+    (showColecciones || it.id !== '/colecciones')
+  )
   const [open, setOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [searchVal, setSearchVal] = useState('')
@@ -190,7 +195,12 @@ export function Header({ promo, showOfertas = true }: { promo?: PromoBar; showOf
             display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none',
             marginRight: 8,
           }}>
-            <Image src="/isotype-color.png" alt="" width={34} height={34} fetchPriority="high" style={{ objectFit: 'contain' }} className="brand-mark" />
+            {/* Sin fetchPriority: el LCP es el hero/foto de producto — pedir el
+                isotipo con prioridad alta competía por ancho de banda con la
+                imagen que sí define el LCP (y junto a loading=lazy era un hint
+                contradictorio para el navegador). eager porque siempre está
+                above the fold. */}
+            <Image src="/isotype-color.png" alt="" width={34} height={34} loading="eager" style={{ objectFit: 'contain' }} className="brand-mark" />
             <span className="brand-wordmark" style={{
               fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 22,
               color: dahila.ink900, letterSpacing: '0.18em',
@@ -288,7 +298,7 @@ export function Header({ promo, showOfertas = true }: { promo?: PromoBar; showOf
                           <Link
                             key={sug.slug}
                             href={`/tienda/${sug.slug}`}
-                            onClick={() => { setShowSearch(false); setSearchVal('') }}
+                            onClick={() => { track('search_select', { q: searchVal.trim(), to: sug.slug }); setShowSearch(false); setSearchVal('') }}
                             style={{
                               display: 'flex', alignItems: 'center', gap: 12,
                               padding: '10px 14px', textDecoration: 'none', color: 'inherit',
@@ -428,7 +438,9 @@ export function Header({ promo, showOfertas = true }: { promo?: PromoBar; showOf
                 {showOfertas && (
                   <li><Link href="/ofertas" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: '#B6314A' }}>Ofertas</Link></li>
                 )}
-                <li><Link href="/colecciones" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>Colecciones</Link></li>
+                {showColecciones && (
+                  <li><Link href="/colecciones" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>Colecciones</Link></li>
+                )}
                 <li><Link href="/encargo" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>Encargo a medida</Link></li>
                 <li><Link href="/atelier" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>Sobre nosotros</Link></li>
               </ul>
@@ -445,7 +457,7 @@ export function Header({ promo, showOfertas = true }: { promo?: PromoBar; showOf
               }}
             >
               <div style={{ position: 'relative', width: '100%', height: 150 }}>
-                <Image src="/photos/top-lace-parque.png" alt="" fill quality={82} sizes="420px" style={{ objectFit: 'cover' }} />
+                <Image src="/photos/top-lace-parque.jpg" alt="" fill quality={82} sizes="420px" style={{ objectFit: 'cover' }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(31,26,27,0.55), rgba(31,26,27,0))' }} />
                 <div style={{ position: 'absolute', left: 16, bottom: 14, color: '#fff' }}>
                   <div style={{ fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', opacity: 0.9 }}>Temporada</div>

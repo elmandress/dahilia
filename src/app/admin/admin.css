@@ -6,7 +6,7 @@
 .admin-layout {
   display: flex;
   min-height: 100vh;
-  background: #f8f8f8;
+  background: #FCFAF6;
 }
 
 .admin-sidebar {
@@ -333,7 +333,7 @@
 }
 
 .admin-page-header p {
-  color: #666;
+  color: #4A4143;
   font-size: 0.9rem;
   margin: 0.25rem 0 0 0;
 }
@@ -364,7 +364,7 @@
 
 .admin-stat-card .stat-label {
   font-size: 0.8rem;
-  color: #888;
+  color: #8C8285;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.5rem;
@@ -379,7 +379,7 @@
 
 .admin-stat-card .stat-sub {
   font-size: 0.8rem;
-  color: #888;
+  color: #8C8285;
   margin-top: 0.25rem;
 }
 
@@ -398,23 +398,23 @@
   text-align: left;
   padding: 0.75rem 1rem;
   font-weight: 500;
-  color: #888;
+  color: #8C8285;
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(31,26,27,0.10);
   white-space: nowrap;
 }
 
 .admin-table td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f5f5f5;
-  color: #333;
+  border-bottom: 1px solid #EDE9EA;
+  color: #1F1A1B;
   vertical-align: middle;
 }
 
 .admin-table tr:hover td {
-  background: #fafafa;
+  background: #FCFAF6;
 }
 
 .admin-table .product-thumb {
@@ -422,7 +422,7 @@
   height: 48px;
   object-fit: cover;
   border-radius: 8px;
-  background: #f5f5f5;
+  background: #EDE9EA;
 }
 
 /* ---------- Badges / Status ---------- */
@@ -437,7 +437,7 @@
 }
 
 .admin-badge.active { background: #e8f5e9; color: #2e7d32; }
-.admin-badge.draft { background: #f5f5f5; color: #888; }
+.admin-badge.draft { background: #EDE9EA; color: #8C8285; }
 .admin-badge.soldout { background: #fff3e0; color: #e65100; }
 .admin-badge.new { background: #e3f2fd; color: #1565c0; }
 .admin-badge.replied { background: #f3e5f5; color: #7b1fa2; }
@@ -472,16 +472,16 @@
 }
 
 .admin-btn-primary:hover:not(:disabled) {
-  background: #333;
+  background: #1F1A1B;
 }
 
 .admin-btn-secondary {
-  background: #f5f5f5;
-  color: #333;
+  background: #EDE9EA;
+  color: #1F1A1B;
 }
 
 .admin-btn-secondary:hover:not(:disabled) {
-  background: #eee;
+  background: rgba(31,26,27,0.10);
 }
 
 .admin-btn-danger {
@@ -504,7 +504,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #888;
+  color: #8C8285;
   border-radius: 6px;
   transition: all 0.15s ease;
   display: inline-flex;
@@ -513,8 +513,8 @@
 }
 
 .admin-btn-icon:hover {
-  background: #f5f5f5;
-  color: #333;
+  background: #EDE9EA;
+  color: #1F1A1B;
 }
 
 .admin-btn-icon.danger:hover {
@@ -551,7 +551,7 @@
 .admin-field label {
   font-size: 0.8rem;
   font-weight: 500;
-  color: #555;
+  color: #4A4143;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -560,7 +560,7 @@
 .admin-field textarea,
 .admin-field select {
   padding: 0.65rem 0.85rem;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(31,26,27,0.18);
   border-radius: 8px;
   font-size: 0.9rem;
   font-family: inherit;
@@ -584,7 +584,7 @@
 
 .admin-field .field-hint {
   font-size: 0.75rem;
-  color: #999;
+  color: #8C8285;
 }
 
 .admin-field .field-error {
@@ -601,13 +601,13 @@
 
 .admin-toggle-option {
   padding: 0.4rem 0.85rem;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(31,26,27,0.18);
   border-radius: 6px;
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.15s ease;
   background: #fff;
-  color: #666;
+  color: #4A4143;
 }
 
 .admin-toggle-option.selected {
@@ -617,18 +617,18 @@
 }
 
 .admin-toggle-option:hover:not(.selected) {
-  border-color: #999;
+  border-color: #8C8285;
 }
 
 /* ---------- Media Upload ---------- */
 .admin-dropzone {
-  border: 2px dashed #ddd;
+  border: 2px dashed rgba(31,26,27,0.18);
   border-radius: 12px;
   padding: 2rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: #fafafa;
+  background: #FCFAF6;
 }
 
 .admin-dropzone:hover,
@@ -640,7 +640,7 @@
 .admin-dropzone svg {
   width: 40px;
   height: 40px;
-  color: #ccc;
+  color: #C9C2C4;
   margin-bottom: 0.75rem;
 }
 
@@ -649,7 +649,7 @@
 }
 
 .admin-dropzone p {
-  color: #888;
+  color: #8C8285;
   font-size: 0.9rem;
   margin: 0;
 }
@@ -672,14 +672,14 @@
   border-radius: 8px;
   overflow: hidden;
   aspect-ratio: 1;
-  background: #f5f5f5;
+  background: #EDE9EA;
   cursor: grab;
   border: 2px solid transparent;
   transition: border-color 0.15s ease;
 }
 
 .admin-media-item:hover {
-  border-color: #ddd;
+  border-color: rgba(31,26,27,0.18);
 }
 
 .admin-media-item.primary {
@@ -720,7 +720,7 @@
   padding: 0.25rem 0.4rem;
   cursor: pointer;
   font-size: 0.7rem;
-  color: #333;
+  color: #1F1A1B;
 }
 
 .admin-media-item .media-overlay button.danger {
@@ -767,7 +767,7 @@
 
 .admin-layout .upload-progress-bar {
   height: 4px;
-  background: #eee;
+  background: rgba(31,26,27,0.10);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -790,7 +790,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  border: 2px solid #eee;
+  border: 2px solid rgba(31,26,27,0.10);
   flex-shrink: 0;
 }
 
@@ -806,7 +806,7 @@
   gap: 0.5rem;
   padding: 0.35rem 0.75rem 0.35rem 0.35rem;
   border-radius: 999px;
-  border: 1px solid #eee;
+  border: 1px solid rgba(31,26,27,0.10);
   background: #fff;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -836,11 +836,11 @@
 
 .admin-filters select {
   padding: 0.45rem 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(31,26,27,0.18);
   border-radius: 6px;
   font-size: 0.85rem;
   background: #fff;
-  color: #333;
+  color: #1F1A1B;
   outline: none;
 }
 
@@ -852,7 +852,7 @@
 .admin-empty {
   text-align: center;
   padding: 3rem 2rem;
-  color: #999;
+  color: #8C8285;
 }
 
 .admin-empty svg {
@@ -864,7 +864,7 @@
 
 .admin-empty h3 {
   font-size: 1.1rem;
-  color: #666;
+  color: #4A4143;
   margin-bottom: 0.5rem;
 }
 
@@ -884,7 +884,7 @@
 .admin-spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid #eee;
+  border: 3px solid rgba(31,26,27,0.10);
   border-top-color: #8F3B53;
   border-radius: 50%;
   animation: admin-spin 0.6s linear infinite;
@@ -927,7 +927,7 @@
 }
 
 .admin-login-card .login-brand p {
-  color: #999;
+  color: #8C8285;
   font-size: 0.85rem;
   margin: 0;
 }
@@ -956,7 +956,7 @@
 
 /* ---------- Order detail drawer ---------- */
 .admin-order-detail {
-  background: #fafafa;
+  background: #FCFAF6;
   border-radius: 8px;
   padding: 1.25rem;
   margin: 0.5rem 0;
@@ -978,12 +978,12 @@
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #999;
+  color: #8C8285;
 }
 
 .admin-order-detail .detail-item .detail-value {
   font-size: 0.9rem;
-  color: #333;
+  color: #1F1A1B;
 }
 
 /* ---------- Inline editable ---------- */
@@ -1003,7 +1003,7 @@
 }
 
 .admin-inline-edit input:hover {
-  background: #f5f5f5;
+  background: #EDE9EA;
 }
 
 .admin-inline-edit input:focus {
@@ -1064,7 +1064,7 @@
 }
 
 .admin-modal p {
-  color: #666;
+  color: #4A4143;
   font-size: 0.9rem;
   margin: 0 0 1.25rem 0;
 }
@@ -1088,10 +1088,10 @@
   gap: 0.5rem;
   padding: 0.65rem 1rem;
   background: #fff;
-  border: 1px solid #eee;
+  border: 1px solid rgba(31,26,27,0.10);
   border-radius: 8px;
   text-decoration: none;
-  color: #333;
+  color: #1F1A1B;
   font-size: 0.85rem;
   transition: all 0.15s ease;
 }
@@ -1113,13 +1113,13 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem;
-  background: #fafafa;
+  background: #FCFAF6;
   border-radius: 6px;
 }
 
 .admin-size-row input {
   padding: 0.35rem 0.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(31,26,27,0.18);
   border-radius: 4px;
   font-size: 0.85rem;
   width: 100px;
@@ -1135,7 +1135,7 @@
   align-items: center;
   gap: 0.35rem;
   font-size: 0.8rem;
-  color: #666;
+  color: #4A4143;
 }
 
 /* ---------- Settings form ---------- */
@@ -1150,7 +1150,7 @@
   color: #1F1A1B;
   margin: 0 0 1rem 0;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(31,26,27,0.10);
 }
 
 /* ---------- Toast notification ---------- */

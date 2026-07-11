@@ -554,7 +554,7 @@ export default function ConfiguracionAdminPage() {
       <form id="config-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
         {SECTIONS.map((section, sectionIndex) => (
           <section key={section.title} id={`config-sec-${sectionIndex}`} className="admin-card" style={{ scrollMarginTop: 16 }}>
-            <div style={{ marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #eee' }}>
+            <div style={{ marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid rgba(31,26,27,0.10)' }}>
               <h3 style={{ margin: 0, fontWeight: 400, fontSize: '1.1rem', fontFamily: 'var(--font-display)' }}>
                 {section.title}
               </h3>
@@ -605,7 +605,7 @@ export default function ConfiguracionAdminPage() {
                           type="color"
                           value={/^#[0-9a-fA-F]{6}$/.test(value) ? value : '#1F1A1B'}
                           onChange={(e) => update(field.key, e.target.value)}
-                          style={{ width: 44, height: 36, padding: 0, border: '1px solid #ddd', borderRadius: 6, cursor: 'pointer' }}
+                          style={{ width: 44, height: 36, padding: 0, border: '1px solid rgba(31,26,27,0.18)', borderRadius: 6, cursor: 'pointer' }}
                           aria-label={field.label}
                         />
                         <input
@@ -643,7 +643,7 @@ export default function ConfiguracionAdminPage() {
             bottom: 0,
             background: '#fff',
             padding: '14px 0',
-            borderTop: '1px solid #eee',
+            borderTop: '1px solid rgba(31,26,27,0.10)',
             display: 'flex',
             justifyContent: 'flex-end',
             gap: 12,

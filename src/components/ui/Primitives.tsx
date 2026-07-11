@@ -118,14 +118,17 @@ export function Button({ variant = 'primary', size = 'md', children, onClick, fu
 export function Chip({ children, on, onClick }: { children: React.ReactNode, on: boolean, onClick: () => void }) {
   const [hover, setHover] = useState(false)
   return (
-    <button onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
-      fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400, letterSpacing: '0.04em',
-      padding: '8px 14px', borderRadius: 999,
-      background: on ? dahila.ink900 : (hover ? dahila.cream50 : '#fff'),
-      color: on ? '#fff' : dahila.ink700,
-      border: `1px solid ${on ? dahila.ink900 : dahila.borderStrong}`,
-      cursor: 'pointer', transition: `all 140ms ${dahila.ease}`,
-    }}>{children}</button>
+    <button onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      aria-pressed={on}
+      style={{
+        fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400, letterSpacing: '0.04em',
+        padding: '8px 14px', borderRadius: 999,
+        whiteSpace: 'nowrap',
+        background: on ? dahila.ink900 : (hover ? dahila.cream50 : '#fff'),
+        color: on ? '#fff' : dahila.ink700,
+        border: `1px solid ${on ? dahila.ink900 : dahila.borderStrong}`,
+        cursor: 'pointer', transition: `all 140ms ${dahila.ease}`,
+      }}>{children}</button>
   )
 }
 

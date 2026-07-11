@@ -64,12 +64,17 @@ export const metadata: Metadata = {
     url: SITE_URL,
     title: 'Dahila Crochet — tejido a mano en Uruguay, a tu medida',
     description: 'Cada prenda se teje especialmente para vos: tu talle, tus colores. Envío a todo Uruguay.',
+    // Tarjeta con la foto real del hero (src/app/og/route.tsx, JPEG por CDN).
+    // Antes: /logo-full.jpg — correcto de marca, pero un share con prenda
+    // real convierte más que un isotipo. Fallback estático si /og fallara:
+    // los crawlers reintentan; el resto del metadata no depende de esto.
     images: [
       {
-        url: '/logo-full.jpg',
+        url: '/og',
         width: 1200,
         height: 630,
-        alt: 'Dahila Crochet - Ropa de diseño hecha a mano',
+        alt: 'Dahila Crochet — prendas tejidas a mano en Uruguay',
+        type: 'image/jpeg',
       },
     ],
   },
@@ -77,7 +82,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Dahila Crochet — tejido a mano en Uruguay, a tu medida',
     description: 'Cada prenda se teje especialmente para vos: tu talle, tus colores. Envío a todo Uruguay.',
-    images: ['/logo-full.jpg'],
+    images: ['/og'],
   },
   robots: {
     index: true,
@@ -138,7 +143,7 @@ export default async function RootLayout({
   // The short shipping line rides along so the drawer can reassure without an
   // extra round-trip.
   const supabase = await createClient()
-  const [{ data: discountData }, { data: settingRows }, { count: productOfferCount }] = await Promise.all([
+  const [{ data: discountData }, { data: settingRows }, { count: productOfferCount }, { data: collectionRows }] = await Promise.all([
     supabase.from('discounts').select('*').eq('active', true),
     supabase.from('site_settings').select('key, value').in('key', [
       'shipping_estimate', 'free_shipping_threshold',
@@ -152,6 +157,11 @@ export default async function RootLayout({
       .eq('status', 'active')
       .eq('discount_active', true)
       .gt('discount_percent', 0),
+    // select('*') a propósito (mismo criterio que el sitemap): filtrar
+    // unlisted/coming_soon en SQL exigiría que esas columnas existan
+    // (drops-2026-07.sql); traer las pocas filas y filtrar en JS tolera
+    // una DB sin esa migración.
+    supabase.from('collections').select('*').limit(12),
   ])
   const discounts = (discountData ?? []) as Discount[]
 
@@ -183,6 +193,15 @@ export default async function RootLayout({
     hasBatchOffer = (count ?? 0) > 0
   }
   const showOfertas = hasBatchOffer || (productOfferCount ?? 0) > 0
+
+  // "Colecciones" en la nav — misma regla que "Ofertas": el ítem existe solo
+  // cuando hay algo real para ver (publicada visible o un teaser "próximamente").
+  // Un ítem permanente hacia una página vacía cobra un clic y devuelve
+  // "pronto…" — tienda incompleta. Aparece solo alrededor de los drops.
+  const showColecciones = (collectionRows ?? []).some((c) => {
+    const col = c as { published?: boolean; unlisted?: boolean; coming_soon?: boolean }
+    return (col.published && !col.unlisted) || (!col.published && col.coming_soon)
+  })
   const settings = (settingRows ?? []).reduce<Record<string, string>>(
     (acc, r) => ({ ...acc, [r.key as string]: String(r.value ?? '') }), {}
   )
@@ -229,11 +248,11 @@ export default async function RootLayout({
         <a href="#contenido" className="skip-link">Saltar al contenido</a>
         <CartProvider initialDiscounts={discounts} shippingEstimate={shippingEstimate} freeShippingThreshold={freeShippingThreshold} queueNote={queueNote}>
           <FavoritesProvider>
-            <Header promo={promo} showOfertas={showOfertas} />
+            <Header promo={promo} showOfertas={showOfertas} showColecciones={showColecciones} />
             <main id="contenido">
               {children}
             </main>
-            <Footer tagline={tagline} />
+            <Footer tagline={tagline} showOfertas={showOfertas} showColecciones={showColecciones} />
             <CartDrawer />
             <BackToTop />
             <WhatsAppFloat enabled={waEnabled} waUrl={waUrl} />

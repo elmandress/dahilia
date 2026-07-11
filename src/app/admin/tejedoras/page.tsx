@@ -145,7 +145,7 @@ export default function AdminTejedorasPage() {
       {tableMissing ? (
         <div className="admin-card">
           <h3 style={{ marginTop: 0, fontSize: '1rem' }}>Falta un paso de configuración</h3>
-          <p style={{ color: '#666', fontSize: '0.9rem', lineHeight: 1.6 }}>
+          <p style={{ color: '#4A4143', fontSize: '0.9rem', lineHeight: 1.6 }}>
             La tabla de postulaciones todavía no existe en la base de datos. Ejecutá el archivo{' '}
             <code>database/schema-tejedoras.sql</code> en el SQL Editor de Supabase (1 minuto) y recargá esta página.
             Mientras tanto la página pública muestra un error amable a quien intente postularse.
@@ -182,7 +182,7 @@ export default function AdminTejedorasPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                   <div>
                     <strong style={{ fontSize: '1rem' }}>{a.name}</strong>
-                    <span style={{ color: '#888', fontSize: '0.85rem', marginLeft: 8 }}>
+                    <span style={{ color: '#8C8285', fontSize: '0.85rem', marginLeft: 8 }}>
                       {a.location || 'Uruguay'} · {new Date(a.created_at).toLocaleDateString('es-UY')}
                     </span>
                   </div>
@@ -191,19 +191,19 @@ export default function AdminTejedorasPage() {
 
                 <div style={{
                   display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                  gap: '0.6rem 1.25rem', margin: '0.9rem 0', fontSize: '0.88rem', color: '#444',
+                  gap: '0.6rem 1.25rem', margin: '0.9rem 0', fontSize: '0.88rem', color: '#4A4143',
                 }}>
-                  <div><span style={{ color: '#999' }}>Experiencia:</span> {a.experience ? `${a.experience} años` : '—'}</div>
-                  <div><span style={{ color: '#999' }}>Sabe tejer:</span> {a.skills || '—'}</div>
-                  <div><span style={{ color: '#999' }}>Disponibilidad:</span> {a.availability ? `${a.availability}/sem` : '—'}</div>
-                  <div><span style={{ color: '#999' }}>Materiales propios:</span> {a.has_materials ? 'Sí' : 'No'}</div>
-                  {a.email && <div><span style={{ color: '#999' }}>Mail:</span> {a.email}</div>}
-                  {a.whatsapp && <div><span style={{ color: '#999' }}>WhatsApp:</span> {a.whatsapp}</div>}
+                  <div><span style={{ color: '#8C8285' }}>Experiencia:</span> {a.experience ? `${a.experience} años` : '—'}</div>
+                  <div><span style={{ color: '#8C8285' }}>Sabe tejer:</span> {a.skills || '—'}</div>
+                  <div><span style={{ color: '#8C8285' }}>Disponibilidad:</span> {a.availability ? `${a.availability}/sem` : '—'}</div>
+                  <div><span style={{ color: '#8C8285' }}>Materiales propios:</span> {a.has_materials ? 'Sí' : 'No'}</div>
+                  {a.email && <div><span style={{ color: '#8C8285' }}>Mail:</span> {a.email}</div>}
+                  {a.whatsapp && <div><span style={{ color: '#8C8285' }}>WhatsApp:</span> {a.whatsapp}</div>}
                 </div>
 
                 {a.portfolio && (
                   <p style={{ fontSize: '0.88rem', margin: '0 0 0.6rem' }}>
-                    <span style={{ color: '#999' }}>Trabajos:</span>{' '}
+                    <span style={{ color: '#8C8285' }}>Trabajos:</span>{' '}
                     {/^https?:\/\//.test(a.portfolio) ? (
                       <a href={a.portfolio} target="_blank" rel="noopener noreferrer" style={{ color: '#8F3B53' }}>
                         {a.portfolio}
@@ -215,7 +215,7 @@ export default function AdminTejedorasPage() {
                 )}
                 {a.message && (
                   <p style={{
-                    fontSize: '0.88rem', color: '#555', background: '#FAF7F0',
+                    fontSize: '0.88rem', color: '#4A4143', background: '#FCFAF6',
                     borderRadius: 8, padding: '10px 12px', margin: '0 0 0.75rem', whiteSpace: 'pre-wrap',
                   }}>{a.message}</p>
                 )}
@@ -225,7 +225,7 @@ export default function AdminTejedorasPage() {
                     value={a.status}
                     onChange={(e) => updateStatus(a.id, e.target.value as Status)}
                     aria-label={`Estado de ${a.name}`}
-                    style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid #ddd', fontSize: '0.85rem' }}
+                    style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(31,26,27,0.18)', fontSize: '0.85rem' }}
                   >
                     {(Object.keys(STATUS_LABEL) as Status[]).map((s) => (
                       <option key={s} value={s}>{STATUS_LABEL[s]}</option>
@@ -253,7 +253,7 @@ export default function AdminTejedorasPage() {
                     value={notesDraft[a.id] ?? a.admin_notes ?? ''}
                     onChange={(e) => setNotesDraft((d) => ({ ...d, [a.id]: e.target.value }))}
                     style={{
-                      flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid #ddd',
+                      flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(31,26,27,0.18)',
                       fontSize: '0.85rem', fontFamily: 'inherit', resize: 'vertical',
                     }}
                   />
@@ -265,9 +265,9 @@ export default function AdminTejedorasPage() {
             ))
           )}
 
-          <div className="admin-card" style={{ marginTop: '1.5rem', background: '#FAF7F0' }}>
+          <div className="admin-card" style={{ marginTop: '1.5rem', background: '#FCFAF6' }}>
             <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}>Recordatorio del proceso</h3>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#666', lineHeight: 1.7 }}>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#4A4143', lineHeight: 1.7 }}>
               Postulación → charla por WhatsApp → <strong>muestra pagada</strong> contra ficha técnica →
               alta como aprendiz con piezas simples. La guía completa (pago por pieza, control de calidad, tiers)
               está en <Link href="/admin/estrategia" style={{ color: '#8F3B53' }}>Estrategia</Link>.

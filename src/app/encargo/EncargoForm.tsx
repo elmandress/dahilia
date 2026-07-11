@@ -6,6 +6,7 @@ import { dahila, Eyebrow, Field, TextInput, Button } from '@/components/ui/Primi
 import { EncargosDisponibles, type EncargosCuposState } from '@/components/EncargosDisponibles'
 import { submitEncargo } from './actions'
 import { subscribeToVipList } from '@/lib/subscribe'
+import { track } from '@/lib/analytics'
 
 export default function EncargoForm({ whatsappUrl, encargosCupos }: { whatsappUrl: string; encargosCupos: EncargosCuposState }) {
   const router = useRouter()
@@ -140,6 +141,9 @@ export default function EncargoForm({ whatsappUrl, encargosCupos }: { whatsappUr
     startTransition(async () => {
       const res = await submitEncargo(fd)
       if (res.ok) {
+        // El encargo a medida es la otra "venta" del sitio — sin este evento,
+        // el embudo de Umami solo veía el camino carrito→WhatsApp.
+        track('encargo_sent', { tipo })
         // Alta en la lista VIP si la pidió — nunca bloquea el encargo.
         if (vipOptIn && email.trim()) {
           subscribeToVipList(email.trim(), 'encargo').catch(() => { /* best-effort */ })

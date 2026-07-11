@@ -39,7 +39,7 @@ export default async function AtelierPage() {
   )
   const val = (key: string, fallback: string) => (s[key]?.trim() ? s[key] : fallback)
 
-  const heroImage = val('about_image_url', '/photos/atelier-tejiendo.png')
+  const heroImage = val('about_image_url', '/photos/atelier-tejiendo.jpg')
   const body = val('about_body',
     'En Dahila tejemos a crochet desde hace años. Hacemos prendas únicas, pensadas con vos: trabajamos con lanas y algodones naturales, sin prisa, paso a paso. Cada pieza la pensamos con la persona que la va a usar — conversamos, vemos colores, ajustamos medidas, y tejemos.')
   const body2 = s.about_body_2?.trim()

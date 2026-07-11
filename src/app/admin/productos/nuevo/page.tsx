@@ -531,7 +531,7 @@ export default function NuevoProductoPage() {
             </div>
 
             {sizes.length === 0 ? (
-              <p style={{ color: '#999', fontSize: '0.85rem' }}>
+              <p style={{ color: '#8C8285', fontSize: '0.85rem' }}>
                 Sin tallas definidas. El producto usará el precio base.
               </p>
             ) : (
@@ -614,7 +614,7 @@ export default function NuevoProductoPage() {
                 onChange={(e) => setDiscountPercent(e.target.value)}
                 placeholder="0"
               />
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.6rem', fontSize: '0.85rem', color: '#555', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.6rem', fontSize: '0.85rem', color: '#4A4143', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={discountActive}
@@ -668,7 +668,7 @@ export default function NuevoProductoPage() {
           <div className="admin-card">
             <h3 style={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 500 }}>Colores disponibles</h3>
             {colors.length === 0 ? (
-              <p style={{ color: '#999', fontSize: '0.85rem' }}>No hay colores definidos aún.</p>
+              <p style={{ color: '#8C8285', fontSize: '0.85rem' }}>No hay colores definidos aún.</p>
             ) : (
               <div className="admin-color-list">
                 {colors.map(color => (
@@ -725,7 +725,7 @@ export default function NuevoProductoPage() {
                   style={{ minHeight: 60 }}
                 />
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#555', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#4A4143', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={isCustomOnly}

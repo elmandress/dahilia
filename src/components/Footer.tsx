@@ -7,6 +7,7 @@ import { useState, useTransition } from 'react'
 import { dahila } from './ui/Primitives'
 import { STUDIO_INSTAGRAM, STUDIO_URL } from '@/lib/env'
 import { subscribeToVipList } from '@/lib/subscribe'
+import { track } from '@/lib/analytics'
 
 interface NavItem { label: string; href: string }
 
@@ -56,6 +57,7 @@ function VipSignup() {
     startTransition(async () => {
       const res = await subscribeToVipList(email, 'footer')
       if (res.ok) {
+        if (!res.already) track('vip_subscribe', { source: 'footer' })
         setDone(res.already ? 'Ya estabas en la lista — te avisamos primero.' : '¡Lista! Vas a ver cada colección antes que nadie.')
       } else {
         setError(res.error || 'No pudimos anotarte. Probá de nuevo.')
@@ -124,10 +126,23 @@ function VipSignup() {
   )
 }
 
-export function Footer({ tagline = 'Prendas tejidas a mano, a tu medida, desde Montevideo.' }: { tagline?: string }) {
+export function Footer({
+  tagline = 'Prendas tejidas a mano, a tu medida, desde Montevideo.',
+  showOfertas = true,
+  showColecciones = true,
+}: { tagline?: string; showOfertas?: boolean; showColecciones?: boolean }) {
   const pathname = usePathname()
 
   if (pathname.startsWith('/admin')) return null
+
+  // Misma regla estacional que el header: los links a páginas sin contenido
+  // real no se muestran (nadie debería aterrizar en un "pronto…").
+  const tiendaLinks = [
+    { label: 'Novedades',    href: '/tienda' },
+    ...(showOfertas ? [{ label: 'Ofertas', href: '/ofertas' }] : []),
+    ...(showColecciones ? [{ label: 'Colecciones', href: '/colecciones' }] : []),
+    { label: 'A medida',     href: '/encargo' },
+  ]
 
   return (
     <footer style={{
@@ -154,12 +169,7 @@ export function Footer({ tagline = 'Prendas tejidas a mano, a tu medida, desde M
 
           <FooterCol
             title="Tienda"
-            items={[
-              { label: 'Novedades',    href: '/tienda' },
-              { label: 'Ofertas',      href: '/ofertas' },
-              { label: 'Colecciones',  href: '/colecciones' },
-              { label: 'A medida',     href: '/encargo' },
-            ]}
+            items={tiendaLinks}
           />
           <FooterCol
             title="Info"

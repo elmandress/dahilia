@@ -217,7 +217,7 @@ export default function ColeccionesAdminPage() {
                   <option key={s} value={s}>{STATE_LABEL[s]}</option>
                 ))}
               </select>
-              <p style={{ fontSize: '0.78rem', color: '#888', margin: '6px 0 0', lineHeight: 1.5 }}>{STATE_HELP[estado]}</p>
+              <p style={{ fontSize: '0.78rem', color: '#8C8285', margin: '6px 0 0', lineHeight: 1.5 }}>{STATE_HELP[estado]}</p>
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: '0.5rem' }}>
               <button type="submit" className="admin-btn admin-btn-primary" disabled={uploading}>
@@ -253,7 +253,7 @@ export default function ColeccionesAdminPage() {
                           )}
                         </div>
                       </td>
-                      <td><strong>{c.name}</strong><br /><span style={{ fontSize: '0.75rem', color: '#888' }}>/colecciones/{c.slug}</span></td>
+                      <td><strong>{c.name}</strong><br /><span style={{ fontSize: '0.75rem', color: '#8C8285' }}>/colecciones/{c.slug}</span></td>
                       <td>
                         <select
                           value={stateOf(c)}

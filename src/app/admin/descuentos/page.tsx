@@ -178,8 +178,8 @@ export default function DescuentosAdminPage() {
               {discounts.map((d) => (
                 <div key={d.id} style={{
                   display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-                  padding: '12px 14px', border: '1px solid #eee', borderRadius: 10,
-                  background: d.active ? '#fff' : '#fafafa',
+                  padding: '12px 14px', border: '1px solid rgba(31,26,27,0.10)', borderRadius: 10,
+                  background: d.active ? '#fff' : '#FCFAF6',
                 }}>
                   <span style={{
                     fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 400,
@@ -187,7 +187,7 @@ export default function DescuentosAdminPage() {
                   }}>−{d.percent}%</span>
                   <div style={{ flex: 1, minWidth: 120 }}>
                     <strong style={{ display: 'block', fontSize: '0.95rem' }}>{d.label}</strong>
-                    <span style={{ fontSize: '0.8rem', color: '#888' }}>{scopeLabel(d)}</span>
+                    <span style={{ fontSize: '0.8rem', color: '#8C8285' }}>{scopeLabel(d)}</span>
                   </div>
                   <button
                     onClick={() => toggleActive(d)}
@@ -213,7 +213,7 @@ export default function DescuentosAdminPage() {
         <h3 style={{ margin: '0 0 0.5rem 0', fontWeight: 400, fontFamily: 'var(--font-display)' }}>
           Productos con descuento propio
         </h3>
-        <p style={{ margin: '0 0 1rem', fontSize: '0.82rem', color: '#888', lineHeight: 1.6 }}>
+        <p style={{ margin: '0 0 1rem', fontSize: '0.82rem', color: '#8C8285', lineHeight: 1.6 }}>
           Estos productos tienen su propia rebaja, puesta desde su ficha. Si un producto además entra en una
           regla de arriba, la tienda aplica automáticamente el descuento mayor de los dos.
         </p>
@@ -224,7 +224,7 @@ export default function DescuentosAdminPage() {
             {productDiscounts.map((p) => (
               <div key={p.id} style={{
                 display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-                padding: '10px 14px', border: '1px solid #eee', borderRadius: 10,
+                padding: '10px 14px', border: '1px solid rgba(31,26,27,0.10)', borderRadius: 10,
               }}>
                 <span style={{
                   fontFamily: 'var(--font-display)', fontSize: '1.15rem',
@@ -233,7 +233,7 @@ export default function DescuentosAdminPage() {
                 <div style={{ flex: 1, minWidth: 140 }}>
                   <strong style={{ fontSize: '0.9rem' }}>{p.name}</strong>
                   {p.status !== 'active' && (
-                    <span style={{ marginLeft: 8, fontSize: '0.72rem', color: '#999' }}>
+                    <span style={{ marginLeft: 8, fontSize: '0.72rem', color: '#8C8285' }}>
                       ({p.status === 'draft' ? 'borrador' : 'agotado'} — no visible)
                     </span>
                   )}

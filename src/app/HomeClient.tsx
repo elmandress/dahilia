@@ -106,7 +106,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
   const featured = newest.length > 0 ? newest : products.slice(0, 4)
   const accesorios = products.filter((p) => p.category?.slug === 'accesorios').slice(0, 4)
 
-  const heroImage = val(settings, 'hero_image_url', '/photos/top-lace-parque.png')
+  const heroImage = val(settings, 'hero_image_url', '/photos/top-lace-parque.jpg')
   // Banner-style focal point (like LinkedIn/YouTube). Stored as "x% y%" so the
   // owner can drag the image until the right part shows. Default 50% 30%.
   const heroPosition = val(settings, 'hero_image_position', '50% 30%')

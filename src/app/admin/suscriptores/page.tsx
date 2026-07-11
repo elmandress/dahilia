@@ -122,7 +122,7 @@ export default function AdminSuscriptoresPage() {
       {tableMissing ? (
         <div className="admin-card">
           <h3 style={{ marginTop: 0, fontSize: '1rem' }}>Falta un paso de configuración</h3>
-          <p style={{ color: '#666', fontSize: '0.9rem', lineHeight: 1.6 }}>
+          <p style={{ color: '#4A4143', fontSize: '0.9rem', lineHeight: 1.6 }}>
             La tabla de suscriptores todavía no existe. Ejecutá <code>database/schema-suscriptores.sql</code>{' '}
             en el SQL Editor de Supabase (1 minuto) y recargá. El formulario del footer empieza a funcionar solo.
           </p>
@@ -167,7 +167,7 @@ export default function AdminSuscriptoresPage() {
                     <tr key={s.id} style={s.unsubscribed_at ? { opacity: 0.5 } : undefined}>
                       <td>{s.email}{s.unsubscribed_at ? ' (baja)' : ''}</td>
                       <td>{SOURCE_LABEL[s.source] ?? s.source}</td>
-                      <td style={{ fontSize: '0.85rem', color: '#888' }}>
+                      <td style={{ fontSize: '0.85rem', color: '#8C8285' }}>
                         {new Date(s.created_at).toLocaleDateString('es-UY')}
                       </td>
                       <td style={{ textAlign: 'right' }}>
@@ -182,9 +182,9 @@ export default function AdminSuscriptoresPage() {
             </div>
           </div>
 
-          <div className="admin-card" style={{ marginTop: '1.5rem', background: '#FAF7F0' }}>
+          <div className="admin-card" style={{ marginTop: '1.5rem', background: '#FCFAF6' }}>
             <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}>Cómo usar la lista</h3>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#666', lineHeight: 1.7 }}>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#4A4143', lineHeight: 1.7 }}>
               Antes de cada drop: descargá el CSV, armá el mail de “acceso anticipado” y mandalo 24 h antes
               de publicar en Instagram. El playbook completo (calendario, semanas de expectativa, WhatsApp)
               está en <Link href="/admin/estrategia" style={{ color: '#8F3B53' }}>Estrategia</Link>.

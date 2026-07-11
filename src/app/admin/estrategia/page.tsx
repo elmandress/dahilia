@@ -345,7 +345,7 @@ export default function EstrategiaPage() {
                           {r.note && <small>{r.note}</small>}
                         </td>
                         <td>{r.hours != null ? `${r.hours} h` : '—'}</td>
-                        <td style={{ color: '#999' }}>{money(r.before)}</td>
+                        <td style={{ color: '#8C8285' }}>{money(r.before)}</td>
                         <td>{r.today != null ? <span className="up">{money(r.today)}</span> : money(r.before)}</td>
                         <td>{r.target != null ? money(r.target) : '—'}</td>
                         <td>{phNow != null ? money(phNow) : '—'}</td>
@@ -401,7 +401,7 @@ export default function EstrategiaPage() {
               )
             })}
           </div>
-          <p style={{ fontSize: '0.78rem', color: '#999', margin: '0 0 2rem' }}>
+          <p style={{ fontSize: '0.78rem', color: '#8C8285', margin: '0 0 2rem' }}>
             Materiales y horas son estimados — ajustalos con tus números reales cuando puedas.
             El punto de color indica la prioridad con la que se decidió cada aumento.
           </p>
