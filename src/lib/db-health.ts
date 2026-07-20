@@ -14,19 +14,31 @@
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/env'
 
-// Sana: no re-chequear por 5 min (mantiene el overhead en ~0 en operación normal).
-const OK_TTL_MS = 5 * 60 * 1000
-// Caída: re-chequear cada 30 s para que el sitio VUELVA rápido tras el reset.
-const DOWN_TTL_MS = 30 * 1000
-// Corta el chequeo a los 2 s: un 402 de cuota responde al toque, así que un
-// timeout implica red lenta, no cuota agotada → fail-open (asumir sana).
-const PROBE_TIMEOUT_MS = 2000
+// Estado del probe:
+//   'down'    → Supabase respondió 402/403 (cuota/restricción). Confiable.
+//   'up'      → respondió 2xx. Confiable.
+//   'unknown' → timeout / error de red / status raro. NO concluyente.
+type Health = 'down' | 'up' | 'unknown'
 
-type HealthCache = { down: boolean; checkedAt: number }
+// TTL por estado. Clave: 'unknown' se cachea POCO para que un arranque frío
+// lento no deje el sitio "sano" (y por ende roto/vacío) durante minutos —
+// re-chequea a los pocos segundos y se autocorrige. Un 'up' confiable sí se
+// cachea largo (overhead ~0 en operación normal); 'down' re-chequea seguido
+// para que el sitio VUELVA rápido cuando resetea la cuota.
+const TTL_MS: Record<Health, number> = {
+  up: 5 * 60 * 1000,
+  down: 30 * 1000,
+  unknown: 8 * 1000,
+}
+// Holgado: un 402 de cuota responde en ~100 ms, pero la PRIMera conexión en
+// frío (DNS+TLS) puede tardar. Mejor un timeout amplio que un falso 'unknown'.
+const PROBE_TIMEOUT_MS = 3500
+
+type HealthCache = { state: Health; checkedAt: number }
 let cache: HealthCache | null = null
-let inFlight: Promise<boolean> | null = null
+let inFlight: Promise<Health> | null = null
 
-async function probe(): Promise<boolean> {
+async function probe(): Promise<Health> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS)
   try {
@@ -43,34 +55,35 @@ async function probe(): Promise<boolean> {
       }
     )
     // 402 (Payment Required) = cuota agotada; 403 puede aparecer en restricción
-    // por Fair Use. Cualquiera de los dos = base caída para el visitante.
-    return res.status === 402 || res.status === 403
+    // por Fair Use. Cualquiera = base caída para el visitante.
+    if (res.status === 402 || res.status === 403) return 'down'
+    if (res.ok) return 'up'
+    return 'unknown'
   } catch {
-    // Timeout / error de red: fail-open. Nunca tirar el sitio a mantenimiento
-    // por un blip transitorio — solo lo hacemos ante un 402/403 explícito.
-    return false
+    // Timeout / error de red: NO concluyente. Fail-open (no tiramos el sitio a
+    // mantenimiento por un blip), pero con TTL corto para reintentar enseguida.
+    return 'unknown'
   } finally {
     clearTimeout(timer)
   }
 }
 
 /**
- * ¿La base está caída por cuota/restricción? Cacheado en memoria.
- * `true` solo ante un 402/403 explícito de Supabase; nunca por timeout.
+ * ¿La base está caída por cuota/restricción? Cacheado en memoria por instancia.
+ * `true` solo ante un 402/403 explícito; nunca por timeout (fail-open).
  */
 export async function isDbDown(): Promise<boolean> {
   const now = Date.now()
-  if (cache) {
-    const ttl = cache.down ? DOWN_TTL_MS : OK_TTL_MS
-    if (now - cache.checkedAt < ttl) return cache.down
+  if (cache && now - cache.checkedAt < TTL_MS[cache.state]) {
+    return cache.state === 'down'
   }
-  // Coalescir chequeos concurrentes: bajo carga, un solo probe a la vez.
+  // Coalescir chequeos concurrentes: un solo probe a la vez bajo carga.
   if (!inFlight) {
-    inFlight = probe().then((down) => {
-      cache = { down, checkedAt: Date.now() }
+    inFlight = probe().then((state) => {
+      cache = { state, checkedAt: Date.now() }
       inFlight = null
-      return down
+      return state
     })
   }
-  return inFlight
+  return (await inFlight) === 'down'
 }
