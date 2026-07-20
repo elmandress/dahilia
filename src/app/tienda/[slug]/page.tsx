@@ -2,14 +2,17 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createBrowserClient } from '@/lib/supabase/client'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import type { Product, Category, Color, Discount } from '@/lib/types'
+import type { Product, Category, Discount } from '@/lib/types'
 import { getPrimaryPhoto, getFinalPrice, resolveDiscountPercent } from '@/lib/types'
+import { getCatalog, getProductBySlug, getSnapshotData } from '@/lib/catalog'
 import { ProductDetailsClient } from './ProductDetailsClient'
+import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
 import { getEncargosCuposState } from '@/components/EncargosDisponibles'
 import { TiendaClient } from '../TiendaClient'
 import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
 import { botImageUrl } from '@/lib/media'
+import { COMPLEMENT_PREFS } from '@/lib/complements'
 
 export const revalidate = 3600
 
@@ -27,6 +30,15 @@ async function resolveSlug(slug: string) {
     supabase.from('categories').select('*').eq('slug', slug).maybeSingle(),
     supabase.from('products').select('slug, status').eq('slug', slug).maybeSingle(),
   ])
+  // DB caída: resolver el slug contra el snapshot para que la tienda siga
+  // navegable en modo lectura (si no, cada URL daría 404).
+  if (catRes.error || prodRes.error) {
+    const snap = getSnapshotData()
+    const cat = snap.categories.find((c) => c.slug === slug)
+    if (cat) return { type: 'category' as const, category: cat }
+    if (snap.products.some((p) => p.slug === slug)) return { type: 'product' as const }
+    return null
+  }
   if (catRes.data) return { type: 'category' as const, category: catRes.data as Category }
   if (prodRes.data) return { type: 'product' as const }
   return null
@@ -52,12 +64,18 @@ export async function generateMetadata({
   const { slug } = await params
   const supabase = await createClient()
 
-  // Try category first
-  const { data: cat } = await supabase
+  // Try category first (con fallback al snapshot si la DB está caída).
+  const { data: catData, error: catErr } = await supabase
     .from('categories')
     .select('name, description')
     .eq('slug', slug)
     .maybeSingle()
+
+  let cat = catData as { name: string; description: string | null } | null
+  if (catErr) {
+    const snapCat = getSnapshotData().categories.find((c) => c.slug === slug)
+    cat = snapCat ? { name: snapCat.name, description: snapCat.description } : null
+  }
 
   if (cat) {
     // CTR: keyword exacto ("cardigans de crochet") + beneficio concreto en la
@@ -93,14 +111,15 @@ export async function generateMetadata({
     }
   }
 
-  // Try product
-  const { data } = await supabase
+  // Try product (con fallback al snapshot si la DB está caída).
+  const { data, error: prodErr } = await supabase
     .from('products')
     .select('*, media:product_media(*)')
     .eq('slug', slug)
     .maybeSingle()
 
-  const product = data as Product | null
+  let product = data as Product | null
+  if (prodErr) product = getSnapshotData().products.find((p) => p.slug === slug) ?? null
   if (!product) return { title: 'Producto no encontrado', robots: { index: false, follow: false } }
 
   // CTR de la ficha: el title lleva el diferencial ("tejido a mano, a tu
@@ -155,24 +174,8 @@ export async function generateMetadata({
 async function CategoryPage({ slug, category }: { slug: string; category: Category }) {
   const supabase = await createClient()
 
-  const [categoriesRes, productsRes, colorsRes, discountsRes] = await Promise.all([
-    supabase.from('categories').select('*').order('sort_order', { ascending: true }),
-    supabase
-      .from('products')
-      .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*))')
-      .in('status', ['active', 'soldout'])
-      .order('sort_order', { ascending: true }),
-    supabase.from('colors').select('*').order('sort_order', { ascending: true }),
-    supabase.from('discounts').select('*').eq('active', true),
-  ])
-
-  const categories = (categoriesRes.data ?? []) as Category[]
-  const colors = (colorsRes.data ?? []) as Color[]
-  const discounts = (discountsRes.data ?? []) as Discount[]
-  const products = (productsRes.data ?? []).map((p) => {
-    const joined = (p.colors ?? []) as Array<{ color: Color | null }>
-    return { ...p, colors: joined.map((c) => c.color).filter((c): c is Color => !!c) }
-  }) as Product[]
+  // Catálogo con fallback al snapshot si la DB está caída (ver src/lib/catalog.ts).
+  const { products, categories, colors, discounts, source } = await getCatalog(supabase)
 
   const categoryProducts = products.filter((p) => p.category?.slug === slug)
 
@@ -220,6 +223,7 @@ async function CategoryPage({ slug, category }: { slug: string; category: Catego
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageJsonLd) }}
       />
+      {source === 'snapshot' && <CatalogReadOnlyBanner />}
       <TiendaClient
         key={`cat:${slug}`}
         initialProducts={products}
@@ -237,40 +241,60 @@ async function CategoryPage({ slug, category }: { slug: string; category: Catego
 async function ProductPage({ slug }: { slug: string }) {
   const supabase = await createClient()
 
-  const [{ data, error: productError }, { data: discountData }, { data: settingsData }] = await Promise.all([
-    supabase
-      .from('products')
-      .select(`
-        *,
-        category:categories(*),
-        collection:collections(*),
-        media:product_media(*),
-        sizes:product_sizes(*),
-        colors:product_colors(*, color:colors(*))
-      `)
-      .eq('slug', slug)
-      .maybeSingle(),
-    supabase.from('discounts').select('*').eq('active', true),
-    supabase.from('site_settings').select('key, value').in('key', [
-      'size_guide_note', 'contact_whatsapp_url', 'shipping_estimate',
-      'queue_note_enabled', 'queue_note_text',
-      'pdp_trust_1', 'pdp_trust_2', 'pdp_trust_3',
-      'maker_name', 'maker_bio', 'maker_photo_url',
-      'pdp_process_enabled',
-      'pdp_process_step_1_icon', 'pdp_process_step_1_label', 'pdp_process_step_1_body',
-      'pdp_process_step_2_icon', 'pdp_process_step_2_label', 'pdp_process_step_2_body',
-      'pdp_process_step_3_icon', 'pdp_process_step_3_label', 'pdp_process_step_3_body',
-      'encargos_cupos_enabled', 'encargos_cupos_total', 'encargos_cupos_taken', 'encargos_cupos_label',
-    ]),
-  ])
+  // Producto con fallback al snapshot si la DB está caída (ver src/lib/catalog.ts).
+  const { product, source } = await getProductBySlug(supabase, slug)
 
-  const product = data as Product | null
-  if (product) {
-    const joined = (product.colors ?? []) as unknown as Array<{ color: Color | null }>
-    product.colors = joined.map((c) => c.color).filter((c): c is Color => !!c)
+  // Distinguir "no existe" de "la base falló": si la consulta EN VIVO dice que
+  // no está → 404 real. Si la base falló y el snapshot tampoco lo tiene → lanzar
+  // (5xx transitorio): así ISR/Google reintentan y no desindexan la ficha.
+  if (!product) {
+    if (source === 'snapshot') {
+      throw new Error(`Supabase caído y sin snapshot para /tienda/${slug}`)
+    }
+    notFound()
   }
-  const discounts = (discountData ?? []) as Discount[]
-  const getSetting = (k: string) => (settingsData ?? []).find((r) => r.key === k)?.value as string | undefined
+
+  const isSnapshot = source === 'snapshot'
+
+  // Descuentos, settings y relacionados: en vivo desde la DB; en modo lectura
+  // (snapshot), desde el snapshot — sin volver a pegarle a la base caída.
+  let discounts: Discount[]
+  let settings: Record<string, string>
+  let relatedAll: Product[]
+  if (isSnapshot) {
+    const snap = getSnapshotData()
+    discounts = snap.discounts
+    settings = snap.settings
+    relatedAll = snap.products.filter((p) => p.status === 'active' && p.id !== product.id).slice(0, 24)
+  } else {
+    const [{ data: discountData }, { data: settingsData }, { data: relatedData }] = await Promise.all([
+      supabase.from('discounts').select('*').eq('active', true),
+      supabase.from('site_settings').select('key, value').in('key', [
+        'size_guide_note', 'contact_whatsapp_url', 'shipping_estimate',
+        'queue_note_enabled', 'queue_note_text',
+        'pdp_trust_1', 'pdp_trust_2', 'pdp_trust_3',
+        'maker_name', 'maker_bio', 'maker_photo_url',
+        'pdp_process_enabled',
+        'pdp_process_step_1_icon', 'pdp_process_step_1_label', 'pdp_process_step_1_body',
+        'pdp_process_step_2_icon', 'pdp_process_step_2_label', 'pdp_process_step_2_body',
+        'pdp_process_step_3_icon', 'pdp_process_step_3_label', 'pdp_process_step_3_body',
+        'encargos_cupos_enabled', 'encargos_cupos_total', 'encargos_cupos_taken', 'encargos_cupos_label',
+      ]),
+      supabase
+        .from('products')
+        .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*)')
+        .eq('status', 'active')
+        .neq('id', product.id)
+        .order('sort_order', { ascending: true })
+        .limit(24),
+    ])
+    discounts = (discountData ?? []) as Discount[]
+    settings = ((settingsData ?? []) as Array<{ key: string; value: string }>)
+      .reduce<Record<string, string>>((acc, r) => ({ ...acc, [r.key]: String(r.value ?? '') }), {})
+    relatedAll = (relatedData ?? []) as Product[]
+  }
+
+  const getSetting = (k: string): string | undefined => settings[k]
   const sizeGuideNote = getSetting('size_guide_note')
   const whatsappUrl = getSetting('contact_whatsapp_url') || 'https://wa.me/59899850073'
   const shippingEstimate = getSetting('shipping_estimate')
@@ -288,34 +312,10 @@ async function ProductPage({ slug }: { slug: string }) {
     encargos_cupos_label: getSetting('encargos_cupos_label') || '',
   })
 
-  // Distinguir "no existe" de "la base falló": con un error de Supabase,
-  // devolver notFound() haría que ISR REEMPLACE la página buena cacheada por
-  // un 404 (y Google la desindexe). Lanzar mantiene la versión anterior viva
-  // — el sitio sobrevive a una caída de la base sirviendo catálogo stale.
-  if (productError) throw new Error(`Supabase falló al cargar /tienda/${slug}: ${productError.message}`)
-  if (!product) notFound()
-
-  const { data: relatedData } = await supabase
-    .from('products')
-    .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*)')
-    .eq('status', 'active')
-    .neq('id', product.id)
-    .order('sort_order', { ascending: true })
-    .limit(24)
-
-  const relatedAll = (relatedData ?? []) as Product[]
   // "Completá el look": otro top al lado de un top compite por la misma venta;
   // un bolso o un accesorio al lado de un top la agranda. Por eso la fila mezcla
   // 2 piezas que COMPLEMENTAN (otra categoría, priorizando los pares que se usan
   // juntos y la misma colección) + 2 similares para quien busca alternativas.
-  const COMPLEMENT_PREFS: Record<string, string[]> = {
-    tops: ['bolsos', 'faldas', 'sets', 'accesorios'],
-    cardigans: ['tops', 'accesorios', 'bolsos'],
-    sets: ['bolsos', 'accesorios', 'cardigans'],
-    faldas: ['tops', 'accesorios', 'bolsos'],
-    bolsos: ['tops', 'accesorios', 'sets'],
-    accesorios: ['cardigans', 'tops', 'bolsos'],
-  }
   const prefs = COMPLEMENT_PREFS[product.category?.slug ?? ''] ?? []
   const prefRank = (p: Product) => {
     const i = prefs.indexOf(p.category?.slug ?? '')
@@ -438,6 +438,7 @@ async function ProductPage({ slug }: { slug: string }) {
     <div style={{ paddingBottom: '4rem' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      {isSnapshot && <CatalogReadOnlyBanner waUrl={whatsappUrl} />}
 
       <ProductDetailsClient
         product={product}

@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { Collection, Product, Discount, Color } from '@/lib/types'
 import { getFinalPrice } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
-import { dahila, Eyebrow } from '@/components/ui/Primitives'
+import { dahila, Eyebrow, Breadcrumb } from '@/components/ui/Primitives'
 import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
 
@@ -105,13 +105,11 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
         dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
       />
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px 80px' }}>
-      <nav style={{ display: 'flex', gap: 6, fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 24 }}>
-        <Link href="/" style={{ color: 'inherit', textDecoration: 'none' }}>Inicio</Link>
-        <span>/</span>
-        <Link href="/colecciones" style={{ color: 'inherit', textDecoration: 'none' }}>Colecciones</Link>
-        <span>/</span>
-        <span style={{ color: dahila.ink900 }}>{collection.name}</span>
-      </nav>
+      <Breadcrumb items={[
+        { label: 'Inicio', href: '/' },
+        { label: 'Colecciones', href: '/colecciones' },
+        { label: collection.name },
+      ]} />
 
       {/* Cover / hero band */}
       <div style={{ position: 'relative', borderRadius: 18, overflow: 'hidden', background: dahila.cream100, marginBottom: 40 }}>

@@ -121,14 +121,42 @@ export function Chip({ children, on, onClick }: { children: React.ReactNode, on:
     <button onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
       aria-pressed={on}
       style={{
-        fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400, letterSpacing: '0.04em',
-        padding: '8px 14px', borderRadius: 999,
+        fontFamily: dahila.fontSans, fontSize: 12.5, fontWeight: on ? 500 : 400, letterSpacing: '0.04em',
+        padding: '9px 16px', borderRadius: 999,
         whiteSpace: 'nowrap',
         background: on ? dahila.ink900 : (hover ? dahila.cream50 : '#fff'),
         color: on ? '#fff' : dahila.ink700,
         border: `1px solid ${on ? dahila.ink900 : dahila.borderStrong}`,
+        boxShadow: on ? dahila.shadowSm : 'none',
         cursor: 'pointer', transition: `all 140ms ${dahila.ease}`,
       }}>{children}</button>
+  )
+}
+
+// --- Breadcrumb -------------------------------------------------
+// Miga de pan visible (además del BreadcrumbList JSON-LD, que ya existía pero
+// no se veía en pantalla). Último ítem sin link = "acá estás".
+export function Breadcrumb({ items }: { items: { label: string, href?: string }[] }) {
+  return (
+    <nav aria-label="Miga de pan" style={{ marginBottom: 20 }}>
+      <ol style={{
+        display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6,
+        margin: 0, padding: 0, listStyle: 'none',
+        fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+        color: dahila.ink500,
+      }}>
+        {items.map((it, i) => (
+          <li key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            {i > 0 && <span aria-hidden>/</span>}
+            {it.href ? (
+              <Link href={it.href} style={{ color: 'inherit', textDecoration: 'none' }}>{it.label}</Link>
+            ) : (
+              <span style={{ color: dahila.ink900 }} aria-current="page">{it.label}</span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
   )
 }
 

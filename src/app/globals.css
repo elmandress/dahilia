@@ -507,8 +507,8 @@ a {
     display: flex !important;
   }
   .tienda-toolbar-cats button {
-    min-height: 40px !important;
-    padding: 6px 13px !important;
+    min-height: 44px !important;
+    padding: 8px 15px !important;
   }
   .tienda-toolbar-actions > button {
     min-height: 40px !important;
@@ -538,16 +538,17 @@ a {
      llegar al final, el fade caiga sobre aire y no sobre el último chip. */
   .tienda-toolbar-cats {
     flex-wrap: nowrap !important;
+    gap: 10px !important;
     overflow-x: auto !important;
     margin-left: -24px;
     margin-right: -24px;
-    padding: 2px 40px 6px 24px;
+    padding: 2px 44px 8px 24px;
     scroll-padding-left: 24px;
     scroll-snap-type: x proximity;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 28px), transparent 100%);
-    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 28px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 40px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 40px), transparent 100%);
   }
   .tienda-toolbar-cats::-webkit-scrollbar { display: none; }
   .tienda-toolbar-cats > button {

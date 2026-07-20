@@ -1,15 +1,20 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import { useCart } from './CartProvider'
 import { useScrollLock } from '@/lib/scroll-lock'
+import { createClient } from '@/lib/supabase/client'
 import { dahila, Icon } from './ui/Primitives'
 import { PriceBlock } from './ui/PriceBlock'
+import type { Product } from '@/lib/types'
 import {
   getPrimaryPhoto, getEffectivePrice, getFinalPrice, formatPrice, BLUR_DATA_URL,
 } from '@/lib/types'
+import { pickAddonSuggestions } from '@/lib/addons'
+import { track } from '@/lib/analytics'
 
 /**
  * Mini-cart drawer — slides in when an item is added (immediate feedback) or
@@ -19,7 +24,7 @@ import {
  */
 export function CartDrawer() {
   const {
-    items, cartTotal, discounts, shippingEstimate, freeShippingThreshold, drawerOpen, closeDrawer, updateQty, removeFromCart,
+    items, cartTotal, discounts, shippingEstimate, freeShippingThreshold, drawerOpen, closeDrawer, updateQty, removeFromCart, addToCart,
   } = useCart()
   const pathname = usePathname()
   const router = useRouter()
@@ -38,9 +43,43 @@ export function CartDrawer() {
     return () => window.removeEventListener('keydown', onKey)
   }, [drawerOpen, closeDrawer])
 
-  if (pathname.startsWith('/admin')) return null
+  // Catálogo liviano para "Sumale un detalle": se trae una sola vez, la
+  // primera vez que el drawer se abre — no en cada render (el catálogo de
+  // Dahila es chico, así que traerlo entero al cliente es más simple que
+  // armar un endpoint dedicado). Misma selección que ya usa /carrito
+  // (pickAddonSuggestions): piezas chicas de categorías que no están en el
+  // pedido — así el mini-cart y el carrito completo sugieren lo mismo.
+  const [catalog, setCatalog] = useState<Product[] | null>(null)
+  useEffect(() => {
+    if (!drawerOpen || catalog !== null) return
+    const supabase = createClient()
+    supabase
+      .from('products')
+      .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*)')
+      .eq('status', 'active')
+      .order('sort_order', { ascending: true })
+      .limit(24)
+      .then(({ data }) => setCatalog((data ?? []) as Product[]))
+  }, [drawerOpen, catalog])
 
   const visibleItems = items.filter((i) => !!i.product)
+
+  const [addedId, setAddedId] = useState<string | null>(null)
+  const addonSuggestions = useMemo(
+    () => (catalog ? pickAddonSuggestions(catalog, visibleItems, discounts) : []),
+    [catalog, visibleItems, discounts]
+  )
+
+  const handleAddonAdd = async (p: Product) => {
+    const avail = (p.sizes ?? []).filter((s) => s.available)
+    const size = avail.length > 0 ? avail[0].size : 'Único'
+    setAddedId(p.id)
+    await addToCart(p, size, 1, { openDrawer: false })
+    track('cart_addon_add', { product: p.slug })
+    setTimeout(() => setAddedId(null), 2000)
+  }
+
+  if (pathname.startsWith('/admin')) return null
 
   return (
     <>
@@ -177,6 +216,64 @@ export function CartDrawer() {
                   </div>
                 )
               })}
+
+              {/* "Sumale un detalle" — mismo cross-sell de /carrito, ahora
+                  también en el momento de mayor intención de compra. Vive
+                  dentro del scroll, nunca empuja el botón de WhatsApp. */}
+              {addonSuggestions.length > 0 && (
+                <div style={{ padding: '16px 0 12px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <span style={{
+                    fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
+                    textTransform: 'uppercase', color: dahila.ink500,
+                  }}>
+                    Sumale un detalle
+                  </span>
+                  {addonSuggestions.map((p) => {
+                    const photo = getPrimaryPhoto(p)
+                    const price = getFinalPrice(p, undefined, discounts)
+                    const justAdded = addedId === p.id
+                    return (
+                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <Link
+                          href={`/tienda/${p.slug}`}
+                          onClick={closeDrawer}
+                          aria-label={`Ver ${p.name}`}
+                          style={{
+                            position: 'relative', width: 44, height: 54, flexShrink: 0,
+                            borderRadius: 8, overflow: 'hidden', background: dahila.cream50, display: 'block',
+                          }}
+                        >
+                          <Image src={photo} alt={p.name} fill sizes="44px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+                        </Link>
+                        <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                          <Link
+                            href={`/tienda/${p.slug}`}
+                            onClick={closeDrawer}
+                            style={{
+                              fontFamily: dahila.fontDisplay, fontSize: 13.5, color: dahila.ink900, lineHeight: 1.25,
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: 'none',
+                            }}
+                          >{p.name}</Link>
+                          <button
+                            onClick={() => handleAddonAdd(p)}
+                            disabled={justAdded}
+                            aria-label={`Agregar ${p.name} al carrito por ${formatPrice(price)}`}
+                            style={{
+                              background: 'transparent', border: 'none', padding: '2px 0',
+                              cursor: justAdded ? 'default' : 'pointer', alignSelf: 'flex-start',
+                              fontFamily: dahila.fontSans, fontSize: 12,
+                              color: justAdded ? '#1E8449' : dahila.wine600,
+                              textDecoration: justAdded ? 'none' : 'underline', textUnderlineOffset: 3,
+                            }}
+                          >
+                            {justAdded ? '✓ Sumado' : `+ Agregar · ${formatPrice(price)}`}
+                          </button>
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Footer / checkout */}

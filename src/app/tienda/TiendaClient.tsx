@@ -8,19 +8,19 @@ import Image from 'next/image'
 import type { Product, Category, Color, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
 import { getFinalPrice, BLUR_DATA_URL } from '@/lib/types'
-import { dahila, Eyebrow, Chip, Icon } from '@/components/ui/Primitives'
+import { dahila, Eyebrow, Chip, Icon, Breadcrumb } from '@/components/ui/Primitives'
 import { track } from '@/lib/analytics'
+import { readRecentlyViewed, type RecentItem } from '@/lib/recentlyViewed'
 
-/** Reads recently-viewed from localStorage and shows a strip above the grid. */
+/** Reads recently-viewed from localStorage and shows a strip above the grid.
+ *  Read-only here (no "current" product to register — this is a listing
+ *  page, not a PDP); misma fuente que RecentlyViewed.tsx (la de la PDP). */
 function RecentlyViewedStrip() {
-  const [items, setItems] = useState<{ slug: string; name: string; photo: string; price: number }[]>([])
+  const [items, setItems] = useState<RecentItem[]>([])
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('dahila_recently_viewed')
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setItems(JSON.parse(raw) ?? [])
-    } catch {}
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setItems(readRecentlyViewed())
   }, [])
 
   if (items.length < 2) return null
@@ -81,6 +81,30 @@ const SORT_LABELS: Record<SortKey, string> = {
 }
 const SORT_KEYS = Object.keys(SORT_LABELS) as SortKey[]
 
+// Predicado compartido: se usa tanto para la grilla real (con los valores
+// aplicados) como para el conteo de vista previa del borrador en mobile
+// ("Ver 8 resultados") — mismo criterio, dos snapshots distintos.
+function matchesFilters(p: Product, opts: {
+  filter: string; search: string; colorIds: string[]; sizes: string[]
+  maxEff: number; onlyDiscount: boolean; hideOutOfStock: boolean; discounts: Discount[]
+}) {
+  const matchesCat = opts.filter === 'todo' || p.category?.slug === opts.filter
+  const matchesSearch =
+    !opts.search ||
+    p.name.toLowerCase().includes(opts.search.toLowerCase()) ||
+    (p.description && p.description.toLowerCase().includes(opts.search.toLowerCase()))
+  const matchesColor =
+    opts.colorIds.length === 0 || (p.colors ?? []).some((c) => opts.colorIds.includes(c.id))
+  const matchesSize =
+    opts.sizes.length === 0 ||
+    (p.sizes ?? []).some((s) => opts.sizes.includes(s.size) && s.available !== false)
+  const finalPrice = getFinalPrice(p, undefined, opts.discounts)
+  const matchesPrice = opts.maxEff <= 0 || finalPrice <= opts.maxEff
+  const matchesDiscount = !opts.onlyDiscount || finalPrice < (p.base_price_uyu ?? Infinity)
+  const matchesStock = !opts.hideOutOfStock || p.status !== 'soldout'
+  return matchesCat && matchesSearch && matchesColor && matchesSize && matchesPrice && matchesDiscount && matchesStock
+}
+
 export function TiendaClient({
   initialProducts,
   categories,
@@ -92,6 +116,8 @@ export function TiendaClient({
   initialMax,
   initialSort,
   initialOnlyOffers,
+  initialSize,
+  initialHideOutOfStock,
 }: {
   initialProducts: Product[]
   categories: Category[]
@@ -103,6 +129,8 @@ export function TiendaClient({
   initialMax?: string
   initialSort?: string
   initialOnlyOffers?: boolean
+  initialSize?: string
+  initialHideOutOfStock?: boolean
 }) {
   const router = useRouter()
 
@@ -129,6 +157,10 @@ export function TiendaClient({
     initialColor ? initialColor.split(',').filter(Boolean) : []
   )
   const [onlyDiscount, setOnlyDiscount] = useState(!!initialOnlyOffers)
+  const [sizes, setSizes] = useState<string[]>(
+    initialSize ? initialSize.split(',').filter(Boolean) : []
+  )
+  const [hideOutOfStock, setHideOutOfStock] = useState(!!initialHideOutOfStock)
   const [showFilters, setShowFilters] = useState(false)
   const [quickView, setQuickView] = useState<Product | null>(null)
 
@@ -145,11 +177,47 @@ export function TiendaClient({
   const [maxPrice, setMaxPrice] = useState<number | null>(
     Number.isFinite(parsedMax) ? parsedMax : null
   )
+
+  // En mobile, Precio/Color/Talle/Ofertas son "borrador" hasta tocar "Ver
+  // resultados": recalcular la grilla a cada drag del slider desorienta más
+  // de lo que ayuda (Baymard). En desktop siguen aplicándose en vivo, que es
+  // el patrón preferido ahí. Categoría, búsqueda y orden quedan siempre en
+  // vivo: viven fuera del panel colapsable.
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  const [appliedColorIds, setAppliedColorIds] = useState(colorIds)
+  const [appliedMaxPrice, setAppliedMaxPrice] = useState(maxPrice)
+  const [appliedOnlyDiscount, setAppliedOnlyDiscount] = useState(onlyDiscount)
+  const [appliedSizes, setAppliedSizes] = useState(sizes)
+  const [appliedHideOutOfStock, setAppliedHideOutOfStock] = useState(hideOutOfStock)
+
+  // En desktop cada setter de abajo (toggleColor, el slider, "Ver resultados"
+  // per se) aplica en vivo tocando applied* al toque — sin useEffect, para no
+  // encadenar renders. En mobile applied* solo se toca desde applyFilters().
+
+  const applyFilters = () => {
+    setAppliedColorIds(colorIds)
+    setAppliedMaxPrice(maxPrice)
+    setAppliedOnlyDiscount(onlyDiscount)
+    setAppliedSizes(sizes)
+    setAppliedHideOutOfStock(hideOutOfStock)
+    setShowFilters(false)
+  }
+
   const effectiveMax = maxPrice ?? priceBounds.max
+  const appliedEffectiveMax = appliedMaxPrice ?? priceBounds.max
 
   // Sync filter state → URL (shareable, indexable). Debounced so dragging the
   // price slider or typing doesn't spam history. router.replace keeps the back
-  // button sane.
+  // button sane. Reads the APPLIED values so the URL always matches what's
+  // actually on screen, not an in-progress mobile draft.
   // When a canonical category slug is set (/tienda/[cat]), category changes
   // navigate to the proper slug route for clean SEO URLs.
   const firstRun = useRef(true)
@@ -158,10 +226,12 @@ export function TiendaClient({
     const t = setTimeout(() => {
       const sp = new URLSearchParams()
       if (search.trim()) sp.set('q', search.trim())
-      if (colorIds.length) sp.set('color', colorIds.join(','))
-      if (maxPrice !== null && maxPrice < priceBounds.max) sp.set('max', String(maxPrice))
+      if (appliedColorIds.length) sp.set('color', appliedColorIds.join(','))
+      if (appliedSizes.length) sp.set('talle', appliedSizes.join(','))
+      if (appliedMaxPrice !== null && appliedMaxPrice < priceBounds.max) sp.set('max', String(appliedMaxPrice))
       if (sort !== 'recientes') sp.set('sort', sort)
-      if (onlyDiscount) sp.set('oferta', '1')
+      if (appliedOnlyDiscount) sp.set('oferta', '1')
+      if (appliedHideOutOfStock) sp.set('disp', '1')
       const qs = sp.toString()
 
       // Prefer clean category URLs over query params
@@ -173,7 +243,7 @@ export function TiendaClient({
       }
     }, 350)
     return () => clearTimeout(t)
-  }, [filter, search, colorIds, maxPrice, sort, onlyDiscount, priceBounds.max, router])
+  }, [filter, search, appliedColorIds, appliedSizes, appliedMaxPrice, sort, appliedOnlyDiscount, appliedHideOutOfStock, priceBounds.max, router])
 
   // Only show colours that are actually used by at least one product.
   const usedColors = useMemo(() => {
@@ -182,20 +252,25 @@ export function TiendaClient({
     return colors.filter((c) => used.has(c.id))
   }, [initialProducts, colors])
 
+  // Talles usados, en el orden configurado en el admin (sort_order de cada
+  // product_sizes), no alfabético — así "XS, S, M, L, XL" sale en orden real.
+  const usedSizes = useMemo(() => {
+    const bestOrder = new Map<string, number>()
+    initialProducts.forEach((p) =>
+      (p.sizes ?? []).forEach((s) => {
+        const prev = bestOrder.get(s.size)
+        if (prev === undefined || s.sort_order < prev) bestOrder.set(s.size, s.sort_order)
+      })
+    )
+    return [...bestOrder.entries()].sort((a, b) => a[1] - b[1]).map(([size]) => size)
+  }, [initialProducts])
+
   const filtered = useMemo(() => {
-    const result = initialProducts.filter((p) => {
-      const matchesCat = filter === 'todo' || p.category?.slug === filter
-      const matchesSearch =
-        !search ||
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        (p.description && p.description.toLowerCase().includes(search.toLowerCase()))
-      const matchesColor =
-        colorIds.length === 0 || (p.colors ?? []).some((c) => colorIds.includes(c.id))
-      const finalPrice = getFinalPrice(p, undefined, discounts)
-      const matchesPrice = effectiveMax <= 0 || finalPrice <= effectiveMax
-      const matchesDiscount = !onlyDiscount || finalPrice < (p.base_price_uyu ?? Infinity)
-      return matchesCat && matchesSearch && matchesColor && matchesPrice && matchesDiscount
-    })
+    const result = initialProducts.filter((p) => matchesFilters(p, {
+      filter, search, colorIds: appliedColorIds, sizes: appliedSizes,
+      maxEff: appliedEffectiveMax, onlyDiscount: appliedOnlyDiscount,
+      hideOutOfStock: appliedHideOutOfStock, discounts,
+    }))
 
     const withFinal = result.map((p) => ({ p, price: getFinalPrice(p, undefined, discounts) }))
     switch (sort) {
@@ -219,13 +294,24 @@ export function TiendaClient({
         break
     }
     return withFinal.map((x) => x.p)
-  }, [initialProducts, filter, search, colorIds, effectiveMax, onlyDiscount, sort, discounts])
+  }, [initialProducts, filter, search, appliedColorIds, appliedSizes, appliedEffectiveMax, appliedOnlyDiscount, appliedHideOutOfStock, sort, discounts])
+
+  // Vista previa del borrador en mobile: cuántas prendas van a quedar si se
+  // toca "Ver resultados" — así el botón no es una caja negra.
+  const draftCount = useMemo(() => {
+    if (!isMobile || !showFilters) return filtered.length
+    return initialProducts.filter((p) => matchesFilters(p, {
+      filter, search, colorIds, sizes, maxEff: effectiveMax, onlyDiscount, hideOutOfStock, discounts,
+    })).length
+  }, [isMobile, showFilters, initialProducts, filter, search, colorIds, sizes, effectiveMax, onlyDiscount, hideOutOfStock, discounts, filtered.length])
 
   const activeFilterCount =
     (filter !== 'todo' ? 1 : 0) +
-    colorIds.length +
-    (maxPrice !== null && maxPrice < priceBounds.max ? 1 : 0) +
-    (onlyDiscount ? 1 : 0)
+    appliedColorIds.length +
+    appliedSizes.length +
+    (appliedMaxPrice !== null && appliedMaxPrice < priceBounds.max ? 1 : 0) +
+    (appliedOnlyDiscount ? 1 : 0) +
+    (appliedHideOutOfStock ? 1 : 0)
 
   // "Limpiar filtros" también debe aparecer cuando lo único activo es una
   // búsqueda (en mobile el input está oculto: sin esto, un ?q= del buscador
@@ -237,19 +323,71 @@ export function TiendaClient({
     setColorIds([])
     setMaxPrice(null)
     setOnlyDiscount(false)
+    setSizes([])
+    setHideOutOfStock(false)
+    setAppliedColorIds([])
+    setAppliedMaxPrice(null)
+    setAppliedOnlyDiscount(false)
+    setAppliedSizes([])
+    setAppliedHideOutOfStock(false)
     setSearch('')
     setSort('recientes')
   }
 
   const toggleColor = (id: string) => {
-    setColorIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]))
+    const next = colorIds.includes(id) ? colorIds.filter((c) => c !== id) : [...colorIds, id]
+    setColorIds(next)
+    if (!isMobile) setAppliedColorIds(next)
+  }
+
+  const toggleSize = (size: string) => {
+    const next = sizes.includes(size) ? sizes.filter((s) => s !== size) : [...sizes, size]
+    setSizes(next)
+    if (!isMobile) setAppliedSizes(next)
+  }
+
+  const setPrice = (v: number) => {
+    setMaxPrice(v)
+    if (!isMobile) setAppliedMaxPrice(v)
+  }
+
+  const setDiscountOnly = (v: boolean) => {
+    setOnlyDiscount(v)
+    if (!isMobile) setAppliedOnlyDiscount(v)
+  }
+
+  const setStockOnly = (v: boolean) => {
+    setHideOutOfStock(v)
+    if (!isMobile) setAppliedHideOutOfStock(v)
+  }
+
+  // Abrir el panel en mobile trae el borrador de vuelta a lo aplicado (si se
+  // cerró sin tocar "Ver resultados" la vez anterior, no arrastra cambios a
+  // medio hacer). En desktop no hace falta: borrador y aplicado ya son lo mismo.
+  const toggleFiltersPanel = () => {
+    const opening = !showFilters
+    if (opening && isMobile) {
+      setColorIds(appliedColorIds)
+      setMaxPrice(appliedMaxPrice)
+      setOnlyDiscount(appliedOnlyDiscount)
+      setSizes(appliedSizes)
+      setHideOutOfStock(appliedHideOutOfStock)
+    }
+    setShowFilters(opening)
   }
 
   const activeCategory = filter !== 'todo' ? categories.find((c) => c.slug === filter) : undefined
-  const heading = activeCategory?.name || (filter !== 'todo' ? 'Colección' : onlyDiscount ? 'Ofertas' : 'Colección')
+  const heading = activeCategory?.name || (filter !== 'todo' ? 'Colección' : appliedOnlyDiscount ? 'Ofertas' : 'Colección')
 
   return (
     <div className="tienda-page" style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
+      {activeCategory && (
+        <Breadcrumb items={[
+          { label: 'Inicio', href: '/' },
+          { label: 'Tienda', href: '/tienda' },
+          { label: activeCategory.name },
+        ]} />
+      )}
       <div className="tienda-head" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 28 }}>
         <Eyebrow>Tienda</Eyebrow>
         <h1 style={{
@@ -281,7 +419,7 @@ export function TiendaClient({
         justifyContent: 'space-between', marginBottom: 18,
       }}>
         {/* Row 1: category chips — full-bleed snap carousel on mobile */}
-        <div ref={catsRailRef} className="tienda-toolbar-cats" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div ref={catsRailRef} className="tienda-toolbar-cats" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <Chip on={filter === 'todo'} onClick={() => setFilter('todo')}>Todo</Chip>
           {categories.map((c) => (
             <Chip key={c.id} on={filter === c.slug} onClick={() => setFilter(c.slug)}>
@@ -339,7 +477,7 @@ export function TiendaClient({
 
           {/* Filters toggle */}
           <button
-            onClick={() => setShowFilters((v) => !v)}
+            onClick={toggleFiltersPanel}
             aria-expanded={showFilters}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -385,7 +523,7 @@ export function TiendaClient({
                 max={priceBounds.max}
                 step={Math.max(1, Math.round((priceBounds.max - priceBounds.min) / 50))}
                 value={effectiveMax}
-                onChange={(e) => setMaxPrice(Number(e.target.value))}
+                onChange={(e) => setPrice(Number(e.target.value))}
                 style={{ width: '100%', accentColor: dahila.ink900 }}
                 aria-label="Precio máximo"
               />
@@ -425,21 +563,80 @@ export function TiendaClient({
             </div>
           )}
 
-          {/* Discount toggle */}
+          {/* Sizes */}
+          {usedSizes.length > 0 && (
+            <div>
+              <div style={{ fontFamily: dahila.fontSans, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: dahila.ink500, marginBottom: 12 }}>
+                Talle
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {usedSizes.map((s) => {
+                  const on = sizes.includes(s)
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => toggleSize(s)}
+                      aria-pressed={on}
+                      style={{
+                        minWidth: 40, height: 36, padding: '0 10px', borderRadius: 8,
+                        fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
+                        background: on ? dahila.ink900 : '#fff',
+                        color: on ? '#fff' : dahila.ink900,
+                        border: `1px solid ${on ? dahila.ink900 : dahila.borderStrong}`,
+                        cursor: 'pointer',
+                      }}
+                    >{s}</button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Discount + stock toggles */}
           <div>
             <div style={{ fontFamily: dahila.fontSans, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: dahila.ink500, marginBottom: 12 }}>
-              Ofertas
+              Disponibilidad
             </div>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink900 }}>
-              <input
-                type="checkbox"
-                checked={onlyDiscount}
-                onChange={(e) => setOnlyDiscount(e.target.checked)}
-                style={{ accentColor: '#B6314A', width: 18, height: 18 }}
-              />
-              Mostrar solo ofertas
-            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink900 }}>
+                <input
+                  type="checkbox"
+                  checked={onlyDiscount}
+                  onChange={(e) => setDiscountOnly(e.target.checked)}
+                  style={{ accentColor: '#B6314A', width: 18, height: 18 }}
+                />
+                Mostrar solo ofertas
+              </label>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink900 }}>
+                <input
+                  type="checkbox"
+                  checked={hideOutOfStock}
+                  onChange={(e) => setStockOnly(e.target.checked)}
+                  style={{ accentColor: dahila.ink900, width: 18, height: 18 }}
+                />
+                Ocultar agotados
+              </label>
+            </div>
           </div>
+
+          {/* En mobile, aplicar es un paso explícito (Baymard: recalcular en
+              vivo a cada toque desorienta en pantallas chicas). En desktop
+              este botón no se renderiza — ya está todo aplicado en vivo. */}
+          {isMobile && (
+            <div style={{ gridColumn: '1 / -1' }}>
+              <button
+                onClick={applyFilters}
+                style={{
+                  width: '100%', background: dahila.ink900, color: '#fff', border: 'none',
+                  borderRadius: 10, padding: '13px 18px', cursor: 'pointer',
+                  fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                }}
+              >
+                Ver {draftCount} {draftCount === 1 ? 'resultado' : 'resultados'}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

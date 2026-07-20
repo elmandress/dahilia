@@ -8,6 +8,7 @@ import { dahila, Eyebrow, Button, Icon } from '@/components/ui/Primitives'
 import { getPrimaryPhoto, formatPrice, getEffectivePrice, getFinalPrice, readyDateEstimate, BLUR_DATA_URL } from '@/lib/types'
 import type { Product, Discount } from '@/lib/types'
 import { computeCouponEffect, type PublicCoupon } from '@/lib/coupons'
+import { pickAddonSuggestions } from '@/lib/addons'
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import Image from 'next/image'
 import { SITE_URL } from '@/lib/env'
@@ -125,24 +126,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
   const overThreshold = freeShippingThreshold > 0 && total >= freeShippingThreshold
   const missingForFree = freeShippingThreshold > 0 ? Math.max(0, freeShippingThreshold - total) : 0
 
-  // "Sumale un detalle": cross-sell silencioso de piezas chicas (Baymard: los
-  // add-ons del carrito deben ser complementos baratos, nunca otra prenda que
-  // compita con la que ya está). Prioriza categorías que NO están en el carrito.
-  const ADDON_MAX_UYU = 800
-  const cartProductIds = new Set(items.map((i) => i.product_id))
-  const cartCategoryIds = new Set(items.map((i) => i.product?.category_id).filter(Boolean))
-  const addonSuggestions = featuredProducts
-    .filter((p) =>
-      !cartProductIds.has(p.id) &&
-      !p.is_custom_only &&
-      (p.base_price_uyu ?? 0) > 0 &&
-      getFinalPrice(p, undefined, discounts) <= ADDON_MAX_UYU
-    )
-    .sort((a, b) =>
-      Number(cartCategoryIds.has(a.category_id ?? '')) - Number(cartCategoryIds.has(b.category_id ?? '')) ||
-      getFinalPrice(a, undefined, discounts) - getFinalPrice(b, undefined, discounts)
-    )
-    .slice(0, 3)
+  const addonSuggestions = pickAddonSuggestions(featuredProducts, items, discounts)
   const [addedAddonId, setAddedAddonId] = useState<string | null>(null)
 
   const handleAddonAdd = async (p: Product) => {
@@ -218,6 +202,28 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
     const base = whatsappUrl.replace(/\/+$/, '')
     const url = `${base}?text=${encodeURIComponent(message)}`
     track('order_sent', { items: items.length, total })
+    // Registro del pedido — sin esperar la respuesta: no debe demorar ni
+    // bloquear la apertura de WhatsApp (ver comentario de iOS Safari abajo).
+    // Si falla (red, migración no corrida), la venta sigue su curso igual.
+    fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: items.filter((i) => !!i.product).map((i) => ({
+          name: i.product.name,
+          slug: i.product.slug,
+          size: i.size,
+          qty: i.qty,
+          unit_price_uyu: getFinalPrice(i.product, i.size, discounts),
+        })),
+        subtotal_uyu: subtotal,
+        discount_uyu: couponDiscount,
+        total_uyu: total,
+        coupon_code: coupon?.code ?? null,
+        free_shipping: freeShipping || overThreshold,
+        gift_note: giftNote.trim() || null,
+      }),
+    }).catch(() => {})
     // Con cupón hay un fetch (await) antes de llegar acá, y iOS Safari suele
     // bloquear window.open fuera del gesto original — si lo bloquea, navegamos
     // en la misma pestaña: wa.me abre la app igual y la venta no se pierde.

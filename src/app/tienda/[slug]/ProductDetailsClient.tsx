@@ -15,7 +15,7 @@ import { FavoriteButton } from '@/components/FavoriteButton'
 import type { Product, Discount } from '@/lib/types'
 import { getEffectivePrice, getFinalPrice, getPrimaryPhoto, getScarcity, readyDateEstimate, formatPrice, BLUR_DATA_URL } from '@/lib/types'
 import { PriceBlock } from '@/components/ui/PriceBlock'
-import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
+import { dahila, Button, Eyebrow, Icon, Breadcrumb } from '@/components/ui/Primitives'
 import { track } from '@/lib/analytics'
 
 export function ProductDetailsClient({
@@ -114,31 +114,14 @@ export function ProductDetailsClient({
     setTimeout(() => setAddedLookId(null), 2200)
   }
 
-  const crumb = {
-    background: 'none', border: 'none', color: 'inherit', cursor: 'pointer',
-    padding: 0, fontFamily: 'inherit', fontSize: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' as const,
-  }
-
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px 0' }}>
-      <nav aria-label="Breadcrumb" style={{
-        display: 'flex', gap: 6, fontFamily: dahila.fontSans, fontSize: 11,
-        color: dahila.ink500, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 28,
-      }}>
-        <Link href="/" style={crumb}>Inicio</Link>
-        <span aria-hidden>/</span>
-        <Link href="/tienda" style={crumb}>Tienda</Link>
-        {product.category && (
-          <>
-            <span aria-hidden>/</span>
-            <Link href={`/tienda/${product.category.slug}`} style={crumb}>
-              {product.category.name}
-            </Link>
-          </>
-        )}
-        <span aria-hidden>/</span>
-        <span style={{ color: dahila.ink900 }} aria-current="page">{product.name}</span>
-      </nav>
+      <Breadcrumb items={[
+        { label: 'Inicio', href: '/' },
+        { label: 'Tienda', href: '/tienda' },
+        ...(product.category ? [{ label: product.category.name, href: `/tienda/${product.category.slug}` }] : []),
+        { label: product.name },
+      ]} />
 
       <div className="producto-split" style={{
         display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 56, alignItems: 'start',
@@ -575,14 +558,26 @@ export function ProductDetailsClient({
           : 'También tejemos'
         return (
         <section style={{ marginTop: 88 }}>
-          <h2 style={{
-            fontFamily: dahila.fontDisplay, fontWeight: 300,
-            fontSize: 22, letterSpacing: '0.08em', textTransform: 'uppercase',
-            color: dahila.ink900, margin: '0 0 28px', paddingBottom: 12,
-            borderBottom: `1px solid ${dahila.border}`,
+          <div style={{
+            display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16,
+            margin: '0 0 28px', paddingBottom: 12, borderBottom: `1px solid ${dahila.border}`,
           }}>
-            {sectionTitle}
-          </h2>
+            <h2 style={{
+              fontFamily: dahila.fontDisplay, fontWeight: 300,
+              fontSize: 22, letterSpacing: '0.08em', textTransform: 'uppercase',
+              color: dahila.ink900, margin: 0,
+            }}>
+              {sectionTitle}
+            </h2>
+            {sameCollection && product.collection?.slug && (
+              <Link href={`/colecciones/${product.collection.slug}`} style={{
+                fontFamily: dahila.fontSans, fontSize: 12, color: dahila.wine600,
+                textDecoration: 'underline', whiteSpace: 'nowrap',
+              }}>
+                Ver toda la colección →
+              </Link>
+            )}
+          </div>
           <div className="tienda-grid" style={{
             display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22, rowGap: 44,
           }}>

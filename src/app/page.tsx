@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import type { Product, Discount, Color } from '@/lib/types'
+import { getCatalog } from '@/lib/catalog'
 import type { Testimonial } from '@/components/TestimonialsStrip'
 import { HomeClient } from './HomeClient'
+import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
 import { SITE_URL } from '@/lib/env'
 
 export const revalidate = 3600
@@ -9,43 +10,25 @@ export const revalidate = 3600
 export default async function Home() {
   const supabase = await createClient()
 
-  const [settingsRes, productsRes, newestRes, discountsRes, testimonialsRes] = await Promise.all([
-    supabase.from('site_settings').select('*'),
-    supabase
-      .from('products')
-      .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*))')
-      .eq('status', 'active')
-      .order('sort_order', { ascending: true })
-      .limit(12),
-    // Sección "Nuevo" de la home: los últimos productos publicados de verdad
-    // (por fecha de alta), no los primeros del orden manual de la tienda.
-    supabase
-      .from('products')
-      .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*))')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(4),
-    supabase.from('discounts').select('*').eq('active', true),
-    Promise.resolve(
-      supabase.from('testimonials').select('*').order('sort_order', { ascending: true })
-    ).catch(() => ({ data: [] })),
-  ])
+  // Catálogo con fallback al snapshot si la DB está caída (ver src/lib/catalog.ts).
+  // Featured y "Nuevo" se derivan de la misma tanda — así la home queda
+  // resiliente sin queries extra que dependan de la base.
+  const catalog = await getCatalog(supabase)
+  const { discounts, settings, source } = catalog
+  const activeProducts = catalog.products.filter((p) => p.status === 'active')
+  const products = activeProducts.slice(0, 12)
+  // Sección "Nuevo": los últimos publicados de verdad (por fecha de alta), no los
+  // primeros del orden manual de la tienda.
+  const newest = [...activeProducts]
+    .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
+    .slice(0, 4)
 
-  const settings = (settingsRes.data ?? []).reduce<Record<string, string>>(
-    (acc, curr) => ({ ...acc, [curr.key]: curr.value }),
-    {}
-  )
-
-  const normalize = (rows: unknown[]) =>
-    rows.map((p) => {
-      const row = p as Product & { colors?: Array<{ color: Color | null }> }
-      const joined = (row.colors ?? []) as Array<{ color: Color | null }>
-      return { ...row, colors: joined.map((c) => c.color).filter((c): c is Color => !!c) }
-    }) as Product[]
-
-  const products = normalize(productsRes.data ?? [])
-  const newest = normalize(newestRes.data ?? [])
-  const discounts = (discountsRes.data ?? []) as Discount[]
+  // Testimonios: opcional y tolerante a DB caída (si falla, queda vacío).
+  const testimonialsRes = await supabase
+    .from('testimonials')
+    .select('*')
+    .order('sort_order', { ascending: true })
+    .then((r) => r, () => ({ data: [] as Testimonial[] }))
   const testimonials = ((testimonialsRes as { data: Testimonial[] | null }).data ?? []) as Testimonial[]
 
   // Bloque "Próximo drop": si apunta a una colección, el link solo se pasa
@@ -121,6 +104,7 @@ export default async function Home() {
 
   return (
     <>
+      {source === 'snapshot' && <CatalogReadOnlyBanner waUrl={waUrl} />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}

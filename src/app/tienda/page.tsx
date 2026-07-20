@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import type { Product, Category, Color, Discount } from '@/lib/types'
+import { getCatalog } from '@/lib/catalog'
 import { getPrimaryPhoto, getFinalPrice } from '@/lib/types'
 import { SITE_URL } from '@/lib/env'
 import { TiendaClient } from './TiendaClient'
+import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
 import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 3600
@@ -30,33 +31,15 @@ export default async function TiendaPage({
   const categoryFilter = typeof params.cat === 'string' ? params.cat : ''
   const searchQuery = typeof params.q === 'string' ? params.q : ''
   const colorParam = typeof params.color === 'string' ? params.color : ''
+  const sizeParam = typeof params.talle === 'string' ? params.talle : ''
   const maxParam = typeof params.max === 'string' ? params.max : ''
   const sortParam = typeof params.sort === 'string' ? params.sort : ''
   const onlyOffers = params.oferta === '1'
+  const hideOutOfStock = params.disp === '1'
 
-  const [categoriesRes, productsRes, colorsRes, discountsRes] = await Promise.all([
-    supabase.from('categories').select('*').order('sort_order', { ascending: true }),
-    supabase
-      .from('products')
-      .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*))')
-      .in('status', ['active', 'soldout'])
-      .order('sort_order', { ascending: true }),
-    supabase.from('colors').select('*').order('sort_order', { ascending: true }),
-    supabase.from('discounts').select('*').eq('active', true),
-  ])
-
-  const categories = (categoriesRes.data ?? []) as Category[]
-  const colors = (colorsRes.data ?? []) as Color[]
-  const discounts = (discountsRes.data ?? []) as Discount[]
-
-  // Flatten the joined product_colors → Color[] for each product.
-  const products = (productsRes.data ?? []).map((p) => {
-    const joined = (p.colors ?? []) as Array<{ color: Color | null }>
-    return {
-      ...p,
-      colors: joined.map((c) => c.color).filter((c): c is Color => !!c),
-    }
-  }) as Product[]
+  // Catálogo con fallback al snapshot estático si la DB está caída (402 de
+  // cuota) — el sitio sigue navegable en modo lectura en vez de quedar vacío.
+  const { products, categories, colors, discounts, source } = await getCatalog(supabase)
 
   // CollectionPage + ItemList JSON-LD — describes /tienda as a product listing
   // and lets Google show it as a carousel. Limited to the first 24 items.
@@ -108,8 +91,9 @@ export default async function TiendaPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
       />
+    {source === 'snapshot' && <CatalogReadOnlyBanner />}
     <TiendaClient
-      key={`${categoryFilter}|${searchQuery}|${colorParam}|${maxParam}|${sortParam}|${onlyOffers}`}
+      key={`${categoryFilter}|${searchQuery}|${colorParam}|${sizeParam}|${maxParam}|${sortParam}|${onlyOffers}|${hideOutOfStock}`}
       initialProducts={products}
       categories={categories}
       colors={colors}
@@ -117,9 +101,11 @@ export default async function TiendaPage({
       initialFilter={categoryFilter}
       initialSearch={searchQuery}
       initialColor={colorParam}
+      initialSize={sizeParam}
       initialMax={maxParam}
       initialSort={sortParam}
       initialOnlyOffers={onlyOffers}
+      initialHideOutOfStock={hideOutOfStock}
     />
     </>
   )

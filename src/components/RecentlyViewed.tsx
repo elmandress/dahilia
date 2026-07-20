@@ -5,28 +5,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { dahila } from './ui/Primitives'
 import { BLUR_DATA_URL } from '@/lib/types'
+import { recordRecentlyViewed, type RecentItem } from '@/lib/recentlyViewed'
 
-export interface RecentItem {
-  slug: string
-  name: string
-  photo: string
-  price: number
-}
-
-const KEY = 'dahila_recently_viewed'
-const MAX = 8
-
-/** Read the recently-viewed list from localStorage (safe on SSR/private mode). */
-function readRecent(): RecentItem[] {
-  try {
-    const raw = localStorage.getItem(KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
+export type { RecentItem }
 
 /**
  * Records the current product into the recently-viewed list and renders the
@@ -41,9 +22,7 @@ export function RecentlyViewed({ current }: { current: RecentItem }) {
     // effect. It runs once per product (current.slug) and reads an external
     // store, which is exactly what effects are for — the cascading-render the
     // lint rule guards against doesn't apply here.
-    const prev = readRecent()
-    const next = [current, ...prev.filter((p) => p.slug !== current.slug)].slice(0, MAX)
-    try { localStorage.setItem(KEY, JSON.stringify(next)) } catch {}
+    const next = recordRecentlyViewed(current)
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setItems(next.filter((p) => p.slug !== current.slug))
   }, [current])

@@ -1,0 +1,21 @@
+name: Resumen diario por mail
+
+# El endpoint /api/cron/daily-summary existe hace rato pero nunca tuvo quién
+# lo llame (ver comentario en src/app/api/cron/daily-summary/route.ts). Esto
+# le pega todos los días — necesita el secret CRON_SECRET configurado acá
+# (Settings → Secrets and variables → Actions) con el MISMO valor que la
+# variable de entorno CRON_SECRET en Netlify.
+on:
+  schedule:
+    # 12:00 UTC = 09:00 en Uruguay (UTC-3, sin horario de verano).
+    - cron: '0 12 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping-daily-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pedir el resumen diario
+        run: |
+          curl -sf -X GET "https://dahila.uy/api/cron/daily-summary" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
