@@ -5,6 +5,7 @@ import { getPrimaryPhoto, getFinalPrice } from '@/lib/types'
 import { SITE_URL } from '@/lib/env'
 import { TiendaClient } from './TiendaClient'
 import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
+import { MaintenanceScreen } from '@/components/MaintenanceScreen'
 import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 3600
@@ -40,6 +41,11 @@ export default async function TiendaPage({
   // Catálogo con fallback al snapshot estático si la DB está caída (402 de
   // cuota) — el sitio sigue navegable en modo lectura en vez de quedar vacío.
   const { products, categories, colors, discounts, source } = await getCatalog(supabase)
+
+  // DB caída y sin snapshot que mostrar → cartel de mantenimiento a pantalla
+  // completa (no una tienda vacía). Corre en el render del servidor, así que
+  // funciona en producción aunque el proxy no se active en el build.
+  if (source === 'snapshot' && products.length === 0) return <MaintenanceScreen />
 
   // CollectionPage + ItemList JSON-LD — describes /tienda as a product listing
   // and lets Google show it as a carousel. Limited to the first 24 items.

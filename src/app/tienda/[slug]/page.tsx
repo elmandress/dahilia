@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createBrowserClient } from '@/lib/supabase/client'
-import { notFound } from 'next/navigation'
+import { notFound, unstable_rethrow } from 'next/navigation'
 import type { Metadata } from 'next'
 import type { Product, Category, Discount } from '@/lib/types'
 import { getPrimaryPhoto, getFinalPrice, resolveDiscountPercent } from '@/lib/types'
 import { getCatalog, getProductBySlug, getSnapshotData } from '@/lib/catalog'
 import { ProductDetailsClient } from './ProductDetailsClient'
 import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
+import { MaintenanceScreen } from '@/components/MaintenanceScreen'
 import { getEncargosCuposState } from '@/components/EncargosDisponibles'
 import { TiendaClient } from '../TiendaClient'
 import { SITE_URL } from '@/lib/env'
@@ -24,36 +24,34 @@ export const revalidate = 3600
  * Resolution order: check categories first (fast, few rows), then products.
  * If neither matches → 404.
  */
-async function resolveSlug(slug: string) {
+type ResolvedSlug = { type: 'category'; category: Category } | { type: 'product' } | 'down' | null
+
+async function resolveSlug(slug: string): Promise<ResolvedSlug> {
   const supabase = await createClient()
-  const [catRes, prodRes] = await Promise.all([
-    supabase.from('categories').select('*').eq('slug', slug).maybeSingle(),
-    supabase.from('products').select('slug, status').eq('slug', slug).maybeSingle(),
-  ])
-  // DB caída: resolver el slug contra el snapshot para que la tienda siga
-  // navegable en modo lectura (si no, cada URL daría 404).
-  if (catRes.error || prodRes.error) {
+  try {
+    const [catRes, prodRes] = await Promise.all([
+      supabase.from('categories').select('*').eq('slug', slug).maybeSingle(),
+      supabase.from('products').select('slug, status').eq('slug', slug).maybeSingle(),
+    ])
+    // Un 402 de cuota puede volver como {error} o como excepción — cubrimos las
+    // dos: cualquier señal de fallo cae al snapshot.
+    if (catRes.error || prodRes.error) throw new Error('db-down')
+    if (catRes.data) return { type: 'category', category: catRes.data as Category }
+    if (prodRes.data) return { type: 'product' }
+    return null
+  } catch (e) {
+    // Dejar pasar los errores de control de Next (bailout dinámico, notFound…);
+    // solo el fallo de DB cae al snapshot.
+    unstable_rethrow(e)
+    // DB caída: resolver contra el snapshot para que la tienda siga navegable
+    // (si no, cada URL daría 404), o mostrar mantenimiento si no hay snapshot.
     const snap = getSnapshotData()
     const cat = snap.categories.find((c) => c.slug === slug)
-    if (cat) return { type: 'category' as const, category: cat }
-    if (snap.products.some((p) => p.slug === slug)) return { type: 'product' as const }
+    if (cat) return { type: 'category', category: cat }
+    if (snap.products.some((p) => p.slug === slug)) return { type: 'product' }
+    if (snap.products.length === 0) return 'down'
     return null
   }
-  if (catRes.data) return { type: 'category' as const, category: catRes.data as Category }
-  if (prodRes.data) return { type: 'product' as const }
-  return null
-}
-
-export async function generateStaticParams() {
-  const supabase = createBrowserClient()
-  const [{ data: cats }, { data: prods }] = await Promise.all([
-    supabase.from('categories').select('slug'),
-    supabase.from('products').select('slug').in('status', ['active', 'soldout']),
-  ])
-  return [
-    ...(cats ?? []).map((c) => ({ slug: c.slug })),
-    ...(prods ?? []).map((p) => ({ slug: p.slug })),
-  ]
 }
 
 export async function generateMetadata({
@@ -64,15 +62,19 @@ export async function generateMetadata({
   const { slug } = await params
   const supabase = await createClient()
 
-  // Try category first (con fallback al snapshot si la DB está caída).
-  const { data: catData, error: catErr } = await supabase
-    .from('categories')
-    .select('name, description')
-    .eq('slug', slug)
-    .maybeSingle()
-
-  let cat = catData as { name: string; description: string | null } | null
-  if (catErr) {
+  // Try category first (con fallback al snapshot si la DB está caída — el 402
+  // de cuota puede volver como {error} o como excepción, así que try/catch).
+  let cat: { name: string; description: string | null } | null = null
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('name, description')
+      .eq('slug', slug)
+      .maybeSingle()
+    if (error) throw error
+    cat = data as { name: string; description: string | null } | null
+  } catch (e) {
+    unstable_rethrow(e)
     const snapCat = getSnapshotData().categories.find((c) => c.slug === slug)
     cat = snapCat ? { name: snapCat.name, description: snapCat.description } : null
   }
@@ -112,14 +114,19 @@ export async function generateMetadata({
   }
 
   // Try product (con fallback al snapshot si la DB está caída).
-  const { data, error: prodErr } = await supabase
-    .from('products')
-    .select('*, media:product_media(*)')
-    .eq('slug', slug)
-    .maybeSingle()
-
-  let product = data as Product | null
-  if (prodErr) product = getSnapshotData().products.find((p) => p.slug === slug) ?? null
+  let product: Product | null = null
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*, media:product_media(*)')
+      .eq('slug', slug)
+      .maybeSingle()
+    if (error) throw error
+    product = data as Product | null
+  } catch (e) {
+    unstable_rethrow(e)
+    product = getSnapshotData().products.find((p) => p.slug === slug) ?? null
+  }
   if (!product) return { title: 'Producto no encontrado', robots: { index: false, follow: false } }
 
   // CTR de la ficha: el title lleva el diferencial ("tejido a mano, a tu
@@ -479,6 +486,8 @@ export default async function TiendaSlugPage({
   await searchParams // consumed by TiendaClient via URL state
 
   const resolved = await resolveSlug(slug)
+  // DB caída y sin snapshot → cartel de mantenimiento, no un 404.
+  if (resolved === 'down') return <MaintenanceScreen />
   if (!resolved) notFound()
 
   if (resolved.type === 'category') {

@@ -3,6 +3,7 @@ import { getCatalog } from '@/lib/catalog'
 import type { Testimonial } from '@/components/TestimonialsStrip'
 import { HomeClient } from './HomeClient'
 import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
+import { MaintenanceScreen } from '@/components/MaintenanceScreen'
 import { SITE_URL } from '@/lib/env'
 
 export const revalidate = 3600
@@ -15,6 +16,10 @@ export default async function Home() {
   // resiliente sin queries extra que dependan de la base.
   const catalog = await getCatalog(supabase)
   const { discounts, settings, source } = catalog
+
+  // DB caída y sin snapshot → cartel de mantenimiento (no una home vacía).
+  if (source === 'snapshot' && catalog.products.length === 0) return <MaintenanceScreen />
+
   const activeProducts = catalog.products.filter((p) => p.status === 'active')
   const products = activeProducts.slice(0, 12)
   // Sección "Nuevo": los últimos publicados de verdad (por fecha de alta), no los

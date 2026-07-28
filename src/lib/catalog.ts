@@ -12,6 +12,7 @@
 // mantenimiento full-screen en lugar del catálogo.
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { unstable_rethrow } from 'next/navigation'
 import type { Product, Category, Color, Discount } from '@/lib/types'
 import snapshot from '@/lib/catalog-snapshot.json'
 
@@ -116,7 +117,8 @@ export async function getCatalog(supabase: SupabaseClient): Promise<Catalog> {
       settings,
       source: 'live',
     }
-  } catch {
+  } catch (e) {
+    unstable_rethrow(e) // no tragar el bailout dinámico / notFound de Next
     return snapshotCatalog()
   }
 }
@@ -142,7 +144,8 @@ export async function getProductBySlug(
     }
     if (!data) return { product: null, source: 'live' }
     return { product: normalizeProducts([data])[0], source: 'live' }
-  } catch {
+  } catch (e) {
+    unstable_rethrow(e) // no tragar el bailout dinámico / notFound de Next
     const fromSnap = SNAPSHOT.products.find((p) => p.slug === slug) ?? null
     return { product: fromSnap, source: 'snapshot' }
   }
