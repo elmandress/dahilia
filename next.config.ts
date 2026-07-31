@@ -45,6 +45,19 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['@supabase/supabase-js', '@supabase/ssr'],
   },
   images: {
+    // TTL del optimizador de imágenes. Next 16 usa el MAYOR entre esto y el
+    // Cache-Control del origen (docs: image#minimumcachettl) — así que esto
+    // es un piso: aunque una foto vieja en Supabase Storage todavía tenga el
+    // cache-control corto de 1 hora con el que se subió (antes de media.ts),
+    // el optimizador de Netlify no vuelve a pedirle el original a Supabase
+    // por un año. Mismo valor que STORAGE_CACHE_SECONDS en lib/media.ts.
+    // Seguro por construcción: los objetos son inmutables (sufijo aleatorio +
+    // upsert:false), así que nunca hay que invalidar una URL ya cacheada.
+    // Esto es la causa más probable del reventón de Cached Egress de jul/2026:
+    // 8 deviceSizes × 5 imageSizes × 2 formatos por foto, cada variante
+    // re-descargando el original completo de Supabase cada vez que el caché
+    // (antes: 4h por default de Next 16, o 1h si el objeto lo pedía) vencía.
+    minimumCacheTTL: 31536000,
     // Allowlisted quality levels (Next 16 requires this when using the
     // `quality` prop). 82 cards · 90 detail · 95 hero · 100 lightbox.
     qualities: [82, 90, 95, 100],
