@@ -160,6 +160,20 @@
 
 .admin-content {
   flex: 1;
+  /* Trampa clásica de flexbox: un ítem flex NO se achica más allá del ancho
+     mínimo intrínseco de su contenido (min-width:auto por default). Si
+     CUALQUIER elemento en CUALQUIER página del admin no puede achicarse (una
+     fila sin wrap, una palabra larga, una tabla sin su propio scroll), esta
+     columna entera se estira más ancha que la pantalla — y como el sitio
+     público usa `overflow-x: clip` en el root (globals.css, a propósito),
+     ese sobrante queda cortado y ES IMPOSIBLE de scrollear: exactamente el
+     "se ve a la mitad y no se puede mover" reportado en casi todas las
+     páginas del admin en mobile. `min-width: 0` fuerza a esta columna a
+     respetar el viewport SIEMPRE, y empuja el problema de vuelta a cada
+     elemento hijo (que ya tiene overflow-x:auto donde corresponde, p.ej.
+     .admin-table-wrap, o simplemente debe wrappear su propio texto).
+  */
+  min-width: 0;
   margin-left: 260px;
   padding: 2rem;
   min-height: 100vh;
