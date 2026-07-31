@@ -5,6 +5,23 @@ import { botImageUrl } from '@/lib/media'
 
 export const revalidate = 3600
 
+// Next serializa el sitemap con interpolación de string cruda (ver
+// node_modules/next/dist/build/webpack/loaders/metadata/resolve-route-data.js
+// → resolveSitemap: `<image:loc>${image}</image:loc>` sin escapar) — no es
+// un helper que decida por nosotros, así que el `&` de las URLs de
+// botImageUrl (?url=...&w=...&q=...) rompe el XML ("EntityRef: expecting
+// ';'" en cualquier validador). Se escapa acá, en el único lugar del código
+// donde una URL dinámica entra a XML crudo — el resto de los usos de
+// botImageUrl van a JSON-LD/HTML, que ya escapan solos.
+function xmlEscape(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+}
+
 /**
  * Dynamic sitemap — auto-updates whenever products, categories, or collections
  * are added or modified. No manual maintenance needed.
@@ -75,7 +92,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Category pages — /tienda/[cat] — high priority, these are the main
     // landing pages Google indexes for queries like "cardigans crochet uruguay".
     const categoryRoutes: MetadataRoute.Sitemap = (categoriesRes.data ?? []).map((c) => ({
-      url: `${SITE_URL}/tienda/${c.slug}`,
+      url: xmlEscape(`${SITE_URL}/tienda/${c.slug}`),
       // lastmod solo cuando hay fecha real (mismo criterio que arriba).
       ...(c.updated_at ? { lastModified: new Date(c.updated_at) } : {}),
       changeFrequency: 'weekly' as const,
@@ -91,14 +108,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const photo = primary?.url
 
       return {
-        url: `${SITE_URL}/tienda/${p.slug}`,
+        url: xmlEscape(`${SITE_URL}/tienda/${p.slug}`),
         ...(p.updated_at ? { lastModified: new Date(p.updated_at) } : {}),
         changeFrequency: 'weekly' as const,
         priority: p.status === 'active' ? 0.8 : 0.7,
         // Vía /_next/image: el image-sitemap mandaba a Googlebot-Image al
         // original de varios MB en supabase.co (egress). Ahora baja ~100 KB
         // desde dahila.uy, cacheado por Netlify.
-        ...(photo ? { images: [botImageUrl(SITE_URL, photo)] } : {}),
+        ...(photo ? { images: [xmlEscape(botImageUrl(SITE_URL, photo))] } : {}),
       }
     })
 
@@ -112,7 +129,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const collectionRoutes: MetadataRoute.Sitemap = collectionsData
       .filter((c) => !c.unlisted)
       .map((c) => ({
-        url: `${SITE_URL}/colecciones/${c.slug}`,
+        url: xmlEscape(`${SITE_URL}/colecciones/${c.slug}`),
         ...(c.updated_at ? { lastModified: new Date(c.updated_at) } : {}),
         changeFrequency: 'weekly' as const,
         priority: 0.75,
