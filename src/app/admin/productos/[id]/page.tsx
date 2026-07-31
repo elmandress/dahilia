@@ -909,7 +909,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {sizes.map((s) => (
-                    <div key={s.tempId} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div key={s.tempId} className="admin-size-row" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <input
                         type="text"
                         value={s.size}
