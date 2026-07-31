@@ -380,8 +380,8 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
 
               <div className="cart-row-controls" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <div style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  border: `1px solid ${dahila.borderStrong}`, borderRadius: 999, padding: '6px 12px'
+                  display: 'flex', alignItems: 'center', gap: 2,
+                  border: `1px solid ${dahila.borderStrong}`, borderRadius: 999, padding: '0 2px'
                 }}>
                   <button
                     onClick={() => updateQty(item.id, item.qty - 1)}
@@ -391,11 +391,12 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                       background: 'transparent', border: 'none', padding: 0,
                       cursor: item.qty <= 1 ? 'default' : 'pointer',
                       color: item.qty <= 1 ? dahila.ink300 : dahila.ink900,
-                      width: 30, height: 30, minWidth: 30, minHeight: 30,
+                      // 44px: mínimo de touch target táctil (WCAG/Apple/Google) — antes 30px.
+                      width: 44, height: 44, minWidth: 44, minHeight: 44,
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   ><Icon name="minus" size={12} /></button>
-                  <span style={{ fontFamily: dahila.fontSans, fontSize: 14, minWidth: 14, textAlign: 'center' }}>{item.qty}</span>
+                  <span style={{ fontFamily: dahila.fontSans, fontSize: 14, minWidth: 16, textAlign: 'center' }}>{item.qty}</span>
                   <button
                     onClick={() => updateQty(item.id, item.qty + 1)}
                     aria-label="Sumar uno"
@@ -404,7 +405,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                       background: 'transparent', border: 'none', padding: 0,
                       cursor: item.qty >= 20 ? 'default' : 'pointer',
                       color: item.qty >= 20 ? dahila.ink300 : dahila.ink900,
-                      width: 30, height: 30, minWidth: 30, minHeight: 30,
+                      width: 44, height: 44, minWidth: 44, minHeight: 44,
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   ><Icon name="plus" size={12} /></button>

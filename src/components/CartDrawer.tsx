@@ -191,20 +191,20 @@ export function CartDrawer() {
 
                       {/* Qty + remove */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, border: `1px solid ${dahila.borderStrong}`, borderRadius: 999, padding: '4px 10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 2, border: `1px solid ${dahila.borderStrong}`, borderRadius: 999, padding: '0 2px' }}>
                           <button
                             onClick={() => updateQty(item.id, item.qty - 1)}
                             aria-label="Restar uno"
                             disabled={item.qty <= 1}
                             style={{ ...qtyBtn, cursor: item.qty <= 1 ? 'default' : 'pointer', color: item.qty <= 1 ? dahila.ink300 : dahila.ink900 }}
-                          ><Icon name="minus" size={11} /></button>
-                          <span style={{ fontFamily: dahila.fontSans, fontSize: 13, minWidth: 12, textAlign: 'center' }}>{item.qty}</span>
+                          ><Icon name="minus" size={12} /></button>
+                          <span style={{ fontFamily: dahila.fontSans, fontSize: 13, minWidth: 16, textAlign: 'center' }}>{item.qty}</span>
                           <button
                             onClick={() => updateQty(item.id, item.qty + 1)}
                             aria-label="Sumar uno"
                             disabled={item.qty >= 20}
                             style={{ ...qtyBtn, cursor: item.qty >= 20 ? 'default' : 'pointer', color: item.qty >= 20 ? dahila.ink300 : dahila.ink900 }}
-                          ><Icon name="plus" size={11} /></button>
+                          ><Icon name="plus" size={12} /></button>
                         </div>
                         <button onClick={() => removeFromCart(item.id)} aria-label="Quitar" style={{
                           background: 'transparent', border: 'none', cursor: 'pointer',
@@ -325,8 +325,10 @@ export function CartDrawer() {
   )
 }
 
+// 44px: mínimo de touch target táctil (WCAG/Apple/Google) — antes 30px,
+// demasiado chico para tocar con precisión en el drawer del carrito.
 const qtyBtn: React.CSSProperties = {
   background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink900,
-  padding: 0, width: 30, height: 30, minWidth: 30, minHeight: 30,
+  padding: 0, width: 44, height: 44, minWidth: 44, minHeight: 44,
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
 }

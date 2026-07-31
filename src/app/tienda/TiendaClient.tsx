@@ -8,7 +8,7 @@ import Image from 'next/image'
 import type { Product, Category, Color, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
 import { getFinalPrice, BLUR_DATA_URL } from '@/lib/types'
-import { dahila, Eyebrow, Chip, Icon, Breadcrumb } from '@/components/ui/Primitives'
+import { dahila, Eyebrow, Chip, Icon, Breadcrumb, Button } from '@/components/ui/Primitives'
 import { track } from '@/lib/analytics'
 import { readRecentlyViewed, type RecentItem } from '@/lib/recentlyViewed'
 
@@ -682,6 +682,11 @@ export function TiendaClient({
               ? 'Estoy preparando la próxima edición. Mientras tanto, podés pedir una prenda a medida.'
               : 'Probá ampliando el precio o sacando algún filtro.'}
           </p>
+          {initialProducts.length === 0 ? (
+            <Button href="/encargo" style={{ marginTop: 8 }}>Pedir a medida</Button>
+          ) : (
+            <Button variant="secondary" onClick={clearAll} style={{ marginTop: 8 }}>Limpiar filtros</Button>
+          )}
         </div>
       ) : (
         <div className="tienda-grid" style={{
