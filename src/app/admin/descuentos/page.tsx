@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Discount, Category, Product } from '@/lib/types'
+import { notifySiteWideChange } from '@/lib/seo-notify'
 
 type DiscountedProduct = Pick<Product, 'id' | 'name' | 'status' | 'discount_percent' | 'discount_active'>
 
@@ -66,6 +67,9 @@ export default function DescuentosAdminPage() {
         active: true,
       })
       if (err) throw err
+      // El precio con descuento se muestra en /tienda, /ofertas, /carrito y
+      // la home — sin esto, siguen mostrando el precio viejo hasta 1h.
+      notifySiteWideChange()
       setLabel('')
       setPercent('10')
       setScope('all')
@@ -83,6 +87,7 @@ export default function DescuentosAdminPage() {
       const supabase = createClient()
       const { error: err } = await supabase.from('discounts').update({ active: !d.active }).eq('id', d.id)
       if (err) throw err
+      notifySiteWideChange()
       setDiscounts((curr) => curr.map((x) => (x.id === d.id ? { ...x, active: !x.active } : x)))
     } catch (e) {
       console.error('Error actualizando descuento', e)
@@ -97,6 +102,7 @@ export default function DescuentosAdminPage() {
       const supabase = createClient()
       const { error: err } = await supabase.from('discounts').delete().eq('id', id)
       if (err) throw err
+      notifySiteWideChange()
       setDiscounts((curr) => curr.filter((x) => x.id !== id))
     } catch (e) {
       console.error('Error eliminando descuento', e)

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { slugify, mediaPath, prepareImageForUpload, STORAGE_CACHE_SECONDS } from '@/lib/media'
 import type { Collection } from '@/lib/types'
+import { notifySiteWideChange } from '@/lib/seo-notify'
 
 // Estados del ciclo de un drop (ver database/drops-2026-07.sql). El estado es
 // la vista amigable de las 3 columnas booleanas.
@@ -127,6 +128,9 @@ export default function ColeccionesAdminPage() {
         ? await supabase.from('collections').update({ ...row, updated_at: new Date().toISOString() }).eq('id', editingId)
         : await supabase.from('collections').insert([{ ...row, sort_order: collections.length + 1 }])
       if (err) throw err
+      // /colecciones y /colecciones/[slug] son estáticas — sin esto, una
+      // colección nueva o editada tarda hasta 5min-1h en verse.
+      notifySiteWideChange()
       await load()
       resetForm()
     } catch (e) {
@@ -141,6 +145,7 @@ export default function ColeccionesAdminPage() {
       const supabase = createClient()
       const { error: err } = await supabase.from('collections').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', id)
       if (err) throw err
+      notifySiteWideChange()
       await load()
     } catch (e) {
       console.error(e)
@@ -155,6 +160,7 @@ export default function ColeccionesAdminPage() {
       const supabase = createClient()
       const { error: err } = await supabase.from('collections').delete().eq('id', id)
       if (err) throw err
+      notifySiteWideChange()
       if (editingId === id) resetForm()
       await load()
     } catch (e) {

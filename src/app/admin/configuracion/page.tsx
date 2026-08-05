@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { mediaPath, prepareImageForUpload, STORAGE_CACHE_SECONDS } from '@/lib/media'
+import { notifySiteWideChange } from '@/lib/seo-notify'
 
 // All keys the CMS surfaces. The DB may contain extras (e.g. legacy)
 // — we preserve them on save by passing through whatever loaded.
@@ -481,6 +482,10 @@ export default function ConfiguracionAdminPage() {
         .upsert(updates, { onConflict: 'key' })
 
       if (err) throw err
+      // Header, footer, banner de promo, contacto — se leen en el layout
+      // raíz que ahora comparten TODAS las páginas cacheadas. Sin esto, lo
+      // que acabás de guardar tarda hasta 1h en verse en el sitio.
+      notifySiteWideChange()
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
     } catch (e) {
