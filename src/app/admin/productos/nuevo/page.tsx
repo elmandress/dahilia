@@ -347,9 +347,10 @@ export default function NuevoProductoPage() {
         if (colorError) throw new Error(`No se guardaron los colores: ${colorError.message}`)
       }
 
-      // Producto nuevo y visible → avisale a Bing/Yandex ya mismo en vez de
+      // Producto nuevo y visible → invalida el caché de esas páginas (si no,
+      // hasta 1h de desfasaje) y avisale a Bing/Yandex ya mismo en vez de
       // esperar a que vuelvan a rastrear el sitemap por su cuenta.
-      if (status === 'active') notifyReindex([`/tienda/${slug.trim()}`, '/tienda'])
+      if (status === 'active') notifyReindex([`/tienda/${slug.trim()}`, '/tienda', '/'])
 
       setToast('Producto creado exitosamente')
       setTimeout(() => {

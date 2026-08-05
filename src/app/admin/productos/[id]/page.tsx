@@ -471,9 +471,10 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
         if (colorError) throw new Error(`No se guardaron los colores: ${colorError.message}`)
       }
 
-      // Cualquier cambio (nombre, precio, fotos, estado) invalida lo que
-      // Bing/Yandex tienen indexado de esta ficha — avisales ahora.
-      notifyReindex([`/tienda/${slug.trim()}`, '/tienda'])
+      // Cualquier cambio (nombre, precio, fotos, estado): invalida el HTML
+      // cacheado de esta ficha para que se vea al toque (no hasta 1h) y
+      // avisale a Bing/Yandex de paso.
+      notifyReindex([`/tienda/${slug.trim()}`, '/tienda', '/'])
 
       setToast('Producto actualizado exitosamente')
       setTimeout(() => {
@@ -495,8 +496,9 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       const { error: deleteError } = await supabase.from('products').delete().eq('id', productId)
       if (deleteError) throw deleteError
 
-      // La URL ya no existe — que Bing la recrawlee y la saque de su índice.
-      notifyReindex([`/tienda/${slug.trim()}`, '/tienda'])
+      // La URL ya no existe: invalida el caché (si no, sigue sirviendo la
+      // ficha vieja hasta 1h) y que Bing la recrawlee para sacarla de su índice.
+      notifyReindex([`/tienda/${slug.trim()}`, '/tienda', '/'])
 
       setToast('Producto eliminado exitosamente')
       setTimeout(() => {

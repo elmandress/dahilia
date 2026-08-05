@@ -142,8 +142,9 @@ export default function ProductosPage() {
       // Revert on failure.
       setProducts((curr) => curr.map((x) => (x.id === p.id ? { ...x, status: p.status } : x)))
     } else {
-      // Publicar o despublicar cambia si la URL debería estar indexada.
-      notifyReindex([`/tienda/${p.slug}`, '/tienda'])
+      // Publicar o despublicar cambia si la URL debería estar indexada, y
+      // el HTML cacheado tiene que dejar de mostrar el estado viejo ya.
+      notifyReindex([`/tienda/${p.slug}`, '/tienda', '/'])
     }
   }
 
