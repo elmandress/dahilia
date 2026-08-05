@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import type { Collection, Product, Discount, Color } from '@/lib/types'
 import { getFinalPrice } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
@@ -11,6 +11,22 @@ import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 300
+
+// Mismo motivo que tienda/[slug]: sin esto, `params` fuerza dinámico en toda
+// la ruta. Colecciones "unlisted" (acceso anticipado VIP) quedan afuera a
+// propósito — no se pre-generan, y `dynamicParams` (true por default) las
+// sigue sirviendo on-demand para quien tiene el link directo, sin publicarlas.
+export async function generateStaticParams() {
+  const supabase = createClient()
+  // select('*') a propósito, no .eq('unlisted', ...): esa columna depende de
+  // una migración (drops-2026-07.sql) que puede no estar corrida — traer todo
+  // y filtrar acá tolera una DB sin esa columna (mismo criterio que
+  // colecciones/page.tsx y sitemap.ts).
+  const { data } = await supabase.from('collections').select('*')
+  return (data ?? [])
+    .filter((c) => (c as Collection).published && !(c as Collection).unlisted)
+    .map((c) => ({ slug: (c as Collection).slug }))
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import type { Collection } from '@/lib/types'
 import { dahila, Eyebrow } from '@/components/ui/Primitives'
 import { OG_BASE } from '@/lib/og'

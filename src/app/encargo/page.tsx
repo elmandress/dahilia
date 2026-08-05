@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import EncargoForm from './EncargoForm'
 import { getEncargosCuposState } from '@/components/EncargosDisponibles'
 import { OG_BASE } from '@/lib/og'

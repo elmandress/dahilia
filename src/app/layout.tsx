@@ -12,7 +12,7 @@ import { AnalyticsScript } from '@/components/AnalyticsScript'
 import { ClarityScript } from '@/components/ClarityScript'
 import { SITE_URL, SUPABASE_STORAGE_ORIGIN } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import type { Discount } from '@/lib/types'
 import './globals.css'
 

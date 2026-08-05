@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og'
 import sharp from 'sharp'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import { SITE_URL } from '@/lib/env'
 import { botImageUrl } from '@/lib/media'
 

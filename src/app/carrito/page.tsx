@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import CarritoClient from './CarritoClient'
 import type { Product, Color, Discount } from '@/lib/types'
 

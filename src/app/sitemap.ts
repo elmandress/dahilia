@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import { SITE_URL } from '@/lib/env'
 import { botImageUrl } from '@/lib/media'
 
@@ -67,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .order('sort_order', { ascending: true }),
       supabase
         .from('categories')
-        .select('slug, updated_at')
+        .select('slug')
         .order('sort_order', { ascending: true }),
       // select('*') a propósito: filtrar `unlisted` acá exigiría que la columna
       // exista (drops-2026-07.sql); traer todo y filtrar en JS tolera una DB
@@ -91,10 +91,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Category pages — /tienda/[cat] — high priority, these are the main
     // landing pages Google indexes for queries like "cardigans crochet uruguay".
+    // Bug real que estuvo vaciando esto en cada build: la query pedía
+    // `updated_at`, columna que `categories` nunca tuvo (ver database/schema.sql)
+    // — Postgrest devolvía error, `categoriesRes.data` quedaba `null`, y como
+    // nada chequeaba `categoriesRes.error`, el sitemap se armaba igual pero sin
+    // categorías, en silencio. Sin `updated_at` en la tabla no hay lastmod real
+    // que declarar acá (mismo criterio que las rutas estáticas arriba).
     const categoryRoutes: MetadataRoute.Sitemap = (categoriesRes.data ?? []).map((c) => ({
       url: xmlEscape(`${SITE_URL}/tienda/${c.slug}`),
-      // lastmod solo cuando hay fecha real (mismo criterio que arriba).
-      ...(c.updated_at ? { lastModified: new Date(c.updated_at) } : {}),
       changeFrequency: 'weekly' as const,
       priority: 0.85,
     }))

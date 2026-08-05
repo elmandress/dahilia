@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { slugify, mediaPath, prepareImageForUpload, STORAGE_CACHE_SECONDS } from '@/lib/media'
+import { notifyReindex } from '@/lib/seo-notify'
 import { draftDescription } from '@/lib/description-draft'
 import type { Category, Color, Collection, Product, ProductMedia, ProductSize, ProductColor } from '@/lib/types'
 
@@ -470,6 +471,10 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
         if (colorError) throw new Error(`No se guardaron los colores: ${colorError.message}`)
       }
 
+      // Cualquier cambio (nombre, precio, fotos, estado) invalida lo que
+      // Bing/Yandex tienen indexado de esta ficha — avisales ahora.
+      notifyReindex([`/tienda/${slug.trim()}`, '/tienda'])
+
       setToast('Producto actualizado exitosamente')
       setTimeout(() => {
         router.push('/admin/productos')
@@ -489,7 +494,10 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       const supabase = createClient()
       const { error: deleteError } = await supabase.from('products').delete().eq('id', productId)
       if (deleteError) throw deleteError
-      
+
+      // La URL ya no existe — que Bing la recrawlee y la saque de su índice.
+      notifyReindex([`/tienda/${slug.trim()}`, '/tienda'])
+
       setToast('Producto eliminado exitosamente')
       setTimeout(() => {
         router.push('/admin/productos')

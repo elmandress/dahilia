@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import { getCatalog } from '@/lib/catalog'
 import { getPrimaryPhoto, getFinalPrice } from '@/lib/types'
 import { SITE_URL } from '@/lib/env'

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import { FavoritosClient } from './FavoritosClient'
 
 export const revalidate = 3600

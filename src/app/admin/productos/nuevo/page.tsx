@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { slugify, mediaPath, prepareImageForUpload, STORAGE_CACHE_SECONDS } from '@/lib/media'
+import { notifyReindex } from '@/lib/seo-notify'
 import { draftDescription } from '@/lib/description-draft'
 import type { Category, Color, Collection } from '@/lib/types'
 
@@ -345,6 +346,10 @@ export default function NuevoProductoPage() {
         const { error: colorError } = await supabase.from('product_colors').insert(colorInserts)
         if (colorError) throw new Error(`No se guardaron los colores: ${colorError.message}`)
       }
+
+      // Producto nuevo y visible → avisale a Bing/Yandex ya mismo en vez de
+      // esperar a que vuelvan a rastrear el sitemap por su cuenta.
+      if (status === 'active') notifyReindex([`/tienda/${slug.trim()}`, '/tienda'])
 
       setToast('Producto creado exitosamente')
       setTimeout(() => {

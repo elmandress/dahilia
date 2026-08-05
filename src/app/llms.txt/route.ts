@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import { SITE_URL } from '@/lib/env'
 import { formatPrice, getFinalPrice } from '@/lib/types'
 import type { Product, Discount } from '@/lib/types'

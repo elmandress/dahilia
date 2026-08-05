@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Product, Category } from '@/lib/types'
 import { formatPrice, getPrimaryPhoto } from '@/lib/types'
+import { notifyReindex } from '@/lib/seo-notify'
 
 export default function ProductosPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -140,6 +141,9 @@ export default function ProductosPage() {
     if (error) {
       // Revert on failure.
       setProducts((curr) => curr.map((x) => (x.id === p.id ? { ...x, status: p.status } : x)))
+    } else {
+      // Publicar o despublicar cambia si la URL debería estar indexada.
+      notifyReindex([`/tienda/${p.slug}`, '/tienda'])
     }
   }
 

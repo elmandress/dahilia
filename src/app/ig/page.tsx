@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import type { Product, Discount } from '@/lib/types'
 import { getPrimaryPhoto, getFinalPrice, formatPrice, BLUR_DATA_URL } from '@/lib/types'
 import { dahila, Icon } from '@/components/ui/Primitives'

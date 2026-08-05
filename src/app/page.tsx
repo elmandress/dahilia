@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import { getCatalog } from '@/lib/catalog'
 import type { Testimonial } from '@/components/TestimonialsStrip'
 import { HomeClient } from './HomeClient'

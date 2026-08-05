@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import { notFound, unstable_rethrow } from 'next/navigation'
 import type { Metadata } from 'next'
 import type { Product, Category, Discount } from '@/lib/types'
@@ -15,6 +15,27 @@ import { botImageUrl } from '@/lib/media'
 import { COMPLEMENT_PREFS } from '@/lib/complements'
 
 export const revalidate = 3600
+
+// Sin esto, Next trata `params` como una Request-time API (como cookies() o
+// searchParams) y renderiza la ruta entera en modo dinámico — cada visita
+// vuelve a pegarle a Supabase en vez de servir HTML cacheado. Con la lista
+// de slugs acá, el build pre-renderiza cada ficha y categoría como HTML
+// estático servido por el CDN de Netlify, y se revalida solo cada hora
+// (`revalidate` arriba). Un producto nuevo que no estaba en el build igual
+// funciona: `dynamicParams` es `true` por default, así que la primera visita
+// lo renderiza on-demand y lo cachea para las siguientes — no hace falta
+// redeployar para que un producto nuevo tenga página.
+export async function generateStaticParams() {
+  const supabase = createClient()
+  const [{ data: categories }, { data: products }] = await Promise.all([
+    supabase.from('categories').select('slug'),
+    supabase.from('products').select('slug').in('status', ['active', 'soldout']),
+  ])
+  return [
+    ...(categories ?? []).map((c) => ({ slug: c.slug })),
+    ...(products ?? []).map((p) => ({ slug: p.slug })),
+  ]
+}
 
 /**
  * This single dynamic segment handles two URL shapes:
@@ -477,14 +498,14 @@ async function ProductPage({ slug }: { slug: string }) {
 
 export default async function TiendaSlugPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const { slug } = await params
-  await searchParams // consumed by TiendaClient via URL state
-
+  // Nada acá lee `searchParams` (TiendaClient maneja los filtros con su
+  // propio estado de URL en el cliente) — no declarar el prop es lo que
+  // permite que esta página vuelva a ser ISR en vez de forzar dinámico en
+  // cada visita (ver supabase/public.ts para el resto del mismo fix).
   const resolved = await resolveSlug(slug)
   // DB caída y sin snapshot → cartel de mantenimiento, no un 404.
   if (resolved === 'down') return <MaintenanceScreen />

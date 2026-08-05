@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import type { Product, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
 

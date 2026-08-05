@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/public'
 import ContactoClient from './ContactoClient'
 import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
