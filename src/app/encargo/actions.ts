@@ -3,6 +3,7 @@
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { notifyNewEncargo, reportSystemError } from '@/lib/email'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export interface EncargoSubmission {
   ok: boolean
@@ -19,34 +20,8 @@ function makeTrackingCode(): string {
   return `DAH-${s.slice(0, 3)}${s.slice(3)}`
 }
 
-// Crude in-process rate limiter. Survives within a single server instance only;
-// good enough to stop honest mistakes (form spamming on submit) but not a distributed
-// attack — that needs a Redis/Upstash bucket. Acceptable for current scale.
-const submissionLog = new Map<string, number[]>()
 const RATE_WINDOW_MS = 60_000 // 1 minute
-const RATE_MAX = 3            // 3 submissions per minute per IP+email
-
-function getClientIp(h: Headers): string {
-  const fwd = h.get('x-forwarded-for')
-  if (fwd) return fwd.split(',')[0].trim()
-  return h.get('x-real-ip') || 'unknown'
-}
-
-function checkRateLimit(key: string): boolean {
-  const now = Date.now()
-  const window = submissionLog.get(key) || []
-  const recent = window.filter((t) => now - t < RATE_WINDOW_MS)
-  if (recent.length >= RATE_MAX) return false
-  recent.push(now)
-  submissionLog.set(key, recent)
-  // Best-effort cleanup
-  if (submissionLog.size > 1000) {
-    for (const [k, ts] of submissionLog) {
-      if (ts.every((t) => now - t > RATE_WINDOW_MS)) submissionLog.delete(k)
-    }
-  }
-  return true
-}
+const RATE_MAX = 3            // 3 submissions per minute por IP+email
 
 const MAX = {
   name: 80,
@@ -96,6 +71,12 @@ export async function submitEncargo(form: FormData): Promise<EncargoSubmission> 
   const tipo = clean(form.get('tipo'), MAX.tipo)
   const talle = clean(form.get('talle'), MAX.talle)
   const message = clean(form.get('message'), MAX.message)
+  // Atribución de canal — opcional, capturada en el navegador (ver
+  // src/lib/attribution.ts). Nunca bloquea el envío del encargo.
+  const utmSource = clean(form.get('utm_source'), 100) || null
+  const utmMedium = clean(form.get('utm_medium'), 100) || null
+  const utmCampaign = clean(form.get('utm_campaign'), 100) || null
+  const referrerHost = clean(form.get('referrer_host'), 200) || null
 
   if (name.length < 2) return { ok: false, error: 'El nombre es requerido.' }
   // Contact: email OR WhatsApp (at least one). Many clients only use WhatsApp,
@@ -117,7 +98,7 @@ export async function submitEncargo(form: FormData): Promise<EncargoSubmission> 
 
   const h = await headers()
   const ip = getClientIp(h)
-  if (!checkRateLimit(`${ip}|${email || whatsapp || 'anon'}`)) {
+  if (!checkRateLimit(`encargo:${ip}|${email || whatsapp || 'anon'}`, { windowMs: RATE_WINDOW_MS, max: RATE_MAX })) {
     return { ok: false, error: 'Demasiados envíos seguidos. Esperá un minuto y volvé a intentar.' }
   }
 
@@ -133,11 +114,16 @@ export async function submitEncargo(form: FormData): Promise<EncargoSubmission> 
       message: message || null,
       status: 'new',
       tracking_code: code,
+      utm_source: utmSource,
+      utm_medium: utmMedium,
+      utm_campaign: utmCampaign,
+      referrer_host: referrerHost,
     })
     if (error) {
-      // If the tracking_code column doesn't exist yet (migration not run), retry
-      // without it so the encargo still saves — the customer just won't get a code.
-      const missingColumn = typeof error.message === 'string' && /tracking_code/.test(error.message)
+      // Si falta tracking_code y/o las columnas de atribución (migración no
+      // corrida), reintentamos sin lo que falte — el encargo se guarda igual.
+      const missingColumn = typeof error.message === 'string'
+        && /tracking_code|utm_source|utm_medium|utm_campaign|referrer_host/.test(error.message)
       if (missingColumn) {
         const retry = await supabase.from('custom_orders').insert({
           customer_name: name, customer_email: email, whatsapp: whatsapp || null,
@@ -177,9 +163,25 @@ export interface EncargoStatusResult {
 
 // Public status lookup by tracking code. Uses the SECURITY DEFINER RPC
 // (get_order_status) so the anon client only ever sees the safe fields.
+//
+// Seguridad (auditoría 2026-08): a diferencia de submitEncargo (arriba), esta
+// función no tenía ningún límite de intentos — permitía scriptear la
+// enumeración de tracking codes (nombre de pila + estado por cada código
+// adivinado). El espacio de códigos es grande (32^6), así que fuerza bruta
+// completa no es práctica, pero igual cerramos el agujero: mismo límite que
+// el resto de los formularios públicos de este archivo.
+const LOOKUP_RATE_WINDOW_MS = 60_000
+const LOOKUP_RATE_MAX = 10
+
 export async function lookupEncargo(rawCode: string): Promise<EncargoStatusResult> {
   const code = clean(rawCode, 16).toUpperCase()
   if (code.length < 6) return { found: false, error: 'Ingresá un código válido (ej. DAH-AB2CDE).' }
+
+  const h = await headers()
+  const ip = getClientIp(h)
+  if (!checkRateLimit(`encargo-lookup:${ip}`, { windowMs: LOOKUP_RATE_WINDOW_MS, max: LOOKUP_RATE_MAX })) {
+    return { found: false, error: 'Demasiados intentos. Esperá un minuto y volvé a intentar.' }
+  }
 
   try {
     const supabase = await createClient()

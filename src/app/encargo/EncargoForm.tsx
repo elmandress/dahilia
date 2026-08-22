@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { dahila, Eyebrow, Field, TextInput, Button } from '@/components/ui/Primitives'
 import { EncargosDisponibles, type EncargosCuposState } from '@/components/EncargosDisponibles'
 import { submitEncargo } from './actions'
 import { subscribeToVipList } from '@/lib/subscribe'
 import { track } from '@/lib/analytics'
+import { getAttribution } from '@/lib/attribution'
 
 export default function EncargoForm({ whatsappUrl, encargosCupos }: { whatsappUrl: string; encargosCupos: EncargosCuposState }) {
   const router = useRouter()
@@ -21,6 +22,13 @@ export default function EncargoForm({ whatsappUrl, encargosCupos }: { whatsappUr
   const [trackingCode, setTrackingCode] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  // El formulario se reemplaza entero por la confirmación (sin navegar) — sin
+  // mover el foco, quien usa lector de pantalla o teclado se queda "parado"
+  // en un botón que ya no existe y nunca se entera de que el encargo salió.
+  const successHeadingRef = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    if (submitted) successHeadingRef.current?.focus()
+  }, [submitted])
 
   if (submitted) {
     const waText = encodeURIComponent(
@@ -29,7 +37,7 @@ export default function EncargoForm({ whatsappUrl, encargosCupos }: { whatsappUr
     return (
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '96px 24px', textAlign: 'center' }}>
         <Eyebrow>Encargo recibido</Eyebrow>
-        <h1 style={{
+        <h1 ref={successHeadingRef} tabIndex={-1} style={{
           fontFamily: dahila.fontDisplay, fontWeight: 300,
           fontSize: 'clamp(32px, 5vw, 48px)', lineHeight: 1.1, letterSpacing: '-0.02em',
           color: dahila.ink900, margin: '14px 0 16px',
@@ -138,6 +146,13 @@ export default function EncargoForm({ whatsappUrl, encargosCupos }: { whatsappUr
     fd.set('tipo', tipo)
     fd.set('talle', talle)
     fd.set('message', message)
+    const attribution = getAttribution()
+    if (attribution) {
+      if (attribution.utm_source) fd.set('utm_source', attribution.utm_source)
+      if (attribution.utm_medium) fd.set('utm_medium', attribution.utm_medium)
+      if (attribution.utm_campaign) fd.set('utm_campaign', attribution.utm_campaign)
+      if (attribution.referrer_host) fd.set('referrer_host', attribution.referrer_host)
+    }
     startTransition(async () => {
       const res = await submitEncargo(fd)
       if (res.ok) {

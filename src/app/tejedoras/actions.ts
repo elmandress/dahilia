@@ -3,38 +3,17 @@
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { notifyWeaverApplication, reportSystemError } from '@/lib/email'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export interface TejedoraSubmission {
   ok: boolean
   error?: string
 }
 
-// Same crude in-process rate limiter as the encargo form: enough to stop
-// honest double-submits at current scale (see encargo/actions.ts for caveats).
-const submissionLog = new Map<string, number[]>()
+// Same crude in-process rate limiter as el resto de los formularios públicos
+// (ver src/lib/rate-limit.ts para las limitaciones).
 const RATE_WINDOW_MS = 60_000
 const RATE_MAX = 3
-
-function getClientIp(h: Headers): string {
-  const fwd = h.get('x-forwarded-for')
-  if (fwd) return fwd.split(',')[0].trim()
-  return h.get('x-real-ip') || 'unknown'
-}
-
-function checkRateLimit(key: string): boolean {
-  const now = Date.now()
-  const window = submissionLog.get(key) || []
-  const recent = window.filter((t) => now - t < RATE_WINDOW_MS)
-  if (recent.length >= RATE_MAX) return false
-  recent.push(now)
-  submissionLog.set(key, recent)
-  if (submissionLog.size > 1000) {
-    for (const [k, ts] of submissionLog) {
-      if (ts.every((t) => now - t > RATE_WINDOW_MS)) submissionLog.delete(k)
-    }
-  }
-  return true
-}
 
 const MAX = {
   name: 80,
@@ -90,7 +69,7 @@ export async function submitTejedora(form: FormData): Promise<TejedoraSubmission
 
   const h = await headers()
   const ip = getClientIp(h)
-  if (!checkRateLimit(`${ip}|${email || whatsapp || 'anon'}`)) {
+  if (!checkRateLimit(`tejedora:${ip}|${email || whatsapp || 'anon'}`, { windowMs: RATE_WINDOW_MS, max: RATE_MAX })) {
     return { ok: false, error: 'Demasiados envíos seguidos. Esperá un minuto y volvé a intentar.' }
   }
 

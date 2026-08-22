@@ -1,6 +1,7 @@
 export default function HomeLoading() {
   return (
-    <div>
+    <div role="status" aria-live="polite">
+      <span className="sr-only">Cargando…</span>
       <section style={{ position: 'relative' }}>
         <div
           className="sk-shimmer"

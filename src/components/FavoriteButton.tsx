@@ -56,7 +56,9 @@ export function FavoriteButton({
       aria-label={label}
       className="card-fav"
       style={{
-        width: 34, height: 34, borderRadius: 999,
+        // 44px: mínimo de touch target táctil (WCAG/Apple/Google) — antes 34px,
+        // el mismo problema que ya se arregló en el stepper del carrito.
+        width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 999,
         background: 'rgba(255,255,255,0.94)',
         border: 'none', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',

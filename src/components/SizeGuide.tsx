@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useScrollLock } from '@/lib/scroll-lock'
+import { useFocusTrap } from '@/lib/focus-trap'
 import { dahila, Icon } from './ui/Primitives'
 
 // Default measurement chart (cm) for the Uruguayan market. Editable from the
@@ -44,6 +45,11 @@ function SizeGuideModal({ note, onClose }: { note?: string; onClose: () => void 
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  // Trap Tab inside the card so keyboard users can't fall through into the
+  // product page sitting behind the scrim.
+  const cardRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(cardRef, true)
+
   return (
     <div
       role="dialog"
@@ -57,6 +63,8 @@ function SizeGuideModal({ note, onClose }: { note?: string; onClose: () => void 
       }}
     >
       <div
+        ref={cardRef}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{
           background: '#fff', borderRadius: 16, width: '100%', maxWidth: 520,

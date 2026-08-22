@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useScrollLock } from '@/lib/scroll-lock'
+import { useFocusTrap } from '@/lib/focus-trap'
 import { dahila, Icon } from './ui/Primitives'
 
 export interface GalleryImage {
@@ -46,6 +47,11 @@ export default function ProductLightbox({
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose, onNav])
 
+  // Trap Tab inside the viewer — otherwise keyboard users tabbing through a
+  // full-screen gallery fall through into the product page behind it.
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef, true)
+
   const current = images[index]
 
   const handleMove = (e: React.MouseEvent) => {
@@ -70,6 +76,8 @@ export default function ProductLightbox({
 
   return (
     <div
+      ref={dialogRef}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-label={`Galería de ${productName}`}

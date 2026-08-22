@@ -40,6 +40,23 @@ Run this mentally (or literally) over any UI you add or touch.
   the project easing), not bouncy or everywhere.
 - Optical alignment over mathematical: prices right-aligned, baselines aligned,
   hairline borders (rgba ink at 0.08) instead of solid #ccc.
+- No em-dash confetti or "In today's world…" openers — these are the single
+  most-cited AI tell in 2026 write-ups. Read new copy out loud; if it doesn't
+  sound like Anush talking, rewrite it.
+- No plastic/generic AI illustrations (too-smooth, too-symmetrical people or
+  objects). Real photos of the actual work — hands, yarn, the piece in
+  progress — beat any illustration here, always.
+- Real proof over stock proof: an actual customer photo/quote beats a generic
+  "trusted by thousands" badge or a stock testimonial avatar every time. If a
+  section can't point to something concretely Dahila, cut it rather than fill
+  it with placeholder-shaped content.
+- Meta titles/descriptions and image `alt` text are specific per page/product,
+  never a copy-pasted template — a generic `alt="product image"` or duplicate
+  meta description across pages is as much a tell as generic body copy.
+- Spacing has rhythm, not uniformity — if every section uses the exact same
+  16px radius / 24px padding with no variation, it reads as templated. Vary
+  density deliberately (a dense info block next to breathing room) the way a
+  person laying out a page by hand would.
 
 ## E-commerce specifics
 - Product price: discounted in red + struck list price + `−N%` badge, consistent

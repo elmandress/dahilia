@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useCart } from './CartProvider'
 import { useScrollLock } from '@/lib/scroll-lock'
+import { useFocusTrap } from '@/lib/focus-trap'
 import { createClient } from '@/lib/supabase/client'
 import { dahila, Icon } from './ui/Primitives'
 import { PriceBlock } from './ui/PriceBlock'
@@ -34,6 +35,11 @@ export function CartDrawer() {
 
   // Shared, ref-counted scroll lock (coexists safely with other overlays).
   useScrollLock(drawerOpen)
+
+  // Keyboard users shouldn't be able to Tab past the drawer into the page
+  // behind the scrim — trap focus inside while open, restore it on close.
+  const panelRef = useRef<HTMLElement>(null)
+  useFocusTrap(panelRef, drawerOpen)
 
   // Esc closes.
   useEffect(() => {
@@ -100,6 +106,8 @@ export function CartDrawer() {
           and the a11y tree — without it, keyboard users would tab into the
           off-screen (translated) cart controls. */}
       <aside
+        ref={panelRef}
+        tabIndex={-1}
         className="cart-drawer"
         role="dialog"
         aria-modal="true"

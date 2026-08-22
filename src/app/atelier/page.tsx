@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/public'
 import { dahila, Eyebrow } from '@/components/ui/Primitives'
 import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
+import { BLUR_DATA_URL } from '@/lib/types'
 
 export const revalidate = 3600
 
@@ -86,6 +87,12 @@ export default async function AtelierPage() {
             src={heroImage}
             alt="Tejiendo en Dahila"
             fill
+            // Hero is /atelier's LCP element (Next 16: fetchPriority replaces priority).
+            fetchPriority="high"
+            loading="eager"
+            quality={90}
+            placeholder="blur"
+            blurDataURL={BLUR_DATA_URL}
             sizes="(max-width: 720px) 100vw, 600px"
             style={{ objectFit: 'cover' }}
           />

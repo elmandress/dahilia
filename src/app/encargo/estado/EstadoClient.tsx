@@ -135,7 +135,7 @@ export function EstadoClient() {
       )}
 
       {result && !result.found && !error && (
-        <div style={{ background: dahila.cream100, borderRadius: 12, padding: '20px', fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink700 }}>
+        <div role="status" style={{ background: dahila.cream100, borderRadius: 12, padding: '20px', fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink700 }}>
           No encontramos ningún encargo con ese código. Revisá que esté bien escrito.
         </div>
       )}

@@ -206,6 +206,20 @@ a {
 }
 .skip-link:focus { top: 12px; }
 
+/* Visually hidden but still announced by screen readers — for loading-state
+   labels and other context a sighted user gets from a shimmer/spinner alone. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Keyboard focus — a single intentional ring, only for keyboard users
    (:focus-visible). Never the ugly default UA outline, never nothing. */
 :focus-visible {
@@ -458,7 +472,8 @@ a {
 }
 .lightbox-arrow:hover { background: rgba(255,255,255,0.26); }
 @media (max-width: 480px) {
-  .lightbox-arrow { width: 40px; height: 40px; }
+  /* 44px: mínimo de touch target táctil (WCAG/Apple/Google) — antes 40px. */
+  .lightbox-arrow { width: 44px; height: 44px; }
 }
 
 /* Shimmer skeleton */

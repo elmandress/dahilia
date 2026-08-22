@@ -21,6 +21,14 @@ Before saying a change is finished, run these in order and stop at the first fai
    (`Partial<Product>`, generated row types, etc.).
 3. Smoke-test the affected routes on the dev server (curl for HTTP 200 + grep
    the dev log for `error`/`⨯`) when the change is user-facing.
+4. For anything touching a money-flow page (PDP, /carrito, /encargo, the
+   WhatsApp checkout button) or any layout/CSS change: an HTTP 200 does not
+   prove the page is usable — a green build cannot see a button that's
+   covered by another element. Actually look at it, at the mobile width real
+   customers use (most of this site's traffic is mobile), before calling it
+   done. Use a browser tool (Playwright MCP or equivalent) to screenshot the
+   affected page at ~390px width if one is available; if not, say explicitly
+   that the change is unverified visually rather than claiming it's checked.
 
 Rules:
 - Never patch over a failing check (no `// @ts-ignore`, no skipping lint).

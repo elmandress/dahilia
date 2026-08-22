@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import type { PublicCoupon } from '@/lib/coupons'
 import { COUPON_REASON_TEXT } from '@/lib/coupons'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 const CART_COOKIE = 'dahila_cart_id'
+// Sin esto, alguien podía scriptear POSTs a este endpoint para (a) fuerza
+// bruta de códigos de cupón activos, o peor, (b) agotar a propósito el
+// max_uses de un cupón promocional mandando redeem:true con cart_id
+// inventados (redeem_coupon no valida que el cart exista de verdad — ver
+// schema-cupones.sql). Límite generoso: no afecta a un cliente real tipeando
+// un código a mano.
+const RATE_WINDOW_MS = 60_000
+const RATE_MAX = 20
 
 interface CouponRpcRow {
   code: string
@@ -29,6 +38,15 @@ interface CouponRpcRow {
  */
 export async function POST(req: NextRequest) {
   try {
+    const h = await headers()
+    const ip = getClientIp(h)
+    if (!checkRateLimit(`coupon:${ip}`, { windowMs: RATE_WINDOW_MS, max: RATE_MAX })) {
+      return NextResponse.json(
+        { ok: false, error: 'Demasiados intentos. Esperá un minuto y volvé a intentar.' },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json().catch(() => null)
     const code = String(body?.code || '').trim().slice(0, 40)
     if (!code) {

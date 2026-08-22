@@ -13,6 +13,7 @@ import { PriceBlock } from '@/components/ui/PriceBlock'
 import Image from 'next/image'
 import { SITE_URL } from '@/lib/env'
 import { track } from '@/lib/analytics'
+import { getAttribution } from '@/lib/attribution'
 
 // Recuerda el código ingresado entre recargas (se re-valida siempre contra el
 // servidor al montar — nunca se confía en lo guardado).
@@ -93,6 +94,11 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
   const [coupon, setCoupon] = useState<PublicCoupon | null>(null)
   const [couponError, setCouponError] = useState<string | null>(null)
   const [couponPending, startCouponTransition] = useTransition()
+  // Guarda contra doble-submit: un doble tap en "Coordinar por WhatsApp" antes
+  // de que responda el canje del cupón podía disparar dos redenciones en
+  // carrera (una se rechaza, pero limpia el cupón igual) y dos filas en el
+  // log de /api/orders para el mismo pedido.
+  const [checkingOut, setCheckingOut] = useState(false)
 
   // Re-validar un cupón recordado de una visita anterior (silencioso).
   useEffect(() => {
@@ -111,10 +117,16 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
       .catch(() => { /* sin red: el cupón simplemente no se restaura */ })
   }, [])
 
-  const subtotal = items.reduce(
-    (acc, item) => acc + (getFinalPrice(item.product, item.size, discounts) * item.qty),
-    0
-  )
+  // Filtrado por !!item.product: un ítem puede quedar sin producto embebido si
+  // el admin lo pasó a "draft" (RLS de products deja de exponerlo) mientras
+  // seguía en el carrito de alguien — mismo guard que en CartProvider,
+  // CartDrawer y el resto de este archivo (checkout, mensaje de WhatsApp).
+  const subtotal = items
+    .filter((item) => !!item.product)
+    .reduce(
+      (acc, item) => acc + (getFinalPrice(item.product, item.size, discounts) * item.qty),
+      0
+    )
   // Efecto del cupón calculado en vivo sobre el carrito actual (si cambian
   // cantidades, el descuento se recalcula solo).
   const couponEffect = coupon ? computeCouponEffect(coupon, items, discounts) : null
@@ -173,6 +185,8 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
 
   const handleCheckout = async () => {
     if (typeof window === 'undefined') return
+    if (checkingOut) return
+    setCheckingOut(true)
     // Registrar el canje ANTES de abrir WhatsApp. Si justo se agotó, avisamos
     // y NO abrimos el chat con un total que ya no es válido.
     if (coupon && (couponDiscount > 0 || freeShipping)) {
@@ -186,6 +200,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
         if (!res.ok) {
           clearCoupon()
           setCouponError('Ese cupón se agotó justo ahora. El total quedó actualizado — volvé a tocar el botón.')
+          setCheckingOut(false)
           return
         }
       } catch {
@@ -222,6 +237,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
         coupon_code: coupon?.code ?? null,
         free_shipping: freeShipping || overThreshold,
         gift_note: giftNote.trim() || null,
+        attribution: getAttribution(),
       }),
     }).catch(() => {})
     // Con cupón hay un fetch (await) antes de llegar acá, y iOS Safari suele
@@ -229,11 +245,13 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
     // en la misma pestaña: wa.me abre la app igual y la venta no se pierde.
     const win = window.open(url, '_blank', 'noopener,noreferrer')
     if (!win) window.location.assign(url)
+    setCheckingOut(false)
   }
 
   if (isLoading) {
     return (
-      <div style={{ maxWidth: 880, margin: '0 auto', padding: '40px 24px 80px' }}>
+      <div role="status" aria-live="polite" style={{ maxWidth: 880, margin: '0 auto', padding: '40px 24px 80px' }}>
+        <span className="sr-only">Cargando tu carrito…</span>
         <div className="sk-shimmer" style={{ width: 60, height: 11, borderRadius: 4 }} />
         <div className="sk-shimmer" style={{ width: 200, height: 44, borderRadius: 6, marginTop: 12, marginBottom: 40 }} />
         {[1, 2].map((i) => (
@@ -701,6 +719,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
 
         <button
           onClick={handleCheckout}
+          disabled={checkingOut}
           aria-label={`Coordinar pedido por WhatsApp con ${whatsappLabel}`}
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10,
@@ -714,7 +733,8 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
             fontWeight: 500,
             letterSpacing: '0.06em',
             textTransform: 'uppercase',
-            cursor: 'pointer',
+            cursor: checkingOut ? 'default' : 'pointer',
+            opacity: checkingOut ? 0.7 : 1,
             width: '100%',
             boxShadow: '0 8px 22px -10px rgba(37,211,102,0.6)',
             transition: 'transform 160ms cubic-bezier(0.22,0.61,0.36,1), box-shadow 160ms',
@@ -729,7 +749,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           }}
         >
           <Icon name="whatsapp-logo" weight="fill" size={20} color="#fff" />
-          Coordinar por WhatsApp
+          {checkingOut ? 'Abriendo WhatsApp…' : 'Coordinar por WhatsApp'}
         </button>
 
         {/* Lista de espera — la expectativa de plazo se fija acá, pegada al
@@ -777,18 +797,20 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
         </div>
         <button
           onClick={handleCheckout}
+          disabled={checkingOut}
           aria-label={`Coordinar pedido por WhatsApp con ${whatsappLabel}`}
           style={{
             flex: 1, marginLeft: 16,
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             background: '#25D366', color: '#fff', border: 'none',
-            borderRadius: 10, padding: '14px 18px', cursor: 'pointer',
+            borderRadius: 10, padding: '14px 18px', cursor: checkingOut ? 'default' : 'pointer',
+            opacity: checkingOut ? 0.7 : 1,
             fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
             letterSpacing: '0.05em', textTransform: 'uppercase',
           }}
         >
           <Icon name="whatsapp-logo" weight="fill" size={18} color="#fff" />
-          Coordinar
+          {checkingOut ? '...' : 'Coordinar'}
         </button>
       </div>
     </div>

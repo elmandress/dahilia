@@ -672,11 +672,11 @@ export function TiendaClient({
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
         }}>
           <Eyebrow>Sin resultados</Eyebrow>
-          <h3 style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, color: dahila.ink900, margin: 0 }}>
+          <h2 style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, color: dahila.ink900, margin: 0 }}>
             {initialProducts.length === 0
               ? 'No hay prendas en la tienda por ahora.'
               : 'No encontramos prendas con esos filtros.'}
-          </h3>
+          </h2>
           <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, color: dahila.ink700, margin: 0, maxWidth: 460, lineHeight: 1.7 }}>
             {initialProducts.length === 0
               ? 'Estoy preparando la próxima edición. Mientras tanto, podés pedir una prenda a medida.'

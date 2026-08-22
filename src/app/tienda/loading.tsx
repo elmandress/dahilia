@@ -1,6 +1,7 @@
 export default function TiendaLoading() {
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
+    <div role="status" aria-live="polite" style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
+      <span className="sr-only">Cargando la tienda…</span>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
         <div className="sk-shimmer" style={{ width: 60, height: 11, borderRadius: 4 }} />
         <div className="sk-shimmer" style={{ width: 320, height: 44, borderRadius: 6 }} />

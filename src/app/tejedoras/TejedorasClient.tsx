@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { dahila, Eyebrow, Field, TextInput, Button } from '@/components/ui/Primitives'
 import { submitTejedora } from './actions'
@@ -49,6 +49,14 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
   const toggleSkill = (s: string) =>
     setSkills((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]))
 
+  // El formulario se reemplaza entero por la confirmación (sin navegar) — sin
+  // mover el foco, quien usa lector de pantalla o teclado se queda "parado"
+  // en un botón que ya no existe y nunca se entera de que la postulación salió.
+  const successHeadingRef = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    if (submitted) successHeadingRef.current?.focus()
+  }, [submitted])
+
   if (submitted) {
     const waText = encodeURIComponent(
       `Hola! Acabo de postularme como tejedora desde la web${name ? ` (soy ${name})` : ''}.`
@@ -56,7 +64,7 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
     return (
       <div style={{ maxWidth: 560, margin: '0 auto', padding: '96px 24px', textAlign: 'center' }}>
         <Eyebrow>Postulación recibida</Eyebrow>
-        <h1 style={{
+        <h1 ref={successHeadingRef} tabIndex={-1} style={{
           fontFamily: dahila.fontDisplay, fontWeight: 300,
           fontSize: 'clamp(32px, 5vw, 48px)', lineHeight: 1.1, letterSpacing: '-0.02em',
           color: dahila.ink900, margin: '14px 0 16px',

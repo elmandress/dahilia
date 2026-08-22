@@ -96,9 +96,9 @@ export function OfertasClient({
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
         }}>
           <Eyebrow>Por ahora no hay ofertas</Eyebrow>
-          <h3 style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, color: dahila.ink900, margin: 0 }}>
+          <h2 style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, color: dahila.ink900, margin: 0 }}>
             Volvé pronto.
-          </h3>
+          </h2>
           <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, color: dahila.ink700, margin: 0, maxWidth: 460, lineHeight: 1.7 }}>
             Mientras tanto, mirá toda la colección.
           </p>

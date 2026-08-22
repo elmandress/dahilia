@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import type { Product, Discount } from '@/lib/types'
@@ -10,6 +10,7 @@ import {
 } from '@/lib/types'
 import { useCart } from './CartProvider'
 import { useScrollLock } from '@/lib/scroll-lock'
+import { useFocusTrap } from '@/lib/focus-trap'
 import { dahila, Button, Icon } from './ui/Primitives'
 import { PriceBlock } from './ui/PriceBlock'
 
@@ -52,6 +53,11 @@ export function QuickViewModal({
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  // Trap Tab inside the card so keyboard users can't fall through into the
+  // product grid sitting behind the scrim.
+  const cardRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(cardRef, true)
+
   const handleAdd = async () => {
     await addToCart(product, talle, 1)
     // addToCart opens the mini-cart drawer; close this modal so we don't stack
@@ -73,6 +79,8 @@ export function QuickViewModal({
       }}
     >
       <div
+        ref={cardRef}
+        tabIndex={-1}
         className="quickview-card"
         onClick={(e) => e.stopPropagation()}
         style={{
