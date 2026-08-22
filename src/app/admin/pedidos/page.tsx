@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatPrice } from '@/lib/types'
+import { channelLabel } from '@/lib/attribution'
 
 interface OrderItem {
   name: string
@@ -22,6 +23,8 @@ interface OrderRow {
   coupon_code: string | null
   free_shipping: boolean
   gift_note: string | null
+  utm_source: string | null
+  referrer_host: string | null
 }
 
 export default function PedidosAdminPage() {
@@ -103,6 +106,9 @@ export default function PedidosAdminPage() {
                     </strong>
                     <span style={{ fontSize: '0.78rem', color: '#8C8285', marginLeft: 8 }}>
                       {new Date(o.created_at).toLocaleString('es-UY', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <span style={{ fontSize: '0.78rem', color: '#5B5356', marginLeft: 8 }}>
+                      · {channelLabel({ utm_source: o.utm_source, referrer_host: o.referrer_host })}
                     </span>
                     {o.coupon_code && (
                       <span style={{ fontSize: '0.78rem', color: '#8F3B53', marginLeft: 8 }}>Cupón {o.coupon_code}</span>

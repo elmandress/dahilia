@@ -6,10 +6,14 @@ const isProd = process.env.NODE_ENV === 'production'
 // retained because Next renders style attributes that nonces don't cover.
 // Fonts are self-hosted by next/font and icons are inline SVG, so we no longer
 // need fonts.googleapis.com, fonts.gstatic.com or cdn.jsdelivr.net in the CSP.
-// Analytics: los hosts de Umami (AnalyticsScript) y Clarity (ClarityScript)
+// Analytics: los hosts de Clarity (ClarityScript) y GA4 (GoogleAnalyticsScript)
 // entran a la CSP AUTOMÁTICAMENTE cuando sus env vars existen en el build —
 // setear la variable en Netlify y redeployar alcanza; sin variable, la CSP
 // queda igual de cerrada que siempre.
+// Umami NO entra acá: se proxea por /stats (ver rewrites más abajo) para que
+// el navegador lo vea como same-origin y los ad-blockers/Safari ITP dejen de
+// bloquearlo por ser un dominio de terceros conocido (cloud.umami.is está en
+// varias listas de bloqueo). umamiOrigin solo se usa como destino del proxy.
 const umamiOrigin = (() => {
   try {
     return process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL
@@ -20,10 +24,15 @@ const umamiOrigin = (() => {
   }
 })()
 const clarityEnabled = Boolean(process.env.NEXT_PUBLIC_CLARITY_ID)
-const analyticsScriptSrc = [umamiOrigin, clarityEnabled ? 'https://www.clarity.ms' : '']
-  .filter(Boolean).join(' ')
-const analyticsConnectSrc = [umamiOrigin, clarityEnabled ? 'https://*.clarity.ms https://c.bing.com' : '']
-  .filter(Boolean).join(' ')
+const gaEnabled = Boolean(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID)
+const analyticsScriptSrc = [
+  clarityEnabled ? 'https://www.clarity.ms' : '',
+  gaEnabled ? 'https://www.googletagmanager.com' : '',
+].filter(Boolean).join(' ')
+const analyticsConnectSrc = [
+  clarityEnabled ? 'https://*.clarity.ms https://c.bing.com' : '',
+  gaEnabled ? 'https://www.googletagmanager.com https://www.google-analytics.com https://*.analytics.google.com' : '',
+].filter(Boolean).join(' ')
 const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}${analyticsScriptSrc ? ' ' + analyticsScriptSrc : ''};
@@ -74,6 +83,15 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
+  },
+  // Proxy de Umami por el propio dominio — ver comentario junto a umamiOrigin
+  // arriba. Sin la env var, no agrega rewrites (comportamiento actual).
+  async rewrites() {
+    if (!umamiOrigin) return []
+    return [
+      { source: '/stats/script.js', destination: `${umamiOrigin}/script.js` },
+      { source: '/stats/api/send', destination: `${umamiOrigin}/api/send` },
+    ]
   },
   async headers() {
     return [

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { CustomOrder } from '@/lib/types'
 import { updateEncargoStatus } from './actions'
+import { channelLabel } from '@/lib/attribution'
 
 const STATUS_TABS: Array<{ key: string; label: string }> = [
   { key: 'all',         label: 'Todos' },
@@ -358,6 +359,7 @@ export default function EncargosPage() {
                       {order.tracking_code && (
                         <> · <span style={{ fontFamily: 'monospace', color: '#4A4143' }}>{order.tracking_code}</span></>
                       )}
+                      {' · '}{channelLabel({ utm_source: order.utm_source ?? null, referrer_host: order.referrer_host ?? null })}
                     </div>
                   </div>
                   <span className={`admin-badge ${order.status}`}>

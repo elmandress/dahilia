@@ -122,6 +122,10 @@ export interface CustomOrder {
   // Soft-delete / papelera. Requires schema-archive-orders.sql. Undefined when the
   // column doesn't exist yet → treated as "not archived" so nothing breaks.
   archived_at?: string | null;
+  // Canal de origen. Requires schema-encargos-attribution.sql. Undefined when
+  // the columns don't exist yet — se maneja igual que archived_at.
+  utm_source?: string | null;
+  referrer_host?: string | null;
 }
 
 // Cupón (vista completa del admin). Requires schema-cupones.sql.

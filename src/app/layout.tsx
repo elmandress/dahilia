@@ -10,6 +10,8 @@ import { WhatsAppFloat } from '@/components/WhatsAppFloat'
 import { WeaverCallout } from '@/components/WeaverCallout'
 import { AnalyticsScript } from '@/components/AnalyticsScript'
 import { ClarityScript } from '@/components/ClarityScript'
+import { GoogleAnalyticsScript } from '@/components/GoogleAnalyticsScript'
+import { AttributionCapture } from '@/components/AttributionCapture'
 import { SITE_URL, SUPABASE_STORAGE_ORIGIN } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
 import { createClient } from '@/lib/supabase/public'
@@ -103,7 +105,7 @@ const organizationJsonLd = {
   // Variantes de escritura reales (Dalia/Dahlia) que la gente usa al buscar
   // — le dice a Google que son la misma entidad, sin tocar el copy visible
   // ni el <title> (evita keyword stuffing).
-  alternateName: ['Dahila', 'Dalia Crochet', 'Dahlia Crochet'],
+  alternateName: ['Dahila', 'Dalia Crochet', 'Dahlia Crochet', 'Dahilia Crochet', 'Dailhia Crochet'],
   url: SITE_URL,
   // ImageObject explícito (no solo la URL) — Google recomienda ancho/alto
   // declarados para el logo del panel de marca; el isotype ya es 512×512.
@@ -259,8 +261,10 @@ export default async function RootLayout({
             <WeaverCallout />
           </FavoritesProvider>
         </CartProvider>
+        <AttributionCapture />
         <AnalyticsScript />
         <ClarityScript />
+        <GoogleAnalyticsScript />
       </body>
     </html>
   );
