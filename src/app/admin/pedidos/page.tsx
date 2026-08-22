@@ -46,7 +46,14 @@ export default function PedidosAdminPage() {
         .order('created_at', { ascending: false })
         .limit(100)
       if (err) {
-        if (err.code === '42P01') { setNeedsMigration(true); return }
+        // PGRST205 es lo que Supabase/PostgREST devuelve en la práctica cuando
+        // la tabla no existe (42P01 es el código de Postgres crudo, casi nunca
+        // lo que llega acá) — mismo criterio defensivo que ya usan
+        // tejedoras/suscriptores/cupones: código O contenido del mensaje.
+        if (err.code === '42P01' || err.code === 'PGRST205' || /orders/.test(err.message || '')) {
+          setNeedsMigration(true)
+          return
+        }
         throw err
       }
       setOrders((data ?? []) as OrderRow[])

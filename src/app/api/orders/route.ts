@@ -60,8 +60,14 @@ export async function POST(req: NextRequest) {
       utm_campaign: attribution?.utm_campaign ? String(attribution.utm_campaign).slice(0, 100) : null,
       referrer_host: attribution?.referrer_host ? String(attribution.referrer_host).slice(0, 200) : null,
     })
-    // 42703 = columna inexistente (schema-orders-attribution.sql no corrió).
-    if (error?.code === '42703') {
+    // Columna inexistente (schema-orders-attribution.sql no corrió todavía).
+    // En la práctica Supabase/PostgREST devuelve PGRST204 acá, no el 42703
+    // crudo de Postgres — por eso el chequeo también mira el mensaje, mismo
+    // criterio defensivo que ya usan las otras páginas del admin
+    // (tejedoras/suscriptores/cupones) para "migración no corrida".
+    const missingColumn = error?.code === '42703' || error?.code === 'PGRST204'
+      || /utm_source|utm_medium|utm_campaign|referrer_host/.test(error?.message || '')
+    if (missingColumn) {
       ;({ error } = await supabase.from('orders').insert(baseRow))
     }
     // La tabla `orders` es opcional (migración no corrida todavía) — no

@@ -122,8 +122,11 @@ export async function submitEncargo(form: FormData): Promise<EncargoSubmission> 
     if (error) {
       // Si falta tracking_code y/o las columnas de atribución (migración no
       // corrida), reintentamos sin lo que falte — el encargo se guarda igual.
-      const missingColumn = typeof error.message === 'string'
-        && /tracking_code|utm_source|utm_medium|utm_campaign|referrer_host/.test(error.message)
+      // PGRST204 es el código real que devuelve Supabase para "columna
+      // inexistente" en un insert (verificado en vivo 22/08) — el chequeo por
+      // mensaje ya alcanzaba, esto es una segunda red de seguridad.
+      const missingColumn = error.code === 'PGRST204' || (typeof error.message === 'string'
+        && /tracking_code|utm_source|utm_medium|utm_campaign|referrer_host/.test(error.message))
       if (missingColumn) {
         const retry = await supabase.from('custom_orders').insert({
           customer_name: name, customer_email: email, whatsapp: whatsapp || null,
