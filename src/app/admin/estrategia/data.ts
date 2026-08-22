@@ -752,10 +752,10 @@ export interface TodoAction extends ActionItem {
 }
 
 export const NEXT_ACTIONS: TodoAction[] = [
-  { id: 'descripciones', label: 'Escribir las descripciones de los 32 productos', detail: 'Material, medidas, horas de tejido, cuidado. Es la mejora que más ventas destraba: sin texto no hay conversión, ni Google, ni IA.', horizon: 'ya' },
+  { id: 'descripciones', label: 'Escribir las descripciones de los productos', detail: 'Material, medidas, horas de tejido, cuidado. Las horas ya las tenés: están en la tabla de precios de acá al lado (columna horas) — no hace falta cronometrar de nuevo, alcanza con pasarlas al texto. Por qué importa de verdad: ver "22 horas" en vez de "hecho con amor" está probado que hace pagar más — el porqué está en la pestaña Novedades.', horizon: 'ya' },
   { id: 'packaging', label: 'Armar el packaging tipo regalo', detail: 'Papel de seda, bolsa kraft, tarjeta a mano. El aumento de precios ya está — esta es la mejora visible que lo acompaña.', horizon: 'ya' },
   { id: 'clase-piloto', label: 'Hacer la clase piloto', detail: '3–4 conocidas, 4 encuentros. El plan completo está en la pestaña Clases.', horizon: 'mes' },
-  { id: 'difusion-wa', label: 'Armar la lista de difusión de WhatsApp', detail: 'Con clientas que ya compraron. Es el canal #1 para vender los drops.', horizon: 'mes' },
+  { id: 'difusion-wa', label: 'Armar la lista de difusión de WhatsApp', detail: 'Con clientas que ya compraron. Es el canal #1 para vender los drops — el paso a paso (los 3 puntitos, "Difusión nueva") está en la pestaña Novedades.', horizon: 'mes' },
   { id: 'anunciar-tejedoras', label: 'Contar que buscás tejedoras', detail: 'Story fijada + link en bio a /tejedoras. La página y el aviso al mail ya funcionan solos.', horizon: 'mes' },
   { id: 'gbp', label: 'Crear el Perfil de Negocio de Google', detail: 'Gratis, ~1 hora. Confianza + aparecer en "crochet Montevideo".', horizon: 'mes' },
   { id: 'mercadopago', label: 'Usar links de pago de Mercado Pago con cuotas', detail: 'Se arma en 2 minutos al cerrar cada venta por WhatsApp. Las cuotas hacen fácil el precio nuevo.', horizon: 'mes' },
@@ -766,7 +766,7 @@ export const NEXT_ACTIONS: TodoAction[] = [
   { id: 'mayorista', label: 'Cotizar el pedido mayorista de bolsos con cabeza fría', detail: 'Los bolsos a precio de lista ya son de tus mejores $/hora — el descuento mayorista máximo es 10%, con seña del 50% y entrega escalonada (20 bolsos ≈ 140 horas ≈ 5 semanas de una persona). Si piden mitad de precio, la respuesta es "no": cada hora tejiendo bolsos baratos es una hora que no teje pedidos que pagan más. Bonus: 20 piezas idénticas y simples son el encargo perfecto para estrenar la red de tejedoras — con la cuenta de la pestaña Tejedoras hecha antes.', horizon: 'ya' },
   { id: 'numero-nuevo', label: 'Propagar el número nuevo (099 850 073) fuera del sitio', detail: 'La web ya lo usa. Falta donde el sitio no llega: la app de WhatsApp Business (transferir el número), el link de la bio de Instagram, Google Business Profile, y tarjetas o packaging impresos con el número viejo.', horizon: 'ya' },
   { id: 'precios-cola-12m', label: 'Aplicar YA la columna 12m a las piezas con cola', detail: 'La regla ya estaba escrita: pieza con más de un mes de lista de espera sube al precio de 12 meses sin esperar noviembre. Con pedidos hasta agosto, esa condición se cumple HOY para todo lo que tiene cola. Subilo desde Productos y acompañalo con la mejora visible (packaging). Una venta que igual no podías tejer no es una venta perdida.', horizon: 'ya' },
-  { id: 'medicion-on', label: 'Prender la medición del sitio (30 min, gratis)', detail: 'Dos cuentas gratis: Umami Cloud (cloud.umami.is) y Microsoft Clarity (clarity.microsoft.com). Matías pega 3 variables en Netlify y el sitio empieza a contar solo el embudo completo: visita → producto → carrito → WhatsApp, más grabaciones de sesión para ver dónde se traban. Hoy el negocio vuela a ciegas: no sabemos qué producto convierte ni dónde se caen las clientas.', horizon: 'ya' },
+  { id: 'medicion-on', label: 'Medición del sitio: ya está prendida', detail: 'Umami y Microsoft Clarity ya miden el embudo completo (visita → producto → carrito → WhatsApp) con grabaciones de sesión. Sumamos Google Analytics también (22/08) — falta un paso tuyo/de Matías: pegar la clave en Netlify (ver pestaña Canales o pedile a Matías el detalle). Una vez hecho, tachá esto.', horizon: 'ya' },
   { id: 'ig-checklist-viral', label: 'Usar el checklist de reel viral en el próximo que despegue', detail: 'Comentario fijado con el link a la pieza, responder todos los comentarios el primer día, "comentá LINK y te lo mando por DM", y anotar el formato ganador. El playbook completo está en la pestaña Canales.', horizon: 'ya' },
   { id: 'precios-fase2', label: 'Segundo paso de precios', detail: 'Con el drop de verano, tops y bolsos suben hacia la meta de 12 meses (columna "12m" de la tabla).', horizon: 'trimestre' },
   { id: 'merchant-center', label: 'Activar Google Merchant Center', detail: 'Gratis, ~30 minutos. El paso a paso está en la pestaña Canales, debajo de "Google". El sitio ya tiene todo lo técnico listo — solo falta el paso de cuenta.', horizon: 'mes' },
@@ -817,3 +817,285 @@ export const RISKS: Risk[] = [
     mitigation: 'Toda propuesta pasa por la calculadora antes de responder: si no paga tu hora mejor que el promedio, se cotiza más caro o se dice que no. La lista de espera te da el poder de elegir.',
   },
 ]
+
+// ─── Novedades y descubrimientos ──────────────────────────────
+// Agosto 2026: investigación externa (estudios de psicología de compra,
+// Baymard, y qué funciona hoy para vender online) leída y traducida a
+// lenguaje simple. No repite lo que ya está en las otras pestañas —
+// completa lo que faltaba. Fuentes completas (con links a los papers y
+// estudios) están guardadas en la memoria de Claude Code de este proyecto,
+// por si en algún momento se quieren revisar en detalle.
+
+export const NOVEDADES_INTRO =
+  'Un par de sesiones se fueron en leer qué dice la evidencia real (estudios de universidades, no blogs de marketing) sobre por qué la gente paga más por algo hecho a mano, y qué funciona hoy para que te encuentren. Esto es el resumen, en criollo — con qué hacer en cada caso.'
+
+export const NOVEDADES_ARTESANAL = [
+  {
+    title: 'No pagan más porque "es mejor calidad" — pagan más porque sintieron que alguien lo hizo PARA ellas',
+    body: 'Hay un estudio (Fuchs, Schreier & van Osselaer, 2015) que midió esto con plata real, no encuestas: decir que algo es hecho a mano lo hace más deseable, y el motivo no es la calidad — es que la persona siente que el objeto "tiene amor adentro". Por eso el ángulo de venta que más rinde no es "es mejor que lo de fábrica" (se puede discutir), es "alguien lo hizo pensando en vos" (no se puede discutir).',
+  },
+  {
+    title: 'Contar las horas reales hace que la pieza valga más — está medido, y con el auge de la IA vale MÁS que antes',
+    body: 'Cuando la gente sabe cuánto trabajo llevó algo, lo valora más, aunque el objeto sea idéntico (Kruger et al., 2004). Y en 2025-2026 esto se volvió más fuerte, no más débil: hay tanto contenido hecho por IA dando vueltas que mostrar el trabajo humano real se nota más. Las horas ya las tenés en la tabla de precios — no hay que cronometrar de nuevo, alcanza con escribirlas en la descripción de cada prenda.',
+  },
+  {
+    title: 'Lo que más convence, en orden: un video del proceso > documentar el tiempo > explicarlo con palabras > > > las imperfecciones (esto casi no suma)',
+    body: 'Un estudio reciente que comparó señales de esfuerzo encontró que un video corto mostrando el trabajo es lo que más mueve la aguja, bastante más que un texto. Y algo importante: frases tipo "cada pieza tiene sus pequeñas imperfecciones que la hacen única" fueron la señal MÁS débil de todas — se lee como excusa, no como valor. Mejor sacarlas del todo.',
+  },
+  {
+    title: 'Regla de oro para el texto: nunca digas "artesanal", "auténtico", "con amor" o "con pasión"',
+    body: 'Hay un fenómeno estudiado (Södergren, 2021): cuando una marca reclama su propia autenticidad en voz alta, genera sospecha, no confianza — es "protestar demasiado". Y esas palabras ya están gastadas de tanto usarlas marcas grandes que no son artesanales de verdad. El truco simple: si una fábrica grande podría copiar la frase sin mentir demasiado, no sirve. "Tejido a mano" pasa el test. "Con amor" no. En cambio "37 horas, lana X, medido para vos" no lo puede copiar nadie más — y por eso convence.',
+  },
+  {
+    title: 'La historia de "una persona contra la ropa en serie" funciona — pero como orgullo, nunca como pedido de lástima',
+    body: 'Está medido (Paharia et al., 2011): las marcas con una historia de desventaja + determinación generan más identificación y más ventas — pero SOLO cuando se cuenta como "esto es lo que hago y así lo hago", nunca como "ayudame a". Uruguay además es un lugar donde esa historia del que rema solo cae particularmente bien. Es un activo, no algo para esconder.',
+  },
+  {
+    title: '"A medida" vende por el resultado (le queda a SU cuerpo), no por el proceso de elegir',
+    body: 'La investigación sobre productos a medida encuentra que lo que hace pagar más no es "tenés más opciones" — es sentir que el resultado es solo tuyo. El ángulo más fuerte para Dahila: ropa que le queda al cuerpo real de la persona, no al talle estándar que traen las tiendas importadas.',
+  },
+  {
+    title: 'Crecés sumando compradoras nuevas, no exprimiendo a las que ya te compraron',
+    body: 'Es el hallazgo más repetido en marketing (formalizado hace 35 años y confirmado una y otra vez desde entonces): las marcas chicas no crecen fidelizando más fuerte, crecen llegando a gente nueva. Nada de programas de puntos ni "cuantas más compres, más descuento". El programa AMIGA que ya tenés (pestaña Clientas) va en la dirección correcta porque trae GENTE NUEVA, no porque premia comprar más.',
+  },
+  {
+    title: 'Usá siempre las mismas fotos/colores/logo — no rediseñes cada temporada',
+    body: 'Parece obvio pero es de lo más comprobado que hay: una marca que se ve igual a sí misma con el tiempo se reconoce más rápido y se recuerda mejor. No hace falta "renovar la imagen" en cada drop — al contrario, cambiar mucho reinicia el reconocimiento que ya construiste.',
+  },
+  {
+    title: 'Vos no sos la protagonista de la página de un producto — la clienta sí',
+    body: 'Un framework clásico de copy dice: el cliente es el héroe de la historia, la marca es quien lo ayuda a lograr lo que quiere. Aplicado acá: la ficha de un producto no habla de "cuánto amor le puso Dahila" — habla de lo que ELLA va a tener puesto, cómo le va a quedar, para qué ocasión. Vos aparecés como quien lo hace posible, no como el tema central.',
+  },
+  {
+    title: 'Un compromiso caro de cumplir vale más que diez adjetivos lindos',
+    body: 'La publicidad y las promesas funcionan en parte porque son caras de fingir — por eso son creíbles. Una marca chanta no se puede dar el lujo de prometer "si no te queda, lo ajustamos" o poner una fecha de entrega con nombre y apellido atrás. Cada promesa concreta y sostenible que hacés (aunque no cueste plata, cuesta compromiso) vale como prueba de que el negocio es real y va en serio.',
+  },
+]
+
+/** SEO en profundidad: qué cambió con la IA y qué ya está resuelto. */
+export const NOVEDADES_SEO_IA = [
+  {
+    title: 'Los resúmenes de IA en Google (AI Overviews) te afectan poco — y hay un dato concreto de por qué',
+    body: 'Un estudio grande (Pew Research, 2025) midió que esos resúmenes aparecen mucho en búsquedas largas o en forma de pregunta (más de la mitad de las veces), pero casi nunca en búsquedas cortas de 1 o 2 palabras (menos de 1 de cada 10). Las búsquedas que te importan a vos —"dahila", "poncho crochet montevideo"— son justo las cortas. Por eso no tiene sentido armar un blog de "tips de tejido" esperando tráfico: ese es el contenido largo que la IA sí se come.',
+  },
+  {
+    title: 'Nadie necesita "optimizar para la IA" con trucos técnicos — Google lo dice explícitamente',
+    body: 'Si alguna vez alguien te ofrece "posicionamiento para IA" o "GEO" como servicio aparte del SEO normal, es un cuento: Google publicó que no hace falta ningún archivo especial ni marcado técnico extra para aparecer en sus resúmenes de IA. Es la misma base de siempre (contenido claro, datos reales, que el sitio cargue bien) — no un curso nuevo que comprar.',
+  },
+  {
+    title: 'Lo que sí importa: que se note quién sos, de verdad',
+    body: 'Google evalúa (y la gente también) si un sitio tiene una autora real detrás: cara, nombre, ubicación, hace cuánto hace esto, forma de contactar. Es literalmente lo mismo que resuelve la desconfianza antes de escribir por WhatsApp — la misma info sirve para las dos cosas a la vez.',
+  },
+  {
+    title: 'Los datos técnicos de cada producto ya están listos para lo que viene (compras hechas por IA)',
+    body: 'Empezaron a aparecer sistemas donde una IA compra directamente por vos (ChatGPT, Google). Todos necesitan que el precio, el stock y la descripción del producto estén en un formato estándar que una máquina pueda leer. El sitio ya lo tiene desde antes — no hace falta tocar nada, es una ventaja que ya está construida.',
+  },
+]
+
+/** Canales que faltaban en la pestaña Canales — no reemplazan el orden de ahí. */
+export const NOVEDADES_CANALES_EXTRA = [
+  {
+    title: 'Reddit — no para vender, para que la IA te "conozca"',
+    body: 'Reddit se convirtió en la fuente que más citan ChatGPT, Gemini y los resúmenes de Google cuando alguien pregunta algo. La lógica es al revés que en Instagram: no se trata de promocionarte, se trata de responder preguntas reales de forma útil en r/crochet o comunidades de Uruguay (sin mencionarte casi nunca) durante un par de semanas antes de aportar algo propio. Una respuesta genuinamente buena sobre cómo se toman medidas para una prenda a medida vale más que cualquier link que pongas.',
+  },
+  {
+    title: 'Un solo email automático, no un newsletter',
+    body: 'Con el checkout por WhatsApp, el email no es prioridad — pero hay UNO que vale la pena: un aviso automático a la lista VIP cuando se abre la cola de producción de nuevo. Es el único tipo de email que la gente realmente quiere recibir (le avisa algo que le interesa, en el momento justo) y no depende de que alguien se siente a escribir un newsletter todos los meses.',
+  },
+]
+
+export const NOVEDADES_URUGUAY =
+  'Un dato para quedarte tranquila con la decisión de vender por WhatsApp: el e-commerce uruguayo pasó los $100.000 millones en 2025, el 70% de la población ya compró algo online, y comprar es el tercer uso más común de internet en Uruguay — justo después de WhatsApp y las redes sociales. El checkout por WhatsApp no es una limitación del sitio: es exactamente cómo compra la gente acá. Lo único no negociable es que todo se vea perfecto desde el celular, porque el 64% de las compras se hacen desde ahí.'
+
+/**
+ * El informe completo, palabra por palabra, con todas las fuentes y los
+ * avisos de ⚠️ (fuentes de agencia/vendor vs. papers revisados por pares).
+ * Todo lo de arriba es la traducción en criollo de esto — este es el
+ * original, para copiarlo y guardarlo o mandarlo a quien quieras.
+ */
+export const NOVEDADES_INFORME_COMPLETO = `Segundo briefing de investigación — Dahila Crochet
+
+Nota de método: marco con ⚠️ las fuentes que son blogs de agencia, vendors o encuestas de opinión con interés comercial en el dato. Las afirmaciones sin marca vienen de papers revisados por pares, documentación oficial de plataforma o datos primarios (SEC, Pew).
+
+1. Libros y frameworks canónicos: qué sigue vigente en 2026
+
+1.1 — Sharp/Ehrenberg-Bass sigue siendo el consenso empírico, pero sus leyes se derivaron de FMCG masivo y la crítica seria es justamente sobre negocios chicos.
+La ley de Double Jeopardy (las marcas chicas tienen menos compradores y levemente menos lealtad) fue formalizada por Ehrenberg, Goodhardt y Barwise (1990) y replicada cientos de veces; una revisión de 2017 confirmó que el patrón sigue sosteniéndose empíricamente (Australasian Marketing Journal / ScienceDirect). La crítica más citada es la de Mark Ritson: las generalizaciones de Sharp asumen alcance masivo pagado, y no contemplan ni al emprendedor chico ni a categorías donde el consumidor prioriza exclusividad y artesanía (Marketing Week).
+→ Dahila: el mecanismo es correcto (crecés sumando compradoras nuevas, no exprimiendo a las que ya te compraron: nada de programas de fidelidad), pero la receta de Sharp —"always-on reach"— no está disponible con presupuesto cero. Lo transportable son los distinctive assets y los CEPs (abajo), no la publicidad continua.
+
+1.2 — La parte de Sharp que sí es gratis: Category Entry Points (Romaniuk & Sharp, How Brands Grow Part 2, 2015).
+Los CEPs son las situaciones/necesidades que hacen que alguien piense en la categoría; la disponibilidad mental se construye vinculando la marca a la mayor cantidad posible de esas señales. El framework operativo son las 7W: Why, When, Where, While, With whom, With what, How feeling (Jenni Romaniuk, Ehrenberg-Bass).
+→ Dahila: no pelear por "crochet". Ocupar momentos: regalo para alguien que ya tiene todo, algo para un casamiento de día, un abrigo que no va a tener nadie más, ropa para un cuerpo que no entra en S/M/L. Cada CEP es una colección, una URL y un ángulo de contenido. Es la intervención de branding más barata que existe.
+
+1.3 — El debate Sharp vs. Binet & Field (60:40) es irrelevante para Dahila y conviene saberlo para no perder tiempo.
+Sharp calificó la regla 60:40 de "terrible y engañosa" por basarse en data de premios; Binet & Field la derivaron del IPA Databank (Mi3, Marketing Week). Ambos lados discuten cómo repartir presupuesto publicitario.
+→ Dahila: sin presupuesto no hay split que hacer. Ignorar el debate entero. Lo único utilizable de ese cuerpo de trabajo es "consistencia en el tiempo" — usar los mismos assets visuales siempre, no rediseñar cada temporada.
+
+1.4 — Berger (STEPPS) sigue vigente, y su dato más útil es el menos citado: ~90% del boca a boca ocurre offline.
+El framework de Contagious (2013) —Social Currency, Triggers, Emotion, Public, Practical Value, Stories— sigue siendo estándar (Jonah Berger, Knowledge@Wharton). El dato de que 9 de cada 10 conversaciones de marca son cara a cara o por teléfono viene de TalkTrack de Keller Fay (las cifras verificables son 90-91%, no el 93% que circula) ⚠️ limitación real: autorreporte a 24 horas.
+→ Dahila: la prenda es el medio. La etiqueta DAHILA visible, la tarjeta en el paquete y —clave de "Social Currency"— darle a la compradora una frase que la haga quedar bien al repetirla ("me la hicieron a mi medida en Montevideo"). Eso es más rentable que cualquier táctica de shares.
+
+1.5 — El hallazgo más accionable de todo el cuerpo de Berger no es Contagious sino su paper de lenguaje concreto.
+Packard & Berger, "How Concrete Language Shapes Customer Satisfaction", Journal of Consumer Research 47(5), 2020 — cinco estudios, incluyendo análisis de texto de más de 1.000 interacciones reales cliente-empleado en dos contextos de campo. El lenguaje concreto (tangible, específico, imaginable) aumenta satisfacción, disposición a comprar y monto comprado (JCR, Penn Today).
+→ Dahila: este es el antídoto directo contra el olor a plantilla. "Prendas únicas hechas con amor" → "37 horas de tejido, 640 g de lana merino, punto piña, medido sobre tu espalda". Es gratis y toca conversión, percepción de oficio y SEO al mismo tiempo.
+
+1.6 — StoryBrand (Miller): útil como checklist de claridad, peligroso como plantilla de copy.
+El SB7 sigue comercialmente vivo (edición 2.0, 2026), pero la crítica más consistente es que es formulaico por diseño y que aplicado literalmente produce sitios que suenan todos iguales; también se le señala que el libro funciona como embudo hacia sus propios productos (StoryBrand, reseña crítica ⚠️).
+→ Dahila: quedate con la estructura (¿queda claro qué vendo, qué gana ella, cuáles son los 3 pasos?) y tirá el vocabulario. El "cliente-héroe / marca-guía" sí aplica y resuelve una tensión real: Anush no es la protagonista de la página de producto, es quien hace posible una prenda que no existe en ninguna vidriera. Si el sitio suena a SB7 aplicado al pie de la letra, cae exactamente en lo que querés evitar.
+
+1.7 — Sutherland (Alchemy): úsalo como generador de hipótesis, no como evidencia. El concepto rescatable es señalización costosa.
+Sutherland es ensayístico y anecdótico, no experimental — la crítica justa es esa. Pero su idea central es sólida y está bien fundada en teoría de señales: la publicidad funciona en parte porque es cara de fingir, y por lo tanto es garantía creíble de que la empresa cree en su propio futuro (EconTalk, síntesis sobre costly signalling ⚠️).
+→ Dahila: un compromiso caro de falsificar vale más que diez adjetivos. Ejemplos concretos: una fecha de entrega comprometida por escrito, una garantía de arreglo de por vida, el video del proceso, la cara y el nombre de la persona. Todos son gratis en dinero y caros en compromiso — que es exactamente lo que los hace señales.
+
+2. Por qué se paga premium por lo artesanal — y cómo decirlo sin sonar pretencioso
+
+2.1 — El "handmade effect" está medido y su mecanismo NO es la calidad: es el amor percibido.
+Fuchs, Schreier & van Osselaer, "The Handmade Effect: What's Love Got to Do with It?", Journal of Marketing 79(2), 2015, pp. 98-110 — cuatro estudios con medición de disposición a pagar incentivo-compatible. Declarar que un producto es hecho a mano aumenta su atractivo, y el efecto está mediado en buena parte por la percepción de que el producto "contiene amor" simbólicamente (Journal of Marketing, PDF del paper).
+→ Dahila: el argumento ganador no es "es de mejor calidad que lo industrial" (discutible y fácil de refutar), es "alguien lo hizo para vos". También explica por qué regalo debería ser el CEP prioritario: es donde el mecanismo del paper opera con máxima fuerza.
+
+2.2 — Effort heuristic: el mismo objeto vale más si se sabe cuánto costó hacerlo.
+Kruger, Wirtz, Van Boven & Altermatt (Journal of Experimental Social Psychology, 2004): cuando se le dice a la gente que un ítem llevó más tiempo y trabajo, lo califica como de mayor calidad y le asigna mayor valor monetario, aunque el objeto sea idéntico (paper).
+→ Dahila: publicar horas reales por prenda, sin redondear ni inflar. "37 h" es más creíble que "muchas horas de trabajo" — y por 1.5 se conecta con la satisfacción medida del lenguaje concreto.
+
+2.3 — En 2025-2026 el effort heuristic se volvió más valioso, no menos, por contraste con lo generado por IA.
+Un estudio sobre arte generado por IA concluye que la penalización de precio se explica principalmente por el heurístico de esfuerzo (esfuerzo de producción percibido como bajo), no por objeciones esencialistas sobre "el alma del arte" — y que revelar explícitamente el trabajo humano en el proceso reduce significativamente ese descuento (resumen del estudio). En paralelo, el trabajo creativo humano se está reposicionando como bien de lujo (The Conversation).
+→ Dahila: el momento juega a favor. Cuanto más contenido genérico e industrial inunda todo, más rinde la prueba de mano humana. Pero tiene que ser prueba, no declaración.
+
+2.4 — Qué señal de esfuerzo funciona mejor: video de proceso > tiempo documentado > explicación escrita >> imperfecciones.
+Preprint "Struggle Premium: How Human Effort and Imperfection Drive Perceived Value in the Age of AI" (Sultana et al., 2026, arXiv): videos de proceso fueron la señal más influyente (23,1%), documentación de tiempo segunda (15,6%), explicación escrita tercera (15,0%), y las imperfecciones tuvieron impacto mínimo. ~73% dijo estar dispuesto a pagar premium por trabajo humano a calidad estética comparable.
+⚠️ Advertencia fuerte: n=70 estudiantes universitarios de un solo país, preprint sin revisión por pares. Tomarlo como hipótesis, no como hecho. Dicho eso, el ordenamiento es consistente con la literatura de effort heuristic.
+→ Dahila: priorizar video de proceso en la PDP sobre párrafos de storytelling. Y descartar "cada pieza es única, con sus pequeñas irregularidades" — es la señal más débil de todas y encima se lee como excusa preventiva por defectos, no como valor.
+
+2.5 — La biografía de underdog funciona, y está medida — pero por identificación, no por lástima.
+Paharia, Keinan, Avery & Schor, "The Underdog Effect: The Marketing of Disadvantage and Determination through Brand Biography", Journal of Consumer Research 37(5), 2011, pp. 775-790. Dos dimensiones necesarias: desventaja externa + pasión y determinación. Aumenta intención de compra, elección real y lealtad. Está mediado por la identificación del consumidor con la marca, es más fuerte en quienes se auto-perciben como underdogs, más fuerte cuando compran para sí mismos que para otros, y más fuerte en culturas donde la narrativa de underdog es parte de la identidad nacional (JCR, HBS).
+→ Dahila: "una persona en Uruguay, tejiendo a mano, contra ropa importada en serie" es literalmente el arquetipo, y Uruguay es un mercado culturalmente receptivo a esa narrativa. La clave del paper es que opera por identificación, no por compasión: nunca "ayudame a", siempre "esto es lo que hago y así lo hago".
+
+2.6 — El límite: la autenticidad reclamada activamente genera sospecha, y "artesanal" ya está diluido por craft-washing.
+Södergren, "Brand authenticity: 25 years of research", International Journal of Consumer Studies, 2021 (Wiley): crear autenticidad es paradójico — cuando se la reclama explícitamente, aparece la sospecha inmediata. La confusión del término "craft" es la causa principal del craftwashing, perjudicial para artesanos y consumidores (The Conversation). En "purpose-washing", la información contradictoria dispara juicios morales severos porque se atribuyen motivos interesados.
+→ Dahila: regla operativa concreta — si una marca industrial grande podría copiar la frase textual sin mentir demasiado, la frase no sirve. "Auténtico", "artesanal", "con amor", "hecho con pasión" fallan el test. "44 horas", "lana de X", "medido sobre tu espalda el 3 de agosto", "entrego el 12 de septiembre" lo pasan.
+
+2.7 — "A medida" sube la disposición a pagar, pero por auto-expresión y unicidad, no por "más opciones".
+La literatura de mass customization reporta ~73% dispuestos a pagar premium, promedio ~+29% (revisión), con las dimensiones de valor siendo utilitaria, diferenciación interpersonal y auto-expresión. Caveat importante y honesto: hay trabajo reciente que encuentra que la customización mejora la experiencia y la intención de recomendar pero no siempre la disposición a pagar (ScienceDirect, 2025).
+→ Dahila: "a medida" hay que traducirlo en beneficios de ajuste y auto-expresión, no en un menú de opciones. El argumento más fuerte y más concreto es el ajuste al cuerpo real frente al talle estándar importado — y ese argumento tiene una audiencia específica y desatendida.
+
+3. SEO en 2026: qué cambió con la IA y qué importa para un sitio chico
+
+3.1 — El dato duro de la caída de clics, con fuente primaria.
+Pew Research Center (julio 2025), 900 adultos de EE.UU. con actividad de navegación compartida, 68.879 búsquedas únicas en marzo 2025, 12.593 con AI summary: 8% de clics a resultados tradicionales cuando había resumen de IA vs. 15% cuando no; sólo 1% clickeó links dentro del resumen; 18% de las búsquedas generaron resumen; el usuario terminó la sesión en 26% de las páginas con resumen vs. 16% sin (Pew).
+
+3.2 — El detalle de Pew que casi nadie cita y que cambia toda la estrategia para Dahila: los AI Overviews aparecen según el largo de la consulta.
+En el mismo estudio: consultas de 10+ palabras dispararon resumen en 53% de los casos, preguntas en 60%, y consultas de 1-2 palabras sólo en 8%.
+→ Dahila: las consultas que importan ("chaleco crochet uruguay", "dahila", "poncho tejido montevideo") son cortas y transaccionales — casi no disparan AI Overview. La sangría de tráfico por IA golpea al contenido informacional genérico. Consecuencia directa: no montar un blog de tips de crochet. Invertir en páginas de producto y de colección.
+
+3.3 — La magnitud se confirma en 2026 con datos de industria, con direcciones consistentes.
+Ahrefs (feb 2026) reporta -58% de CTR para el resultado #1 cuando hay AI Overview; Seer Interactive, sobre 53 marcas, 5,47M de consultas y 2,43 mil millones de impresiones (ene 2025 – feb 2026), midió CTR orgánico de 0,61% con AIO vs 1,62% sin (-61%); la tasa zero-click ronda 65% (Search Engine Journal, Search Engine Land) ⚠️ metodologías propietarias, pero coinciden en dirección y orden de magnitud con Pew.
+
+3.4 — Google dice oficialmente que GEO/AEO no son disciplinas separadas. No contrates nada que te venda lo contrario.
+Documentación oficial: "There are no additional requirements to appear in AI Overviews or AI Mode, nor other special optimizations necessary" y "You don't need to create new machine readable files, AI text files, or markup to appear in these features" (Google Search Central). La guía nueva de Google llama a AEO y GEO "still SEO" (SEJ).
+→ Dahila: cero llms.txt, cero schema "para IA", cero consultoría de GEO.
+
+3.5 — El contrapunto académico sí tiene algo útil, y coincide con la sección 2.
+"GEO: Generative Engine Optimization" (Aggarwal, Murahari, Rajpurohit, Kalyan, Narasimhan & Deshpande, ACM SIGKDD 2024, arXiv:2311.09735): sobre GEO-bench (~10.000 consultas, 9 datasets), ciertas ediciones de contenido aumentaron la visibilidad en respuestas generativas entre 22% y 41%. Las tácticas ganadoras fueron agregar estadísticas, agregar citas y mejorar fluidez — no keyword stuffing.
+→ Dahila: escribir con datos verificables (horas, gramaje, medidas, plazos, origen del hilado) es simultáneamente lo que pide el effort heuristic, lo que mide Packard & Berger, y lo que hace un texto citable por sistemas generativos. Un solo cambio de copy sirve para tres cosas distintas.
+
+3.6 — Las Quality Rater Guidelines vigentes: versión del 11 de septiembre de 2025, 182 páginas.
+E-E-A-T con Trust como base; cambios de 2025: reglas sobre contenido IA, tres categorías de spam, y la ampliación de "YMYL Society" a "YMYL Government, Civics & Society" (análisis de las 182 páginas ⚠️). Importante: E-E-A-T no es un factor de ranking, es un marco de evaluación humana — no existe un "score de E-E-A-T".
+→ Dahila: lo accionable es el who/how/why del contenido — autoría real, cara, nombre, ubicación, años de oficio, datos de contacto verificables. Esto le sirve al rater, a la conversión, y resuelve el problema ya identificado de "prueba de legitimidad antes de WhatsApp" desde otro ángulo: la legitimidad también tiene que ser legible para Google.
+
+3.7 — Datos estructurados: no hacen falta para IA, sí para todo lo demás — y ahora también para la commerce agéntica.
+Product + Offer con name, image, price, priceCurrency y availability siguen siendo requisito para merchant listings y rich results (Google Merchant Center Help). Y el contexto nuevo: OpenAI+Stripe lanzaron el Agentic Commerce Protocol y Google+Shopify respondieron con el Universal Commerce Protocol en enero de 2026 — ambos se alimentan de feeds de producto estructurados ⚠️ (resumen).
+→ Dahila: Product/Offer bien puesto es barato, verificable en Rich Results Test, y es el mismo formato que van a consumir los agentes de compra. Es infraestructura, no táctica.
+
+3.8 — SEO local: un negocio desde casa SÍ califica para Google Business Profile si hay contacto en persona.
+Guía oficial: los negocios online-only sin contacto presencial no pueden crear perfil; un negocio desde casa sí puede, ocultando la dirección, si atiende clientes en su ubicación o viaja hacia ellos (Google Business Profile Help, Whitespark ⚠️). En la encuesta anual de factores locales, las señales de GBP pesan ~32% y la categoría primaria es el factor #1 del Local Pack ⚠️ (encuesta de opinión a SEOs, no evidencia causal).
+→ Dahila: si Anush toma medidas en persona o entrega en mano en Montevideo, califica. GBP + reseñas es probablemente el activo de descubrimiento local más barato disponible, y ninguna competidora de nicho lo tiene bien hecho.
+
+3.9 — Hay un hueco estructural en español rioplatense, tanto en búsqueda clásica como en respuestas de IA.
+El español representa ~4,6% de las páginas web frente a 40,6% del inglés; los bots de indexación de OpenAI visitan las páginas en inglés con mucha más frecuencia que las variantes localizadas, sub-muestreando sistemáticamente el contenido en español; y las respuestas en español tienden a ensamblarse desde fuentes que no son locales — con precios de otro mercado y referencias de otro país (Search Engine Land, "el problema del español global" ⚠️ análisis de industria, pero con datos de corpus verificables).
+→ Dahila: escribir en es-UY real (voseo, "buzo", "chaleco", "pollera", precios en pesos, referencias a barrios de Montevideo) es una ventaja de disponibilidad, no una decisión de marca. Hay poquísima competencia en ese corpus.
+
+4. Llegar a la gente con presupuesto cero
+
+4.1 — Pinterest: la plataforma está creciendo y funciona como buscador, no como red social. Datos primarios.
+Comunicados oficiales: Q1 2026 — 631M de usuarios activos mensuales (+11% interanual), ingresos +18%; Q2 2026 — 640M MAU (+11%), ingresos +18% (Pinterest Q2 2026, Businesswire, Q1 2026, SEC). Los vendedores de handmade citan consistentemente a Pinterest como fuente principal de tráfico referido, y los pines siguen generando clics meses o años después de publicados ⚠️ (Craftybase). ⚠️ Las cifras de "5,6x purchase intent index" o "+67% revenue" vienen de material promocional — descartarlas.
+→ Dahila: los 34 productos ya son contenido de Pinterest. Cada foto existente = un pin con link a la PDP. Costo de producción marginal cero, y vida útil de meses frente a las 48 horas de un post de Instagram. Es el mejor ratio esfuerzo/retorno de esta sección.
+
+4.2 — Reddit importa por una razón nueva: es la fuente más citada por los sistemas de IA.
+Análisis de decenas de millones de citas sitúan a Reddit como el dominio #1 citado en ChatGPT, Gemini, Perplexity y AI Overviews, con AI Overviews citándolo en ~21% de los resultados ⚠️ (fuentes de industria; direccionalmente muy consistente entre proveedores distintos). La regla operativa que se repite en todas las guías: ~90% valor / 10% promoción, 20-30 comentarios útiles antes de mencionar nada propio, 1-2 semanas de observación por comunidad (guía ⚠️).
+→ Dahila: r/crochet y r/uruguay. No para vender: para existir en el corpus del que los LLM extraen respuestas. Una respuesta genuinamente útil sobre cómo se toman medidas para una prenda a medida vale más que cualquier link.
+
+4.3 — WhatsApp ya no es sólo el checkout: es el canal propio con mejor read rate disponible, y es gratis hasta 256 contactos.
+LatAm es el benchmark global de commerce por WhatsApp — Brasil, México, Colombia y Argentina lo hicieron años antes que Europa. Read rates medidos alrededor de 60-68% (Braze reporta 68% sobre su base) ⚠️, muy por encima de email. La app gratuita permite listas de difusión a hasta 256 contactos guardados. Distinción importante: Channels es un feed (sin opt-in, sin segmentación, sin respuesta 1:1); broadcasts es lo que convierte (benchmarks ⚠️, guía de límites ⚠️).
+→ Dahila: ya tenés el número de teléfono de absolutamente todas las personas que compraron alguna vez, porque el checkout pasa por ahí. Ese es el activo más subexplotado del negocio y no cuesta nada activarlo.
+
+4.4 — Email sigue siendo rentable, pero con dos correcciones honestas.
+La cifra de $36-45 de retorno por $1 ⚠️ viene de encuestas de autorreporte tipo DMA/Litmus, sin grupo de control — es débil metodológicamente y hay que citarla con pinzas. Lo que sí está bien sostenido: los flujos automatizados generan mucho más que los envíos masivos, las marcas D2C en crecimiento reportan 25-40% de ingresos vía email, y las tasas de apertura están infladas 15-20% por Apple Mail Privacy Protection — hay que medir clics e ingresos, no aperturas (recopilación de datos ⚠️).
+→ Dahila: con checkout por WhatsApp, email es secundario. Pero un solo flujo automatizado —aviso cuando se abre la cola de producción— vale más que un newsletter mensual que nadie va a escribir con constancia.
+
+4.5 — Micro/nano influencers: los números están inflados por quien los publica, pero la lógica se sostiene.
+Se reportan engagement de 4% en nano vs 1,3% en macro, conversión 7% vs 3%, y costo por interacción ~2,5x menor ⚠️ (todos estos datos vienen de plataformas de influencer marketing, con sesgo comercial evidente — tratarlos como orientativos, no como medición). El punto defendible con presupuesto cero no es el tier sino que el intercambio sea producto por contenido y que la persona ya sea usuaria real de la categoría.
+→ Dahila: 5 mujeres reales en Montevideo con 2-10k seguidoras, cada una con una prenda medida a su cuerpo, documentando el proceso desde la toma de medidas. Resuelve dos cosas de una: alcance y el UGC que hoy falta en el sitio. (Nota del 22/08: con el orgánico actual funcionando tan bien, esto queda en pausa por ahora — ver más abajo.)
+
+4.6 — Etsy: DESCARTADO por decisión del usuario (22/08) — ni siquiera como vidriera internacional secundaria.
+
+4.7 — El recordatorio incómodo: ~90% del boca a boca de marca es offline.
+TalkTrack de Keller Fay, sobre 32.000+ participantes: la enorme mayoría de la información sobre marcas llega por conversación cara a cara o telefónica ⚠️ (autorreporte a 24h).
+→ Dahila: para un negocio local esto reordena prioridades enteras. Ferias, entrega en mano, la etiqueta cosida, la tarjeta en el paquete y la frase repetible pesan más, en volumen absoluto de conversaciones, que la estrategia de contenidos.
+
+4.8 — El contexto uruguayo confirma que WhatsApp-first no es una limitación, es lo nativo.
+CEDU: el e-commerce uruguayo superó los $100.000 millones en 2025 con 32% de crecimiento; la base de compradores llegó al 70% de la población (~1.890.000 personas); 64% del volumen viene de móvil; y comprar productos y servicios es el tercer uso más frecuente de internet entre uruguayos, detrás de WhatsApp y redes sociales (CEDU, informe e-País ICEX). Sólo 12% compra más de una vez por mes — el mercado tiene volumen pero baja frecuencia.
+→ Dahila: el checkout por WhatsApp está alineado con el comportamiento real del mercado, no en contra. Lo no negociable es que el sitio sea impecable en móvil (64% del volumen) — y la baja frecuencia de compra refuerza el punto de Sharp: crecés sumando compradoras nuevas, no esperando recompra.
+
+Top 5 priorizado (complementario a las 5 prioridades de la ronda anterior)
+
+1. Reescribir todo el copy abstracto en números y sustantivos concretos.
+2. Un video de proceso de 20-40 segundos por familia de producto, embebido en la PDP.
+3. Definir 4-6 Category Entry Points y darle a cada uno su propia colección/URL en es-UY.
+4. Convertir WhatsApp de checkout en audiencia, y abrir Google Business Profile.
+5. Distribuir el catálogo existente en Pinterest.
+
+Tres cosas a NO hacer, que la investigación desaconseja explícitamente:
+- No montar un blog de tips de crochet esperando tráfico.
+- No escribir nunca "auténtico", "artesanal", "con amor" ni "con pasión".
+- No contratar nada que se venda como "GEO" o "AEO" ni instalar llms.txt.`
+
+export const NOVEDADES_CEPS = [
+  { title: 'Un regalo para alguien que ya tiene de todo', body: 'La persona difícil de regalarle. Nadie más le va a traer algo hecho a mano y a su medida.' },
+  { title: 'Un look para un casamiento o evento de día', body: 'Buscan algo que nadie más tenga puesto — es el momento donde "pieza única" pesa más.' },
+  { title: 'Una prenda que no va a tener nadie más', body: 'Para quien ya sabe que quiere algo distinto a lo que se compra en cadena.' },
+  { title: 'Ropa para un cuerpo que no entra en el talle estándar', body: 'Las tiendas de S/M/L la dejan afuera. Es el público más desatendido de esta lista y el que más agradece que exista Dahila.' },
+]
+
+export const NOVEDADES_SEO = [
+  {
+    title: 'La gente busca el nombre mal escrito — ya está resuelto en el sitio',
+    body: 'Dahila, Dahilia, Dalia, Dailhia… es normal que un nombre nuevo se busque con variantes. El sitio ya le decía a Google que "Dalia" y "Dahlia" son formas alternativas de la marca; el 22/08 sumamos también "Dahilia" y "Dailhia" a esa misma lista, así que si alguien busca cualquiera de esas variantes, ayuda a que igual aparezcas vos.',
+  },
+  {
+    title: '¿Conviene meter palabras en inglés para que la IA te encuentre?',
+    body: 'No como texto visible — escribir en "uruguayo" de verdad (voseo, precios en pesos, buzo/pollera/chaleco) es una ventaja: hay muy poco contenido así en español y eso te hace más fácil de encontrar, no más difícil. Lo que sí es útil y ya está: los datos técnicos de cada producto (precio, si hay stock) están en un formato que cualquier sistema — en cualquier idioma — puede leer sin que el texto esté en inglés. No hace falta traducir nada.',
+  },
+]
+
+/** Cómo pasar el catálogo a Pinterest — paso a paso, para hacerlo una tarde. */
+export const NOVEDADES_PINTEREST_HOWTO = [
+  { step: 'Crear la cuenta', detail: 'pinterest.com/business/create — gratis, cuenta de negocio (no la personal).' },
+  { step: 'Reclamar dahila.uy', detail: 'Configuración → "Reclamar sitio web". Pinterest da un código para pegar — pedíselo a Matías, es 5 minutos de su lado.' },
+  { step: 'Crear 4-6 tableros', detail: 'Uno por tipo de momento, no por categoría de producto: "Regalos tejidos a mano", "Para el casamiento", "Piezas únicas", etc. — los mismos momentos de la sección de arriba.' },
+  { step: 'Pinear el catálogo actual', detail: 'Ya no hace falta bajar y subir cada foto a mano: el sitio tiene un botón "Guardar en Pinterest" en cada producto (se agregó el 22/08) — con eso alcanza, un click por producto.' },
+  { step: 'De acá en más', detail: 'Cada vez que subís un producto nuevo, ese botón ya está — pinealo esa misma semana, mientras la foto es nueva.' },
+]
+
+/** Difusión de WhatsApp — el paso a paso operativo (la app, no el sitio). */
+export const NOVEDADES_WHATSAPP_HOWTO = [
+  { step: 'Abrí WhatsApp Business en el celular', detail: 'Los 3 puntitos arriba a la derecha → "Difusión nueva" (algunos celulares la llaman "Lista de difusión").' },
+  { step: 'Elegí los contactos', detail: 'Hasta 256. OJO: solo le llega a quien YA te tiene guardada en sus contactos — así funciona la difusión de WhatsApp, no hay forma de saltear eso.' },
+  { step: 'Por eso, pedí que te guarden', detail: 'Al cerrar cada venta: "guardame el contacto así te aviso cuando abra la próxima tanda" — es el paso que hace que la lista sirva.' },
+  { step: 'Mandá el mensaje cuando haya novedad', detail: 'Un drop, la cola que se abre de nuevo, una colección nueva. Cada persona lo recibe como un mensaje tuyo normal, no como un grupo — nadie ve a los demás destinatarios.' },
+]
+
+export const NOVEDADES_MOMENTUM =
+  'Instagram y TikTok ya están funcionando mejor que el promedio — no hace falta salir a buscar quién te dé alcance todavía. Con eso funcionando, seguí haciendo más de lo mismo (mismo formato, mismo tipo de video) antes que sumar tácticas nuevas de alcance pago o colaboraciones. Cuando ese crecimiento orgánico se empiece a enfriar es el momento de mirar micro-influencers de nicho — no antes.'
+
+export const NOVEDADES_BOCA_A_BOCA =
+  'Casi todo lo que se dice de una marca (9 de cada 10 conversaciones, según la data disponible) pasa hablando, no en redes — y vos ya hacés lo más difícil de bien: packaging, tarjeta a mano, el programa AMIGA de la pestaña Clientas. Lo único que falta es una frase fácil de repetir: que la tarjeta o la etiqueta diga algo como "Tejido a mano para vos, en Montevideo — dahila.uy", no solo el logo. Así, cuando alguien le pregunta a tu clienta "¿de dónde es eso?", la respuesta ya está en la prenda y no depende de que ella se acuerde de recomendarte.'

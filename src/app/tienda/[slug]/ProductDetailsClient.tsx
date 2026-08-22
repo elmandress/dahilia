@@ -11,6 +11,7 @@ import { ProductCard } from '@/components/ProductCard'
 import { RecentlyViewed } from '@/components/RecentlyViewed'
 import { SizeGuide } from '@/components/SizeGuide'
 import { ShareButton } from '@/components/ShareButton'
+import { PinterestButton } from '@/components/PinterestButton'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import type { Product, Discount } from '@/lib/types'
 import { getEffectivePrice, getFinalPrice, getPrimaryPhoto, getScarcity, readyDateEstimate, formatPrice, BLUR_DATA_URL } from '@/lib/types'
@@ -443,6 +444,10 @@ export function ProductDetailsClient({
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
             <FavoriteButton productId={product.id} variant="inline" />
             <ShareButton title={`${product.name} — Dahila Crochet`} text={`Mirá esta prenda de Dahila: ${product.name}`} />
+            <PinterestButton
+              imageUrl={getPrimaryPhoto(product)}
+              description={`${product.name} — tejido a mano, a tu medida | Dahila Crochet`}
+            />
           </div>
 
           {/* Maker bio — who made this piece; builds trust for artisan brands */}

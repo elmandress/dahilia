@@ -22,14 +22,18 @@ import {
   MERCHANT_WHY, MERCHANT_STEPS,
   NEXT_ACTIONS,
   RISKS,
+  NOVEDADES_INTRO, NOVEDADES_ARTESANAL, NOVEDADES_CEPS, NOVEDADES_SEO,
+  NOVEDADES_SEO_IA, NOVEDADES_CANALES_EXTRA, NOVEDADES_URUGUAY, NOVEDADES_INFORME_COMPLETO,
+  NOVEDADES_PINTEREST_HOWTO, NOVEDADES_WHATSAPP_HOWTO, NOVEDADES_MOMENTUM, NOVEDADES_BOCA_A_BOCA,
   type TodoAction, type ActionItem, type PricePriority,
 } from './data'
+import { CopyReportButton } from './CopyReportButton'
 import Calculadora from './Calculadora'
 import './estrategia.css'
 
 const PROGRESS_KEY = 'estrategia_progress'
 
-type TabId = 'resumen' | 'precios' | 'calculadora' | 'tejedoras' | 'clases' | 'clientas' | 'drops' | 'canales' | 'riesgos'
+type TabId = 'resumen' | 'precios' | 'calculadora' | 'tejedoras' | 'clases' | 'clientas' | 'drops' | 'canales' | 'novedades' | 'riesgos'
 
 const TABS: Array<[TabId, string]> = [
   ['resumen', 'Resumen'],
@@ -40,6 +44,7 @@ const TABS: Array<[TabId, string]> = [
   ['clientas', 'Clientas'],
   ['drops', 'Drops'],
   ['canales', 'Canales'],
+  ['novedades', 'Novedades'],
   ['riesgos', 'Riesgos'],
 ]
 
@@ -809,6 +814,134 @@ export default function EstrategiaPage() {
                 <div className="detail">{s.detail}</div>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* ══ NOVEDADES ══ */}
+      {tab === 'novedades' && (
+        <section aria-label="Novedades">
+          <SectionHead
+            kicker="Investigado en agosto 2026"
+            title="Novedades y descubrimientos"
+            desc={NOVEDADES_INTRO}
+          />
+
+          <SectionHead
+            title="Por qué se paga más por algo hecho a mano"
+            desc="Y cómo contarlo sin que suene a que lo estás vendiendo."
+          />
+          <div className="est-grid wide" style={{ marginBottom: '2rem' }}>
+            {NOVEDADES_ARTESANAL.map((c) => (
+              <div key={c.title} className="est-card">
+                <h4>{c.title}</h4>
+                <p>{c.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            title="4 momentos para armar colecciones propias"
+            desc="En vez de competir por la palabra 'crochet', ocupar el momento puntual en el que alguien ya está pensando en comprar. Cada uno puede ser una colección con su propia URL."
+          />
+          <div className="est-grid wide" style={{ marginBottom: '2rem' }}>
+            {NOVEDADES_CEPS.map((c) => (
+              <div key={c.title} className="est-card">
+                <h4>{c.title}</h4>
+                <p>{c.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            title="El nombre de la marca y cómo te encuentran"
+            desc="Dos preguntas que surgieron: las variantes del nombre mal escrito, y si conviene meter inglés."
+          />
+          <div className="est-grid wide" style={{ marginBottom: '2rem' }}>
+            {NOVEDADES_SEO.map((c) => (
+              <div key={c.title} className="est-card">
+                <h4>{c.title}</h4>
+                <p>{c.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            title="Google, la IA y las búsquedas — en profundidad"
+            desc="Todo lo que cambió con las respuestas automáticas de Google (AI Overviews) y qué de eso importa de verdad para un sitio chico."
+          />
+          <div className="est-grid wide" style={{ marginBottom: '2rem' }}>
+            {NOVEDADES_SEO_IA.map((c) => (
+              <div key={c.title} className="est-card">
+                <h4>{c.title}</h4>
+                <p>{c.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            kicker="Instagram y TikTok ya están funcionando"
+            title="No hace falta salir a buscar alcance todavía"
+            desc={NOVEDADES_MOMENTUM}
+          />
+
+          <SectionHead
+            title="Dos canales que faltaban"
+            desc="No cambian el orden de la pestaña Canales — se suman."
+          />
+          <div className="est-grid wide" style={{ marginBottom: '2rem' }}>
+            {NOVEDADES_CANALES_EXTRA.map((c) => (
+              <div key={c.title} className="est-card">
+                <h4>{c.title}</h4>
+                <p>{c.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            kicker="Para quedarte tranquila"
+            title="Uruguay ya compra así"
+            desc={NOVEDADES_URUGUAY}
+          />
+
+          <SectionHead
+            title="Cómo pasar el catálogo a Pinterest"
+            desc="Pinterest ya estaba en la pestaña Canales como canal recomendado — esto es el paso a paso para hacerlo en una tarde."
+          />
+          <div className="est-pipeline" style={{ marginBottom: '2rem' }}>
+            {NOVEDADES_PINTEREST_HOWTO.map((s, i) => (
+              <div key={s.step} className="est-pipeline-step">
+                <span className="num">{i + 1}</span>
+                <div className="step">{s.step}</div>
+                <div className="detail">{s.detail}</div>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            title="Cómo armar la difusión de WhatsApp"
+            desc="El paso a paso en la app — es distinto de un grupo."
+          />
+          <div className="est-pipeline" style={{ marginBottom: '2rem' }}>
+            {NOVEDADES_WHATSAPP_HOWTO.map((s, i) => (
+              <div key={s.step} className="est-pipeline-step">
+                <span className="num">{i + 1}</span>
+                <div className="step">{s.step}</div>
+                <div className="detail">{s.detail}</div>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            kicker="El boca a boca sigue siendo lo más grande"
+            title="Cómo ayudarlo sin depender de que se acuerden"
+            desc={NOVEDADES_BOCA_A_BOCA}
+          />
+
+          <div className="est-card" style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
+            <h4>¿Querés el informe original, con todas las fuentes?</h4>
+            <p>Todo lo de arriba es la traducción en criollo. Esto de acá es el texto original completo — con los links a los estudios y los avisos de qué fuente es más o menos confiable — por si lo querés guardar, leer despacio o mandárselo a alguien.</p>
+            <CopyReportButton text={NOVEDADES_INFORME_COMPLETO} />
           </div>
         </section>
       )}
