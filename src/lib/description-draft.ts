@@ -49,7 +49,7 @@ const OPENERS: Record<string, string[]> = {
   ],
   faldas: [
     '{name} lleva el crochet hecho a mano a tu vestidor: caída, textura y una prenda que no vas a ver repetida.',
-    'Una falda tejida a mano: {name} funciona sola o combinada, con la textura única del punto artesanal.',
+    'Una falda tejida a mano: {name} funciona sola o combinada, con la caída que solo da el crochet.',
   ],
   accesorios: [
     '{name} es la manera más fácil de sumar tejido a mano a tu día a día — o de regalarlo.',

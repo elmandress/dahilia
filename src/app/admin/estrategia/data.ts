@@ -332,10 +332,13 @@ export const CLASSES_PRICING = {
   title: 'Cuánto cobrar (referencias reales, a validar)',
   refs: [
     'Casa Dominga (Montevideo): $1.500 por mes, 8 encuentros grupales, materiales incluidos.',
-    'Clases particulares en Superprof Uruguay: $291–500 la hora.',
+    'Clases particulares en Superprof Uruguay: $291–500 la hora. OJO: es un sitio de avisos, mayormente gente sin marca — es el PISO del mercado, no la referencia.',
+    'LaVidaLalala (Montevideo, relevado ago 2026): $4.300 por mes por 4 clases de 1 h 30 en grupos de hasta 3 → unos $717 la hora. Y la clase suelta de prueba: $1.800 (~$1.200 la hora).',
   ],
   suggestion:
     'Sugerencia: ciclo mensual de 4 encuentros de 2 h en grupo de 4–6, entre $1.600 y $2.200 por persona con materiales incluidos. Un grupo de 5 deja $8.000–11.000 por mes por 8 horas de trabajo — mejor que cualquier prenda. Validalo con tus costos de lana antes de publicar.',
+  anchor:
+    'Dónde pararte: el mercado tiene dos pisos muy separados. El de los avisos ($300–500/h) es gente sin marca; el boutique ($700–1.200/h) es taller con nombre propio. Vos tenés 5.100 seguidoras, marca y obra que mostrar — estás en el segundo, no en el primero. La sugerencia de arriba ($200–275/h en grupo de 5) es prudente para arrancar y aprender a enseñar, pero es la mitad del tramo boutique: subila en cuanto el primer ciclo se llene.',
 }
 
 export const CLASSES_LEVELS = [
@@ -523,24 +526,24 @@ export const CHANNELS: Channel[] = [
   },
   {
     rank: 4,
-    channel: 'Pinterest',
-    role: 'Tráfico que no caduca',
-    why: 'La gente busca "top crochet" con ganas de comprar, y un pin trabaja meses (un reel, horas). Para crochet es oro y casi nadie lo usa en Uruguay.',
-    action: 'Un pin por producto apuntando a su ficha. Una hora por semana alcanza.',
+    channel: 'TikTok',
+    role: 'Descubrimiento que ya arrancó',
+    why: 'Dejó de ser una apuesta: 4 videos en menos de una semana juntaron ~1.800 likes y ~650 seguidores (agosto 2026). Eso es tracción real y temprana — la cuenta está en la ventana en la que el algoritmo prueba tu contenido con desconocidos. Subió de puesto por mérito propio: Pinterest y Google tienen más potencial de fondo, pero todavía no arrancaron.',
+    action: 'Grabá PARA TikTok, no repostees con la marca de agua de Instagram (los reposts marcados pierden alcance en las dos plataformas). Mismo esfuerzo: grabá una vez sin marca y subí el archivo a las dos. Repetí el formato del video que mejor anduvo antes de inventar uno nuevo.',
   },
   {
     rank: 5,
+    channel: 'Pinterest',
+    role: 'Tráfico que no caduca',
+    why: 'La gente busca "top crochet" con ganas de comprar, y un pin trabaja meses (un reel, horas). Para crochet es oro y casi nadie lo usa en Uruguay.',
+    action: 'Un pin por producto apuntando a su ficha — el sitio ya tiene un botón "Guardar" en cada producto que arma el pin solo. Una hora por semana alcanza.',
+  },
+  {
+    rank: 6,
     channel: 'Google',
     role: 'Confianza y búsqueda local',
     why: '"Crochet Montevideo" te tiene que encontrar. Además el perfil de negocio da confianza cuando pedís seña por WhatsApp.',
     action: 'Crear el Perfil de Negocio de Google (gratis, 1 hora). Las descripciones de producto hacen el resto — el sitio ya está preparado.',
-  },
-  {
-    rank: 6,
-    channel: 'TikTok',
-    role: 'Apuesta de alcance',
-    why: 'Un video de proceso puede explotar y traerte el país entero — o nada. Como reutilizás los videos de Instagram, apostar cuesta cero.',
-    action: 'Republicá tal cual los videos de proceso. Sin estrategia propia por ahora.',
   },
   {
     rank: 7,
@@ -753,6 +756,7 @@ export interface TodoAction extends ActionItem {
 
 export const NEXT_ACTIONS: TodoAction[] = [
   { id: 'descripciones', label: 'Escribir las descripciones de los productos', detail: 'Material, medidas, horas de tejido, cuidado. Las horas ya las tenés: están en la tabla de precios de acá al lado (columna horas) — no hace falta cronometrar de nuevo, alcanza con pasarlas al texto. Por qué importa de verdad: ver "22 horas" en vez de "hecho con amor" está probado que hace pagar más — el porqué está en la pestaña Novedades.', horizon: 'ya' },
+  { id: 'disponible-ahora', label: 'Nuevo (22/08): marcar piezas "Disponible ahora"', detail: 'En Productos → editar una pieza que ya está tejida y lista (sin la espera habitual): poné el "Tiempo mínimo (semanas)" en 0. Aparece sola en una sección nueva del home y en un filtro de la tienda — nadie tiene que tocar código para usarla, es completar ese campo. Sirve para vender lo que ya tenés hecho sin que compita con lo que se hace a pedido.', horizon: 'ya' },
   { id: 'packaging', label: 'Armar el packaging tipo regalo', detail: 'Papel de seda, bolsa kraft, tarjeta a mano. El aumento de precios ya está — esta es la mejora visible que lo acompaña.', horizon: 'ya' },
   { id: 'clase-piloto', label: 'Hacer la clase piloto', detail: '3–4 conocidas, 4 encuentros. El plan completo está en la pestaña Clases.', horizon: 'mes' },
   { id: 'difusion-wa', label: 'Armar la lista de difusión de WhatsApp', detail: 'Con clientas que ya compraron. Es el canal #1 para vender los drops — el paso a paso (los 3 puntitos, "Difusión nueva") está en la pestaña Novedades.', horizon: 'mes' },
@@ -906,6 +910,54 @@ export const NOVEDADES_CANALES_EXTRA = [
 
 export const NOVEDADES_URUGUAY =
   'Un dato para quedarte tranquila con la decisión de vender por WhatsApp: el e-commerce uruguayo pasó los $100.000 millones en 2025, el 70% de la población ya compró algo online, y comprar es el tercer uso más común de internet en Uruguay — justo después de WhatsApp y las redes sociales. El checkout por WhatsApp no es una limitación del sitio: es exactamente cómo compra la gente acá. Lo único no negociable es que todo se vea perfecto desde el celular, porque el 64% de las compras se hacen desde ahí.'
+
+// ─── Fotos de producto (investigado agosto 2026) ──────────────
+// La palanca de conversión más grande que queda sin usar, y la única que se
+// puede mover sin comprar nada: se hace con el teléfono y una ventana.
+
+export const FOTOS_INTRO =
+  'Vender ropa online es vender una foto. Y en crochet hay un problema puntual: lo que justifica el precio es la TEXTURA — el relieve del punto — y la textura es exactamente lo que desaparece si la luz está mal. Esto no necesita comprar nada: se resuelve con el teléfono, una ventana y saber de qué lado pararse.'
+
+export const FOTOS_LUZ = [
+  {
+    title: '⚠️ Ojo con las guías de internet: acá la ventana buena es la del SUR',
+    body: 'Todas las guías de fotografía dicen "usá la ventana que da al norte". Están escritas en el hemisferio norte. Acá es al revés: en Montevideo el sol pasa por el norte, así que la ventana norte te da sol directo (dura, quema el brillo de la lana) y la que da luz pareja todo el día es la SUR. Si tu taller solo tiene ventana al norte, colgá una cortina fina o una sábana blanca y listo — eso difunde el sol y queda igual de bien.',
+  },
+  {
+    title: 'La regla que hace toda la diferencia: la luz tiene que venir de costado',
+    body: 'Poné la prenda AL LADO de la ventana, no de frente. Cuando la luz cruza en diagonal (más o menos a 45°), cada punto proyecta su micro-sombra y el relieve aparece. De frente, o peor con flash, el tejido se aplana y parece estampado. Es el mismo principio que usan en los museos para leer el relieve de una superficie. Si de todo esto hacés una sola cosa, que sea esta.',
+  },
+  {
+    title: 'Tres fotos distintas del mismo lugar, girando la prenda',
+    body: 'Sin mover nada: de espaldas a la ventana sale la foto de color fiel; con la prenda al costado sale la de textura; a contraluz sale la de clima (linda, pero pierde detalle). Mejor momento: primera hora de la mañana, última de la tarde, o cualquier día nublado — el nublado es un difusor gratis del tamaño del cielo.',
+  },
+  {
+    title: 'El color mal sacado es el error más caro que existe en tu negocio',
+    body: 'Casi la mitad de las devoluciones del comercio online son por talle, calce o color. Vos no tenés devoluciones fáciles: una prenda a medida en el color equivocado son semanas de trabajo perdidas. Dos reglas duras: nunca mezcles luz de ventana con lámpara amarilla en la misma foto (queda un tono imposible de corregir), y no le subas la saturación a la lana al editar.',
+  },
+]
+
+export const FOTOS_ORDEN = [
+  { step: 'La principal: puesta, cuerpo entero', detail: 'Es la miniatura que se ve en la grilla y en Google. La prenda en un cuerpo real le gana al flat-lay y al maniquí — el maniquí es lo peor de los dos mundos: ni muestra la caída real ni transmite calidez. Si no hay modelo, vos con trípode y temporizador: cámara un poquito arriba de los ojos, hombros abajo, y algo en las manos (un mate, un ovillo) para no quedar tiesa.' },
+  { step: 'El detalle del punto, con luz de costado', detail: 'Cerca, bien cerca. Esta es la foto que justifica el precio y la que nadie más está haciendo bien en Uruguay.' },
+  { step: 'La espalda', detail: 'La pregunta silenciosa de toda compra de ropa online.' },
+  { step: 'En uso, contexto real', detail: 'Con qué se combina, en qué momento se usa. Es la que ayuda a imaginársela puesta.' },
+  { step: 'Referencia de tamaño o medidas', detail: 'Un objeto conocido al lado, o la foto de la tabla de medidas. Cierra la duda del talle antes de que tenga que preguntarla.' },
+]
+
+export const FOTOS_ERRORES = [
+  'Flash directo: aplana el punto y quema el brillo de la fibra. Nunca.',
+  'La prenda hecha un bollo o doblada sobre sí misma: escondés tu propio trabajo.',
+  'Fondo con textura o estampado: compite con el tejido y gana el fondo. Pared lisa clara o tela lisa.',
+  'Mezclar luz de ventana con lámpara: el tono queda irrecuperable.',
+  'Sobreeditar: filtros, viñetas y saturación de más. Además de falsear el color, es una de las señales que hacen que un sitio parezca genérico.',
+]
+
+export const FOTOS_VIDEO =
+  'Cinco segundos girando sobre el eje contestan la pregunta que ninguna foto contesta: ¿pesa? ¿pica? ¿cae bien o queda tieso? Ese mismo clip te sirve dos veces — va en la ficha del producto Y es el arranque del reel. Se filma una vez.'
+
+export const FOTOS_EDICION =
+  'Con Snapseed (gratis, sin anuncios ni compras) alcanza y sobra. Tres pasos y nada más: balance de blancos → exposición → un toque de nitidez solo en la zona del punto. El cuello de botella nunca es la app ni la cámara: es de qué lado entra la luz.'
 
 /**
  * El informe completo, palabra por palabra, con todas las fuentes y los

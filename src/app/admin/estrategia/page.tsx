@@ -24,6 +24,7 @@ import {
   RISKS,
   NOVEDADES_INTRO, NOVEDADES_ARTESANAL, NOVEDADES_CEPS, NOVEDADES_SEO,
   NOVEDADES_SEO_IA, NOVEDADES_CANALES_EXTRA, NOVEDADES_URUGUAY, NOVEDADES_INFORME_COMPLETO,
+  FOTOS_INTRO, FOTOS_LUZ, FOTOS_ORDEN, FOTOS_ERRORES, FOTOS_VIDEO, FOTOS_EDICION,
   NOVEDADES_PINTEREST_HOWTO, NOVEDADES_WHATSAPP_HOWTO, NOVEDADES_MOMENTUM, NOVEDADES_BOCA_A_BOCA,
   type TodoAction, type ActionItem, type PricePriority,
 } from './data'
@@ -53,6 +54,39 @@ const PRIO_LABEL: Record<PricePriority, string> = {
 }
 
 const money = (n: number) => `$${n.toLocaleString('es-UY')}`
+
+/**
+ * Estado de un precio de la tabla contra lo que hay hoy en la tienda.
+ *
+ * Antes era binario (`live === today` o "Pendiente"), y eso mentía: una pieza
+ * que Anush ya subió POR ENCIMA del plan aparecía como pendiente, como si le
+ * faltara hacer algo. Pasa de verdad con 4 productos hoy — subieron más que
+ * la columna de 12 meses, que es exactamente lo que la regla de la lista de
+ * espera manda hacer. Marcarlo "Pendiente" convierte una decisión correcta en
+ * una tarea fantasma.
+ */
+type PriceState = 'hold' | 'ok' | 'above' | 'pending' | 'unknown'
+function priceState(today: number | null, live: number | null | undefined): PriceState {
+  if (today == null) return 'hold'
+  if (live == null) return 'unknown'
+  if (live === today) return 'ok'
+  return live > today ? 'above' : 'pending'
+}
+
+function PriceStateBadge({ state }: { state: PriceState }) {
+  switch (state) {
+    case 'hold':
+      return <span className="est-badge prio-hold">No tocar</span>
+    case 'ok':
+      return <span className="est-badge ok">✓</span>
+    case 'above':
+      return <span className="est-badge ok" title="En la tienda está más caro que el plan — probablemente lo subiste por la lista de espera. No hay nada que hacer.">✓ más alto</span>
+    case 'pending':
+      return <span className="est-badge pend">Pendiente</span>
+    default:
+      return <span className="est-badge pend">—</span>
+  }
+}
 
 // Posición porcentual en escala logarítmica para el gráfico de bandas.
 const LOG_MIN = Math.log(300)
@@ -126,10 +160,15 @@ export default function EstrategiaPage() {
     }
   }
 
-  // Estado vivo de los precios: "aplicado" si el precio en la tienda coincide
-  // con el aprobado.
+  // Estado vivo de los precios. Cuenta como hecho tanto el que coincide con el
+  // aprobado como el que está MÁS caro en la tienda: subirlo de más es lo que
+  // manda la regla de la lista de espera, no una tarea pendiente. Contarlos
+  // como pendientes hacía que el panel pidiera trabajo ya hecho.
   const priceRows = PRICE_TABLE.filter((r) => r.today != null)
-  const appliedCount = priceRows.filter((r) => livePrices[r.slug] != null && livePrices[r.slug] === r.today).length
+  const appliedCount = priceRows.filter((r) => {
+    const st = priceState(r.today, livePrices[r.slug])
+    return st === 'ok' || st === 'above'
+  }).length
   const pricesApplied = priceRows.length > 0 && appliedCount === priceRows.length
 
   const currentMonth = new Date().getMonth() + 1
@@ -339,7 +378,7 @@ export default function EstrategiaPage() {
                 <tbody>
                   {PRICE_TABLE.map((r) => {
                     const live = livePrices[r.slug]
-                    const applied = r.today != null && live != null && live === r.today
+                    const state = priceState(r.today, live)
                     const phNow = contribPerHour(r, r.today ?? r.before)
                     const phTarget = contribPerHour(r, r.target)
                     return (
@@ -356,11 +395,10 @@ export default function EstrategiaPage() {
                         <td>{phNow != null ? money(phNow) : '—'}</td>
                         <td>{phTarget != null ? <span className="up">{money(phTarget)}</span> : '—'}</td>
                         <td>
-                          {r.today == null
-                            ? <span className="est-badge prio-hold">No tocar</span>
-                            : applied
-                              ? <span className="est-badge ok">✓</span>
-                              : <span className="est-badge pend">Pendiente</span>}
+                          <PriceStateBadge state={state} />
+                          {state === 'above' && live != null && (
+                            <small style={{ display: 'block', color: '#8C8285' }}>en la tienda: {money(live)}</small>
+                          )}
                         </td>
                       </tr>
                     )
@@ -374,7 +412,7 @@ export default function EstrategiaPage() {
           <div className="est-price-cards est-only-mobile" style={{ marginBottom: '1rem' }}>
             {PRICE_TABLE.map((r) => {
               const live = livePrices[r.slug]
-              const applied = r.today != null && live != null && live === r.today
+              const state = priceState(r.today, live)
               const phNow = contribPerHour(r, r.today ?? r.before)
               const phTarget = contribPerHour(r, r.target)
               return (
@@ -384,11 +422,7 @@ export default function EstrategiaPage() {
                       <span className={`est-dot prio-${r.priority}`} />
                       {r.name}
                     </span>
-                    {r.today == null
-                      ? <span className="est-badge prio-hold">No tocar</span>
-                      : applied
-                        ? <span className="est-badge ok">✓</span>
-                        : <span className="est-badge pend">Pendiente</span>}
+                    <PriceStateBadge state={state} />
                   </div>
                   <div className="row2">
                     <span className="was">{money(r.before)}</span>
@@ -523,6 +557,9 @@ export default function EstrategiaPage() {
               {CLASSES_PRICING.refs.map((r) => <li key={r.slice(0, 20)}>{r}</li>)}
             </ul>
             <p style={{ fontWeight: 500, color: '#1F1A1B' }}>{CLASSES_PRICING.suggestion}</p>
+            <p style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(31,26,27,0.08)', fontSize: '0.88rem', color: '#5c5556', lineHeight: 1.65 }}>
+              {CLASSES_PRICING.anchor}
+            </p>
           </div>
 
           <SectionHead
@@ -937,6 +974,46 @@ export default function EstrategiaPage() {
             title="Cómo ayudarlo sin depender de que se acuerden"
             desc={NOVEDADES_BOCA_A_BOCA}
           />
+
+          <SectionHead
+            kicker="Lo que más mueve la aguja y no cuesta nada"
+            title="Fotos: cómo sacarlas bien con el teléfono"
+            desc={FOTOS_INTRO}
+          />
+          <div className="est-grid wide" style={{ marginBottom: '2rem' }}>
+            {FOTOS_LUZ.map((c) => (
+              <div key={c.title} className="est-card">
+                <h4>{c.title}</h4>
+                <p>{c.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            title="Las 5 fotos de cada producto, en este orden"
+            desc="Siempre el mismo orden, en los 34. Así la tienda se ve pareja y la clienta sabe dónde mirar."
+          />
+          <div className="est-pipeline" style={{ marginBottom: '2rem' }}>
+            {FOTOS_ORDEN.map((s, i) => (
+              <div key={s.step} className="est-pipeline-step">
+                <span className="num">{i + 1}</span>
+                <div className="step">{s.step}</div>
+                <div className="detail">{s.detail}</div>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead title="Los 5 errores que arruinan una foto de tejido" />
+          <div className="est-grid wide" style={{ marginBottom: '2rem' }}>
+            {FOTOS_ERRORES.map((e) => (
+              <div key={e.slice(0, 24)} className="est-card">
+                <p>{e}</p>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead title="El video de 5 segundos" desc={FOTOS_VIDEO} />
+          <SectionHead title="Con qué editar" desc={FOTOS_EDICION} />
 
           <div className="est-card" style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
             <h4>¿Querés el informe original, con todas las fuentes?</h4>
