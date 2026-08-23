@@ -40,9 +40,17 @@ export function captureAttribution(): void {
   // Un referrer del propio dominio (navegación interna) no es una fuente.
   if (referrerHost && referrerHost === window.location.hostname) referrerHost = null
 
+  // /ig existe SOLO para ser el link de la bio de Instagram (ver app/ig), así
+  // que quien entra por ahí viene de Instagram por definición. Damos eso por
+  // sentado cuando no vienen UTM en la URL: el link de la bio puede ser
+  // simplemente "dahila.uy/ig", corto y prolijo, en vez de arrastrar
+  // "?utm_source=instagram&utm_medium=bio" a la vista de todo el mundo.
+  // Un UTM explícito en la URL siempre gana (sirve para distinguir un reel
+  // puntual de la bio, p. ej. ?utm_medium=reel-poncho).
+  const esLandingDeInstagram = window.location.pathname.replace(/\/+$/, '') === '/ig'
   const attribution: Attribution = {
-    utm_source: utmSource,
-    utm_medium: params.get('utm_medium'),
+    utm_source: utmSource ?? (esLandingDeInstagram ? 'instagram' : null),
+    utm_medium: params.get('utm_medium') ?? (esLandingDeInstagram ? 'bio' : null),
     utm_campaign: params.get('utm_campaign'),
     referrer_host: referrerHost,
   }

@@ -10,10 +10,16 @@ export const revalidate = 300
 
 // /ig — el link de la bio de Instagram, en el propio dominio.
 // Reemplaza a un Linktree: cero fuga a dominios ajenos, branding intacto y
-// medición completa (Umami registra la pageview con sus UTM, y todo lo que
-// pase después — product_view, add_to_cart, order_sent — queda en el mismo
-// embudo). El link recomendado para la bio:
-//   https://dahila.uy/ig?utm_source=instagram&utm_medium=bio
+// medición completa (todo lo que pase después — product_view, add_to_cart,
+// order_sent — queda en el mismo embudo).
+//
+// El link para la bio es simplemente:
+//   https://dahila.uy/ig
+// Sin parámetros: como esta página existe SOLO para la bio de Instagram,
+// lib/attribution.ts asume instagram/bio cuando alguien llega acá sin UTM
+// (la URL larga con ?utm_source=... quedaba fea a la vista en el perfil).
+// Si algún día se quiere medir un reel puntual aparte, un UTM explícito
+// sigue pisando el default: /ig?utm_medium=reel-poncho
 // Pensada para el navegador in-app de Instagram: una columna, tap targets
 // grandes, lo nuevo primero (el último reel casi siempre es la última pieza).
 // noindex: es una utilidad de navegación, no una landing para Google.
