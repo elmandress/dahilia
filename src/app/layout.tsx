@@ -8,6 +8,7 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { WhatsAppFloat } from '@/components/WhatsAppFloat'
 import { WeaverCallout } from '@/components/WeaverCallout'
+import { VipCallout } from '@/components/VipCallout'
 import { AnalyticsScript } from '@/components/AnalyticsScript'
 import { ClarityScript } from '@/components/ClarityScript'
 import { GoogleAnalyticsScript } from '@/components/GoogleAnalyticsScript'
@@ -243,6 +244,12 @@ export default async function RootLayout({
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <meta name="apple-mobile-web-app-title" content="Dahila" />
+        {/* Verificación del sitio en Pinterest (Configuración → Sitios web
+            reclamados). Reclamar el dominio es lo que activa los Rich Pins:
+            los pines toman precio y disponibilidad del schema.org que las
+            fichas ya publican, y se actualizan solos cuando cambia el
+            precio en el admin. No caduca: si se saca, hay que re-reclamar. */}
+        <meta name="p:domain_verify" content="cfc7470c4dc04012bdc53503424844d7" />
         <link rel="manifest" href="/site.webmanifest" />
         <link rel="preconnect" href={SUPABASE_STORAGE_ORIGIN} />
       </head>
@@ -259,6 +266,7 @@ export default async function RootLayout({
             <BackToTop />
             <WhatsAppFloat enabled={waEnabled} waUrl={waUrl} />
             <WeaverCallout />
+            <VipCallout />
           </FavoritesProvider>
         </CartProvider>
         <AttributionCapture />

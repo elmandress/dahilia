@@ -421,13 +421,12 @@ async function ProductPage({ slug }: { slug: string }) {
     // número de parte de fabricante real, y reusar el UUID interno ahí es dato
     // de relleno que Google no puede aprovechar. `sku` (el id interno) alcanza.
     sku: product.id,
-    // Merchant Center pide que la AUSENCIA de identificadores sea explícita
-    // para productos hechos a mano (support.google.com/merchants/answer/6324478:
-    // "custom goods, handmade items… leave GTIN/MPN blank" + identifier_exists
-    // en no/false). Sin esta declaración, parte del catálogo queda pendiente de
-    // revisión en vez de aprobarse — que es lo que explica ver menos productos
-    // listados de los que el sitemap publica.
-    identifier_exists: false,
+    // NO va `identifier_exists` acá: es un atributo del FEED de Merchant
+    // Center, no una propiedad de schema.org, así que en el JSON-LD Google
+    // simplemente lo ignora (verificado contra la documentación 23/08). La
+    // declaración de "estas piezas no tienen código de barras" — que es lo
+    // que evita que queden marcadas como "Limited" por identificador
+    // faltante — vive en /merchant-feed.xml, que sí lo admite.
     brand: { '@type': 'Brand', name: 'Dahila Crochet' },
     ...(product.category ? { category: product.category.name } : {}),
     ...(product.material ? { material: product.material } : {}),
