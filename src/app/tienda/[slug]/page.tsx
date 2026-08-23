@@ -237,7 +237,15 @@ async function CategoryPage({ slug, category }: { slug: string; category: Catego
               '@type': 'Offer',
               price: getFinalPrice(p, undefined, discounts).toFixed(2),
               priceCurrency: 'UYU',
-              availability: p.status === 'active' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+              // Mismo criterio que la ficha del producto (ver productJsonLd):
+              // solo InStock si sale ya; lo que se teje a pedido es BackOrder.
+              // Si los dos lugares se contradicen, Merchant Center lo marca.
+              availability:
+                p.status !== 'active'
+                  ? 'https://schema.org/OutOfStock'
+                  : p.lead_time_weeks_min === 0 && p.lead_time_weeks_max === 0
+                    ? 'https://schema.org/InStock'
+                    : 'https://schema.org/BackOrder',
             },
           },
         }
@@ -379,6 +387,21 @@ async function ProductPage({ slug }: { slug: string }) {
   const schemaImages = galleryImages.length > 0 ? galleryImages : [botImageUrl(SITE_URL, photo)]
   const finalPrice = getFinalPrice(product, undefined, discounts)
 
+  // Rango real de precios cuando la pieza cuesta distinto según el talle (8 de
+  // 34 productos hoy). Google exige que el precio del schema coincida con el
+  // que ve la clienta en la página; publicar un solo `price` cuando al elegir
+  // un talle aparece otro es la clase de discrepancia que deja el producto
+  // fuera de las fichas gratuitas. Con varios precios se usa AggregateOffer
+  // (low/high), que es lo que schema.org define para exactamente este caso.
+  const sizePrices = (product.sizes ?? [])
+    .filter((s) => s.available !== false)
+    .map((s) => getFinalPrice(product, s.size, discounts))
+    .filter((n) => n > 0)
+  const allPrices = sizePrices.length > 0 ? sizePrices : (finalPrice > 0 ? [finalPrice] : [])
+  const lowPrice = allPrices.length > 0 ? Math.min(...allPrices) : finalPrice
+  const highPrice = allPrices.length > 0 ? Math.max(...allPrices) : finalPrice
+  const hasPriceRange = lowPrice !== highPrice
+
   // Price validity one year out — keeps Google Merchant / rich-results parsing
   // happy without asserting a promo end date the owner didn't set. This is a
   // Server Component that runs per-request (revalidate=3600), so reading the
@@ -394,25 +417,46 @@ async function ProductPage({ slug }: { slug: string }) {
     name: product.name,
     ...(product.description ? { description: product.description } : {}),
     image: schemaImages,
-    // Sin `mpn`: son piezas hechas a mano, una por una — no existe un número
-    // de parte de fabricante real, y reusar el UUID interno ahí es dato
+    // Sin `mpn` ni `gtin`: son piezas hechas a mano, una por una — no existe un
+    // número de parte de fabricante real, y reusar el UUID interno ahí es dato
     // de relleno que Google no puede aprovechar. `sku` (el id interno) alcanza.
     sku: product.id,
+    // Merchant Center pide que la AUSENCIA de identificadores sea explícita
+    // para productos hechos a mano (support.google.com/merchants/answer/6324478:
+    // "custom goods, handmade items… leave GTIN/MPN blank" + identifier_exists
+    // en no/false). Sin esta declaración, parte del catálogo queda pendiente de
+    // revisión en vez de aprobarse — que es lo que explica ver menos productos
+    // listados de los que el sitemap publica.
+    identifier_exists: false,
     brand: { '@type': 'Brand', name: 'Dahila Crochet' },
     ...(product.category ? { category: product.category.name } : {}),
     ...(product.material ? { material: product.material } : {}),
     offers: {
-      '@type': 'Offer',
+      // AggregateOffer cuando el precio cambia según el talle (ver lowPrice /
+      // highPrice arriba); Offer simple cuando hay un único precio real.
+      '@type': hasPriceRange ? 'AggregateOffer' : 'Offer',
       url: `${SITE_URL}/tienda/${product.slug}`,
       seller: { '@type': 'Organization', name: 'Dahila Crochet', url: SITE_URL },
-      price: finalPrice.toFixed(2),
+      ...(hasPriceRange
+        ? {
+            lowPrice: lowPrice.toFixed(2),
+            highPrice: highPrice.toFixed(2),
+            offerCount: allPrices.length,
+          }
+        : { price: finalPrice.toFixed(2) }),
       priceCurrency: 'UYU',
       availability:
-        product.status === 'active'
-          ? 'https://schema.org/InStock'
-          : product.status === 'soldout'
-            ? 'https://schema.org/OutOfStock'
-            : 'https://schema.org/PreOrder',
+        // Honestidad con Google (y con la clienta): "InStock" solo si la pieza
+        // realmente está tejida y sale ya. Lo que se teje a pedido es
+        // BackOrder — declararlo InStock y después entregar en semanas es la
+        // clase de discrepancia que Merchant Center marca como problema.
+        product.status === 'soldout'
+          ? 'https://schema.org/OutOfStock'
+          : product.status !== 'active'
+            ? 'https://schema.org/PreOrder'
+            : product.lead_time_weeks_min === 0 && product.lead_time_weeks_max === 0
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/BackOrder',
       itemCondition: 'https://schema.org/NewCondition',
       priceValidUntil,
       // Hecho a medida: no se aceptan cambios (coherente con la FAQ del sitio).
@@ -426,14 +470,19 @@ async function ProductPage({ slug }: { slug: string }) {
       shippingDetails: {
         '@type': 'OfferShippingDetails',
         shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'UY' },
-        ...(product.lead_time_weeks_min > 0 || product.lead_time_weeks_max > 0
+        // Ojo con el 0: una pieza "Disponible ahora" (lead_time_weeks_min = 0,
+        // ver isReadyToShip en lib/types) tiene handling 0 días, que es un dato
+        // REAL y bueno para Google — no la ausencia de dato. Por eso el guard
+        // mira que los valores sean números válidos, no que sean > 0: con `> 0`
+        // el bloque entero desaparecía justo en las piezas listas para enviar.
+        ...(Number.isFinite(product.lead_time_weeks_min) && Number.isFinite(product.lead_time_weeks_max)
           ? {
               deliveryTime: {
                 '@type': 'ShippingDeliveryTime',
                 handlingTime: {
                   '@type': 'QuantitativeValue',
-                  minValue: (product.lead_time_weeks_min || product.lead_time_weeks_max) * 7,
-                  maxValue: (product.lead_time_weeks_max || product.lead_time_weeks_min) * 7,
+                  minValue: Math.min(product.lead_time_weeks_min, product.lead_time_weeks_max) * 7,
+                  maxValue: Math.max(product.lead_time_weeks_min, product.lead_time_weeks_max) * 7,
                   unitCode: 'DAY',
                 },
                 transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' },

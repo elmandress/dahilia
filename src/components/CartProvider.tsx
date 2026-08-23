@@ -98,7 +98,16 @@ export function CartProvider({
   const [isLoading, setIsLoading] = useState(true)
   const [hasMounted, setHasMounted] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [addError, setAddError] = useState(false)
+  // Mensaje del toast de error. Antes era un booleano con el texto fijo de
+  // "agregar": updateQty y removeFromCart fallaban en silencio (solo
+  // console.error), así que sin red la cantidad simplemente no se movía y la
+  // clienta no tenía forma de saber que su cambio no se guardó.
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const addError = errorMsg !== null
+  const showError = useCallback((msg: string) => {
+    setErrorMsg(msg)
+    setTimeout(() => setErrorMsg(null), 3500)
+  }, [])
   const hasFetchedRef = useRef(false)
 
   const openDrawer = useCallback(() => setDrawerOpen(true), [])
@@ -187,10 +196,9 @@ export function CartProvider({
     } catch (e) {
       console.error('addToCart failed', e)
       // Surface the error so the user knows the add failed.
-      setAddError(true)
-      setTimeout(() => setAddError(false), 3500)
+      showError('No se pudo agregar al carrito. Intentá de nuevo.')
     }
-  }, [])
+  }, [showError])
 
   const updateQty = useCallback(async (itemId: string, qty: number) => {
     if (qty < 0) return
@@ -207,8 +215,9 @@ export function CartProvider({
       pingOtherTabs()
     } catch (e) {
       console.error('updateQty failed', e)
+      showError('No se pudo actualizar la cantidad. Revisá tu conexión.')
     }
-  }, [])
+  }, [showError])
 
   const removeFromCart = useCallback(async (itemId: string) => {
     try {
@@ -222,10 +231,17 @@ export function CartProvider({
       pingOtherTabs()
     } catch (e) {
       console.error('removeFromCart failed', e)
+      showError('No se pudo eliminar la pieza. Revisá tu conexión.')
     }
-  }, [])
+  }, [showError])
 
-  const cartCount = items.reduce((sum, item) => sum + item.qty, 0)
+  // Mismo guard `!!item.product` que usan el drawer, /carrito y el mensaje de
+  // WhatsApp: si la dueña pasa una pieza a "draft" mientras está en el carrito
+  // de alguien, RLS deja de exponer el producto y la fila queda sin él. Sin
+  // filtrar acá, el globito del header seguía contando esa pieza fantasma: el
+  // header decía "2", el drawer mostraba 1, y con un solo ítem en borrador el
+  // badge decía "1" sobre un carrito que anuncia "Tu carrito está vacío".
+  const cartCount = items.reduce((sum, item) => (item.product ? sum + item.qty : sum), 0)
   // Cart total applies BOTH the per-product discount and any active batch/
   // category rule (best wins, via getFinalPrice) so the total the shopper sees
   // matches the price shown across the store, card, and PDP.
@@ -266,7 +282,7 @@ export function CartProvider({
           whiteSpace: 'nowrap',
         }}
       >
-        No se pudo agregar al carrito. Intentá de nuevo.
+        {errorMsg ?? ''}
       </div>
     </CartContext.Provider>
   )

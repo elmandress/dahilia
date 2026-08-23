@@ -37,6 +37,7 @@ export default async function TiendaPage({
   const sortParam = typeof params.sort === 'string' ? params.sort : ''
   const onlyOffers = params.oferta === '1'
   const hideOutOfStock = params.disp === '1'
+  const onlyReadyToShip = params.ya === '1'
 
   // Catálogo con fallback al snapshot estático si la DB está caída (402 de
   // cuota) — el sitio sigue navegable en modo lectura en vez de quedar vacío.
@@ -99,7 +100,7 @@ export default async function TiendaPage({
       />
     {source === 'snapshot' && <CatalogReadOnlyBanner />}
     <TiendaClient
-      key={`${categoryFilter}|${searchQuery}|${colorParam}|${sizeParam}|${maxParam}|${sortParam}|${onlyOffers}|${hideOutOfStock}`}
+      key={`${categoryFilter}|${searchQuery}|${colorParam}|${sizeParam}|${maxParam}|${sortParam}|${onlyOffers}|${hideOutOfStock}|${onlyReadyToShip}`}
       initialProducts={products}
       categories={categories}
       colors={colors}
@@ -112,6 +113,7 @@ export default async function TiendaPage({
       initialSort={sortParam}
       initialOnlyOffers={onlyOffers}
       initialHideOutOfStock={hideOutOfStock}
+      initialOnlyReadyToShip={onlyReadyToShip}
     />
     </>
   )

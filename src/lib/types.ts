@@ -230,6 +230,19 @@ export function getFinalPrice(product: Product, sizeLabel?: string, batch?: Disc
   return Math.round((list * (100 - pct)) / 100);
 }
 
+// Normalizacion de texto para busqueda: saca tildes y pasa a minusculas, asi
+// "amelie" encuentra "Top AMELIE". Vive aca (y no duplicada) porque la usan
+// DOS lugares que TIENEN que coincidir: el dropdown del header (/api/search)
+// y la grilla de /tienda (matchesFilters). Cuando solo uno de los dos
+// normalizaba, la sugerencia mostraba la pieza y al apretar Enter la grilla
+// contestaba "No encontramos prendas con esos filtros".
+// El rango de marcas combinantes va en escapes explicitos (U+0300-U+036F) y no
+// como caracteres literales, para que no lo corrompa un guardado con otra
+// codificacion.
+export function normalizeText(s: string): string {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
 // Helper: format price in UYU
 export function formatPrice(price: number): string {
   return `UYU ${price.toLocaleString('es-UY')}`;
@@ -244,10 +257,16 @@ export function readyDateEstimate(minWeeks: number, maxWeeks: number): string | 
       day: 'numeric',
       month: 'long',
     });
-  if (minWeeks > 0 && maxWeeks > 0 && minWeeks !== maxWeeks) {
-    return `entre el ${fmt(minWeeks)} y el ${fmt(maxWeeks)}`;
+  // El editor de producto no impide cargar min > max (dos inputs sueltos, sin
+  // validación cruzada). Sin ordenarlos, un 5/2 mal tipeado imprime "entre el
+  // 26 de setiembre y el 5 de setiembre" — un rango al revés en la ficha.
+  // Mismo criterio que el bloque de schema.org, que ya usa Math.min/Math.max.
+  const lo = Math.min(minWeeks, maxWeeks);
+  const hi = Math.max(minWeeks, maxWeeks);
+  if (lo > 0 && hi > 0 && lo !== hi) {
+    return `entre el ${fmt(lo)} y el ${fmt(hi)}`;
   }
-  const weeks = maxWeeks || minWeeks;
+  const weeks = hi || lo;
   if (weeks > 0) return `alrededor del ${fmt(weeks)}`;
   return null;
 }
@@ -273,6 +292,14 @@ export function getPrimaryPhoto(product: Product): string {
   }
   const primary = product.media.find(m => m.is_primary && m.type === 'image');
   return primary?.url || product.media[0].url || PHOTO_PLACEHOLDER;
+}
+
+// "Disponible ahora": la pieza ya está tejida y lista, sin la espera habitual
+// de a-medida. Reusa el campo lead_time_weeks_min que el catálogo ya tiene
+// (no agrega ninguna columna nueva) — la dueña lo pone en 0 en el editor de
+// producto cuando corresponde. Nunca se infiere solo: es una decisión suya.
+export function isReadyToShip(product: Product): boolean {
+  return product.status === 'active' && !product.is_custom_only && product.lead_time_weeks_min === 0;
 }
 
 // Honest scarcity for a handmade catalogue. Everything here is derived from data

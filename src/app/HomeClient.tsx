@@ -7,7 +7,7 @@ import { DropTeaser } from '@/components/DropTeaser'
 import { TestimonialsStrip } from '@/components/TestimonialsStrip'
 import type { Product, Discount } from '@/lib/types'
 import type { Testimonial } from '@/components/TestimonialsStrip'
-import { BLUR_DATA_URL } from '@/lib/types'
+import { BLUR_DATA_URL, isReadyToShip } from '@/lib/types'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -105,6 +105,9 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
   // manual si la consulta dedicada no trajo nada).
   const featured = newest.length > 0 ? newest : products.slice(0, 4)
   const accesorios = products.filter((p) => p.category?.slug === 'accesorios').slice(0, 4)
+  // Disponible ahora: piezas ya tejidas, sin la espera habitual — la sección
+  // se oculta sola si hoy no hay ninguna (nunca prometer algo que no hay).
+  const readyToShip = products.filter(isReadyToShip).slice(0, 4)
 
   const heroImage = val(settings, 'hero_image_url', '/photos/top-lace-parque.jpg')
   // Banner-style focal point (like LinkedIn/YouTube). Stored as "x% y%" so the
@@ -261,6 +264,40 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
             : <EmptyCollectionState onCta={() => router.push('/encargo')} />}
         </div>
       </section>
+
+      {/* DISPONIBLE AHORA — piezas ya tejidas, sin la espera de a-medida.
+          Se oculta sola cuando no hay ninguna (readyToShip vacío). */}
+      {readyToShip.length > 0 && (
+        <section style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 24px 0' }}>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+            marginBottom: 32, paddingBottom: 12,
+            borderBottom: `1px solid ${dahila.border}`,
+          }}>
+            <div>
+              <h2 style={{
+                fontFamily: dahila.fontDisplay, fontWeight: 300,
+                fontSize: 22, letterSpacing: '0.08em', textTransform: 'uppercase',
+                color: dahila.ink900, margin: 0,
+              }}>Disponible ahora</h2>
+              <p style={{
+                fontFamily: dahila.fontSans, fontSize: 12.5, fontWeight: 300,
+                color: dahila.ink500, margin: '4px 0 0',
+              }}>Ya tejidas, listas para enviar — sin la espera habitual.</p>
+            </div>
+            <Link href="/tienda?ya=1" style={{
+              fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
+              letterSpacing: '0.06em', color: dahila.ink700, textDecoration: 'none',
+            }}>Ver todo →</Link>
+          </div>
+
+          <div className="product-grid" style={{
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22,
+          }}>
+            {readyToShip.map((product) => <ProductCard key={product.id} product={product} discounts={discounts} />)}
+          </div>
+        </section>
+      )}
 
       {/* PRÓXIMO DROP — countdown + captura VIP; ver DropTeaser.tsx */}
       {showDrop && (

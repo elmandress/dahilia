@@ -19,7 +19,7 @@ export function ProductCard({
   discounts?: Discount[]
   onQuickView?: () => void
 }) {
-  const { addToCart } = useCart()
+  const { addToCart, queueNote } = useCart()
   const [hover, setHover] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
 
@@ -187,7 +187,11 @@ export function ProductCard({
             )}
           </div>
         )}
-        {product.lead_time_weeks_min > 0 && product.status !== 'soldout' && (
+        {/* Con lista de espera activa el plazo del producto queda corto (la cola
+            manda), así que la etiqueta se oculta: mismo criterio que el PDP
+            (ProductDetailsClient) y el carrito. Sin este guard la grilla
+            prometía "1–2 sem." al lado del cartel que dice otra cosa. */}
+        {!queueNote.trim() && product.lead_time_weeks_min > 0 && product.status !== 'soldout' && (
           <span style={{
             fontFamily: dahila.fontSans, fontSize: 10, color: dahila.ink500,
             letterSpacing: '0.02em', whiteSpace: 'nowrap', marginLeft: 'auto',

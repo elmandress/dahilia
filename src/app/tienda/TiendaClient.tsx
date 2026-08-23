@@ -7,7 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Product, Category, Color, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
-import { getFinalPrice, BLUR_DATA_URL } from '@/lib/types'
+import { getFinalPrice, BLUR_DATA_URL, isReadyToShip, normalizeText } from '@/lib/types'
 import { dahila, Eyebrow, Chip, Icon, Breadcrumb, Button } from '@/components/ui/Primitives'
 import { track } from '@/lib/analytics'
 import { readRecentlyViewed, type RecentItem } from '@/lib/recentlyViewed'
@@ -86,13 +86,18 @@ const SORT_KEYS = Object.keys(SORT_LABELS) as SortKey[]
 // ("Ver 8 resultados") — mismo criterio, dos snapshots distintos.
 function matchesFilters(p: Product, opts: {
   filter: string; search: string; colorIds: string[]; sizes: string[]
-  maxEff: number; onlyDiscount: boolean; hideOutOfStock: boolean; discounts: Discount[]
+  maxEff: number; onlyDiscount: boolean; hideOutOfStock: boolean; onlyReadyToShip: boolean; discounts: Discount[]
 }) {
   const matchesCat = opts.filter === 'todo' || p.category?.slug === opts.filter
+  // Mismo normalizado que el dropdown del header (/api/search): sin esto,
+  // buscar "amelie" sugería "Top AMÉLIE" y al apretar Enter esta grilla
+  // contestaba "No encontramos prendas con esos filtros" — la tilde la
+  // escribe casi nadie desde el teléfono.
+  const q = normalizeText(opts.search)
   const matchesSearch =
-    !opts.search ||
-    p.name.toLowerCase().includes(opts.search.toLowerCase()) ||
-    (p.description && p.description.toLowerCase().includes(opts.search.toLowerCase()))
+    !q ||
+    normalizeText(p.name).includes(q) ||
+    (!!p.description && normalizeText(p.description).includes(q))
   const matchesColor =
     opts.colorIds.length === 0 || (p.colors ?? []).some((c) => opts.colorIds.includes(c.id))
   const matchesSize =
@@ -102,7 +107,8 @@ function matchesFilters(p: Product, opts: {
   const matchesPrice = opts.maxEff <= 0 || finalPrice <= opts.maxEff
   const matchesDiscount = !opts.onlyDiscount || finalPrice < (p.base_price_uyu ?? Infinity)
   const matchesStock = !opts.hideOutOfStock || p.status !== 'soldout'
-  return matchesCat && matchesSearch && matchesColor && matchesSize && matchesPrice && matchesDiscount && matchesStock
+  const matchesReady = !opts.onlyReadyToShip || isReadyToShip(p)
+  return matchesCat && matchesSearch && matchesColor && matchesSize && matchesPrice && matchesDiscount && matchesStock && matchesReady
 }
 
 export function TiendaClient({
@@ -118,6 +124,7 @@ export function TiendaClient({
   initialOnlyOffers,
   initialSize,
   initialHideOutOfStock,
+  initialOnlyReadyToShip,
 }: {
   initialProducts: Product[]
   categories: Category[]
@@ -131,6 +138,7 @@ export function TiendaClient({
   initialOnlyOffers?: boolean
   initialSize?: string
   initialHideOutOfStock?: boolean
+  initialOnlyReadyToShip?: boolean
 }) {
   const router = useRouter()
 
@@ -161,6 +169,7 @@ export function TiendaClient({
     initialSize ? initialSize.split(',').filter(Boolean) : []
   )
   const [hideOutOfStock, setHideOutOfStock] = useState(!!initialHideOutOfStock)
+  const [onlyReadyToShipFilter, setOnlyReadyToShipFilter] = useState(!!initialOnlyReadyToShip)
   const [showFilters, setShowFilters] = useState(false)
   const [quickView, setQuickView] = useState<Product | null>(null)
 
@@ -197,6 +206,7 @@ export function TiendaClient({
   const [appliedOnlyDiscount, setAppliedOnlyDiscount] = useState(onlyDiscount)
   const [appliedSizes, setAppliedSizes] = useState(sizes)
   const [appliedHideOutOfStock, setAppliedHideOutOfStock] = useState(hideOutOfStock)
+  const [appliedOnlyReadyToShip, setAppliedOnlyReadyToShip] = useState(onlyReadyToShipFilter)
 
   // En desktop cada setter de abajo (toggleColor, el slider, "Ver resultados"
   // per se) aplica en vivo tocando applied* al toque — sin useEffect, para no
@@ -208,6 +218,7 @@ export function TiendaClient({
     setAppliedOnlyDiscount(onlyDiscount)
     setAppliedSizes(sizes)
     setAppliedHideOutOfStock(hideOutOfStock)
+    setAppliedOnlyReadyToShip(onlyReadyToShipFilter)
     setShowFilters(false)
   }
 
@@ -232,6 +243,7 @@ export function TiendaClient({
       if (sort !== 'recientes') sp.set('sort', sort)
       if (appliedOnlyDiscount) sp.set('oferta', '1')
       if (appliedHideOutOfStock) sp.set('disp', '1')
+      if (appliedOnlyReadyToShip) sp.set('ya', '1')
       const qs = sp.toString()
 
       // Prefer clean category URLs over query params
@@ -243,7 +255,7 @@ export function TiendaClient({
       }
     }, 350)
     return () => clearTimeout(t)
-  }, [filter, search, appliedColorIds, appliedSizes, appliedMaxPrice, sort, appliedOnlyDiscount, appliedHideOutOfStock, priceBounds.max, router])
+  }, [filter, search, appliedColorIds, appliedSizes, appliedMaxPrice, sort, appliedOnlyDiscount, appliedHideOutOfStock, appliedOnlyReadyToShip, priceBounds.max, router])
 
   // Only show colours that are actually used by at least one product.
   const usedColors = useMemo(() => {
@@ -269,7 +281,7 @@ export function TiendaClient({
     const result = initialProducts.filter((p) => matchesFilters(p, {
       filter, search, colorIds: appliedColorIds, sizes: appliedSizes,
       maxEff: appliedEffectiveMax, onlyDiscount: appliedOnlyDiscount,
-      hideOutOfStock: appliedHideOutOfStock, discounts,
+      hideOutOfStock: appliedHideOutOfStock, onlyReadyToShip: appliedOnlyReadyToShip, discounts,
     }))
 
     const withFinal = result.map((p) => ({ p, price: getFinalPrice(p, undefined, discounts) }))
@@ -294,16 +306,16 @@ export function TiendaClient({
         break
     }
     return withFinal.map((x) => x.p)
-  }, [initialProducts, filter, search, appliedColorIds, appliedSizes, appliedEffectiveMax, appliedOnlyDiscount, appliedHideOutOfStock, sort, discounts])
+  }, [initialProducts, filter, search, appliedColorIds, appliedSizes, appliedEffectiveMax, appliedOnlyDiscount, appliedHideOutOfStock, appliedOnlyReadyToShip, sort, discounts])
 
   // Vista previa del borrador en mobile: cuántas prendas van a quedar si se
   // toca "Ver resultados" — así el botón no es una caja negra.
   const draftCount = useMemo(() => {
     if (!isMobile || !showFilters) return filtered.length
     return initialProducts.filter((p) => matchesFilters(p, {
-      filter, search, colorIds, sizes, maxEff: effectiveMax, onlyDiscount, hideOutOfStock, discounts,
+      filter, search, colorIds, sizes, maxEff: effectiveMax, onlyDiscount, hideOutOfStock, onlyReadyToShip: onlyReadyToShipFilter, discounts,
     })).length
-  }, [isMobile, showFilters, initialProducts, filter, search, colorIds, sizes, effectiveMax, onlyDiscount, hideOutOfStock, discounts, filtered.length])
+  }, [isMobile, showFilters, initialProducts, filter, search, colorIds, sizes, effectiveMax, onlyDiscount, hideOutOfStock, onlyReadyToShipFilter, discounts, filtered.length])
 
   const activeFilterCount =
     (filter !== 'todo' ? 1 : 0) +
@@ -311,7 +323,8 @@ export function TiendaClient({
     appliedSizes.length +
     (appliedMaxPrice !== null && appliedMaxPrice < priceBounds.max ? 1 : 0) +
     (appliedOnlyDiscount ? 1 : 0) +
-    (appliedHideOutOfStock ? 1 : 0)
+    (appliedHideOutOfStock ? 1 : 0) +
+    (appliedOnlyReadyToShip ? 1 : 0)
 
   // "Limpiar filtros" también debe aparecer cuando lo único activo es una
   // búsqueda (en mobile el input está oculto: sin esto, un ?q= del buscador
@@ -325,11 +338,13 @@ export function TiendaClient({
     setOnlyDiscount(false)
     setSizes([])
     setHideOutOfStock(false)
+    setOnlyReadyToShipFilter(false)
     setAppliedColorIds([])
     setAppliedMaxPrice(null)
     setAppliedOnlyDiscount(false)
     setAppliedSizes([])
     setAppliedHideOutOfStock(false)
+    setAppliedOnlyReadyToShip(false)
     setSearch('')
     setSort('recientes')
   }
@@ -361,6 +376,11 @@ export function TiendaClient({
     if (!isMobile) setAppliedHideOutOfStock(v)
   }
 
+  const setReadyToShipOnly = (v: boolean) => {
+    setOnlyReadyToShipFilter(v)
+    if (!isMobile) setAppliedOnlyReadyToShip(v)
+  }
+
   // Abrir el panel en mobile trae el borrador de vuelta a lo aplicado (si se
   // cerró sin tocar "Ver resultados" la vez anterior, no arrastra cambios a
   // medio hacer). En desktop no hace falta: borrador y aplicado ya son lo mismo.
@@ -372,6 +392,7 @@ export function TiendaClient({
       setOnlyDiscount(appliedOnlyDiscount)
       setSizes(appliedSizes)
       setHideOutOfStock(appliedHideOutOfStock)
+      setOnlyReadyToShipFilter(appliedOnlyReadyToShip)
     }
     setShowFilters(opening)
   }
@@ -615,6 +636,15 @@ export function TiendaClient({
                   style={{ accentColor: dahila.ink900, width: 18, height: 18 }}
                 />
                 Ocultar agotados
+              </label>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink900 }}>
+                <input
+                  type="checkbox"
+                  checked={onlyReadyToShipFilter}
+                  onChange={(e) => setReadyToShipOnly(e.target.checked)}
+                  style={{ accentColor: dahila.ink900, width: 18, height: 18 }}
+                />
+                Disponible ahora — sin espera
               </label>
             </div>
           </div>

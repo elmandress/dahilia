@@ -536,6 +536,17 @@ export function ProductDetailsClient({
               maxWidth: '40vw',
             }}>{product.name}</span>
             <PriceBlock list={listPrice} final={finalPrice} size="sm" align="start" />
+            {/* Qué talle va a agregar este botón. En mobile la barra queda fija
+                mientras el selector de talle ya quedó muy arriba: sin esto se
+                toca "Agregar" a ciegas, sin poder confirmar qué se eligió. */}
+            {(product.sizes?.length ?? 0) > 1 && (
+              <span style={{
+                fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500,
+                lineHeight: 1.2, marginTop: 1,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                maxWidth: '40vw',
+              }}>Talle {talle}</span>
+            )}
           </div>
           <button
             onClick={handleAdd}

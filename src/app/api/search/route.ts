@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getPrimaryPhoto, getFinalPrice } from '@/lib/types'
+import { getPrimaryPhoto, getFinalPrice, normalizeText as normalize } from '@/lib/types'
 import type { Product } from '@/lib/types'
 
 export const revalidate = 0
 
 // Strip diacritics + lowercase so "cardigan" matches "Cardigán" and vice versa.
-// Use explicit Unicode escape range to avoid source-encoding corruption of literal chars.
-function normalize(s: string): string {
-  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
-}
+// La implementación vive en lib/types (normalizeText) porque /tienda tiene que
+// filtrar con EXACTAMENTE el mismo criterio: si acá normalizamos y allá no, la
+// sugerencia lleva a una grilla vacía.
 
 /**
  * Lightweight product search for the header's live suggestions. Returns a small,

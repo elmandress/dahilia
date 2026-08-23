@@ -43,6 +43,13 @@ export function QuickViewModal({
   const hasDiscount = discountPct > 0 && listPrice > 0
   const isSoldOut = product.status === 'soldout'
   const canBuy = !isSoldOut && !product.is_custom_only
+  // Mismo guard que el PDP: si el talle elegido está marcado no disponible, el
+  // botón no puede agregar. Pasa cuando NINGÚN talle está disponible pero el
+  // producto sigue en 'active' — ahí `firstAvailable` es undefined y el estado
+  // cae al primer talle de la lista, que está agotado. Sin esto el botón
+  // quedaba habilitado y la API respondía 409 con un toast genérico.
+  const selectedSizeRow = product.sizes?.find((s) => s.size === talle)
+  const sizeAvailable = !selectedSizeRow || selectedSizeRow.available
 
   useScrollLock(true)
 
@@ -59,6 +66,7 @@ export function QuickViewModal({
   useFocusTrap(cardRef, true)
 
   const handleAdd = async () => {
+    if (!sizeAvailable) return
     await addToCart(product, talle, 1)
     // addToCart opens the mini-cart drawer; close this modal so we don't stack
     // two dialogs on top of each other.
@@ -180,9 +188,15 @@ export function QuickViewModal({
 
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
             {canBuy ? (
-              <Button variant="primary" size="lg" full onClick={handleAdd}>
-                Agregar al carrito
-              </Button>
+              sizeAvailable ? (
+                <Button variant="primary" size="lg" full onClick={handleAdd}>
+                  Agregar al carrito
+                </Button>
+              ) : (
+                <Button variant="secondary" size="lg" full disabled>
+                  Sin stock en el talle {talle}
+                </Button>
+              )
             ) : product.is_custom_only ? (
               <Button variant="primary" size="lg" full onClick={() => router.push('/encargo')}>
                 Pedir a medida

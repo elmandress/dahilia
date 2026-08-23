@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-31T17:54:28.627Z",
+  "generatedAt": "2026-08-22T22:13:45.181Z",
   "products": [
     {
       "id": "36379e02-073b-46ae-8e07-62eae0b3d137",
@@ -7,7 +7,7 @@
       "name": "Sweater Senda",
       "description": "Sweater Senda se teje a crochet, a mano, especialmente para vos. Se teje a mano cuando la encargás. No hay dos iguales — es lo que tiene lo hecho a mano. Envío a todo Uruguay.",
       "category_id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-      "badge": "Nuevo",
+      "badge": null,
       "status": "active",
       "base_price_uyu": 1960,
       "sort_order": 0,
@@ -17,7 +17,7 @@
       "care_instructions": "Lavar a mano con agua tibia\nSecar sobre una toalla al natural \nGuardar doblado",
       "is_custom_only": false,
       "created_at": "2026-07-13T14:35:05.176886+00:00",
-      "updated_at": "2026-07-13T14:35:05.176886+00:00",
+      "updated_at": "2026-08-03T21:01:40.769118+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
@@ -31,48 +31,39 @@
       },
       "media": [
         {
-          "id": "7d4bb726-1a08-40a8-a401-0116a0e1c73e",
+          "id": "cc402932-662f-49e8-a27a-1b91483805ce",
           "alt": null,
           "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/sweater-senda-dahila-crochet-w2mt.jpg",
           "type": "image",
           "position": 0,
-          "created_at": "2026-07-13T14:35:05.472817+00:00",
+          "created_at": "2026-08-03T21:01:41.733373+00:00",
           "is_primary": true,
           "product_id": "36379e02-073b-46ae-8e07-62eae0b3d137"
         },
         {
-          "id": "3911e557-f0fd-4ff9-b03b-9b3e9cd7b371",
+          "id": "df2cb26b-0303-4831-a45b-76411c82db69",
           "alt": null,
           "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/sweater-senda-dahila-crochet-11wj.jpg",
           "type": "image",
           "position": 1,
-          "created_at": "2026-07-13T14:35:05.472817+00:00",
+          "created_at": "2026-08-03T21:01:41.733373+00:00",
           "is_primary": true,
           "product_id": "36379e02-073b-46ae-8e07-62eae0b3d137"
         },
         {
-          "id": "56765196-b6ec-4bf9-aeba-323e00af739e",
+          "id": "c6452b14-6aed-47a9-bd3d-6b0b84fb812d",
           "alt": null,
           "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/sweater-senda-dahila-crochet-9396.jpg",
           "type": "image",
           "position": 2,
-          "created_at": "2026-07-13T14:35:05.472817+00:00",
+          "created_at": "2026-08-03T21:01:41.733373+00:00",
           "is_primary": true,
           "product_id": "36379e02-073b-46ae-8e07-62eae0b3d137"
         }
       ],
       "sizes": [
         {
-          "id": "28e84952-e63e-4892-ae56-86b937eeee11",
-          "size": "S",
-          "available": true,
-          "price_uyu": 1760,
-          "stock_qty": null,
-          "product_id": "36379e02-073b-46ae-8e07-62eae0b3d137",
-          "sort_order": 0
-        },
-        {
-          "id": "dbcc99d6-b377-4058-8edf-a330a6ca7af4",
+          "id": "4346dcdf-3382-43ef-b235-aaf8df3ba8de",
           "size": "M",
           "available": true,
           "price_uyu": 1960,
@@ -81,13 +72,22 @@
           "sort_order": 1
         },
         {
-          "id": "aa983dd8-a5e0-4f13-a896-b7865c6f398f",
+          "id": "3238d447-f842-42c8-9754-1aac7ce86b85",
           "size": "L",
           "available": true,
           "price_uyu": 2160,
           "stock_qty": null,
           "product_id": "36379e02-073b-46ae-8e07-62eae0b3d137",
           "sort_order": 2
+        },
+        {
+          "id": "c52417da-4dbc-4244-8bd4-65300133d72c",
+          "size": "S",
+          "available": true,
+          "price_uyu": 1760,
+          "stock_qty": null,
+          "product_id": "36379e02-073b-46ae-8e07-62eae0b3d137",
+          "sort_order": 0
         }
       ],
       "colors": []
@@ -168,6 +168,97 @@
           "price_uyu": null,
           "stock_qty": null,
           "product_id": "de312560-e688-4615-89e4-c20afd917c8d",
+          "sort_order": 2
+        }
+      ],
+      "colors": []
+    },
+    {
+      "id": "5746fce3-ccd4-43f6-9370-e0bce317e958",
+      "slug": "spring-cardigan",
+      "name": "Spring cardigan",
+      "description": "Spring cardigan es una pieza de abrigo tejida a crochet, punto por punto, especialmente para vos. Al encargarla elegís tu talle, y se teje especialmente para vos. No hay dos iguales — es lo que tiene lo hecho a mano. Envío a todo Uruguay.",
+      "category_id": "c2876878-3dfd-4dd8-9ecc-0eac800db711",
+      "badge": "Nuevo",
+      "status": "active",
+      "base_price_uyu": 2800,
+      "sort_order": 0,
+      "lead_time_weeks_min": 2,
+      "lead_time_weeks_max": 3,
+      "material": "Acrílico antipilling",
+      "care_instructions": "Lavar a mano con agua tibia\nSecar en horizontal sobre una toalla \nGuardar doblado",
+      "is_custom_only": false,
+      "created_at": "2026-08-03T21:05:09.093632+00:00",
+      "updated_at": "2026-08-03T21:07:07.48447+00:00",
+      "discount_percent": 0,
+      "discount_active": false,
+      "collection_id": null,
+      "category": {
+        "id": "c2876878-3dfd-4dd8-9ecc-0eac800db711",
+        "name": "Cardigans",
+        "slug": "cardigans",
+        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "sort_order": 2,
+        "description": null
+      },
+      "media": [
+        {
+          "id": "8c5f4c90-57bd-431d-a28e-f9d5ae7d6768",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/spring-cardigan-dahila-crochet-8gjc.jpg",
+          "type": "image",
+          "position": 0,
+          "created_at": "2026-08-03T21:07:08.073608+00:00",
+          "is_primary": true,
+          "product_id": "5746fce3-ccd4-43f6-9370-e0bce317e958"
+        },
+        {
+          "id": "f599dd54-d026-4e8c-913f-4a7a2a809e77",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/spring-cardigan-dahila-crochet-lwuf.jpg",
+          "type": "image",
+          "position": 1,
+          "created_at": "2026-08-03T21:07:08.073608+00:00",
+          "is_primary": true,
+          "product_id": "5746fce3-ccd4-43f6-9370-e0bce317e958"
+        },
+        {
+          "id": "76357a47-2253-4169-86fa-4e21f1369023",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/spring-cardigan-dahila-crochet-03sq.jpg",
+          "type": "image",
+          "position": 2,
+          "created_at": "2026-08-03T21:07:08.073608+00:00",
+          "is_primary": true,
+          "product_id": "5746fce3-ccd4-43f6-9370-e0bce317e958"
+        }
+      ],
+      "sizes": [
+        {
+          "id": "762f0422-b9a8-49b7-8eeb-c66ee5d9bad1",
+          "size": "S",
+          "available": true,
+          "price_uyu": 2800,
+          "stock_qty": null,
+          "product_id": "5746fce3-ccd4-43f6-9370-e0bce317e958",
+          "sort_order": 0
+        },
+        {
+          "id": "b030f501-e859-45c6-84af-b3d1028767d0",
+          "size": "M",
+          "available": true,
+          "price_uyu": 3000,
+          "stock_qty": null,
+          "product_id": "5746fce3-ccd4-43f6-9370-e0bce317e958",
+          "sort_order": 1
+        },
+        {
+          "id": "9f7a2675-7ee6-4dae-ad0c-cdd81ceda272",
+          "size": "L",
+          "available": true,
+          "price_uyu": 3300,
+          "stock_qty": null,
+          "product_id": "5746fce3-ccd4-43f6-9370-e0bce317e958",
           "sort_order": 2
         }
       ],
@@ -376,6 +467,88 @@
           "stock_qty": null,
           "product_id": "5862dee8-668f-4247-9a9d-6bdaa36e5468",
           "sort_order": 2
+        }
+      ],
+      "colors": []
+    },
+    {
+      "id": "b26c03b3-c8a6-4570-89e9-f98875a5db68",
+      "slug": "cardigan-amour",
+      "name": "Cardigan amour",
+      "description": "Cada Cardigan amour nace en el taller: tejido a mano, punto por punto. Se teje a mano cuando la encargás. No hay dos iguales — es lo que tiene lo hecho a mano. Envío a todo Uruguay.",
+      "category_id": "c2876878-3dfd-4dd8-9ecc-0eac800db711",
+      "badge": "Nuevo",
+      "status": "active",
+      "base_price_uyu": 2500,
+      "sort_order": 0,
+      "lead_time_weeks_min": 2,
+      "lead_time_weeks_max": 3,
+      "material": "Acrílico antipilling",
+      "care_instructions": "Lavar a mano con agua tibia \nSecar al natural sobre una toalla \nGuardar doblado",
+      "is_custom_only": false,
+      "created_at": "2026-08-18T22:13:23.090307+00:00",
+      "updated_at": "2026-08-18T22:13:23.090307+00:00",
+      "discount_percent": 0,
+      "discount_active": false,
+      "collection_id": null,
+      "category": {
+        "id": "c2876878-3dfd-4dd8-9ecc-0eac800db711",
+        "name": "Cardigans",
+        "slug": "cardigans",
+        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "sort_order": 2,
+        "description": null
+      },
+      "media": [
+        {
+          "id": "b5a464c8-1eaa-409c-88dc-14e046750898",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/cardigan-amour-dahila-crochet-o1ux.jpg",
+          "type": "image",
+          "position": 0,
+          "created_at": "2026-08-18T22:13:23.536962+00:00",
+          "is_primary": true,
+          "product_id": "b26c03b3-c8a6-4570-89e9-f98875a5db68"
+        },
+        {
+          "id": "99626b23-2441-4e4e-af36-fdc55bcb30ce",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/cardigan-amour-dahila-crochet-dyfr.jpg",
+          "type": "image",
+          "position": 1,
+          "created_at": "2026-08-18T22:13:23.536962+00:00",
+          "is_primary": true,
+          "product_id": "b26c03b3-c8a6-4570-89e9-f98875a5db68"
+        },
+        {
+          "id": "70935acd-9e6a-487a-a1bc-1c94ceac13ec",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/cardigan-amour-dahila-crochet-71yu.jpg",
+          "type": "image",
+          "position": 2,
+          "created_at": "2026-08-18T22:13:23.536962+00:00",
+          "is_primary": true,
+          "product_id": "b26c03b3-c8a6-4570-89e9-f98875a5db68"
+        }
+      ],
+      "sizes": [
+        {
+          "id": "5cc4b7d8-b6db-416a-94de-d030e026b069",
+          "size": "S",
+          "available": true,
+          "price_uyu": 2500,
+          "stock_qty": null,
+          "product_id": "b26c03b3-c8a6-4570-89e9-f98875a5db68",
+          "sort_order": 0
+        },
+        {
+          "id": "2f07d0bf-45b7-4c52-8932-7d85ee05697b",
+          "size": "M/L",
+          "available": true,
+          "price_uyu": 2700,
+          "stock_qty": null,
+          "product_id": "b26c03b3-c8a6-4570-89e9-f98875a5db68",
+          "sort_order": 1
         }
       ],
       "colors": []
@@ -849,7 +1022,7 @@
       "care_instructions": "Lavar a mano con agua tibia y jabón neutro\nSecar al natural sobre una toalla\nVentilar cada cierto tiempo para que ventilen las fibras",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:44:37.740143+00:00",
-      "updated_at": "2026-07-10T02:08:47.804426+00:00",
+      "updated_at": "2026-08-18T12:17:03.566118+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
@@ -863,60 +1036,60 @@
       },
       "media": [
         {
-          "id": "f9302f84-74d2-48b8-a235-e21ae008b6a2",
+          "id": "8c16c746-a8d2-4c2f-a06b-4731d760fc42",
           "alt": null,
           "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780771436854_rrbtwvxa6y.jpeg",
           "type": "image",
           "position": 0,
-          "created_at": "2026-06-12T20:37:14.155489+00:00",
+          "created_at": "2026-08-18T12:17:04.012623+00:00",
           "is_primary": true,
           "product_id": "df6cba8d-08cd-4803-9177-7cbe24799578"
         },
         {
-          "id": "2f3cbb27-6319-49c6-a7de-22833057ff29",
+          "id": "605f08fc-20e6-441c-8f0a-44f0b6061399",
           "alt": null,
           "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780771438506_iaxfl7f841r.jpeg",
           "type": "image",
           "position": 1,
-          "created_at": "2026-06-12T20:37:14.155489+00:00",
+          "created_at": "2026-08-18T12:17:04.012623+00:00",
           "is_primary": true,
           "product_id": "df6cba8d-08cd-4803-9177-7cbe24799578"
         },
         {
-          "id": "2562f171-7fe3-4c8d-818c-6fdecf9003db",
+          "id": "28508a91-8740-416f-99c1-dfa0400fa9e7",
           "alt": null,
           "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780771439703_wsdxm5vwqbc.jpeg",
           "type": "image",
           "position": 2,
-          "created_at": "2026-06-12T20:37:14.155489+00:00",
+          "created_at": "2026-08-18T12:17:04.012623+00:00",
           "is_primary": true,
           "product_id": "df6cba8d-08cd-4803-9177-7cbe24799578"
         }
       ],
       "sizes": [
         {
-          "id": "0888dda8-4ccd-4e91-9ad3-92cd23ec2e32",
+          "id": "1e8792e9-0b00-4482-b71f-809ec7e66276",
           "size": "S",
           "available": true,
-          "price_uyu": 1100,
+          "price_uyu": 1999,
           "stock_qty": null,
           "product_id": "df6cba8d-08cd-4803-9177-7cbe24799578",
           "sort_order": 0
         },
         {
-          "id": "0c8d7bc0-9b07-487c-a573-16dfb72414c1",
+          "id": "23afa45e-96ae-49cc-bf66-ccb3b6da8de7",
           "size": "M",
           "available": true,
-          "price_uyu": 1250,
+          "price_uyu": 2280,
           "stock_qty": null,
           "product_id": "df6cba8d-08cd-4803-9177-7cbe24799578",
           "sort_order": 1
         },
         {
-          "id": "828b7056-6f1a-4d93-9bf9-74742cc79908",
+          "id": "5aa14d0b-cc9e-493c-9997-02b88a16f1a4",
           "size": "L",
           "available": true,
-          "price_uyu": 1400,
+          "price_uyu": 2450,
           "stock_qty": null,
           "product_id": "df6cba8d-08cd-4803-9177-7cbe24799578",
           "sort_order": 2
@@ -1198,75 +1371,22 @@
       "colors": []
     },
     {
-      "id": "7ddbedab-d356-4176-b207-e0011ac7aa48",
-      "slug": "set-de-bufanda-y-guantes",
-      "name": "Set de bufanda y guantes",
-      "description": "Bufanda y guantes tejidos a crochet, en set: el regalo de invierno que siempre queda bien — y como van juntos, los tonos combinan de fábrica (bueno, de taller). Se tejen a mano en el color que elijas. Envío a todo Uruguay, con tiempo para que llegue antes del frío.",
-      "category_id": "e463a213-522d-4e55-ba54-3827c4c2aa84",
-      "badge": null,
-      "status": "active",
-      "base_price_uyu": 980,
-      "sort_order": 0,
-      "lead_time_weeks_min": 1,
-      "lead_time_weeks_max": 2,
-      "material": "Lana",
-      "care_instructions": "Lavar a mano con agua tibia y jabón neutro\nSecar al natural sobre una toalla\nVentilar cada cierto tiempo para que ventilen las fibras",
-      "is_custom_only": false,
-      "created_at": "2026-06-06T18:59:02.485417+00:00",
-      "updated_at": "2026-07-10T14:51:05.002075+00:00",
-      "discount_percent": 10,
-      "discount_active": true,
-      "collection_id": null,
-      "category": {
-        "id": "e463a213-522d-4e55-ba54-3827c4c2aa84",
-        "name": "Sets",
-        "slug": "sets",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
-        "sort_order": 4,
-        "description": null
-      },
-      "media": [
-        {
-          "id": "6cfde4f6-d8f2-40a5-af4a-f945631b3730",
-          "alt": null,
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780772305501_uxghg7v5qom.jpeg",
-          "type": "image",
-          "position": 0,
-          "created_at": "2026-07-10T14:51:05.566424+00:00",
-          "is_primary": true,
-          "product_id": "7ddbedab-d356-4176-b207-e0011ac7aa48"
-        },
-        {
-          "id": "26ef0c9e-43a3-4a4f-a776-f1eaded0ab3b",
-          "alt": null,
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780772308402_8ajkym4ew08.jpeg",
-          "type": "image",
-          "position": 1,
-          "created_at": "2026-07-10T14:51:05.566424+00:00",
-          "is_primary": true,
-          "product_id": "7ddbedab-d356-4176-b207-e0011ac7aa48"
-        }
-      ],
-      "sizes": [],
-      "colors": []
-    },
-    {
-      "id": "3012ee63-6e40-46f6-92a0-9da27a483f0a",
-      "slug": "calentadores",
-      "name": "Calentadores",
-      "description": "Polainas tejidas a crochet para los días de frío de verdad: abrigan los tobillos sin sumar bulto, y le dan un detalle artesanal a cualquier look de invierno. Van igual de bien con calzas, jeans o por encima de unas botas. Hechas a mano, en el color que elijas. Envío a todo Uruguay.",
+      "id": "4352af39-9cfb-4397-a5de-fce3b2efd86b",
+      "slug": "bolso-de-estudiante",
+      "name": "BOLSO de estudiante",
+      "description": "El bolso de estudiante: espacio para cuadernos, computadora chica y el resto de tu día. Tejido a crochet a mano, aguanta el uso diario y suma un detalle artesanal que ningún bolso de fábrica tiene. Lo pedís en el color que quieras y se teje para vos. Envío a todo Uruguay.",
       "category_id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
       "badge": null,
       "status": "active",
-      "base_price_uyu": 590,
+      "base_price_uyu": 990,
       "sort_order": 0,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
-      "material": "Chenille",
+      "material": "Trapillo reciclado",
       "care_instructions": "Lavar a mano con agua tibia y jabón neutro\nSecar al natural sobre una toalla\nVentilar cada cierto tiempo para que ventilen las fibras",
       "is_custom_only": false,
-      "created_at": "2026-06-06T18:54:16.945527+00:00",
-      "updated_at": "2026-07-10T02:08:47.804426+00:00",
+      "created_at": "2026-06-06T18:43:04.530416+00:00",
+      "updated_at": "2026-08-05T17:01:42.585454+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
@@ -1280,24 +1400,34 @@
       },
       "media": [
         {
-          "id": "0ebd3dc6-b557-4a84-8c6e-715b7c7bcad8",
+          "id": "a919cc98-4ac6-4c76-89de-eddfbbf79e5f",
           "alt": null,
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780772000413_ey9jham9ll.jpeg",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780771341132_9rlud93ch49.jpeg",
           "type": "image",
           "position": 0,
-          "created_at": "2026-06-06T18:54:17.194806+00:00",
+          "created_at": "2026-08-05T17:01:43.064029+00:00",
           "is_primary": true,
-          "product_id": "3012ee63-6e40-46f6-92a0-9da27a483f0a"
+          "product_id": "4352af39-9cfb-4397-a5de-fce3b2efd86b"
         },
         {
-          "id": "16466d7f-ec1f-4d59-b414-fe73410fb31b",
+          "id": "cc451794-7863-493e-961b-d8fbf432840b",
           "alt": null,
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780772002638_931gdhwydef.jpeg",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780771342662_rp5449mfyg.jpeg",
           "type": "image",
           "position": 1,
-          "created_at": "2026-06-06T18:54:17.194806+00:00",
+          "created_at": "2026-08-05T17:01:43.064029+00:00",
           "is_primary": true,
-          "product_id": "3012ee63-6e40-46f6-92a0-9da27a483f0a"
+          "product_id": "4352af39-9cfb-4397-a5de-fce3b2efd86b"
+        },
+        {
+          "id": "427e53ea-3c87-4531-bde5-12fcc64c08c7",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780771343994_hqgydfyydc.jpeg",
+          "type": "image",
+          "position": 2,
+          "created_at": "2026-08-05T17:01:43.064029+00:00",
+          "is_primary": true,
+          "product_id": "4352af39-9cfb-4397-a5de-fce3b2efd86b"
         }
       ],
       "sizes": [],
@@ -2025,69 +2155,6 @@
       "colors": []
     },
     {
-      "id": "4352af39-9cfb-4397-a5de-fce3b2efd86b",
-      "slug": "bolso-de-estudiante",
-      "name": "BOLSO de estudiante",
-      "description": "El bolso de estudiante: espacio para cuadernos, computadora chica y el resto de tu día. Tejido a crochet a mano, aguanta el uso diario y suma un detalle artesanal que ningún bolso de fábrica tiene. Lo pedís en el color que quieras y se teje para vos. Envío a todo Uruguay.",
-      "category_id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-      "badge": null,
-      "status": "active",
-      "base_price_uyu": 720,
-      "sort_order": 0,
-      "lead_time_weeks_min": 1,
-      "lead_time_weeks_max": 2,
-      "material": "Trapillo reciclado",
-      "care_instructions": "Lavar a mano con agua tibia y jabón neutro\nSecar al natural sobre una toalla\nVentilar cada cierto tiempo para que ventilen las fibras",
-      "is_custom_only": false,
-      "created_at": "2026-06-06T18:43:04.530416+00:00",
-      "updated_at": "2026-07-10T02:08:47.804426+00:00",
-      "discount_percent": 0,
-      "discount_active": false,
-      "collection_id": null,
-      "category": {
-        "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-        "name": "Accesorios",
-        "slug": "accesorios",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
-        "sort_order": 3,
-        "description": null
-      },
-      "media": [
-        {
-          "id": "fa5182f9-c516-4d48-8c88-ba6d00102f2b",
-          "alt": null,
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780771341132_9rlud93ch49.jpeg",
-          "type": "image",
-          "position": 0,
-          "created_at": "2026-06-06T18:43:04.76437+00:00",
-          "is_primary": true,
-          "product_id": "4352af39-9cfb-4397-a5de-fce3b2efd86b"
-        },
-        {
-          "id": "e72c9148-580f-46c9-826a-b7b5f8b0d49c",
-          "alt": null,
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780771342662_rp5449mfyg.jpeg",
-          "type": "image",
-          "position": 1,
-          "created_at": "2026-06-06T18:43:04.76437+00:00",
-          "is_primary": true,
-          "product_id": "4352af39-9cfb-4397-a5de-fce3b2efd86b"
-        },
-        {
-          "id": "02ac2b94-e3a0-41a5-9bdb-4d65785ce3fc",
-          "alt": null,
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780771343994_hqgydfyydc.jpeg",
-          "type": "image",
-          "position": 2,
-          "created_at": "2026-06-06T18:43:04.76437+00:00",
-          "is_primary": true,
-          "product_id": "4352af39-9cfb-4397-a5de-fce3b2efd86b"
-        }
-      ],
-      "sizes": [],
-      "colors": []
-    },
-    {
       "id": "b926c277-acc4-4111-8fbc-d8f5a2194ae9",
       "slug": "tote-bag-de-playa",
       "name": "Tote bag de playa",
@@ -2151,22 +2218,22 @@
       "colors": []
     },
     {
-      "id": "b6a39615-2a6c-4096-acd4-568f68c793e0",
-      "slug": "donut-bag",
-      "name": "DONUT bag",
-      "description": "La DONUT bag es el bolso con forma redonda que se volvió firma del crochet: chico, con personalidad y justo para lo esencial. Tejido a mano en el color que elijas — un accesorio que levanta cualquier look básico. Envío a todo Uruguay.",
+      "id": "3012ee63-6e40-46f6-92a0-9da27a483f0a",
+      "slug": "calentadores",
+      "name": "Calentadores",
+      "description": "Polainas tejidas a crochet para los días de frío de verdad: abrigan los tobillos sin sumar bulto, y le dan un detalle artesanal a cualquier look de invierno. Van igual de bien con calzas, jeans o por encima de unas botas. Hechas a mano, en el color que elijas. Envío a todo Uruguay.",
       "category_id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
       "badge": null,
       "status": "active",
-      "base_price_uyu": 720,
+      "base_price_uyu": 1000,
       "sort_order": 0,
-      "lead_time_weeks_min": 2,
-      "lead_time_weeks_max": 3,
-      "material": "Trapillo reciclado",
+      "lead_time_weeks_min": 1,
+      "lead_time_weeks_max": 2,
+      "material": "Chenille",
       "care_instructions": "Lavar a mano con agua tibia y jabón neutro\nSecar al natural sobre una toalla\nVentilar cada cierto tiempo para que ventilen las fibras",
       "is_custom_only": false,
-      "created_at": "2026-06-06T18:35:40.510918+00:00",
-      "updated_at": "2026-07-10T02:08:47.804426+00:00",
+      "created_at": "2026-06-06T18:54:16.945527+00:00",
+      "updated_at": "2026-08-11T21:22:50.148413+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
@@ -2180,24 +2247,77 @@
       },
       "media": [
         {
-          "id": "e12d4278-c564-43a8-b79a-a5189000a820",
+          "id": "fd0fe534-1a59-4a4f-87ab-6a30d8300f1a",
           "alt": null,
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780770914025_g5zu1q55tvp.jpeg",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780772000413_ey9jham9ll.jpeg",
           "type": "image",
           "position": 0,
-          "created_at": "2026-06-06T18:35:40.769689+00:00",
+          "created_at": "2026-08-11T21:22:50.68899+00:00",
           "is_primary": true,
-          "product_id": "b6a39615-2a6c-4096-acd4-568f68c793e0"
+          "product_id": "3012ee63-6e40-46f6-92a0-9da27a483f0a"
         },
         {
-          "id": "6749c68d-7f90-4888-b187-408009deab75",
+          "id": "f589bd82-a33d-4eb3-9207-b36b1e84d3b6",
           "alt": null,
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780770915145_jbjuct7s3dn.jpeg",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780772002638_931gdhwydef.jpeg",
           "type": "image",
           "position": 1,
-          "created_at": "2026-06-06T18:35:40.769689+00:00",
+          "created_at": "2026-08-11T21:22:50.68899+00:00",
           "is_primary": true,
-          "product_id": "b6a39615-2a6c-4096-acd4-568f68c793e0"
+          "product_id": "3012ee63-6e40-46f6-92a0-9da27a483f0a"
+        }
+      ],
+      "sizes": [],
+      "colors": []
+    },
+    {
+      "id": "7ddbedab-d356-4176-b207-e0011ac7aa48",
+      "slug": "set-de-bufanda-y-guantes",
+      "name": "Set de bufanda y guantes",
+      "description": "Bufanda y guantes tejidos a crochet, en set: el regalo de invierno que siempre queda bien — y como van juntos, los tonos combinan de fábrica (bueno, de taller). Se tejen a mano en el color que elijas. Envío a todo Uruguay, con tiempo para que llegue antes del frío.",
+      "category_id": "e463a213-522d-4e55-ba54-3827c4c2aa84",
+      "badge": null,
+      "status": "active",
+      "base_price_uyu": 980,
+      "sort_order": 0,
+      "lead_time_weeks_min": 1,
+      "lead_time_weeks_max": 2,
+      "material": "Lana",
+      "care_instructions": "Lavar a mano con agua tibia y jabón neutro\nSecar al natural sobre una toalla\nVentilar cada cierto tiempo para que ventilen las fibras",
+      "is_custom_only": false,
+      "created_at": "2026-06-06T18:59:02.485417+00:00",
+      "updated_at": "2026-08-17T15:43:34.483359+00:00",
+      "discount_percent": 0,
+      "discount_active": true,
+      "collection_id": null,
+      "category": {
+        "id": "e463a213-522d-4e55-ba54-3827c4c2aa84",
+        "name": "Sets",
+        "slug": "sets",
+        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "sort_order": 4,
+        "description": null
+      },
+      "media": [
+        {
+          "id": "c0007245-5512-4d2d-9a04-f37b19f8d423",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780772305501_uxghg7v5qom.jpeg",
+          "type": "image",
+          "position": 0,
+          "created_at": "2026-08-17T15:43:34.946273+00:00",
+          "is_primary": true,
+          "product_id": "7ddbedab-d356-4176-b207-e0011ac7aa48"
+        },
+        {
+          "id": "5ec9340d-e426-4c9c-89d6-e8c47c199ede",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780772308402_8ajkym4ew08.jpeg",
+          "type": "image",
+          "position": 1,
+          "created_at": "2026-08-17T15:43:34.946273+00:00",
+          "is_primary": true,
+          "product_id": "7ddbedab-d356-4176-b207-e0011ac7aa48"
         }
       ],
       "sizes": [],
@@ -2434,6 +2554,59 @@
       ],
       "sizes": [],
       "colors": []
+    },
+    {
+      "id": "b6a39615-2a6c-4096-acd4-568f68c793e0",
+      "slug": "donut-bag",
+      "name": "DONUT bag",
+      "description": "La DONUT bag es el bolso con forma redonda que se volvió firma del crochet: chico, con personalidad y justo para lo esencial. Tejido a mano en el color que elijas — un accesorio que levanta cualquier look básico. Envío a todo Uruguay.",
+      "category_id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
+      "badge": null,
+      "status": "active",
+      "base_price_uyu": 990,
+      "sort_order": 0,
+      "lead_time_weeks_min": 2,
+      "lead_time_weeks_max": 3,
+      "material": "Trapillo reciclado",
+      "care_instructions": "Lavar a mano con agua tibia y jabón neutro\nSecar al natural sobre una toalla\nVentilar cada cierto tiempo para que ventilen las fibras",
+      "is_custom_only": false,
+      "created_at": "2026-06-06T18:35:40.510918+00:00",
+      "updated_at": "2026-08-05T17:02:17.163946+00:00",
+      "discount_percent": 0,
+      "discount_active": false,
+      "collection_id": null,
+      "category": {
+        "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
+        "name": "Accesorios",
+        "slug": "accesorios",
+        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "sort_order": 3,
+        "description": null
+      },
+      "media": [
+        {
+          "id": "f5da7f3d-4f92-45fd-a94a-904fe7319301",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780770914025_g5zu1q55tvp.jpeg",
+          "type": "image",
+          "position": 0,
+          "created_at": "2026-08-05T17:02:17.621308+00:00",
+          "is_primary": true,
+          "product_id": "b6a39615-2a6c-4096-acd4-568f68c793e0"
+        },
+        {
+          "id": "0bd96c67-fe49-4b2f-862d-e094808ca65f",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/1780770915145_jbjuct7s3dn.jpeg",
+          "type": "image",
+          "position": 1,
+          "created_at": "2026-08-05T17:02:17.621308+00:00",
+          "is_primary": true,
+          "product_id": "b6a39615-2a6c-4096-acd4-568f68c793e0"
+        }
+      ],
+      "sizes": [],
+      "colors": []
     }
   ],
   "categories": [
@@ -2494,7 +2667,7 @@
     "atelier_photo_1": "/photos/detalle-tejido.jpg",
     "atelier_photo_2": "/photos/atelier-escritorio.png",
     "about_body_2": "",
-    "queue_note_text": "Por demanda, los pedidos estarán listos a mediados de agosto",
+    "queue_note_text": "Por demanda, los pedidos estarán listos a finales de septiembre",
     "faq_5_q": "¿Dahila se escribe con H? ¿Es lo mismo que Dalia o Dahlia?",
     "faq_5_a": "Sí — somos Dahila Crochet. Mucha gente nos busca como \"Dalia\" o \"Dahlia\" y llega igual: es la misma marca, hecha a mano en Montevideo.",
     "estrategia_progress": "{\"run-precios\":true,\"run-schemas\":true,\"vp-regalo\":true,\"vp-tarjeta\":true,\"vp-cuidado\":true,\"vp-etiqueta\":true,\"packaging\":true,\"primera-postulante\":true,\"descripciones\":true,\"mayorista\":true,\"numero-nuevo\":true}",
