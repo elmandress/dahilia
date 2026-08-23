@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { slugify, mediaPath, prepareImageForUpload, STORAGE_CACHE_SECONDS } from '@/lib/media'
 import { notifyReindex } from '@/lib/seo-notify'
 import { draftDescription } from '@/lib/description-draft'
+import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
 import type { Category, Color, Collection } from '@/lib/types'
 
 interface SizeEntry {
@@ -41,6 +42,11 @@ export default function NuevoProductoPage() {
   const [error, setError] = useState('')
   const [toast, setToast] = useState('')
   const [dragOver, setDragOver] = useState(false)
+  // Si el producto llegó a crearse pero falló un paso posterior (fotos,
+  // talles), el formulario NO puede volver a insertarlo: el segundo intento
+  // chocaba contra el slug único y devolvía un error de base incomprensible,
+  // con un producto a medio crear ya en el catálogo.
+  const [createdId, setCreatedId] = useState<string | null>(null)
 
   // Form state
   const [name, setName] = useState('')
@@ -70,6 +76,18 @@ export default function NuevoProductoPage() {
 
   // Drag reorder
   const [dragIndex, setDragIndex] = useState<number | null>(null)
+
+  // Cerrar la pestaña con el formulario a medio llenar (foto subida,
+  // descripción escrita) perdía todo sin aviso: mismo mecanismo que en
+  // Configuración y en el editor.
+  const [savedOk, setSavedOk] = useState(false)
+  const hasContent = name.trim() !== '' || description.trim() !== '' || mediaEntries.length > 0 || sizes.length > 0
+  useUnsavedWarning(!savedOk && hasContent)
+
+  const leaveForm = () => {
+    if (!savedOk && hasContent && !confirm('Tenés un producto a medio cargar. ¿Salir igual y perderlo?')) return
+    router.push('/admin/productos')
+  }
 
   const loadFormData = useCallback(async () => {
     const supabase = createClient()
@@ -117,20 +135,20 @@ export default function NuevoProductoPage() {
       // en el archivo — señal para Google Images. Solo subidas nuevas.
       const filePath = mediaPath('products', name || 'producto', `f.${prepared.ext}`)
 
-      // Add placeholder entry
-      const entry: MediaEntry = {
+      // Add placeholder entry. La posición y "es la principal" se calculan
+      // sobre el estado ANTERIOR: con una longitud capturada en el closure,
+      // elegir 3 fotos de una marcaba las 3 como principales.
+      setMediaEntries(prev => [...prev, {
         tempId,
         url: URL.createObjectURL(file),
         type: isVideo ? 'video' : 'image',
         alt: '',
-        position: mediaEntries.length,
-        is_primary: mediaEntries.length === 0,
+        position: prev.length,
+        is_primary: prev.length === 0,
         uploading: true,
         progress: 0,
         file,
-      }
-
-      setMediaEntries(prev => [...prev, entry])
+      }])
 
       // Upload to Supabase Storage
       const { data, error: uploadError } = await supabase.storage
@@ -158,7 +176,7 @@ export default function NuevoProductoPage() {
         )
       )
     }
-  }, [mediaEntries.length, name])
+  }, [name])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -259,6 +277,26 @@ export default function NuevoProductoPage() {
       setError('Ingresá un precio base o un precio en al menos un talle.')
       return
     }
+    // Chequeos que antes cortaban DESPUÉS de crear el producto: la prenda
+    // quedaba creada y a medias, y volver a tocar Guardar chocaba con el slug.
+    const stillUploading = mediaEntries.filter((m) => m.uploading)
+    if (stillUploading.length > 0) {
+      setError(`Esperá a que terminen de subirse ${stillUploading.length} foto(s) y guardá de nuevo.`)
+      return
+    }
+    // product_sizes tiene UNIQUE(product_id, size).
+    const sizeNames = sizes.map((s) => s.size.trim().toLowerCase()).filter(Boolean)
+    const duplicated = sizeNames.find((s, i) => sizeNames.indexOf(s) !== i)
+    if (duplicated) {
+      setError(`El talle "${duplicated}" está repetido. Dejá uno solo de cada talle.`)
+      return
+    }
+    if (createdId) {
+      // El producto ya existe de un intento anterior: terminarlo se hace en
+      // el editor, no re-insertando.
+      router.push(`/admin/productos/${createdId}`)
+      return
+    }
 
     setSaving(true)
     setError('')
@@ -280,8 +318,10 @@ export default function NuevoProductoPage() {
           base_price_uyu: basePriceUyu ? parseInt(basePriceUyu) : null,
           discount_percent: Math.max(0, Math.min(90, parseInt(discountPercent) || 0)),
           discount_active: discountActive,
-          lead_time_weeks_min: parseInt(leadTimeMin) || 2,
-          lead_time_weeks_max: parseInt(leadTimeMax) || 3,
+          // parseInt(x) || N pisaba un 0 real (falsy) con el default — un
+          // problema concreto para marcar "disponible ahora, sin espera".
+          lead_time_weeks_min: Number.isNaN(parseInt(leadTimeMin)) ? 2 : Math.max(0, parseInt(leadTimeMin)),
+          lead_time_weeks_max: Number.isNaN(parseInt(leadTimeMax)) ? 3 : Math.max(0, parseInt(leadTimeMax)),
           material: material.trim() || null,
           care_instructions: careInstructions.trim() || null,
           is_custom_only: isCustomOnly,
@@ -291,15 +331,11 @@ export default function NuevoProductoPage() {
         .single()
 
       if (productError) throw productError
+      setCreatedId(product.id as string)
 
       // Insert media — fail loudly if it doesn't work, otherwise the owner
       // thinks photos are saved and the product page renders blank.
       if (mediaEntries.length > 0) {
-        const stillUploading = mediaEntries.filter(m => m.uploading)
-        if (stillUploading.length > 0) {
-          throw new Error(`Esperá a que terminen de subirse ${stillUploading.length} foto(s).`)
-        }
-
         const mediaInserts = mediaEntries
           .filter((m) => !m.uploading && m.url && !m.url.startsWith('blob:'))
           .map((m, i) => ({
@@ -352,6 +388,7 @@ export default function NuevoProductoPage() {
       // esperar a que vuelvan a rastrear el sitemap por su cuenta.
       if (status === 'active') notifyReindex([`/tienda/${slug.trim()}`, '/tienda', '/'])
 
+      setSavedOk(true)
       setToast('Producto creado exitosamente')
       setTimeout(() => {
         router.push('/admin/productos')
@@ -373,7 +410,7 @@ export default function NuevoProductoPage() {
         <div className="admin-actions admin-actions-desktop">
           <button
             className="admin-btn admin-btn-secondary"
-            onClick={() => router.push('/admin/productos')}
+            onClick={leaveForm}
           >
             Cancelar
           </button>
@@ -382,7 +419,7 @@ export default function NuevoProductoPage() {
             onClick={handleSave}
             disabled={saving}
           >
-            {saving ? 'Guardando...' : 'Guardar producto'}
+            {saving ? 'Guardando...' : createdId ? 'Terminar en el editor' : 'Guardar producto'}
           </button>
         </div>
       </div>
@@ -390,6 +427,19 @@ export default function NuevoProductoPage() {
       {error && (
         <div style={{ background: '#ffebee', color: '#c62828', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' }}>
           {error}
+          {createdId && (
+            <div style={{ marginTop: 8 }}>
+              La prenda <strong>sí</strong> quedó creada. Terminá de cargarla desde su editor para no crearla dos veces.{' '}
+              <button
+                type="button"
+                className="admin-btn admin-btn-secondary admin-btn-sm"
+                style={{ marginLeft: 6 }}
+                onClick={() => router.push(`/admin/productos/${createdId}`)}
+              >
+                Abrir el producto creado
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -700,14 +750,17 @@ export default function NuevoProductoPage() {
                   <label>Tiempo mín (sem.)</label>
                   <input
                     type="number"
+                    min={0}
                     value={leadTimeMin}
                     onChange={(e) => setLeadTimeMin(e.target.value)}
                   />
+                  <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#8C8285' }}>0 = ya está listo, sale en &quot;Disponible ahora&quot;.</p>
                 </div>
                 <div className="admin-field" style={{ flex: 1 }}>
                   <label>Tiempo máx (sem.)</label>
                   <input
                     type="number"
+                    min={0}
                     value={leadTimeMax}
                     onChange={(e) => setLeadTimeMax(e.target.value)}
                   />
@@ -752,7 +805,7 @@ export default function NuevoProductoPage() {
       <div className="admin-mobile-save-bar">
         <button
           className="admin-btn admin-btn-secondary"
-          onClick={() => router.push('/admin/productos')}
+          onClick={leaveForm}
         >
           Cancelar
         </button>
@@ -762,7 +815,7 @@ export default function NuevoProductoPage() {
           disabled={saving}
           style={{ flex: 1 }}
         >
-          {saving ? 'Guardando...' : 'Guardar'}
+          {saving ? 'Guardando...' : createdId ? 'Terminar en el editor' : 'Guardar'}
         </button>
       </div>
     </>

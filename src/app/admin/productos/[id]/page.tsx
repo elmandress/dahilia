@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { slugify, mediaPath, prepareImageForUpload, STORAGE_CACHE_SECONDS } from '@/lib/media'
 import { notifyReindex } from '@/lib/seo-notify'
 import { draftDescription } from '@/lib/description-draft'
+import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
 import type { Category, Color, Collection, Product, ProductMedia, ProductSize, ProductColor } from '@/lib/types'
 
 type LoadedProductColor = Partial<ProductColor> & { color_id?: string; color?: { id: string } }
@@ -87,6 +88,37 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
 
   // Drag reorder
   const [dragIndex, setDragIndex] = useState<number | null>(null)
+
+  // ---- Cambios sin guardar ----
+  // El editor no tiene autoguardado: escribir la descripción, sumar 4 fotos y
+  // cerrar la pestaña (o tocar "Cancelar" sin querer) perdía todo en silencio.
+  // Configuración ya avisaba; acá se usa el mismo mecanismo. La huella se
+  // arma con los campos que realmente se guardan, no con el estado entero.
+  const snapshot = JSON.stringify({
+    name, slug, description, categoryId, collectionId, badge, status,
+    basePriceUyu, discountPercent, discountActive, leadTimeMin, leadTimeMax,
+    material, careInstructions, isCustomOnly,
+    media: mediaEntries.map((m) => [m.url, m.alt, m.is_primary]),
+    sizes: sizes.map((s) => [s.size, s.price_uyu, s.available]),
+    colors: [...selectedColors].sort(),
+  })
+  const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null)
+  useEffect(() => {
+    if (loading) return
+    // Solo la primera vez, apenas termina de cargar: ese es el punto de
+    // referencia contra el que se comparan los cambios.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSavedSnapshot((prev) => (prev === null ? snapshot : prev))
+  }, [loading, snapshot])
+  const isDirty = savedSnapshot !== null && snapshot !== savedSnapshot
+  useUnsavedWarning(isDirty)
+
+  // `beforeunload` no cubre la navegación interna del App Router, así que los
+  // botones que se van de la página preguntan a mano.
+  const leaveEditor = () => {
+    if (isDirty && !confirm('Tenés cambios sin guardar en este producto. ¿Salir igual y perderlos?')) return
+    router.push('/admin/productos')
+  }
 
   const fillProductForm = useCallback((p: LoadedProduct) => {
     setName(p.name || '')
@@ -211,19 +243,21 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       // en el archivo — señal para Google Images. Solo subidas nuevas.
       const filePath = mediaPath('products', name || 'producto', `f.${prepared.ext}`)
 
-      const entry: MediaEntry = {
+      // La posición y "es la principal" salen del estado ANTERIOR, no de una
+      // longitud capturada en el closure: al elegir 3 fotos de una en un
+      // producto vacío, las 3 se marcaban como principales (y la ficha
+      // pública tomaba cualquiera de ellas).
+      setMediaEntries(prev => [...prev, {
         tempId,
         url: URL.createObjectURL(file),
         type: isVideo ? 'video' : 'image',
         alt: '',
-        position: mediaEntries.length,
-        is_primary: mediaEntries.length === 0,
+        position: prev.length,
+        is_primary: prev.length === 0,
         uploading: true,
         progress: 0,
         file,
-      }
-
-      setMediaEntries(prev => [...prev, entry])
+      }])
 
       const { data, error: uploadError } = await supabase.storage
         .from('media')
@@ -249,7 +283,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
         )
       )
     }
-  }, [mediaEntries.length, name])
+  }, [name])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -276,14 +310,18 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
 
   const loadStorageFiles = useCallback(async () => {
     const supabase = createClient()
-    const { data } = await supabase.storage.from('media').list('products', { limit: 200, sortBy: { column: 'created_at', order: 'desc' } })
-    if (data) {
-      const urls = data.map(f => {
-        const { data: pub } = supabase.storage.from('media').getPublicUrl(`products/${f.name}`)
-        return pub.publicUrl
-      })
-      setStorageFiles(urls)
+    const { data, error: listError } = await supabase.storage.from('media').list('products', { limit: 200, sortBy: { column: 'created_at', order: 'desc' } })
+    if (listError) {
+      // Antes abría el modal igual y mostraba "Fotos en Storage (0)": parecía
+      // que no había ninguna foto subida cuando en realidad no se pudo leer.
+      setError(`No se pudo leer el storage: ${listError.message}`)
+      return
     }
+    const urls = (data ?? []).map(f => {
+      const { data: pub } = supabase.storage.from('media').getPublicUrl(`products/${f.name}`)
+      return pub.publicUrl
+    })
+    setStorageFiles(urls)
     setShowStoragePicker(true)
   }, [])
 
@@ -377,6 +415,22 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       setError('Ingresá un precio base o un precio en al menos un talle.')
       return
     }
+    // Todo lo que pueda impedir que se guarde se chequea ANTES de tocar la
+    // base: guardar borra las fotos/talles viejos para volver a insertarlos,
+    // así que cortar en el medio se llevaba puesto lo que ya estaba guardado.
+    const stillUploading = mediaEntries.filter((m) => m.uploading)
+    if (stillUploading.length > 0) {
+      setError(`Esperá a que terminen de subirse ${stillUploading.length} foto(s) y guardá de nuevo.`)
+      return
+    }
+    // product_sizes tiene UNIQUE(product_id, size): dos talles con el mismo
+    // nombre hacen fallar el insert después del delete y se perdían todos.
+    const sizeNames = sizes.map((s) => s.size.trim().toLowerCase()).filter(Boolean)
+    const duplicated = sizeNames.find((s, i) => sizeNames.indexOf(s) !== i)
+    if (duplicated) {
+      setError(`El talle "${duplicated}" está repetido. Dejá uno solo de cada talle.`)
+      return
+    }
 
     setSaving(true)
     setError('')
@@ -398,8 +452,10 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           base_price_uyu: basePriceUyu ? parseInt(basePriceUyu) : null,
           discount_percent: Math.max(0, Math.min(90, parseInt(discountPercent) || 0)),
           discount_active: discountActive,
-          lead_time_weeks_min: parseInt(leadTimeMin) || 2,
-          lead_time_weeks_max: parseInt(leadTimeMax) || 3,
+          // parseInt(x) || N pisaba un 0 real (falsy) con el default — un
+          // problema concreto para marcar "disponible ahora, sin espera".
+          lead_time_weeks_min: Number.isNaN(parseInt(leadTimeMin)) ? 2 : Math.max(0, parseInt(leadTimeMin)),
+          lead_time_weeks_max: Number.isNaN(parseInt(leadTimeMax)) ? 3 : Math.max(0, parseInt(leadTimeMax)),
           material: material.trim() || null,
           care_instructions: careInstructions.trim() || null,
           is_custom_only: isCustomOnly,
@@ -410,15 +466,12 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       if (productError) throw productError
 
       // Replace product media
-      // Delete old media links first
-      await supabase.from('product_media').delete().eq('product_id', productId)
-      
-      if (mediaEntries.length > 0) {
-        const stillUploading = mediaEntries.filter((m) => m.uploading)
-        if (stillUploading.length > 0) {
-          throw new Error(`Esperá a que terminen de subirse ${stillUploading.length} foto(s).`)
-        }
+      // Delete old media links first. Si el borrado falla (RLS, red), NO se
+      // sigue: insertar arriba de lo viejo dejaba las fotos duplicadas.
+      const { error: mediaDeleteError } = await supabase.from('product_media').delete().eq('product_id', productId)
+      if (mediaDeleteError) throw new Error(`No se pudieron actualizar las fotos: ${mediaDeleteError.message}`)
 
+      if (mediaEntries.length > 0) {
         const mediaInserts = mediaEntries
           .filter((m) => !m.uploading && m.url && !m.url.startsWith('blob:'))
           .map((m, i) => ({
@@ -440,7 +493,8 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
 
       // Replace sizes
       // Delete old sizes first
-      await supabase.from('product_sizes').delete().eq('product_id', productId)
+      const { error: sizeDeleteError } = await supabase.from('product_sizes').delete().eq('product_id', productId)
+      if (sizeDeleteError) throw new Error(`No se pudieron actualizar los talles: ${sizeDeleteError.message}`)
 
       if (sizes.length > 0) {
         const sizeInserts = sizes
@@ -460,7 +514,8 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       }
 
       // Replace colors
-      await supabase.from('product_colors').delete().eq('product_id', productId)
+      const { error: colorDeleteError } = await supabase.from('product_colors').delete().eq('product_id', productId)
+      if (colorDeleteError) throw new Error(`No se pudieron actualizar los colores: ${colorDeleteError.message}`)
 
       if (selectedColors.length > 0) {
         const colorInserts = selectedColors.map((colorId) => ({
@@ -476,6 +531,9 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       // avisale a Bing/Yandex de paso.
       notifyReindex([`/tienda/${slug.trim()}`, '/tienda', '/'])
 
+      // Ya está guardado: nuevo punto de referencia, así el aviso de "cambios
+      // sin guardar" no salta al salir de la página.
+      setSavedSnapshot(snapshot)
       setToast('Producto actualizado exitosamente')
       setTimeout(() => {
         router.push('/admin/productos')
@@ -546,7 +604,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           </button>
           <button
             className="admin-btn admin-btn-secondary"
-            onClick={() => router.push('/admin/productos')}
+            onClick={leaveEditor}
           >
             Cancelar
           </button>
@@ -717,6 +775,13 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                 <option value="active">Activo / Visible</option>
                 <option value="soldout">Agotado</option>
               </select>
+              {/* Avisa sin bloquear: "Activo" sin ninguna foto publica una
+                  tarjeta vacía en la tienda, y nada lo decía antes de guardar. */}
+              {status === 'active' && mediaEntries.length === 0 && (
+                <span className="field-hint" role="alert" style={{ color: '#7a1e2f' }}>
+                  Activo y sin ninguna foto: en la tienda va a salir con la imagen de placeholder.
+                </span>
+              )}
             </div>
           </div>
 
@@ -989,19 +1054,41 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                 <label>Tiempo mínimo (semanas)</label>
                 <input
                   type="number"
+                  min={0}
                   value={leadTimeMin}
                   onChange={(e) => setLeadTimeMin(e.target.value)}
                 />
+                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#8C8285' }}>Poné 0 si esta pieza ya está lista y se envía ya — aparece sola en &quot;Disponible ahora&quot; en la tienda.</p>
               </div>
               <div className="admin-field">
                 <label>Tiempo máximo (semanas)</label>
                 <input
                   type="number"
+                  min={0}
                   value={leadTimeMax}
                   onChange={(e) => setLeadTimeMax(e.target.value)}
                 />
               </div>
             </div>
+
+            {/* Los dos campos eran independientes y nada avisaba si quedaban
+                al revés — la ficha llegaba a mostrar "entre el 26 y el 5 de
+                setiembre". Avisa sin bloquear: el dato es de ella, no nuestro. */}
+            {(() => {
+              const min = parseInt(leadTimeMin)
+              const max = parseInt(leadTimeMax)
+              if (Number.isNaN(min) || Number.isNaN(max) || min <= max) return null
+              return (
+                <p role="alert" style={{
+                  margin: '-6px 0 0', fontSize: '0.82rem', color: '#7a1e2f',
+                  background: 'rgba(182,49,74,0.06)', border: '1px solid rgba(182,49,74,0.22)',
+                  borderRadius: 8, padding: '8px 10px',
+                }}>
+                  El tiempo mínimo ({min}) es mayor que el máximo ({max}). Revisalos o la fecha
+                  estimada en la ficha va a quedar al revés.
+                </p>
+              )
+            })()}
 
             <div className="admin-field">
               <label>Materiales</label>
@@ -1028,13 +1115,19 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
 
       {/* Sticky save bar — mobile-only */}
       <div className="admin-mobile-save-bar">
+        {/* Era una "×" al lado de Guardar: en el teléfono ese símbolo se lee
+            como "cerrar/cancelar", y lo que hacía era borrar el producto.
+            Con el tacho de basura la acción se entiende antes de tocarla. */}
         <button
           className="admin-btn admin-btn-danger admin-btn-sm"
           onClick={handleDelete}
           aria-label="Eliminar producto"
-          style={{ minWidth: 44 }}
+          title="Eliminar producto"
+          style={{ minWidth: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          ×
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+          </svg>
         </button>
         <button
           className="admin-btn admin-btn-primary"
@@ -1042,7 +1135,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           disabled={saving}
           style={{ flex: 1 }}
         >
-          {saving ? 'Guardando...' : 'Guardar cambios'}
+          {saving ? 'Guardando...' : isDirty ? 'Guardar cambios •' : 'Guardar cambios'}
         </button>
       </div>
     </>

@@ -149,6 +149,20 @@ const NAV_ITEMS = [
   },
 ]
 
+// El menú tenía 15 ítems en una lista plana — más del doble de lo que se
+// puede escanear de un vistazo, así que encontrar algo era leer los 15. Se
+// agrupan por para-qué-entrás, no por tipo de dato: primero lo que se mira
+// todos los días, después el catálogo, después lo de vender más, y al final
+// lo que se toca una vez y no se vuelve a mirar. El orden de NAV_ITEMS de
+// arriba no se toca — esto solo decide en qué bloque cae cada uno.
+const NAV_GROUPS: Array<{ title: string | null; hrefs: string[] }> = [
+  { title: null, hrefs: ['/admin'] },
+  { title: 'Día a día', hrefs: ['/admin/encargos', '/admin/pedidos', '/admin/tejedoras', '/admin/carritos'] },
+  { title: 'Catálogo', hrefs: ['/admin/productos', '/admin/colecciones', '/admin/categorias', '/admin/colores'] },
+  { title: 'Vender más', hrefs: ['/admin/estrategia', '/admin/descuentos', '/admin/cupones', '/admin/suscriptores', '/admin/testimonios'] },
+  { title: 'Ajustes', hrefs: ['/admin/configuracion'] },
+]
+
 export default function AdminChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -241,21 +255,41 @@ export default function AdminChrome({ children }: { children: React.ReactNode })
         </div>
 
         <nav className="admin-sidebar-nav">
-          {NAV_ITEMS.map((item) => {
-            const badge = pending[item.href] ?? 0
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={isActive(item.href) ? 'active' : ''}
-                onClick={() => setSidebarOpen(false)}
-              >
-                {item.icon}
-                {item.label}
-                {badge > 0 && <span className="admin-nav-badge">{badge}</span>}
-              </Link>
-            )
-          })}
+          {(() => {
+            const byHref = new Map(NAV_ITEMS.map((i) => [i.href, i]))
+            const grouped = new Set(NAV_GROUPS.flatMap((g) => g.hrefs))
+            // Cualquier ítem que se agregue a NAV_ITEMS sin asignarle grupo cae
+            // acá en vez de desaparecer del menú en silencio.
+            const ungrouped = NAV_ITEMS.filter((i) => !grouped.has(i.href))
+            const groups = ungrouped.length > 0
+              ? [...NAV_GROUPS, { title: 'Más', hrefs: ungrouped.map((i) => i.href) }]
+              : NAV_GROUPS
+
+            const renderLink = (href: string) => {
+              const item = byHref.get(href)
+              if (!item) return null
+              const badge = pending[item.href] ?? 0
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={isActive(item.href) ? 'active' : ''}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  {item.icon}
+                  {item.label}
+                  {badge > 0 && <span className="admin-nav-badge">{badge}</span>}
+                </Link>
+              )
+            }
+
+            return groups.map((group, gi) => (
+              <div key={group.title ?? `g${gi}`} className="admin-nav-group">
+                {group.title && <span className="admin-nav-group-title">{group.title}</span>}
+                {group.hrefs.map(renderLink)}
+              </div>
+            ))
+          })()}
         </nav>
 
         <div className="admin-sidebar-footer">

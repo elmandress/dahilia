@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { mediaPath, prepareImageForUpload, STORAGE_CACHE_SECONDS } from '@/lib/media'
 import { notifySiteWideChange } from '@/lib/seo-notify'
+import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
 
 // All keys the CMS surfaces. The DB may contain extras (e.g. legacy)
 // — we preserve them on save by passing through whatever loaded.
@@ -228,6 +229,38 @@ async function uploadToMedia(file: File, hint: string): Promise<string> {
  * exactly like the LinkedIn / YouTube banner croppers. The position is stored
  * as "x% y%" in `hero_image_position`.
  */
+/**
+ * Descripción de una sección de Configuración.
+ *
+ * Esta pantalla llegó a tener ~460 palabras de texto explicativo visibles a la
+ * vez (17 secciones, varias con un párrafo entero): para encontrar un campo
+ * había que leer explicaciones. Acá se muestra solo la primera frase — que
+ * dice QUÉ es y dónde se ve — y el resto (el porqué, los detalles de cuándo
+ * usarlo) queda plegado a un clic. No se borra nada: la información sigue ahí
+ * para quien la necesite, pero deja de competir con lo que se vino a hacer.
+ *
+ * <details> nativo a propósito: accesible por teclado y sin estado propio.
+ */
+function SectionDescription({ text }: { text: string }) {
+  const style = { margin: '4px 0 0', fontSize: 12, color: '#8C8285', lineHeight: 1.5 } as const
+  // Primera frase = hasta el primer punto seguido de espacio. Si no hay corte
+  // natural, o lo que sobra es muy poco, se muestra entero sin plegar.
+  // [\s\S] en vez de `.` con la bandera /s: el proyecto compila a ES2017 y esa
+  // bandera exige ES2018. Mismo resultado, sin tocar el target del build.
+  const split = text.match(/^([\s\S]+?\.)\s+(\S[\s\S]*)$/)
+  if (!split || split[1].length > 170 || split[2].length < 40) {
+    return <p style={style}>{text}</p>
+  }
+  return (
+    <details className="admin-config-desc">
+      <summary style={style}>
+        {split[1]} <span className="admin-config-desc-more">Ver detalle</span>
+      </summary>
+      <p style={{ ...style, marginTop: 6 }}>{split[2]}</p>
+    </details>
+  )
+}
+
 function HeroBannerEditor({
   url,
   position,
@@ -431,6 +464,13 @@ export default function ConfiguracionAdminPage() {
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Copia de lo último guardado, para saber si hay cambios pendientes. Va en
+  // estado y no en un ref porque se lee durante el render (`isDirty` decide si
+  // se muestra el aviso): leer un ref en render es justo lo que las reglas de
+  // hooks prohíben, y además no re-renderizaría al guardar.
+  const [savedSnapshot, setSavedSnapshot] = useState('')
+  const isDirty = !loading && JSON.stringify(settings) !== savedSnapshot
+  useUnsavedWarning(isDirty)
 
   const loadSettings = useCallback(async () => {
     setError(null)
@@ -444,6 +484,7 @@ export default function ConfiguracionAdminPage() {
         if (item?.key) loaded[item.key as string] = String(item.value ?? '')
       })
       setSettings(loaded)
+      setSavedSnapshot(JSON.stringify(loaded))
     } catch (e) {
       console.error('Error cargando configuración', e)
       setError('No se pudo cargar la configuración. Ejecutá database/schema-extra.sql en Supabase si todavía no lo hiciste.')
@@ -486,6 +527,8 @@ export default function ConfiguracionAdminPage() {
       // raíz que ahora comparten TODAS las páginas cacheadas. Sin esto, lo
       // que acabás de guardar tarda hasta 1h en verse en el sitio.
       notifySiteWideChange()
+      // Nuevo punto de referencia: a partir de acá no hay cambios pendientes.
+      setSavedSnapshot(JSON.stringify(settings))
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
     } catch (e) {
@@ -563,7 +606,7 @@ export default function ConfiguracionAdminPage() {
               <h3 style={{ margin: 0, fontWeight: 400, fontSize: '1.1rem', fontFamily: 'var(--font-display)' }}>
                 {section.title}
               </h3>
-              <p style={{ margin: '4px 0 0', fontSize: 12, color: '#8C8285' }}>{section.description}</p>
+              <SectionDescription text={section.description} />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -651,9 +694,18 @@ export default function ConfiguracionAdminPage() {
             borderTop: '1px solid rgba(31,26,27,0.10)',
             display: 'flex',
             justifyContent: 'flex-end',
+            alignItems: 'center',
             gap: 12,
           }}
         >
+          {/* Señal visible de que falta guardar. El diálogo del navegador
+              (useUnsavedWarning) es la red de último momento; esto es lo que
+              evita llegar hasta ahí. */}
+          {isDirty && !saving && (
+            <span style={{ marginRight: 'auto', fontSize: '0.85rem', color: '#8F3B53' }}>
+              Tenés cambios sin guardar
+            </span>
+          )}
           <button
             type="submit"
             className="admin-btn admin-btn-primary"

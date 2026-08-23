@@ -15,6 +15,7 @@ function slugify(s: string) {
 
 export default function CategoriasAdminPage() {
   const [categories, setCategories] = useState<Category[]>([])
+  const [productCounts, setProductCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [name, setName] = useState('')
@@ -40,6 +41,18 @@ export default function CategoriasAdminPage() {
 
       if (err) throw err
       setCategories((data ?? []) as Category[])
+
+      // Cuántas prendas cuelgan de cada categoría. Borrar una las deja a
+      // todas sin categoría (ON DELETE SET NULL) y no había forma de saber
+      // cuántas antes de tocar el tacho.
+      const { data: prods } = await supabase.from('products').select('category_id')
+      if (prods) {
+        const counts: Record<string, number> = {}
+        for (const p of prods as Array<{ category_id: string | null }>) {
+          if (p.category_id) counts[p.category_id] = (counts[p.category_id] ?? 0) + 1
+        }
+        setProductCounts(counts)
+      }
     } catch (e) {
       console.error('Error cargando categorías', e)
       setError('No se pudieron cargar las categorías desde la base de datos.')
@@ -115,7 +128,14 @@ export default function CategoriasAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta categoría? Las prendas vinculadas quedarán sin categoría.')) return
+    const cat = categories.find((c) => c.id === id)
+    const used = productCounts[id] ?? 0
+    const detail = used === 0
+      ? 'No tiene ninguna prenda adentro.'
+      : used === 1
+        ? '1 prenda va a quedar sin categoría.'
+        : `${used} prendas van a quedar sin categoría.`
+    if (!confirm(`¿Eliminar la categoría "${cat?.name ?? ''}"? ${detail} Las prendas NO se borran, pero dejan de aparecer en esa sección de la tienda.`)) return
 
     setError(null)
     try {
@@ -310,7 +330,11 @@ export default function CategoriasAdminPage() {
                         ) : (
                           <div>
                             <strong>{cat.name}</strong><br/>
-                            <span style={{ fontSize: '0.75rem', color: '#8C8285' }}>/{cat.slug}</span>
+                            <span style={{ fontSize: '0.75rem', color: '#8C8285' }}>
+                              /{cat.slug}
+                              {' · '}
+                              {(productCounts[cat.id] ?? 0) === 1 ? '1 prenda' : `${productCounts[cat.id] ?? 0} prendas`}
+                            </span>
                           </div>
                         )}
                       </td>

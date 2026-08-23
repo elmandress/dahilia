@@ -17,6 +17,10 @@ export default function ProductosPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [dragId, setDragId] = useState<string | null>(null)
   const [savingOrder, setSavingOrder] = useState(false)
+  // Un error de lectura (RLS, red, base caída) devolvía data:null y la página
+  // mostraba "No hay productos / Creá tu primer producto": para quien no es
+  // técnico eso se lee como "se borró todo el catálogo".
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const loadData = useCallback(async () => {
     const supabase = createClient()
@@ -34,6 +38,7 @@ export default function ProductosPage() {
       supabase.from('categories').select('*').order('sort_order'),
     ])
 
+    setLoadError(productsRes.error ? 'No se pudieron cargar los productos (no es que no haya: no se pudo leer la base). Probá recargar la página.' : null)
     setProducts((productsRes.data ?? []) as Product[])
     setCategories((categoriesRes.data ?? []) as Category[])
     setLoading(false)
@@ -46,18 +51,30 @@ export default function ProductosPage() {
 
   const handleDelete = async (id: string) => {
     const supabase = createClient()
+    const target = products.find((p) => p.id === id)
 
-    // Delete related data first
-    await Promise.all([
-      supabase.from('product_media').delete().eq('product_id', id),
-      supabase.from('product_sizes').delete().eq('product_id', id),
-      supabase.from('product_colors').delete().eq('product_id', id),
-    ])
+    // Se borra el producto primero: fotos, talles y colores caen solos por el
+    // ON DELETE CASCADE del schema. Antes se borraban esos tres a mano ANTES
+    // del producto, así que si el borrado final fallaba (RLS, red) la prenda
+    // seguía publicada pero ya sin fotos ni talles, y el cartel decía
+    // "no se pudo eliminar" — el peor de los dos mundos.
+    let { error } = await supabase.from('products').delete().eq('id', id)
 
-    const { error } = await supabase.from('products').delete().eq('id', id)
+    // Base sin la cascada (esquema viejo): recién ahí se limpian las hijas.
+    if (error && (error.code === '23503' || /foreign key/i.test(error.message || ''))) {
+      await Promise.all([
+        supabase.from('product_media').delete().eq('product_id', id),
+        supabase.from('product_sizes').delete().eq('product_id', id),
+        supabase.from('product_colors').delete().eq('product_id', id),
+      ])
+      ;({ error } = await supabase.from('products').delete().eq('id', id))
+    }
 
     if (!error) {
       setProducts(products.filter(p => p.id !== id))
+      // La URL deja de existir: sin esto la ficha vieja se sigue sirviendo
+      // desde el caché hasta 1h (el editor ya lo hacía; el listado no).
+      if (target?.slug) notifyReindex([`/tienda/${target.slug}`, '/tienda', '/'])
     } else {
       console.error('delete product failed', error)
       alert('No se pudo eliminar el producto. Probá de nuevo en un momento.')
@@ -203,6 +220,19 @@ export default function ProductosPage() {
         </Link>
       </div>
 
+      {loadError && (
+        <div role="alert" style={{
+          background: 'rgba(182,49,74,0.06)', border: '1px solid rgba(182,49,74,0.24)',
+          color: '#7a1e2f', padding: '12px 14px', borderRadius: 8, marginBottom: 18, fontSize: 13,
+          display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap',
+        }}>
+          <span>{loadError}</span>
+          <button className="admin-btn admin-btn-secondary admin-btn-sm" onClick={() => { setLoading(true); loadData() }}>
+            Reintentar
+          </button>
+        </div>
+      )}
+
       {/* Filters + search */}
       <div className="admin-filters" style={{ flexWrap: 'wrap', gap: 10 }}>
         <input
@@ -242,11 +272,33 @@ export default function ProductosPage() {
             <svg fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
             </svg>
-            <h3>No hay productos</h3>
-            <p>Creá tu primer producto para empezar</p>
-            <Link href="/admin/productos/nuevo" className="admin-btn admin-btn-primary">
-              Crear producto
-            </Link>
+            {/* Tres motivos distintos para una lista vacía: no se pudo leer,
+                el filtro no deja pasar nada, o de verdad no hay nada. */}
+            {loadError ? (
+              <>
+                <h3>No se pudo leer el catálogo</h3>
+                <p>Los productos siguen ahí — es la conexión con la base la que falló.</p>
+              </>
+            ) : products.length > 0 ? (
+              <>
+                <h3>Ningún producto coincide</h3>
+                <p>Tenés {products.length} productos, pero ninguno pasa el filtro o la búsqueda actual.</p>
+                <button
+                  className="admin-btn admin-btn-secondary"
+                  onClick={() => { setSearchTerm(''); setFilterStatus('all'); setFilterCategory('all') }}
+                >
+                  Quitar filtros
+                </button>
+              </>
+            ) : (
+              <>
+                <h3>No hay productos</h3>
+                <p>Creá tu primer producto para empezar</p>
+                <Link href="/admin/productos/nuevo" className="admin-btn admin-btn-primary">
+                  Crear producto
+                </Link>
+              </>
+            )}
           </div>
         ) : (
           <div className="admin-table-wrap">
@@ -370,7 +422,10 @@ export default function ProductosPage() {
       {deleteId && (
         <div className="admin-modal-overlay" onClick={() => setDeleteId(null)}>
           <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>¿Eliminar producto?</h3>
+            {/* El nombre va en el título: en el teléfono la fila que tocaste
+                queda tapada por el modal y no había forma de verificar cuál
+                de las 34 prendas estabas por borrar. */}
+            <h3>¿Eliminar “{products.find((p) => p.id === deleteId)?.name ?? 'este producto'}”?</h3>
             <p>Esta acción no se puede deshacer. Se eliminarán también las fotos, tallas y colores asociados.</p>
             <div className="modal-actions">
               <button className="admin-btn admin-btn-secondary" onClick={() => setDeleteId(null)}>

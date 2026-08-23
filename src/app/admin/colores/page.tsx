@@ -8,6 +8,7 @@ const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 
 export default function ColoresAdminPage() {
   const [colors, setColors] = useState<Color[]>([])
+  const [productCounts, setProductCounts] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [name, setName] = useState('')
@@ -30,6 +31,17 @@ export default function ColoresAdminPage() {
 
       if (err) throw err
       setColors((data ?? []) as Color[])
+
+      // En cuántas prendas se usa cada color: borrarlo lo saca de todas
+      // (ON DELETE CASCADE en product_colors) y no se veía de antemano.
+      const { data: links } = await supabase.from('product_colors').select('color_id')
+      if (links) {
+        const counts: Record<string, number> = {}
+        for (const l of links as Array<{ color_id: string }>) {
+          counts[l.color_id] = (counts[l.color_id] ?? 0) + 1
+        }
+        setProductCounts(counts)
+      }
     } catch (e) {
       console.error('Error cargando colores', e)
       setError('No se pudieron cargar los colores desde la base de datos.')
@@ -101,7 +113,14 @@ export default function ColoresAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar este color? Las prendas vinculadas ya no tendrán este swatch.')) return
+    const col = colors.find((c) => c.id === id)
+    const used = productCounts[id] ?? 0
+    const detail = used === 0
+      ? 'No lo usa ninguna prenda.'
+      : used === 1
+        ? 'Se va a sacar de 1 prenda.'
+        : `Se va a sacar de ${used} prendas.`
+    if (!confirm(`¿Eliminar el color "${col?.name ?? ''}"? ${detail} Esta acción no se puede deshacer.`)) return
     setError(null)
     try {
       const supabase = createClient()

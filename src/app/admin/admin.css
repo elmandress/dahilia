@@ -56,6 +56,41 @@
   overflow-y: auto;
 }
 
+/* Descripción plegable de cada sección de Configuración (ver
+   SectionDescription). El marcador nativo se oculta: el "Ver detalle" ya
+   comunica que hay más, y el triángulo del navegador desentona con el resto. */
+.admin-config-desc > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.admin-config-desc > summary::-webkit-details-marker { display: none; }
+
+.admin-config-desc-more {
+  color: #8F3B53;
+  white-space: nowrap;
+}
+.admin-config-desc[open] .admin-config-desc-more { display: none; }
+.admin-config-desc > summary:hover .admin-config-desc-more { text-decoration: underline; }
+
+/* Bloques del menú (ver NAV_GROUPS en AdminChrome). El separador hace el
+   trabajo de agrupar visualmente; el título es una etiqueta discreta, no
+   otro nivel de jerarquía que compita con los ítems. */
+.admin-nav-group + .admin-nav-group {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+.admin-nav-group-title {
+  display: block;
+  padding: 0.5rem 1.5rem 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
+
 .admin-sidebar-nav a {
   display: flex;
   align-items: center;
