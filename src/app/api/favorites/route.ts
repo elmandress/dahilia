@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { randomUUID } from 'node:crypto'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+
+/**
+ * Mismo caso que /api/cart: el dueño de una lista de favoritos es una cookie,
+ * no una sesión, así que RLS no puede scopearla y la policy quedaba abierta
+ * a cualquiera con la anon key. Esta ruta entra como servicio y filtra a mano
+ * por `fav_id`. Si la clave de servicio no está, cae al cliente de siempre.
+ */
+async function getDb() {
+  return createAdminClient() ?? (await createClient())
+}
 
 // Cookie-scoped wishlist, modelled on /api/cart. The fav_id cookie is HttpOnly
 // so the list survives across visits without a login, and every query is scoped
@@ -31,7 +42,7 @@ function applyFavCookie(res: NextResponse, favId: string, setCookie: boolean) {
 }
 
 async function loadFavorites(favId: string) {
-  const supabase = await createClient()
+  const supabase = await getDb()
   const { data, error } = await supabase
     .from('favorites')
     .select('id, product_id, added_at, product:products(*, category:categories(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*)))')
@@ -79,7 +90,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { favId, setCookie } = await getOrCreateFavId()
-    const supabase = await createClient()
+    const supabase = await getDb()
 
     // The product must exist (any status — you can favourite a sold-out piece).
     const { data: product, error: prodErr } = await supabase
@@ -114,7 +125,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Falta productId.' }, { status: 400 })
     }
     const { favId, setCookie } = await getOrCreateFavId()
-    const supabase = await createClient()
+    const supabase = await getDb()
 
     const { error } = await supabase
       .from('favorites')

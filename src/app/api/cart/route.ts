@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { randomUUID } from 'node:crypto'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+
+/**
+ * El carrito de un visitante anónimo NO se puede scopear con RLS: no hay
+ * sesión, el dueño es una cookie. Por eso las policies de `cart_items` eran
+ * `USING (true)` y cualquiera con la anon key podía leer los carritos de
+ * todos. La solución es al revés: cerrar la tabla en la base y que esta ruta
+ * —la única que conoce la cookie— entre como servicio.
+ *
+ * El `?? await createClient()` es a propósito: si la clave de servicio no
+ * está configurada, sigue andando con el cliente anónimo de siempre. Así el
+ * código funciona ANTES y DESPUÉS de correr el SQL que cierra las policies,
+ * sin ventana rota entre un deploy y el otro.
+ *
+ * TODAS las consultas de abajo filtran por `cart_id`: con el cliente de
+ * servicio ese filtro es la única barrera, así que no se puede omitir.
+ */
+async function getDb() {
+  return createAdminClient() ?? (await createClient())
+}
 
 const CART_COOKIE = 'dahila_cart_id'
 const CART_COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
@@ -29,7 +49,7 @@ function applyCartCookie(res: NextResponse, cartId: string, setCookie: boolean) 
 }
 
 async function loadItems(cartId: string) {
-  const supabase = await createClient()
+  const supabase = await getDb()
   const { data, error } = await supabase
     .from('cart_items')
     .select('*, product:products(*, media:product_media(*), sizes:product_sizes(*))')
@@ -65,7 +85,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { cartId, setCookie } = await getOrCreateCartId()
-    const supabase = await createClient()
+    const supabase = await getDb()
 
     // Confirm product exists and is purchasable
     const { data: product, error: prodErr } = await supabase
@@ -105,6 +125,10 @@ export async function POST(req: NextRequest) {
         .from('cart_items')
         .update({ qty: newQty })
         .eq('id', existing.id)
+        // Redundante (existing salió de una búsqueda ya filtrada por cartId),
+        // pero con el cliente de servicio no hay RLS abajo que ataje un error
+        // futuro: toda escritura lleva su scope explícito.
+        .eq('cart_id', cartId)
       if (error) throw error
     } else {
       const { error } = await supabase
@@ -134,7 +158,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const { cartId, setCookie } = await getOrCreateCartId()
-    const supabase = await createClient()
+    const supabase = await getDb()
 
     if (qty === 0) {
       const { error } = await supabase
@@ -168,7 +192,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Falta itemId.' }, { status: 400 })
     }
     const { cartId, setCookie } = await getOrCreateCartId()
-    const supabase = await createClient()
+    const supabase = await getDb()
 
     const { error } = await supabase
       .from('cart_items')
