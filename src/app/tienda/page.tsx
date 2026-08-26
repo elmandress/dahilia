@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/public'
 import { getCatalog } from '@/lib/catalog'
 import { getPrimaryPhoto, getFinalPrice } from '@/lib/types'
+import { botImageUrl } from '@/lib/media'
 import { SITE_URL } from '@/lib/env'
 import { TiendaClient } from './TiendaClient'
 import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
@@ -76,7 +77,12 @@ export default async function TiendaPage({
             '@type': 'Product',
             name: p.name,
             url: `${SITE_URL}/tienda/${p.slug}`,
-            image: photo.startsWith('http') ? photo : `${SITE_URL}${photo}`,
+            // Vía botImageUrl (lib/media.ts): esta ItemList tenía la URL
+            // cruda de Supabase Storage — Googlebot la recorre en cada
+            // rastreo de /tienda (hub, changeFrequency diario), hasta 24
+            // fotos originales directo del storage. Misma canilla de egress
+            // que el fix de julio tapó en la ficha de producto pero no acá.
+            image: botImageUrl(SITE_URL, photo),
             offers: {
               '@type': 'Offer',
               price: getFinalPrice(p, undefined, discounts).toFixed(2),

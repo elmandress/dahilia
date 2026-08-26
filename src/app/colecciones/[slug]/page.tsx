@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/public'
 import type { Collection, Product, Discount, Color } from '@/lib/types'
 import { getFinalPrice } from '@/lib/types'
+import { botImageUrl } from '@/lib/media'
 import { ProductCard } from '@/components/ProductCard'
 import { dahila, Eyebrow, Breadcrumb } from '@/components/ui/Primitives'
 import { SITE_URL } from '@/lib/env'
@@ -87,7 +88,10 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
     name: collection.name,
     description: collection.description || `Colección ${collection.name} — Dahila Crochet.`,
     url: `${SITE_URL}/colecciones/${collection.slug}`,
-    ...(collection.cover_url ? { image: collection.cover_url } : {}),
+    // Vía botImageUrl (lib/media.ts) — mismo motivo que el ItemList de abajo:
+    // sin esto, Googlebot bajaba la portada original directo de Supabase
+    // Storage en cada rastreo de la colección.
+    ...(collection.cover_url ? { image: botImageUrl(SITE_URL, collection.cover_url) } : {}),
     mainEntity: products.length > 0 ? {
       '@type': 'ItemList',
       numberOfItems: products.length,
@@ -101,7 +105,10 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
             '@type': 'Product',
             name: p.name,
             url: `${SITE_URL}/tienda/${p.slug}`,
-            ...(img ? { image: img } : {}),
+            // Vía botImageUrl: esta ItemList tenía la URL cruda de Supabase
+            // Storage — misma canilla de egress que en /tienda y
+            // /tienda/[categoría] (ver comentarios ahí).
+            ...(img ? { image: botImageUrl(SITE_URL, img) } : {}),
             offers: {
               '@type': 'Offer',
               priceCurrency: 'UYU',

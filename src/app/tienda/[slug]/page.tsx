@@ -232,7 +232,13 @@ async function CategoryPage({ slug, category }: { slug: string; category: Catego
             '@type': 'Product',
             name: p.name,
             url: `${SITE_URL}/tienda/${p.slug}`,
-            image: photo.startsWith('http') ? photo : `${SITE_URL}${photo}`,
+            // Vía botImageUrl (ver comentario junto a schemaImages más abajo,
+            // y lib/media.ts): esta ItemList de la vista por categoría estaba
+            // con la URL cruda de Supabase Storage — Googlebot la recorre en
+            // cada rastreo de /tienda/[categoría], hasta 24 fotos originales
+            // por categoría, directo del storage. Era una canilla de egress
+            // que el fix de julio no había tapado acá.
+            image: botImageUrl(SITE_URL, photo),
             offers: {
               '@type': 'Offer',
               price: getFinalPrice(p, undefined, discounts).toFixed(2),
