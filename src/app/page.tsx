@@ -14,7 +14,7 @@ export default async function Home() {
   // Catálogo con fallback al snapshot si la DB está caída (ver src/lib/catalog.ts).
   // Featured y "Nuevo" se derivan de la misma tanda — así la home queda
   // resiliente sin queries extra que dependan de la base.
-  const catalog = await getCatalog(supabase)
+  const catalog = await getCatalog()
   const { discounts, settings, source } = catalog
 
   // DB caída y sin snapshot → cartel de mantenimiento (no una home vacía).

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/public'
 import { getCatalog } from '@/lib/catalog'
 import { getPrimaryPhoto, getFinalPrice } from '@/lib/types'
 import { botImageUrl } from '@/lib/media'
@@ -28,7 +27,6 @@ export default async function TiendaPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const supabase = await createClient()
   const params = await searchParams
   const categoryFilter = typeof params.cat === 'string' ? params.cat : ''
   const searchQuery = typeof params.q === 'string' ? params.q : ''
@@ -42,7 +40,7 @@ export default async function TiendaPage({
 
   // Catálogo con fallback al snapshot estático si la DB está caída (402 de
   // cuota) — el sitio sigue navegable en modo lectura en vez de quedar vacío.
-  const { products, categories, colors, discounts, source } = await getCatalog(supabase)
+  const { products, categories, colors, discounts, source } = await getCatalog()
 
   // DB caída y sin snapshot que mostrar → cartel de mantenimiento a pantalla
   // completa (no una tienda vacía). Corre en el render del servidor, así que

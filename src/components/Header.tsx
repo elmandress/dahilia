@@ -18,15 +18,20 @@ const NAV_ITEMS = [
   { id: '/colecciones', label: 'Colecciones' },
   { id: '/ofertas',     label: 'Ofertas', accent: true },
   { id: '/encargo',     label: 'A medida' },
+  { id: '/blog',        label: 'Notas' },
   { id: '/atelier',     label: 'Sobre nosotros' },
   { id: '/tejedoras',   label: 'Tejé con Dahila' },
   { id: '/contacto',    label: 'Contacto' },
 ]
 
-// Categories shown in the Tienda mega-menu. Static on purpose: the catalogue
-// uses these stable slugs (seeded in schema.sql) and keeping them out of a
-// per-render DB call keeps every page fast. Update here if categories change.
-const MEGA_CATEGORIES = [
+// Fallback de categorías del mega-menú. Antes esta lista era la ÚNICA fuente
+// ("estática a propósito, para no pagar una consulta por render"): una
+// categoría nueva creada en el admin no aparecía en la navegación hasta que
+// alguien editara este archivo. Ese motivo ya no existe — el layout raíz lee
+// el catálogo cacheado (lib/catalog.ts) y le pasa las categorías reales, sin
+// consultas extra. La lista queda solo como red de seguridad para el modo
+// snapshot/DB caída.
+const MEGA_CATEGORIES_FALLBACK = [
   { slug: 'tops',       label: 'Tops' },
   { slug: 'cardigans',  label: 'Cardigans' },
   { slug: 'accesorios', label: 'Accesorios' },
@@ -41,7 +46,20 @@ export interface PromoBar {
   fg: string
 }
 
-export function Header({ promo, showOfertas = true, showColecciones = true }: { promo?: PromoBar; showOfertas?: boolean; showColecciones?: boolean }) {
+export function Header({
+  promo,
+  showOfertas = true,
+  showColecciones = true,
+  categories,
+}: {
+  promo?: PromoBar
+  showOfertas?: boolean
+  showColecciones?: boolean
+  /** Categorías reales del catálogo (las pasa el layout raíz). Vacío o ausente
+   *  → se usa el fallback estático. */
+  categories?: { slug: string; label: string }[]
+}) {
+  const megaCategories = categories && categories.length > 0 ? categories : MEGA_CATEGORIES_FALLBACK
   // "Ofertas" y "Colecciones" son ítems estacionales: el layout los prende
   // solo cuando hay contenido real detrás (descuentos vigentes / colecciones
   // publicadas o teaser de drop). Un ítem permanente hacia una página vacía
@@ -406,7 +424,7 @@ export function Header({ promo, showOfertas = true, showColecciones = true }: { 
         >
           <div style={{
             maxWidth: 1280, margin: '0 auto', padding: '28px 24px',
-            display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: 32, alignItems: 'start',
+            display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr)', gap: 32, alignItems: 'start',
           }}>
             {/* Categories */}
             <div>
@@ -419,7 +437,7 @@ export function Header({ promo, showOfertas = true, showColecciones = true }: { 
                     Toda la colección
                   </Link>
                 </li>
-                {MEGA_CATEGORIES.map((c) => (
+                {megaCategories.map((c) => (
                   <li key={c.slug}>
                     <Link href={`/tienda/${c.slug}`} onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>
                       {c.label}
@@ -533,7 +551,7 @@ export function Header({ promo, showOfertas = true, showColecciones = true }: { 
                     2 taps en vez de obligar a scrollear la tienda entera. */}
                 {it.mega && (
                   <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 10 }}>
-                    {MEGA_CATEGORIES.map((c) => (
+                    {megaCategories.map((c) => (
                       <Link key={c.slug} href={`/tienda/${c.slug}`} onClick={() => setOpen(false)} style={{
                         textDecoration: 'none',
                         fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300,

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { notifySiteWideChange } from '@/lib/seo-notify'
 import type { Category } from '@/lib/types'
 
 function slugify(s: string) {
@@ -83,6 +84,12 @@ export default function CategoriasAdminPage() {
         sort_order: parseInt(sortOrder) || 1,
       }])
       if (err) throw err
+      // Las categorías arman la nav, el mega-menú y el riel de la tienda, y
+      // salen del catálogo cacheado (lib/catalog.ts). Sin este aviso, una
+      // categoría nueva o renombrada no se ve en el sitio hasta que venza el
+      // caché. Es el mismo patrón que colecciones/descuentos/configuración —
+      // esta página se había quedado afuera.
+      notifySiteWideChange()
       await loadCategories()
       setName('')
       setSlug('')
@@ -119,6 +126,7 @@ export default function CategoriasAdminPage() {
         })
         .eq('id', id)
       if (err) throw err
+      notifySiteWideChange()
       await loadCategories()
       setEditingId(null)
     } catch (e) {
@@ -142,6 +150,7 @@ export default function CategoriasAdminPage() {
       const supabase = createClient()
       const { error: err } = await supabase.from('categories').delete().eq('id', id)
       if (err) throw err
+      notifySiteWideChange()
       await loadCategories()
     } catch (e) {
       console.error('Error eliminando categoría', e)
@@ -164,6 +173,7 @@ export default function CategoriasAdminPage() {
         supabase.from('categories').update({ sort_order: a.sort_order }).eq('id', b.id),
       ])
       if (r1.error || r2.error) throw r1.error ?? r2.error
+      notifySiteWideChange()
       await loadCategories()
     } catch (e) {
       console.error('Error reordenando categorías', e)

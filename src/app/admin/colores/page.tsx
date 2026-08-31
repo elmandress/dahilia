@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { notifySiteWideChange } from '@/lib/seo-notify'
 import type { Color } from '@/lib/types'
 
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
@@ -70,6 +71,7 @@ export default function ColoresAdminPage() {
         sort_order: parseInt(sortOrder) || 1,
       }])
       if (err) throw err
+      notifySiteWideChange()
       await loadColors()
       setName('')
       setHex('#8F3B53')
@@ -104,6 +106,7 @@ export default function ColoresAdminPage() {
         })
         .eq('id', id)
       if (err) throw err
+      notifySiteWideChange()
       await loadColors()
       setEditingId(null)
     } catch (e) {
@@ -126,6 +129,7 @@ export default function ColoresAdminPage() {
       const supabase = createClient()
       const { error: err } = await supabase.from('colors').delete().eq('id', id)
       if (err) throw err
+      notifySiteWideChange()
       await loadColors()
     } catch (e) {
       console.error('Error eliminando color', e)
@@ -146,6 +150,7 @@ export default function ColoresAdminPage() {
         supabase.from('colors').update({ sort_order: a.sort_order }).eq('id', b.id),
       ])
       if (r1.error || r2.error) throw r1.error ?? r2.error
+      notifySiteWideChange()
       await loadColors()
     } catch (e) {
       console.error('Error reordenando colores', e)

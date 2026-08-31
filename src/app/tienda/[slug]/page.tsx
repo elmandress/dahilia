@@ -200,10 +200,8 @@ export async function generateMetadata({
 // ─── Category view ───────────────────────────────────────────────────────────
 
 async function CategoryPage({ slug, category }: { slug: string; category: Category }) {
-  const supabase = await createClient()
-
-  // Catálogo con fallback al snapshot si la DB está caída (ver src/lib/catalog.ts).
-  const { products, categories, colors, discounts, source } = await getCatalog(supabase)
+  // Catálogo cacheado con fallback al snapshot si la DB está caída (ver src/lib/catalog.ts).
+  const { products, categories, colors, discounts, source } = await getCatalog()
 
   const categoryProducts = products.filter((p) => p.category?.slug === slug)
 
@@ -281,10 +279,8 @@ async function CategoryPage({ slug, category }: { slug: string; category: Catego
 // ─── Product detail view ──────────────────────────────────────────────────────
 
 async function ProductPage({ slug }: { slug: string }) {
-  const supabase = await createClient()
-
-  // Producto con fallback al snapshot si la DB está caída (ver src/lib/catalog.ts).
-  const { product, source } = await getProductBySlug(supabase, slug)
+  // Producto cacheado con fallback al snapshot si la DB está caída (ver src/lib/catalog.ts).
+  const { product, source } = await getProductBySlug(slug)
 
   // Distinguir "no existe" de "la base falló": si la consulta EN VIVO dice que
   // no está → 404 real. Si la base falló y el snapshot tampoco lo tiene → lanzar
@@ -298,43 +294,20 @@ async function ProductPage({ slug }: { slug: string }) {
 
   const isSnapshot = source === 'snapshot'
 
-  // Descuentos, settings y relacionados: en vivo desde la DB; en modo lectura
-  // (snapshot), desde el snapshot — sin volver a pegarle a la base caída.
-  let discounts: Discount[]
-  let settings: Record<string, string>
-  let relatedAll: Product[]
-  if (isSnapshot) {
-    const snap = getSnapshotData()
-    discounts = snap.discounts
-    settings = snap.settings
-    relatedAll = snap.products.filter((p) => p.status === 'active' && p.id !== product.id).slice(0, 24)
-  } else {
-    const [{ data: discountData }, { data: settingsData }, { data: relatedData }] = await Promise.all([
-      supabase.from('discounts').select('*').eq('active', true),
-      supabase.from('site_settings').select('key, value').in('key', [
-        'size_guide_note', 'contact_whatsapp_url', 'shipping_estimate',
-        'queue_note_enabled', 'queue_note_text',
-        'pdp_trust_1', 'pdp_trust_2', 'pdp_trust_3',
-        'maker_name', 'maker_bio', 'maker_photo_url',
-        'pdp_process_enabled',
-        'pdp_process_step_1_icon', 'pdp_process_step_1_label', 'pdp_process_step_1_body',
-        'pdp_process_step_2_icon', 'pdp_process_step_2_label', 'pdp_process_step_2_body',
-        'pdp_process_step_3_icon', 'pdp_process_step_3_label', 'pdp_process_step_3_body',
-        'encargos_cupos_enabled', 'encargos_cupos_total', 'encargos_cupos_taken', 'encargos_cupos_label',
-      ]),
-      supabase
-        .from('products')
-        .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*)')
-        .eq('status', 'active')
-        .neq('id', product.id)
-        .order('sort_order', { ascending: true })
-        .limit(24),
-    ])
-    discounts = (discountData ?? []) as Discount[]
-    settings = ((settingsData ?? []) as Array<{ key: string; value: string }>)
-      .reduce<Record<string, string>>((acc, r) => ({ ...acc, [r.key]: String(r.value ?? '') }), {})
-    relatedAll = (relatedData ?? []) as Product[]
-  }
+  // Descuentos, settings y relacionados salen del MISMO payload cacheado que
+  // usa el resto del sitio (lib/catalog.ts), que además ya trae su propio
+  // fallback al snapshot si la DB está caída. Antes esta ficha hacía 3
+  // consultas extra por render (descuentos + settings + hasta 24 productos
+  // relacionados con sus joins) que devolvían datos que el catálogo ya tenía
+  // en memoria: con ~36 fichas, eso era descargar el catálogo varias veces por
+  // ciclo de revalidación. De paso desaparece la rama duplicada
+  // snapshot/en-vivo: ahora hay un solo camino.
+  const catalog = await getCatalog()
+  const discounts: Discount[] = catalog.discounts
+  const settings: Record<string, string> = catalog.settings
+  const relatedAll: Product[] = catalog.products
+    .filter((p) => p.status === 'active' && p.id !== product.id)
+    .slice(0, 24)
 
   const getSetting = (k: string): string | undefined => settings[k]
   const sizeGuideNote = getSetting('size_guide_note')

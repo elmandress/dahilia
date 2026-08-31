@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { notifyIndexNow } from '@/lib/indexnow'
 import { createClient } from '@/lib/supabase/server'
+import { CATALOG_TAG } from '@/lib/catalog'
 
 // Lo llama el admin (client-side) después de guardar algo que un visitante
 // ve en el sitio público. Dos modos, se pueden combinar en el mismo request:
@@ -51,6 +52,25 @@ export async function POST(request: Request) {
 
   if (paths.length === 0 && !layout) {
     return NextResponse.json({ ok: false }, { status: 400 })
+  }
+
+  // Invalidar el caché de DATOS además del HTML. Son dos capas distintas:
+  // revalidatePath tira el HTML cacheado de una ruta, pero el catálogo vive en
+  // un unstable_cache compartido (lib/catalog.ts) que sobrevive a eso y
+  // volvería a servir los datos viejos al re-renderizar. Se invalida siempre:
+  // todo lo que llama a este endpoint (productos, precios, descuentos,
+  // settings, colecciones, categorías) sale de ese mismo payload, y hacerlo de
+  // más no cuesta nada — el siguiente request lo repuebla con una consulta.
+  // `{ expire: 0 }` y no el perfil 'max': 'max' marca el tag como stale y sirve
+  // stale-while-revalidate (la primera visita después de guardar todavía vería
+  // lo viejo). Acá el disparador es "Anush guardó en el CMS y va a mirar el
+  // sitio", así que corresponde expirar ya: el primer request paga una consulta
+  // y ve el cambio. Es la única forma no deprecada de pedir eso en Next 16
+  // (revalidateTag de un solo argumento quedó deprecado).
+  try {
+    revalidateTag(CATALOG_TAG, { expire: 0 })
+  } catch {
+    // No debe tumbar el resto del request.
   }
 
   for (const path of paths) {

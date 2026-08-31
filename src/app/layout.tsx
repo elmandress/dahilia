@@ -15,8 +15,7 @@ import { GoogleAnalyticsScript } from '@/components/GoogleAnalyticsScript'
 import { AttributionCapture } from '@/components/AttributionCapture'
 import { SITE_URL, SUPABASE_STORAGE_ORIGIN } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
-import { createClient } from '@/lib/supabase/public'
-import type { Discount } from '@/lib/types'
+import { getCatalog } from '@/lib/catalog'
 import './globals.css'
 
 export const viewport: Viewport = {
@@ -136,6 +135,19 @@ const organizationJsonLd = {
   },
 }
 
+// WebSite (distinto de Organization arriba): Google lo lee aparte para
+// entender el NOMBRE del sitio en sí — Organization.alternateName ayuda al
+// panel de marca, pero no todo lo que decide cómo emparejar una búsqueda con
+// "el sitio" pasa por ahí. Mismas variantes de escritura, mismo motivo: cero
+// costo de keyword stuffing porque no toca copy visible.
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Dahila Crochet',
+  alternateName: ['Dahila', 'Dalia Crochet', 'Dahlia Crochet', 'Dahilia Crochet', 'Dailhia Crochet'],
+  url: SITE_URL,
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -145,28 +157,23 @@ export default async function RootLayout({
   // (drawer, page) prices with the same batch/category logic as the storefront.
   // The short shipping line rides along so the drawer can reassure without an
   // extra round-trip.
-  const supabase = await createClient()
-  const [{ data: discountData }, { data: settingRows }, { count: productOfferCount }, { data: collectionRows }] = await Promise.all([
-    supabase.from('discounts').select('*').eq('active', true),
-    supabase.from('site_settings').select('key, value').in('key', [
-      'shipping_estimate', 'free_shipping_threshold',
-      'queue_note_enabled', 'queue_note_text',
-      'promo_bar_enabled', 'promo_bar_text', 'promo_bar_link', 'promo_bar_bg', 'promo_bar_fg',
-      'brand_short_intro', 'whatsapp_float_enabled', 'contact_whatsapp_url',
-    ]),
-    supabase
-      .from('products')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'active')
-      .eq('discount_active', true)
-      .gt('discount_percent', 0),
-    // select('*') a propósito (mismo criterio que el sitemap): filtrar
-    // unlisted/coming_soon en SQL exigiría que esas columnas existan
-    // (drops-2026-07.sql); traer las pocas filas y filtrar en JS tolera
-    // una DB sin esa migración.
-    supabase.from('collections').select('*').limit(12),
-  ])
-  const discounts = (discountData ?? []) as Discount[]
+  //
+  // EGRESS: este layout corre en TODAS las páginas del sitio, así que sus
+  // consultas se multiplicaban por cada visita a cualquier ruta (eran 4-5
+  // queries por pageview, incluso en /contacto o /info, que no tienen nada
+  // que ver con el catálogo). Ahora se sirve del MISMO catálogo cacheado que
+  // la tienda (lib/catalog.ts): las cuentas de ofertas, las colecciones de la
+  // nav y los settings salen en memoria de un payload que ya estaba cacheado,
+  // sin una sola consulta extra. El admin invalida ese caché al guardar
+  // (lib/seo-notify.ts → /api/seo/reindex → revalidateTag), así que la
+  // frescura no cambia.
+  const catalog = await getCatalog()
+  const discounts = catalog.discounts
+  const settings = catalog.settings
+  const collectionRows = catalog.collections
+  const productOfferCount = catalog.products.filter(
+    (p) => p.status === 'active' && p.discount_active && (p.discount_percent ?? 0) > 0
+  ).length
 
   // "Ofertas" solo entra a la navegación cuando hay ofertas DE VERDAD — que
   // una clienta pueda ver en /ofertas. Una marca hecha a mano con lista de
@@ -188,26 +195,22 @@ export default async function RootLayout({
     .filter((d) => d.scope === 'category' && d.category_id)
     .map((d) => d.category_id as string)
   if (!hasBatchOffer && batchCatIds.length > 0) {
-    const { count } = await supabase
-      .from('products')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'active')
-      .in('category_id', batchCatIds)
-    hasBatchOffer = (count ?? 0) > 0
+    // Antes: una consulta COUNT extra por visita. Ahora se resuelve sobre los
+    // productos que el catálogo cacheado ya trajo.
+    hasBatchOffer = catalog.products.some(
+      (p) => p.status === 'active' && p.category_id && batchCatIds.includes(p.category_id)
+    )
   }
-  const showOfertas = hasBatchOffer || (productOfferCount ?? 0) > 0
+  const showOfertas = hasBatchOffer || productOfferCount > 0
 
   // "Colecciones" en la nav — misma regla que "Ofertas": el ítem existe solo
   // cuando hay algo real para ver (publicada visible o un teaser "próximamente").
   // Un ítem permanente hacia una página vacía cobra un clic y devuelve
   // "pronto…" — tienda incompleta. Aparece solo alrededor de los drops.
-  const showColecciones = (collectionRows ?? []).some((c) => {
+  const showColecciones = collectionRows.some((c) => {
     const col = c as { published?: boolean; unlisted?: boolean; coming_soon?: boolean }
     return (col.published && !col.unlisted) || (!col.published && col.coming_soon)
   })
-  const settings = (settingRows ?? []).reduce<Record<string, string>>(
-    (acc, r) => ({ ...acc, [r.key as string]: String(r.value ?? '') }), {}
-  )
   const shippingEstimate = settings.shipping_estimate ?? ''
   // Umbral de envío gratis (UYU). Vacío o no numérico = apagado. Lo fija la
   // dueña en Configuración; carrito y drawer muestran cuánto falta para llegar.
@@ -234,6 +237,10 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         {/* Icons are inline SVG (see components/ui/icons.tsx) — no icon-font
             CDN, so nothing render-blocking from a third-party domain here. */}
         {/* Favicon kit (RealFaviconGenerator) — static files in public/, not
@@ -257,7 +264,12 @@ export default async function RootLayout({
         <a href="#contenido" className="skip-link">Saltar al contenido</a>
         <CartProvider initialDiscounts={discounts} shippingEstimate={shippingEstimate} freeShippingThreshold={freeShippingThreshold} queueNote={queueNote}>
           <FavoritesProvider>
-            <Header promo={promo} showOfertas={showOfertas} showColecciones={showColecciones} />
+            <Header
+              promo={promo}
+              showOfertas={showOfertas}
+              showColecciones={showColecciones}
+              categories={catalog.categories.map((c) => ({ slug: c.slug, label: c.name }))}
+            />
             <main id="contenido">
               {children}
             </main>

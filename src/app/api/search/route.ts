@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getCatalog } from '@/lib/catalog'
 import { getPrimaryPhoto, getFinalPrice, normalizeText as normalize } from '@/lib/types'
 import type { Product } from '@/lib/types'
 
@@ -18,6 +18,13 @@ export const revalidate = 0
  * match in JS with full accent/case normalisation. This avoids the `unaccent`
  * Postgres extension (no migration needed) and sidesteps interpolating raw user
  * input into a PostgREST filter string.
+ *
+ * EGRESS: los productos salen del catálogo cacheado (lib/catalog.ts), no de una
+ * consulta propia. Antes esta ruta bajaba hasta 200 filas con sus joins DESDE
+ * SUPABASE en cada pulsación de tecla (el header dispara una búsqueda cada
+ * 220ms mientras se escribe) — una sola clienta tipeando "cardigan celeste"
+ * podía generar media docena de descargas del catálogo casi entero. Ahora el
+ * costo por tecla es CPU en memoria y cero transferencia de la base.
  */
 export async function GET(req: NextRequest) {
   const raw = (req.nextUrl.searchParams.get('q') || '').trim()
@@ -25,17 +32,10 @@ export async function GET(req: NextRequest) {
   const q = normalize(raw)
 
   try {
-    const supabase = await createClient()
-    const { data, error } = await supabase
-      .from('products')
-      .select('id, slug, name, description, status, base_price_uyu, discount_percent, discount_active, media:product_media(url, is_primary, type), sizes:product_sizes(price_uyu)')
-      .in('status', ['active', 'soldout'])
-      .limit(200)
-
-    if (error) throw error
+    const { products } = await getCatalog()
 
     // Rank: name match beats description match; earlier position beats later.
-    const scored = (data ?? [])
+    const scored = products
       .map((p) => {
         const prod = p as unknown as Product & { description?: string | null }
         const name = normalize(prod.name || '')
