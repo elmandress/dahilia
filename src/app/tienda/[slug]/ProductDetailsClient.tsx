@@ -125,7 +125,7 @@ export function ProductDetailsClient({
       ]} />
 
       <div className="producto-split" style={{
-        display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 56, alignItems: 'start',
+        display: 'grid', gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 1fr)', gap: 56, alignItems: 'start',
       }}>
         {/* Gallery */}
         <div style={{ position: 'relative' }}>
@@ -595,7 +595,7 @@ export function ProductDetailsClient({
             )}
           </div>
           <div className="tienda-grid" style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22, rowGap: 44,
+            display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22, rowGap: 44,
           }}>
             {related.map((p) => (
               <ProductCard key={p.id} product={p} discounts={discounts} />
@@ -651,6 +651,18 @@ function CareInstructions({ text }: { text: string }) {
         }}
       >
         {text}
+        {/* La guía completa, para quien abrió este panel porque justamente
+            tiene la duda. Es post-compra útil (menos prendas arruinadas) y
+            enlace interno hacia el blog desde la página más visitada. */}
+        <div style={{ marginTop: 10 }}>
+          <Link href="/blog/como-cuidar-prendas-de-crochet" style={{
+            fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 400,
+            color: dahila.ink900, textDecoration: 'underline',
+            textDecorationColor: dahila.wine600, textUnderlineOffset: 3,
+          }}>
+            Cómo cuidar una prenda de crochet →
+          </Link>
+        </div>
       </div>
     </div>
   )

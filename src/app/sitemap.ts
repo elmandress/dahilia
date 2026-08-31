@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/public'
 import { SITE_URL } from '@/lib/env'
 import { botImageUrl } from '@/lib/media'
+import { getAllArticles } from '@/content/blog'
 
 export const revalidate = 3600
 
@@ -48,6 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/`,          changeFrequency: 'weekly',  priority: 1    },
     { url: `${SITE_URL}/tienda`,    changeFrequency: 'daily',   priority: 0.9  },
+    { url: `${SITE_URL}/blog`,      changeFrequency: 'weekly',  priority: 0.7  },
     { url: `${SITE_URL}/encargo`,   changeFrequency: 'monthly', priority: 0.6  },
     { url: `${SITE_URL}/atelier`,   changeFrequency: 'monthly', priority: 0.5  },
     { url: `${SITE_URL}/info`,      changeFrequency: 'monthly', priority: 0.5  },
@@ -55,6 +57,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/tejedoras`, changeFrequency: 'monthly', priority: 0.5  },
     { url: `${SITE_URL}/terminos`,  changeFrequency: 'yearly',  priority: 0.3  },
   ]
+
+  // Notas del blog. Viven en el repo (src/content/blog), así que a diferencia
+  // del resto del sitemap no dependen de la base: si Supabase está caído, el
+  // sitemap igual publica el blog completo. `lastModified` sale de la fecha
+  // real de publicación/actualización de cada nota — nunca de "ahora", por el
+  // mismo motivo documentado arriba para las rutas estáticas.
+  const blogRoutes: MetadataRoute.Sitemap = getAllArticles().map((a) => ({
+    url: `${SITE_URL}/blog/${a.slug}`,
+    lastModified: new Date(a.updatedAt ?? a.publishedAt),
+    changeFrequency: 'monthly' as const,
+    priority: a.role === 'pillar' ? 0.7 : 0.6,
+  }))
 
   try {
     const supabase = await createClient()
@@ -155,12 +169,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         : []),
     ]
 
-    return [...staticRoutes, ...conditionalHubs, ...categoryRoutes, ...productRoutes, ...collectionRoutes]
+    return [...staticRoutes, ...blogRoutes, ...conditionalHubs, ...categoryRoutes, ...productRoutes, ...collectionRoutes]
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e)
     if (!message.includes('Dynamic server usage')) {
       console.error('sitemap fetch failed', e)
     }
-    return staticRoutes
+    return [...staticRoutes, ...blogRoutes]
   }
 }

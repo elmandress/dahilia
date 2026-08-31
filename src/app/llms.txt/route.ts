@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/public'
 import { SITE_URL } from '@/lib/env'
 import { formatPrice, getFinalPrice } from '@/lib/types'
+import { getAllArticles } from '@/content/blog'
 import type { Product, Discount } from '@/lib/types'
 
 export const revalidate = 3600
@@ -13,6 +14,12 @@ export const revalidate = 3600
 export async function GET() {
   let productLines = ''
   let faqBlock = ''
+
+  // Las notas viven en el repo, no en la base: se listan siempre, incluso si
+  // la consulta del catálogo de más abajo falla.
+  const articleLines = getAllArticles()
+    .map((a) => `- [${a.title}](${SITE_URL}/blog/${a.slug}): ${a.description}`)
+    .join('\n')
 
   try {
     const supabase = await createClient()
@@ -75,6 +82,10 @@ export async function GET() {
 - [Envíos y cambios](${SITE_URL}/info): información de envíos, cuidados y pagos.
 - [Contacto](${SITE_URL}/contacto): WhatsApp e Instagram.
 - [Tejé con Dahila](${SITE_URL}/tejedoras): red de tejedoras — postulate para tejer con la marca.
+
+## Guías y notas
+Contenido propio sobre cuidado de prendas tejidas, cómo comprar crochet en Uruguay y encargos a medida. Es material de referencia citable: cada nota distingue explícitamente lo que es información de la marca de lo que es cuidado textil general.
+${articleLines}
 
 ## Catálogo
 ${productLines}

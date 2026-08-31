@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/public'
 import { dahila, Eyebrow } from '@/components/ui/Primitives'
 import { SITE_URL } from '@/lib/env'
@@ -83,10 +84,37 @@ export default async function InfoPage() {
                 fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.75,
                 color: dahila.ink700, margin: 0, whiteSpace: 'pre-line',
               }}>{text}</p>
+              {/* Enlace contextual a la nota que amplía este bloque. Solo donde
+                  hay una guía de verdad detrás: es la lectora que ya está
+                  preguntándose "¿y cómo la lavo?" la que mejor convierte en
+                  lectura, y de paso le da a Google una señal de tema fuerte
+                  entre /info y el blog. */}
+              {DEEPER_READ[b.key] && (
+                <p style={{ margin: '12px 0 0' }}>
+                  <Link href={DEEPER_READ[b.key].href} style={{
+                    fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 400,
+                    color: dahila.ink900, textDecoration: 'underline',
+                    textDecorationColor: dahila.wine600, textUnderlineOffset: 3,
+                  }}>
+                    {DEEPER_READ[b.key].label} →
+                  </Link>
+                </p>
+              )}
             </section>
           )
         })}
       </div>
     </div>
   )
+}
+
+const DEEPER_READ: Record<string, { href: string; label: string }> = {
+  info_care: {
+    href: '/blog/como-cuidar-prendas-de-crochet',
+    label: 'Guía completa: cómo cuidar una prenda de crochet',
+  },
+  info_custom: {
+    href: '/blog/como-encargar-prenda-a-medida',
+    label: 'Cómo funciona un encargo a medida, paso a paso',
+  },
 }

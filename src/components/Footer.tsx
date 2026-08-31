@@ -154,7 +154,7 @@ export function Footer({
       <div style={{ maxWidth: 1280, margin: '0 auto' }}>
         <div className="footer-grid" style={{
           display: 'grid',
-          gridTemplateColumns: '1.6fr 1fr 1fr 1fr',
+          gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)',
           gap: 48, alignItems: 'start',
         }}>
           <div>
@@ -175,6 +175,7 @@ export function Footer({
             title="Info"
             items={[
               { label: 'Envíos y cambios',  href: '/info' },
+              { label: 'Notas',             href: '/blog' },
               { label: 'Sobre nosotros',    href: '/atelier' },
               { label: 'Contacto',          href: '/contacto' },
               { label: 'Estado de encargo', href: '/encargo/estado' },
