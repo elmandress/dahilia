@@ -137,7 +137,7 @@ export default async function AtelierPage() {
 
       {/* Values — editable */}
       <section style={{ marginTop: 88 }}>
-        <div className="numbers" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 40 }}>
+        <div className="numbers" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 40 }}>
           {values.map((v) => (
             <div key={v.t} style={{ padding: '28px 0', borderTop: `1px solid ${dahila.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{
@@ -152,7 +152,7 @@ export default async function AtelierPage() {
 
       {/* Photo strip — CMS-editable via atelier_photo_1/2/3 in site_settings */}
       <section style={{ marginTop: 64, marginBottom: 96 }}>
-        <div className="photo-strip" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+        <div className="photo-strip" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 14 }}>
           {stripPhotos.map((src, i) => (
             <div key={i} style={{ position: 'relative', width: '100%', aspectRatio: '3/4', borderRadius: 12, overflow: 'hidden' }}>
               <Image

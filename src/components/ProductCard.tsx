@@ -61,6 +61,11 @@ export function ProductCard({
       style={{
         textDecoration: 'none', color: 'inherit',
         display: 'flex', flexDirection: 'column', gap: 10,
+        // minWidth: 0 — sin esto, una tarjeta con contenido que no puede
+        // achicarse (precio en una sola línea, badges) queda con su ancho
+        // mínimo fijado por ese contenido, y como es un ítem de grilla eso
+        // puede forzar a la columna entera a crecer más de lo disponible.
+        minWidth: 0,
       }}>
 
       <div style={{
@@ -152,14 +157,14 @@ export function ProductCard({
       </div>
 
       <div style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-        gap: 12, padding: '0 2px',
+        display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline',
+        gap: '4px 12px', padding: '0 2px',
       }}>
         <span style={{
           fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 16,
           color: dahila.ink900, lineHeight: 1.2,
           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
+          overflow: 'hidden', minWidth: 0, flex: '1 1 140px',
         }}>{product.name}</span>
         <PriceBlock list={listPrice} final={finalPrice} size="sm" align="end" />
       </div>

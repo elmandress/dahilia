@@ -16,7 +16,7 @@ export default function TiendaLoading() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
           gap: 22,
           rowGap: 44,
         }}
@@ -45,7 +45,7 @@ export default function TiendaLoading() {
           animation: sk-shimmer-anim 1.6s linear infinite;
         }
         @media (max-width: 720px) {
-          .tienda-skeleton-grid { grid-template-columns: 1fr 1fr !important; gap: 14px !important; row-gap: 32px !important; }
+          .tienda-skeleton-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 14px !important; row-gap: 32px !important; }
         }
       `}</style>
     </div>

@@ -194,7 +194,7 @@ export default function EncargoForm({ whatsappUrl, encargosCupos }: { whatsappUr
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }} noValidate>
 
         <Field label="¿Qué querés tejer?">
-          <div className="encargo-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 8 }}>
+          <div className="encargo-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8, marginTop: 8 }}>
             {['Cardigan', 'Top', 'Set', 'Otro'].map((t) => (
               <button key={t} type="button" onClick={() => setTipo(t)} aria-pressed={tipo === t} style={{
                 padding: '14px 8px', minHeight: 44, borderRadius: 8,
@@ -213,7 +213,7 @@ export default function EncargoForm({ whatsappUrl, encargosCupos }: { whatsappUr
           <TextInput placeholder="¿Cómo te llamás?" value={name} onChange={setName} />
         </Field>
 
-        <div className="encargo-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div className="encargo-grid-2" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 24 }}>
           <Field label="WhatsApp" helper="Te respondo más rápido por acá.">
             <TextInput placeholder="+598 ..." value={whatsapp} onChange={setWhatsapp} />
           </Field>

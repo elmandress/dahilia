@@ -119,8 +119,25 @@ html, body {
   /* Ningún desborde accidental puede convertirse en scroll horizontal de la
      página (rompe la composición en mobile). `clip` y no `hidden`: hidden
      crearía un contenedor de scroll y rompería position:sticky. Los carruseles
-     legítimos scrollean dentro de su propio contenedor (overflow-x: auto). */
+     legítimos scrollean dentro de su propio contenedor (overflow-x: auto).
+     overflow-y explícito en 'visible': la spec computa el eje no-'visible'
+     de un par overflow-x/y distinto forzando el otro a 'auto' si se deja
+     implícito — sin esto el body ganaría un scroll container propio sin querer. */
   overflow-x: clip;
+  overflow-y: visible;
+}
+
+/* Los navegadores mobile "infieren" un tamaño de fuente mayor al detectado
+   en columnas angostas (font boosting / text autosizing) para que el texto
+   siga siendo legible tras un zoom-to-fit — pero el resultado varía por
+   dispositivo/densidad de píxeles y es la causa más común de "en este
+   celular el texto y la grilla se ven más grandes que en este otro" con el
+   mismo código. Se desactiva esa heurística puntual; el zoom real del
+   navegador y el tamaño de fuente del sistema (accesibilidad) NO se ven
+   afectados por esta propiedad — solo el autoajuste automático de WebKit/Blink. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 h1, .h1 {
@@ -247,9 +264,17 @@ a {
 
 /* Tablet ≤ 720px */
 @media (max-width: 720px) {
-  .product-grid     { grid-template-columns: 1fr 1fr !important; gap: 14px !important; }
-  .tienda-grid      { grid-template-columns: 1fr 1fr !important; gap: 14px !important; row-gap: 32px !important; }
-  .trust-bar        { grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
+  /* minmax(0, 1fr) y no el atajo "1fr" (== minmax(auto, 1fr)): una tarjeta
+     con contenido que no puede achicarse (precio en una sola línea, badge,
+     nombre largo) fuerza su columna a crecer por encima del espacio real
+     disponible con "auto" — ahí es donde la grilla entera termina más ancha
+     que la pantalla ("se ve zoomeada", productos que no entran). Con 0 como
+     mínimo, la columna nunca crece más allá de su porción del contenedor;
+     el contenido interno se ajusta (line-clamp / wrap) en vez de romper la
+     grilla. Mismo criterio en todas las grillas de abajo. */
+  .product-grid     { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 14px !important; }
+  .tienda-grid      { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 14px !important; row-gap: 32px !important; }
+  .trust-bar        { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 16px !important; }
   .process          { grid-template-columns: 1fr !important; padding: 32px 28px !important; gap: 24px !important; }
   .split            { grid-template-columns: 1fr !important; gap: 28px !important; }
   .home-banner      { grid-template-columns: 1fr !important; }
@@ -257,13 +282,13 @@ a {
   .hero-content     { padding: 0 24px !important; }
   .producto-split   { grid-template-columns: 1fr !important; gap: 24px !important; }
   .producto-detail  { position: static !important; }
-  .footer-grid      { grid-template-columns: 1fr 1fr !important; gap: 32px !important; }
+  .footer-grid      { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 32px !important; }
   .contact-grid     { grid-template-columns: 1fr !important; }
-  .encargo-grid-4   { grid-template-columns: 1fr 1fr !important; }
+  .encargo-grid-4   { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
   .encargo-grid-2   { grid-template-columns: 1fr !important; }
   .atelier-split    { grid-template-columns: 1fr !important; gap: 28px !important; }
   .numbers          { grid-template-columns: 1fr !important; gap: 0 !important; }
-  .photo-strip      { grid-template-columns: 1fr 1fr !important; }
+  .photo-strip      { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
   /* auto-fill en vez de un conteo fijo — con 4 o 5 fotos (el caso más común)
      un grid de exactamente 3 columnas dejaba un resto de 1-2 miniaturas
      solas en la fila siguiente. auto-fill acomoda las que entren por fila
@@ -301,9 +326,12 @@ a {
 }
 
 /* Header navigation: full horizontal nav stays visible on laptops and up.
-   The hamburger only appears on tablet-portrait / phones (≤ 768px), where
-   six uppercase links + logo + icons genuinely stop fitting. Between ~820px
-   and 980px we tighten the gap and type so the nav fits without wrapping. */
+   El hamburguesa aparece a ≤ 900px (antes 768px). El umbral se subió al sumar
+   "Notas" al menú: con los 8 ítems posibles (Tienda, Colecciones, Ofertas, A
+   medida, Notas, Sobre nosotros, Tejé con Dahila, Contacto) la fila necesita
+   ~650px solo para los links, más logo e íconos. Entre 768 y 900px eso ya no
+   entraba y los links se partían en dos líneas. Entre 900 y 980px la regla de
+   abajo aprieta gap y tipografía para que entren sin envolver. */
 .nav-mobile { display: none; }
 /* Mobile menu overlay (backdrop + slide-in panel) is hidden above the mobile
    breakpoint and shown as a fixed overlay below it. Kept on its own classes so
@@ -314,7 +342,7 @@ a {
   .nav-desktop { gap: 18px !important; }
   .nav-desktop a { font-size: 11px !important; letter-spacing: 0.04em !important; }
 }
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .nav-desktop { display: none !important; }
   .nav-mobile  { display: inline-flex !important; }
   .mega-menu   { display: none !important; }
@@ -491,6 +519,64 @@ a {
 }
 
 /* ============================================================
+   Riel de categorías de /tienda — scrollea siempre que su contenido no
+   entre en el ancho disponible, en CUALQUIER tamaño de pantalla/zoom/fuente.
+   Antes esto solo pasaba a ≤640px (ver el bloque mobile de abajo) y el resto
+   del tiempo el riel simplemente envolvía (flex-wrap) — con más categorías
+   de las que había cuando se fijó ese número, o con la fuente del sistema
+   aumentada en un teléfono grande (ej. una pantalla "ancha" que igual mide
+   menos de 640px lógicos), el contenido podía desbordar SIN el modo scroll,
+   dejando categorías inalcanzables. TiendaClient.tsx mide el desborde real
+   (scrollWidth vs clientWidth, con ResizeObserver) y listo — nunca depende
+   de un breakpoint fijo.
+   ============================================================ */
+.tienda-toolbar-cats-wrap { min-width: 0; }
+.tienda-toolbar-cats {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  /* min-width: 0 explícito — sin esto, en algunos motores el contenedor con
+     scroll puede negarse a achicarse por debajo del ancho de su contenido
+     dentro de la fila flex de .tienda-toolbar (mismo mecanismo de fondo que
+     el fix de la grilla de productos), lo que empujaría el resto de la
+     toolbar (buscador/orden/filtro) fuera de la fila en vez de dejar que
+     el riel de categorías sea el que scrollea. */
+  min-width: 0;
+}
+.tienda-toolbar-cats::-webkit-scrollbar { display: none; }
+.tienda-toolbar-cats button {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* Fades "hay más contenido" — una capa decorativa APARTE del elemento con
+   scroll (pointer-events: none), no un mask-image puesto directo sobre el
+   riel. Antes el fade era un mask-image sobre el propio `.tienda-toolbar-cats`
+   cuyo ancho (40px) se restaba a mano del padding derecho extra (44px) para
+   que "cayera sobre aire" al llegar al final — un margen de 4px que depende
+   de que el navegador mida el texto de cada chip exactamente igual. En un
+   dispositivo con métricas de fuente distintas (confirmado: Samsung S23 FE)
+   ese margen se consumía y el mask llegaba a comerse el último chip ("Sets"),
+   sin ninguna forma de scrollear más allá porque ya se había llegado al final
+   real — el chip estaba ahí, pero visualmente borrado por el propio fade.
+   Con el fade en una capa separada que no comparte caja con el contenido,
+   ese acoplamiento fue eliminado: React decide su visibilidad (catsOverflow +
+   atStart/atEnd en TiendaClient.tsx) mirando la posición real de scroll, así
+   que desaparece solo al llegar al final de verdad, sin tapar nada. Un
+   mask-image directo sobre un contenedor con overflow-x además puede
+   interferir con el hit-testing del scroll táctil en algunos motores mobile
+   — sacarlo de encima del elemento scrolleable también evita ese riesgo. */
+.tienda-toolbar-cats-wrap { position: relative; }
+.tienda-toolbar-cats-fade {
+  position: absolute; top: 0; bottom: 0; width: 36px;
+  pointer-events: none; opacity: 0; transition: opacity 160ms ease; z-index: 1;
+}
+.tienda-toolbar-cats-fade.is-visible { opacity: 1; }
+.tienda-toolbar-cats-fade--right { right: 0; background: linear-gradient(to right, rgba(255,255,255,0), var(--bg) 65%); }
+.tienda-toolbar-cats-fade--left  { left: 0;  background: linear-gradient(to left,  rgba(255,255,255,0), var(--bg) 65%); }
+
+/* ============================================================
    Tienda toolbar — 2-row layout on mobile so it never squishes
    ============================================================ */
 @media (max-width: 640px) {
@@ -544,32 +630,16 @@ a {
     gap: 8px !important;
     margin-bottom: 12px !important;
   }
-  /* Category chips: carrusel full-bleed con snap (patrón Zara/COS/App Store).
+  /* Category chips: carrusel full-bleed en mobile (patrón Zara/COS/App Store).
      La fila corre de borde a borde de la PANTALLA (márgenes negativos que
      compensan el padding de .tienda-page), así el chip cortado queda en el
      borde físico — señal universal de "hay más" — y nunca a mitad del área
-     de contenido, donde se lee como desborde roto. El fade del borde derecho
-     (mask) refuerza la pista; el padding extra derecho garantiza que, al
-     llegar al final, el fade caiga sobre aire y no sobre el último chip. */
-  .tienda-toolbar-cats {
-    flex-wrap: nowrap !important;
-    gap: 10px !important;
-    overflow-x: auto !important;
-    margin-left: -24px;
-    margin-right: -24px;
-    padding: 2px 44px 8px 24px;
-    scroll-padding-left: 24px;
-    scroll-snap-type: x proximity;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 40px), transparent 100%);
-    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 40px), transparent 100%);
-  }
-  .tienda-toolbar-cats::-webkit-scrollbar { display: none; }
-  .tienda-toolbar-cats > button {
-    scroll-snap-align: start;
-    flex-shrink: 0;
-  }
+     de contenido, donde se lee como desborde roto. Esto es puramente visual;
+     el propio scroll (overflow-x, snap, fades) ya es incondicional arriba. */
+  .tienda-toolbar-cats-wrap { margin-left: -24px; margin-right: -24px; }
+  /* gap vive en el div interno (JSX, width: max-content) — este contenedor
+     ya no es flex (ahora solo hace scroll), un "gap" acá no tendría efecto. */
+  .tienda-toolbar-cats { padding: 2px 24px 8px 24px; scroll-padding-left: 24px; }
   /* Actions row: search takes remaining space */
   .tienda-toolbar-actions {
     flex-wrap: nowrap !important;
@@ -587,6 +657,26 @@ a {
   .tienda-recent { margin-bottom: 20px !important; }
   .tienda-recent-item { width: 72px !important; }
   .tienda-recent-thumb { width: 72px !important; height: 88px !important; }
+}
+
+/* ============================================================
+   Blog — listado y notas.
+   Las grillas usan minmax(0, 1fr) por el mismo motivo que las de producto
+   (ver la nota del bloque de ≤720px): con "1fr" a secas, un título largo sin
+   espacios podría forzar la columna a crecer y desbordar la pantalla.
+   ============================================================ */
+@media (max-width: 900px) {
+  .blog-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+  /* La nota destacada pasa a una columna: en tablet, una imagen de 4/3 al lado
+     de un título de 32px deja las dos partes demasiado angostas. */
+  .blog-lead { grid-template-columns: minmax(0, 1fr) !important; }
+  .blog-lead > div:last-child { padding: 26px 26px 30px !important; }
+  .blog-lead-img { min-height: 0 !important; aspect-ratio: 16 / 9 !important; }
+}
+@media (max-width: 640px) {
+  .blog-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 32px !important; }
+  .blog-clusters { grid-template-columns: minmax(0, 1fr) !important; gap: 28px !important; }
+  .blog-page, .blog-article { padding-top: 24px !important; }
 }
 
 /* ============================================================

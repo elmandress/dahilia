@@ -67,7 +67,7 @@ export default async function ColeccionesPage() {
           Pronto vas a ver acá las colecciones. Mientras tanto, mirá la <Link href="/tienda" style={{ color: dahila.wine600 }}>tienda</Link>.
         </p>
       ) : (
-        <div className="tienda-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, rowGap: 40 }}>
+        <div className="tienda-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 24, rowGap: 40 }}>
           {/* Próximamente — solo la portada, sin link: expectativa sin filtrar contenido */}
           {upcoming.map((c) => (
             <div key={c.id} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

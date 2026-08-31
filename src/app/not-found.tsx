@@ -65,7 +65,7 @@ export default async function NotFound() {
             Mientras tanto, mirá esto
           </h2>
           <div className="tienda-grid" style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22, rowGap: 44,
+            display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22, rowGap: 44,
           }}>
             {products.map((p) => (
               <ProductCard key={p.id} product={p} discounts={discounts} />

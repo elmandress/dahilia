@@ -164,7 +164,7 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
           Todavía no hay piezas en esta colección. <Link href="/tienda" style={{ color: dahila.wine600 }}>Ver la tienda →</Link>
         </p>
       ) : (
-        <div className="tienda-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22, rowGap: 44 }}>
+        <div className="tienda-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22, rowGap: 44 }}>
           {products.map((p) => (
             <ProductCard key={p.id} product={p} discounts={discounts} />
           ))}

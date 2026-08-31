@@ -142,19 +142,65 @@ export function TiendaClient({
 }) {
   const router = useRouter()
 
-  // Carrusel de categorías (mobile): al aterrizar en /tienda/bolsos desde el
+  // Carrusel de categorías: al aterrizar en /tienda/bolsos desde el
   // mega-menú, el chip activo puede quedar fuera de pantalla a la derecha —
   // se trae a la vista una sola vez al montar, sin animación (es estado
   // inicial, no un cambio que haya que dramatizar).
   const catsRailRef = useRef<HTMLDivElement>(null)
+  // Envoltorio interno de los chips, medido aparte (ver abajo): su ancho
+  // natural cambia con el tamaño de fuente aunque el riel (que solo sigue el
+  // ancho del contenedor padre) no cambie — sin esto, un aumento de fuente sin
+  // resize de ventana no dispara una nueva medición del desborde.
+  const catsInnerRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const rail = catsRailRef.current
     if (!rail || rail.scrollWidth <= rail.clientWidth) return
     const active = rail.querySelector<HTMLElement>('[aria-pressed="true"]')
     if (!active) return
-    const overflowRight = active.offsetLeft + active.offsetWidth - rail.clientWidth
-    if (overflowRight > 0) rail.scrollLeft = overflowRight + 40
+    // Medido con getBoundingClientRect y no con offsetLeft: offsetLeft es
+    // relativo al offsetParent (que cambia según qué ancestro esté
+    // posicionado — el wrapper de los fades ahora lo es), así que comparar
+    // ese número contra el ancho del riel daba una cuenta frágil. Los rects
+    // son coordenadas de viewport de los dos elementos: la resta es exacta
+    // sin importar la estructura.
+    const overflowRight = active.getBoundingClientRect().right - rail.getBoundingClientRect().right
+    if (overflowRight > 0) rail.scrollLeft += overflowRight + 24
   }, []) // solo al montar: después la clienta controla el scroll
+
+  // Si las categorías no entran en una fila, el riel scrollea — pero "no
+  // entran" NO puede depender de un breakpoint fijo (max-width: 640px): un
+  // teléfono grande con la fuente del sistema aumentada, un desktop con zoom
+  // alto, o simplemente más categorías que las que había cuando se eligió ese
+  // número, pueden desbordar por fuera de ese umbral igual. Se mide el
+  // desborde real (scrollWidth vs clientWidth) y se re-mide cuando cambia el
+  // ancho del riel O el ancho natural de su contenido (ResizeObserver en
+  // ambos cubre resize de ventana, zoom, orientación y fuente del sistema
+  // aumentada) o la lista de categorías.
+  const [catsOverflow, setCatsOverflow] = useState(false)
+  const [catsAtStart, setCatsAtStart] = useState(true)
+  const [catsAtEnd, setCatsAtEnd] = useState(true)
+  useEffect(() => {
+    const rail = catsRailRef.current
+    const inner = catsInnerRef.current
+    if (!rail || !inner) return
+    const measure = () => {
+      const overflow = rail.scrollWidth > rail.clientWidth + 1
+      setCatsOverflow(overflow)
+      setCatsAtStart(rail.scrollLeft <= 1)
+      setCatsAtEnd(rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 1)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(rail)
+    ro.observe(inner)
+    rail.addEventListener('scroll', measure, { passive: true })
+    window.addEventListener('resize', measure)
+    return () => {
+      ro.disconnect()
+      rail.removeEventListener('scroll', measure)
+      window.removeEventListener('resize', measure)
+    }
+  }, [categories])
 
   const [filter, setFilter] = useState(initialFilter || 'todo')
   const [search, setSearch] = useState(initialSearch || '')
@@ -439,14 +485,30 @@ export function TiendaClient({
         display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'center',
         justifyContent: 'space-between', marginBottom: 18,
       }}>
-        {/* Row 1: category chips — full-bleed snap carousel on mobile */}
-        <div ref={catsRailRef} className="tienda-toolbar-cats" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <Chip on={filter === 'todo'} onClick={() => setFilter('todo')}>Todo</Chip>
-          {categories.map((c) => (
-            <Chip key={c.id} on={filter === c.slug} onClick={() => setFilter(c.slug)}>
-              {c.name}
-            </Chip>
-          ))}
+        {/* Row 1: category chips — scrolla siempre que no entren (ver el
+            efecto de arriba: la decisión es por medición real, no por
+            breakpoint), full-bleed en mobile. Los fades son una capa
+            puramente visual (pointer-events: none) que nunca toca el
+            elemento con scroll — así no puede interferir con el touch
+            scroll ni comerse el último chip (ver nota en globals.css). */}
+        <div className="tienda-toolbar-cats-wrap">
+          <div ref={catsRailRef} className="tienda-toolbar-cats">
+            {/* width: max-content — sin esto, un div de bloque con
+                display:flex ocupa el 100% del contenedor con scroll (su
+                comportamiento por defecto), los chips se achican para entrar
+                y nunca hay nada que desbordar: el riel jamás detectaría que
+                hace falta scroll. Con max-content mide su contenido real. */}
+            <div ref={catsInnerRef} style={{ display: 'flex', gap: 10, width: 'max-content' }}>
+              <Chip on={filter === 'todo'} onClick={() => setFilter('todo')}>Todo</Chip>
+              {categories.map((c) => (
+                <Chip key={c.id} on={filter === c.slug} onClick={() => setFilter(c.slug)}>
+                  {c.name}
+                </Chip>
+              ))}
+            </div>
+          </div>
+          <div aria-hidden className={`tienda-toolbar-cats-fade tienda-toolbar-cats-fade--left ${catsOverflow && !catsAtStart ? 'is-visible' : ''}`} />
+          <div aria-hidden className={`tienda-toolbar-cats-fade tienda-toolbar-cats-fade--right ${catsOverflow && !catsAtEnd ? 'is-visible' : ''}`} />
         </div>
 
         {/* Row 2: search + sort + filter toggle */}
@@ -720,7 +782,7 @@ export function TiendaClient({
         </div>
       ) : (
         <div className="tienda-grid" style={{
-          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22, rowGap: 44,
+          display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22, rowGap: 44,
         }}>
           {filtered.map((p) => (
             <ProductCard

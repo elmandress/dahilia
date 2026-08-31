@@ -82,7 +82,7 @@ export function FavoritosClient({ whatsappUrl }: { whatsappUrl: string }) {
       </div>
 
       <div className="tienda-grid" style={{
-        display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22, rowGap: 44,
+        display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22, rowGap: 44,
       }}>
         {items.map((it) => (
           <ProductCard key={it.id} product={it.product} onQuickView={() => router.push(`/tienda/${it.product.slug}`)} />

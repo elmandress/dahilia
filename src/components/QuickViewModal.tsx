@@ -94,7 +94,7 @@ export function QuickViewModal({
         style={{
           background: '#fff', borderRadius: 16, overflow: 'hidden',
           width: '100%', maxWidth: 760, maxHeight: '90vh',
-          display: 'grid', gridTemplateColumns: '1fr 1fr',
+          display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
           boxShadow: dahila.shadowMd,
           position: 'relative',
         }}

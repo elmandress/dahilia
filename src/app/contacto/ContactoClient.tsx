@@ -53,7 +53,7 @@ export default function ContactoClient({ settings }: Props) {
       <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, color: dahila.ink700, margin: '0 auto 48px', maxWidth: 540 }}>
         Te respondo por DM de Instagram o WhatsApp. Lo que te quede más cómodo.
       </p>
-      <div className="contact-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14, marginBottom: 32 }}>
+      <div className="contact-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 14, marginBottom: 32 }}>
         {CHANNELS.map((c) => (
           <a
             key={c.label}

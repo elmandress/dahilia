@@ -121,7 +121,7 @@ export default async function IgLandingPage() {
           }}>
             Lo nuevo
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
             {newest.map((p) => {
               const photo = getPrimaryPhoto(p)
               const price = getFinalPrice(p, undefined, discounts)

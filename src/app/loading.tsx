@@ -25,7 +25,7 @@ export default function HomeLoading() {
         </div>
         <div
           className="home-skeleton-grid"
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22 }}
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22 }}
         >
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -54,7 +54,7 @@ export default function HomeLoading() {
           animation: sk-shimmer-anim 1.6s linear infinite;
         }
         @media (max-width: 720px) {
-          .home-skeleton-grid { grid-template-columns: 1fr 1fr !important; gap: 14px !important; }
+          .home-skeleton-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 14px !important; }
         }
       `}</style>
     </div>

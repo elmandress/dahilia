@@ -219,7 +219,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
       <section aria-label="Por qué Dahila" style={{ borderBottom: `1px solid ${dahila.border}` }}>
         <div className="trust-bar" style={{
           maxWidth: 1280, margin: '0 auto', padding: '20px 24px',
-          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 18,
+          display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 18,
         }}>
           {[
             ['hand-heart', 'Hecho a mano', 'Tejido pieza por pieza'],
@@ -257,7 +257,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
         </div>
 
         <div className="product-grid" style={{
-          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22,
+          display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22,
         }}>
           {featured.length > 0
             ? featured.map((product) => <ProductCard key={product.id} product={product} discounts={discounts} />)
@@ -292,7 +292,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
           </div>
 
           <div className="product-grid" style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22,
+            display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22,
           }}>
             {readyToShip.map((product) => <ProductCard key={product.id} product={product} discounts={discounts} />)}
           </div>
@@ -316,7 +316,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
           background: dahila.cream100,
           borderRadius: 16,
           padding: '48px 56px',
-          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 40,
+          display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 40,
         }}>
           {processItems.map((s, i) => (
             <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -337,7 +337,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
       {showBanner && (
         <section className="home-section" style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
           <div className="home-banner" style={{
-            display: 'grid', gridTemplateColumns: banner.image ? '1.1fr 1fr' : '1fr',
+            display: 'grid', gridTemplateColumns: banner.image ? 'minmax(0, 1.1fr) minmax(0, 1fr)' : '1fr',
             background: dahila.cream100, borderRadius: 20, overflow: 'hidden',
             alignItems: 'stretch',
           }}>
@@ -387,7 +387,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
             paddingBottom: 12, borderBottom: `1px solid ${dahila.border}`,
           }}>Accesorios</h2>
           <div className="product-grid" style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22,
+            display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22,
           }}>
             {accesorios.map((product) => (
               <ProductCard key={product.id} product={product} />
@@ -399,7 +399,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
       {/* SPLIT — About */}
       <section className="home-section" style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
         <div className="split" style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 56, alignItems: 'center',
+          display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 56, alignItems: 'center',
         }}>
           <div style={{ position: 'relative', width: '100%', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden' }}>
             <Image

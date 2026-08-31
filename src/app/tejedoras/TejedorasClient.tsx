@@ -203,7 +203,7 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
       }}>Postulate</h2>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }} noValidate>
-        <div className="encargo-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div className="encargo-grid-2" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 24 }}>
           <Field label="Tu nombre">
             <TextInput placeholder="¿Cómo te llamás?" value={name} onChange={setName} />
           </Field>
@@ -212,7 +212,7 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
           </Field>
         </div>
 
-        <div className="encargo-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div className="encargo-grid-2" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 24 }}>
           <Field label="WhatsApp" helper="Te respondemos más rápido por acá.">
             <TextInput placeholder="+598 ..." value={whatsapp} onChange={setWhatsapp} />
           </Field>
@@ -225,7 +225,7 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
         </p>
 
         <Field label="¿Hace cuánto tejés?">
-          <div className="encargo-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 8 }}>
+          <div className="encargo-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8, marginTop: 8 }}>
             {EXPERIENCIAS.map((e2) => (
               <button key={e2.value} type="button" onClick={() => setExperience(e2.value)}
                 aria-pressed={experience === e2.value} style={optionBtn(experience === e2.value)}>
@@ -247,7 +247,7 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
         </Field>
 
         <Field label="¿Cuántas horas por semana tenés?">
-          <div className="encargo-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 8 }}>
+          <div className="encargo-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8, marginTop: 8 }}>
             {DISPONIBILIDADES.map((d) => (
               <button key={d} type="button" onClick={() => setAvailability(d)}
                 aria-pressed={availability === d} style={optionBtn(availability === d)}>
