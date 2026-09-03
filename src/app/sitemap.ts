@@ -50,7 +50,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/`,          changeFrequency: 'weekly',  priority: 1    },
     { url: `${SITE_URL}/tienda`,    changeFrequency: 'daily',   priority: 0.9  },
     { url: `${SITE_URL}/blog`,      changeFrequency: 'weekly',  priority: 0.7  },
-    { url: `${SITE_URL}/encargo`,   changeFrequency: 'monthly', priority: 0.6  },
+    // 0.8: /encargo es la página que más retiene (29s por usuario, el doble que
+    // una ficha) y la que mejor rankea en las consultas de intención de compra
+    // ("tejidos a medida", "dónde mandar hacer"). Estaba en 0.6, por debajo de
+    // páginas institucionales que convierten mucho menos.
+    { url: `${SITE_URL}/encargo`,   changeFrequency: 'monthly', priority: 0.8  },
     { url: `${SITE_URL}/atelier`,   changeFrequency: 'monthly', priority: 0.5  },
     { url: `${SITE_URL}/info`,      changeFrequency: 'monthly', priority: 0.5  },
     { url: `${SITE_URL}/contacto`,  changeFrequency: 'monthly', priority: 0.6  },

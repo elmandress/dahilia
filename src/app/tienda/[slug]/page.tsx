@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/public'
-import { notFound, unstable_rethrow } from 'next/navigation'
+import { notFound, permanentRedirect, unstable_rethrow } from 'next/navigation'
 import type { Metadata } from 'next'
 import type { Product, Category, Discount } from '@/lib/types'
 import { getPrimaryPhoto, getFinalPrice, resolveDiscountPercent } from '@/lib/types'
@@ -13,6 +13,7 @@ import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
 import { botImageUrl } from '@/lib/media'
 import { COMPLEMENT_PREFS } from '@/lib/complements'
+import { slugRedirectTarget } from '@/lib/slug'
 
 export const revalidate = 3600
 
@@ -104,7 +105,14 @@ export async function generateMetadata({
     // CTR: keyword exacto ("cardigans de crochet") + beneficio concreto en la
     // descripción — no una definición de la página. Backlinko (4M resultados):
     // el keyword exacto en el title rinde +24% de clicks que una variante.
-    const title = `${cat.name} de crochet, tejidos a mano`
+    // "en Uruguay" no es relleno: es el modificador que decide dónde podemos
+    // rankear. En Search Console, los términos genéricos caen en posición
+    // 50-70 ("cardigan" 69, "cardigans de mujer" 58, "chaleco" 53) — ahí
+    // competimos contra fast fashion global y no hay nada que hacer. Los
+    // mismos términos con intención local o artesanal están en el top 10
+    // ("cardigan tejido a mano" 7, "crochet uruguay" 16, "tienda crochet" 6).
+    // El title apunta a la pelea que se puede ganar.
+    const title = `${cat.name} de crochet tejidos a mano en Uruguay`
     const desc =
       cat.description ||
       `${cat.name} hechos a mano en Montevideo, en tu talle y tus colores. Precios claros, envío a todo Uruguay — y si querés algo distinto, se teje a medida para vos.`
@@ -536,7 +544,21 @@ export default async function TiendaSlugPage({
   const resolved = await resolveSlug(slug)
   // DB caída y sin snapshot → cartel de mantenimiento, no un 404.
   if (resolved === 'down') return <MaintenanceScreen />
-  if (!resolved) notFound()
+
+  // Slug con basura pegada (emoji/espacio/punto de un link copiado desde
+  // Instagram: `/tienda/spring-cardigan 🥰`). Antes era un 404 que perdía la
+  // visita. Solo redirigimos si el slug limpio EXISTE — si no, un 404
+  // legítimo terminaría redirigiendo a otro 404.
+  if (!resolved) {
+    const target = slugRedirectTarget(slug)
+    if (target) {
+      const cleanResolved = await resolveSlug(target)
+      if (cleanResolved && cleanResolved !== 'down') {
+        permanentRedirect(`/tienda/${target}`)
+      }
+    }
+    notFound()
+  }
 
   if (resolved.type === 'category') {
     return <CategoryPage slug={slug} category={resolved.category} />

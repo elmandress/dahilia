@@ -323,6 +323,22 @@ export function TiendaClient({
     return [...bestOrder.entries()].sort((a, b) => a[1] - b[1]).map(([size]) => size)
   }, [initialProducts])
 
+  // Sección "En stock" — las piezas ya tejidas, sin la espera del a-medida.
+  // Misma fuente que el filtro y que el bloque de la home (isReadyToShip →
+  // lead_time_weeks_min = 0, que Anush marca desde el editor de producto), así
+  // que no hay una segunda lista que mantener ni columna nueva en la base.
+  //
+  // Se acota a la categoría de la página: en /tienda/cardigans muestra los
+  // cardigans en stock, no bolsos. Ahí la sección SIRVE a la intención de la
+  // clienta en vez de contradecirla — y las categorías son ~1 de cada 5
+  // impresiones que el sitio recibe en Google.
+  const readyToShip = useMemo(
+    () => initialProducts.filter(
+      (p) => isReadyToShip(p) && (filter === 'todo' || p.category?.slug === filter)
+    ),
+    [initialProducts, filter]
+  )
+
   const filtered = useMemo(() => {
     const result = initialProducts.filter((p) => matchesFilters(p, {
       filter, search, colorIds: appliedColorIds, sizes: appliedSizes,
@@ -376,6 +392,18 @@ export function TiendaClient({
   // búsqueda (en mobile el input está oculto: sin esto, un ?q= del buscador
   // del header dejaría la grilla filtrada sin ninguna forma visible de volver).
   const hasActiveCriteria = activeFilterCount > 0 || search.trim().length > 0
+
+  // Distinto de hasActiveCriteria: la categoría NO cuenta como filtro de la
+  // clienta (en /tienda/cardigans es el contexto de la página, no algo que
+  // ella tocó). Solo esto esconde la sección "En stock" — mientras esté
+  // simplemente mirando el catálogo o una categoría, la sección ayuda.
+  const hasUserFilters =
+    appliedColorIds.length + appliedSizes.length > 0 ||
+    (appliedMaxPrice !== null && appliedMaxPrice < priceBounds.max) ||
+    appliedOnlyDiscount ||
+    appliedHideOutOfStock ||
+    appliedOnlyReadyToShip ||
+    search.trim().length > 0
 
   const clearAll = () => {
     setFilter('todo')
@@ -706,7 +734,7 @@ export function TiendaClient({
                   onChange={(e) => setReadyToShipOnly(e.target.checked)}
                   style={{ accentColor: dahila.ink900, width: 18, height: 18 }}
                 />
-                Disponible ahora — sin espera
+                En stock — sin espera
               </label>
             </div>
           </div>
@@ -755,6 +783,83 @@ export function TiendaClient({
         )}
       </div>
 
+      {/* ── Sección "En stock" ────────────────────────────────────────────
+          Las piezas que ya están tejidas y salen sin espera. Va arriba de la
+          grilla y SOLO con el catálogo completo a la vista (sin filtros ni
+          búsqueda): si alguien ya está filtrando, esta sección competiría con
+          su intención en vez de ayudarla.
+
+          Por qué existe como sección y no solo como filtro: un filtro hay que
+          descubrirlo y activarlo — la mayoría nunca abre el panel. En un
+          catálogo hecho a mano, donde casi todo tiene semanas de espera, lo
+          que ya está listo es justo lo que más rápido convierte, y la
+          investigación de entrega es contundente: la falta de una fecha
+          concreta es de los motivos más citados de abandono. Acá la promesa
+          es concreta y honesta — sale ya. */}
+      {!hasUserFilters && readyToShip.length > 0 && readyToShip.length < filtered.length && (
+        <section
+          aria-labelledby="en-stock-titulo"
+          style={{
+            marginBottom: 48, paddingBottom: 40,
+            borderBottom: `1px solid ${dahila.border}`,
+          }}
+        >
+          <div style={{
+            display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+            gap: 16, flexWrap: 'wrap', marginBottom: 18,
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <Eyebrow>En stock</Eyebrow>
+              <h2 id="en-stock-titulo" style={{
+                fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 23,
+                color: dahila.ink900, margin: 0,
+              }}>
+                Listo para llevar, sin espera
+              </h2>
+              <p style={{
+                fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300,
+                color: dahila.ink700, margin: 0, lineHeight: 1.6,
+              }}>
+                Estas piezas ya están tejidas — se despachan apenas confirmás.
+              </p>
+            </div>
+            {readyToShip.length > 4 && (
+              <button
+                onClick={() => {
+                  track('en_stock_ver_todas', { count: readyToShip.length })
+                  // Aplicado directo, no vía setReadyToShipOnly: ese helper
+                  // deja el filtro en borrador en mobile (espera el botón "Ver
+                  // resultados" del panel). Acá el click ES la confirmación, y
+                  // en mobile cae la mayor parte del tráfico de Instagram.
+                  setOnlyReadyToShipFilter(true)
+                  setAppliedOnlyReadyToShip(true)
+                }}
+                style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600,
+                  textDecoration: 'underline', padding: 0,
+                }}
+              >
+                Ver las {readyToShip.length} →
+              </button>
+            )}
+          </div>
+
+          <div className="tienda-grid" style={{
+            display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22, rowGap: 44,
+          }}>
+            {readyToShip.slice(0, 4).map((p) => (
+              <ProductCard
+                key={p.id}
+                product={p}
+                discounts={discounts}
+                onQuickView={() => { track('quickview_open', { product: p.slug, source: 'en_stock' }); setQuickView(p) }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       <RecentlyViewedStrip />
 
       {filtered.length === 0 ? (
@@ -775,7 +880,11 @@ export function TiendaClient({
               : 'Probá ampliando el precio o sacando algún filtro.'}
           </p>
           {initialProducts.length === 0 ? (
-            <Button href="/encargo" style={{ marginTop: 8 }}>Pedir a medida</Button>
+            <Button
+              href="/encargo"
+              style={{ marginTop: 8 }}
+              onClick={() => track('encargo_click', { source: 'tienda_vacia' })}
+            >Pedir a medida</Button>
           ) : (
             <Button variant="secondary" onClick={clearAll} style={{ marginTop: 8 }}>Limpiar filtros</Button>
           )}
@@ -793,6 +902,40 @@ export function TiendaClient({
             />
           ))}
         </div>
+      )}
+
+      {/* Puente al encargo — al pie del catálogo, para quien lo recorrió y no
+          encontró lo suyo. /encargo es la página que más retiene (29s por
+          usuario vs 12-17s de una ficha) y donde mejor rankeamos en Google
+          ("tejidos a medida", "dónde mandar hacer"), pero casi nadie la
+          encontraba desde acá: hasta ahora el único link a /encargo en la
+          tienda aparecía cuando los filtros no daban resultados. */}
+      {filtered.length > 0 && (
+        <section style={{
+          marginTop: 56, padding: '36px 28px', background: dahila.cream100,
+          borderRadius: 16, textAlign: 'center',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+        }}>
+          <Eyebrow>A medida</Eyebrow>
+          <h2 style={{
+            fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24,
+            color: dahila.ink900, margin: 0,
+          }}>
+            ¿No encontraste lo que buscabas?
+          </h2>
+          <p style={{
+            fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300,
+            color: dahila.ink700, margin: 0, maxWidth: 460, lineHeight: 1.7,
+          }}>
+            Contame qué tenés en mente y lo tejemos para vos — en tu talle, en tus
+            colores. Te paso un presupuesto sin compromiso.
+          </p>
+          <Button
+            href="/encargo"
+            style={{ marginTop: 8 }}
+            onClick={() => track('encargo_click', { source: 'tienda_pie' })}
+          >Pedir a medida</Button>
+        </section>
       )}
 
       {quickView && (

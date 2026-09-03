@@ -745,6 +745,27 @@ export default function NuevoProductoPage() {
           <div className="admin-card">
             <h3 style={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 500 }}>Detalles</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {/* Mismo atajo que en el editor: es el MISMO dato que "Tiempo
+                  mín = 0", con el nombre de la sección de la tienda. */}
+              <label style={{
+                display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer',
+                background: leadTimeMin === '0' ? 'rgba(143,59,83,0.06)' : '#FAF7F5',
+                border: `1px solid ${leadTimeMin === '0' ? 'rgba(143,59,83,0.3)' : '#E8E0DC'}`,
+                borderRadius: 10, padding: '12px 14px',
+              }}>
+                <input
+                  type="checkbox"
+                  checked={leadTimeMin === '0'}
+                  onChange={(e) => setLeadTimeMin(e.target.checked ? '0' : '2')}
+                  style={{ accentColor: '#8F3B53', width: 18, height: 18, marginTop: 1 }}
+                />
+                <span>
+                  <strong style={{ fontWeight: 500 }}>En stock — se envía sin espera</strong>
+                  <span style={{ display: 'block', fontSize: '0.82rem', color: '#8C8285', marginTop: 2 }}>
+                    Ya está tejida. Aparece en la sección <em>En stock</em> de la tienda.
+                  </span>
+                </span>
+              </label>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <div className="admin-field" style={{ flex: 1 }}>
                   <label>Tiempo mín (sem.)</label>
@@ -754,7 +775,7 @@ export default function NuevoProductoPage() {
                     value={leadTimeMin}
                     onChange={(e) => setLeadTimeMin(e.target.value)}
                   />
-                  <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#8C8285' }}>0 = ya está listo, sale en &quot;Disponible ahora&quot;.</p>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#8C8285' }}>0 = lo mismo que marcar &quot;En stock&quot; arriba.</p>
                 </div>
                 <div className="admin-field" style={{ flex: 1 }}>
                   <label>Tiempo máx (sem.)</label>

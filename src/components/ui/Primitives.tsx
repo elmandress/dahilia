@@ -91,6 +91,9 @@ export function Button({ variant = 'primary', size = 'md', children, onClick, fu
     return (
       <Link
         href={href}
+        // onClick también acá: la rama <Link> lo descartaba, así que un
+        // `<Button href>` con tracking navegaba pero no registraba el evento.
+        onClick={onClick as unknown as React.MouseEventHandler<HTMLAnchorElement>}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         style={{ ...mergedStyle, textDecoration: 'none' }}

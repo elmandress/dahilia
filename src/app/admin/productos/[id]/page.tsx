@@ -1048,7 +1048,32 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           {/* Details (Lead times / Care) */}
           <div id="prod-sec-specs" className="admin-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', scrollMarginTop: 16 }}>
             <h3 style={{ margin: 0, fontWeight: 400, fontFamily: 'var(--font-display)' }}>Especificaciones</h3>
-            
+
+            {/* Atajo para la sección "En stock" de la tienda. Es el MISMO dato
+                que "Tiempo mínimo = 0" (no hay columna nueva): el campo de
+                abajo sigue siendo la fuente de verdad y los dos se mantienen
+                sincronizados. Existe porque "poné 0 en semanas" no se
+                encuentra — un check con el nombre de la sección, sí. */}
+            <label style={{
+              display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer',
+              background: leadTimeMin === '0' ? 'rgba(143,59,83,0.06)' : '#FAF7F5',
+              border: `1px solid ${leadTimeMin === '0' ? 'rgba(143,59,83,0.3)' : '#E8E0DC'}`,
+              borderRadius: 10, padding: '12px 14px',
+            }}>
+              <input
+                type="checkbox"
+                checked={leadTimeMin === '0'}
+                onChange={(e) => setLeadTimeMin(e.target.checked ? '0' : '2')}
+                style={{ accentColor: '#8F3B53', width: 18, height: 18, marginTop: 1 }}
+              />
+              <span>
+                <strong style={{ fontWeight: 500 }}>En stock — se envía sin espera</strong>
+                <span style={{ display: 'block', fontSize: '0.82rem', color: '#8C8285', marginTop: 2 }}>
+                  Esta pieza ya está tejida. Aparece en la sección <em>En stock</em>, arriba de todo en la tienda.
+                </span>
+              </span>
+            </label>
+
             <div className="admin-form-grid">
               <div className="admin-field">
                 <label>Tiempo mínimo (semanas)</label>
@@ -1058,7 +1083,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                   value={leadTimeMin}
                   onChange={(e) => setLeadTimeMin(e.target.value)}
                 />
-                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#8C8285' }}>Poné 0 si esta pieza ya está lista y se envía ya — aparece sola en &quot;Disponible ahora&quot; en la tienda.</p>
+                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#8C8285' }}>En 0 es lo mismo que marcar &quot;En stock&quot; acá arriba: la pieza se envía sin espera.</p>
               </div>
               <div className="admin-field">
                 <label>Tiempo máximo (semanas)</label>

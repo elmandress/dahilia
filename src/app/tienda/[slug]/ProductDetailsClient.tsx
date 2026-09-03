@@ -232,7 +232,7 @@ export function ProductDetailsClient({
                   }}>{t}</button>
                 ))}
 
-                <button onClick={() => router.push('/encargo')} style={{
+                <button onClick={() => { track('encargo_click', { source: 'pdp_talles', product: product.slug }); router.push('/encargo') }} style={{
                   padding: '0 14px', height: 44, borderRadius: 8,
                   fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink900,
                   background: 'transparent', border: `1px dashed ${dahila.borderStrong}`, cursor: 'pointer',
@@ -288,7 +288,7 @@ export function ProductDetailsClient({
                   </div>
                 </div>
               )}
-              <Button variant="primary" full onClick={() => router.push('/encargo')}>Solicitar presupuesto</Button>
+              <Button variant="primary" full onClick={() => { track('encargo_click', { source: 'pdp_custom_only', product: product.slug }); router.push('/encargo') }}>Solicitar presupuesto</Button>
             </div>
           )}
 
@@ -300,7 +300,7 @@ export function ProductDetailsClient({
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <Button variant="secondary" size="lg" full disabled>Sin stock en el talle {talle}</Button>
-                <button onClick={() => router.push('/encargo')} style={{
+                <button onClick={() => { track('encargo_click', { source: 'pdp_sin_talle', product: product.slug }); router.push('/encargo') }} style={{
                   background: 'transparent', border: 'none', cursor: 'pointer',
                   fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600,
                   textDecoration: 'underline', padding: 0,
@@ -329,7 +329,7 @@ export function ProductDetailsClient({
               >
                 <Icon name="whatsapp-logo" size={18} /> Avisame cuando vuelva
               </a>
-              <button onClick={() => router.push('/encargo')} style={{
+              <button onClick={() => { track('encargo_click', { source: 'pdp_agotado', product: product.slug }); router.push('/encargo') }} style={{
                 background: 'transparent', border: 'none', cursor: 'pointer',
                 fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600,
                 textDecoration: 'underline', padding: 0, alignSelf: 'center',
