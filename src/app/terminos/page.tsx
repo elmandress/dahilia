@@ -6,10 +6,17 @@ export const revalidate = 86400
 
 export const metadata: Metadata = {
   title: 'Términos y condiciones',
-  description: 'Términos y condiciones de compra, política de privacidad y derechos del consumidor en Dahila Crochet.',
+  description: 'Términos y condiciones de compra y política de privacidad de Dahila Crochet.',
   alternates: { canonical: '/terminos' },
   robots: { index: true, follow: true },
 }
+
+// Revisión 04/09/2026: se sacaron las cláusulas de cambios y devoluciones,
+// derecho de retractación y "precios con IVA" (pedido de Mati). Se alinearon
+// las formas de pago con lo que dice el resto del sitio (transferencia o
+// Mercado Pago) y se sumó a la sección de datos lo que el sitio realmente
+// recolecta y mide (medidas de encargos, lista de novedades, analítica).
+// Ojo al editar: sacar un texto de acá no cambia lo que la ley exige.
 
 export default async function TerminosPage() {
   const supabase = await createClient()
@@ -25,7 +32,6 @@ export default async function TerminosPage() {
   const whatsapp = s.contact_whatsapp || '+598 99 850 073'
   const waUrl = s.contact_whatsapp_url || 'https://wa.me/59899850073'
   const igUrl = s.contact_instagram_url || 'https://www.instagram.com/dahila.crochet/'
-  const year = new Date().getFullYear()
 
   return (
     <div style={{ maxWidth: 760, margin: '0 auto', padding: '48px 24px 96px' }}>
@@ -38,8 +44,10 @@ export default async function TerminosPage() {
         }}>
           Términos y condiciones
         </h1>
+        {/* Fecha fija y real: antes decía "enero {año actual}", que se
+            actualizaba solo cada año aunque el texto no hubiera cambiado. */}
         <p style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink500, margin: 0 }}>
-          Última actualización: enero {year}
+          Última actualización: septiembre de 2026
         </p>
       </div>
 
@@ -71,24 +79,21 @@ export default async function TerminosPage() {
             lo cual forma parte de su naturaleza artesanal y no constituye un defecto.
           </p>
           <p style={{ marginTop: 12 }}>
-            Las prendas fabricadas <strong>a medida o bajo encargo personalizado</strong> (según el artículo 17 de la
-            Ley 17.250) quedan expresamente excluidas del derecho de retractación previsto en el artículo 13 de dicha
-            ley, en tanto fueron confeccionadas según especificaciones particulares del consumidor. Por este motivo,
-            durante todo el proceso de confección se realizan consultas y confirmaciones con el cliente para asegurar
-            su conformidad.
+            Las prendas <strong>a medida o por encargo</strong> se confeccionan según las especificaciones de cada
+            cliente. Por eso, durante todo el proceso se hacen consultas y confirmaciones para asegurar que el
+            resultado sea el esperado.
           </p>
         </Block>
 
         <Block title="4. Precios y formas de pago">
           <p>
-            Todos los precios publicados están expresados en <strong>pesos uruguayos (UYU)</strong> e incluyen el IVA
-            correspondiente cuando aplica. Los precios pueden modificarse sin previo aviso, pero el precio vigente al
-            momento de la confirmación del encargo o compra es el que aplica a esa transacción.
+            Todos los precios publicados están expresados en <strong>pesos uruguayos (UYU)</strong>. Los precios
+            pueden modificarse sin previo aviso, pero el precio vigente al momento de la confirmación del encargo o
+            compra es el que aplica a esa transacción.
           </p>
           <p style={{ marginTop: 12 }}>
-            Las formas de pago se coordinan directamente con el vendedor por WhatsApp e incluyen transferencia
-            bancaria, BROU, RedPagos u otros medios acordados en cada caso. No se procesan pagos con tarjeta de crédito
-            directamente en el sitio web.
+            Las formas de pago se coordinan directamente con el vendedor por WhatsApp: transferencia bancaria,
+            Mercado Pago u otros medios acordados en cada caso. No se procesan pagos directamente en el sitio web.
           </p>
         </Block>
 
@@ -122,40 +127,18 @@ export default async function TerminosPage() {
           </p>
         </Block>
 
-        <Block title="7. Cambios, devoluciones y garantía legal">
-          <p>
-            De conformidad con el artículo 17 de la Ley 17.250, las prendas confeccionadas a medida o personalizadas
-            según especificaciones del consumidor <strong>no pueden ser objeto de devolución o cambio</strong> salvo
-            que presenten un vicio o defecto de fabricación.
-          </p>
-          <p style={{ marginTop: 12 }}>
-            En caso de que la prenda presente un defecto de fabricación imputable a Dahila Crochet, el consumidor
-            tiene derecho a:
-          </p>
-          <ul style={{ margin: '12px 0 0 20px', display: 'flex', flexDirection: 'column', gap: 6,
-            fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700 }}>
-            <li>La reparación gratuita del producto.</li>
-            <li>La sustitución del producto por otro equivalente.</li>
-            <li>La reducción proporcional del precio.</li>
-            <li>La resolución del contrato con devolución del precio pagado.</li>
-          </ul>
-          <p style={{ marginTop: 12 }}>
-            Para ejercer estos derechos, el consumidor debe comunicarse dentro de los <strong>30 días corridos</strong>{' '}
-            desde la recepción del producto, aportando evidencia fotográfica del defecto.
-          </p>
-        </Block>
-
-        <Block title="8. Protección de datos personales">
+        <Block title="7. Protección de datos personales">
           <p>
             En cumplimiento de la <strong>Ley N.º 18.331</strong> y el Decreto N.º 414/009, Dahila Crochet informa
-            que los datos personales recopilados (nombre, apellido, teléfono, correo electrónico, dirección de entrega)
-            son utilizados exclusivamente para:
+            que los datos personales que nos das (nombre y apellido, teléfono, correo electrónico, dirección de
+            entrega y, si hacés un encargo a medida, tus medidas) se usan exclusivamente para:
           </p>
           <ul style={{ margin: '12px 0 0 20px', display: 'flex', flexDirection: 'column', gap: 6,
             fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700 }}>
-            <li>Gestionar y cumplir los pedidos realizados.</li>
-            <li>Comunicar el estado del encargo al cliente.</li>
+            <li>Gestionar y cumplir los pedidos y encargos.</li>
+            <li>Comunicarte el estado de tu encargo.</li>
             <li>Coordinar envíos y pagos.</li>
+            <li>Enviarte novedades de la marca, solo si te anotaste en la lista (podés pedir la baja cuando quieras).</li>
           </ul>
           <p style={{ marginTop: 12 }}>
             Los datos no son cedidos ni vendidos a terceros. El titular de los datos tiene derecho de acceso,
@@ -164,12 +147,14 @@ export default async function TerminosPage() {
             <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ color: dahila.wine600 }}>WhatsApp</a>.
           </p>
           <p style={{ marginTop: 12 }}>
-            Este sitio utiliza cookies técnicas necesarias para el funcionamiento del carrito de compras y preferencias
-            del usuario. No se utilizan cookies de seguimiento publicitario de terceros.
+            Este sitio usa cookies técnicas, necesarias para el carrito de compras y tus preferencias. Además, para
+            entender cómo se usa el sitio y mejorarlo, usa herramientas de medición (Google Analytics, Microsoft
+            Clarity y Umami) que registran cómo se navega —qué páginas se visitan, clics y desplazamiento— sin
+            pedirte datos personales. Esa información no se usa para publicidad ni se vende.
           </p>
         </Block>
 
-        <Block title="9. Propiedad intelectual">
+        <Block title="8. Propiedad intelectual">
           <p>
             Todos los textos, fotografías, diseños, logotipos e imágenes publicados en este sitio web son propiedad
             de Dahila Crochet o han sido utilizados con autorización expresa de sus titulares. Queda prohibida su
@@ -177,7 +162,7 @@ export default async function TerminosPage() {
           </p>
         </Block>
 
-        <Block title="10. Limitación de responsabilidad">
+        <Block title="9. Limitación de responsabilidad">
           <p>
             Dahila Crochet no será responsable por daños indirectos, pérdida de ganancias o perjuicios derivados del
             uso del sitio web. La responsabilidad máxima frente al consumidor en cualquier caso estará limitada al
@@ -190,7 +175,7 @@ export default async function TerminosPage() {
           </p>
         </Block>
 
-        <Block title="11. Jurisdicción y ley aplicable">
+        <Block title="10. Jurisdicción y ley aplicable">
           <p>
             Estos términos y condiciones se rigen por las leyes de la República Oriental del Uruguay. Para cualquier
             controversia que pudiera surgir, las partes se someten a la jurisdicción de los Tribunales ordinarios de
@@ -204,7 +189,7 @@ export default async function TerminosPage() {
           </p>
         </Block>
 
-        <Block title="12. Modificaciones">
+        <Block title="11. Modificaciones">
           <p>
             Dahila Crochet se reserva el derecho de modificar estos términos y condiciones en cualquier momento. Las
             modificaciones entran en vigencia desde su publicación en este sitio. El uso continuado del sitio implica

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { randomUUID } from 'node:crypto'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 /**
  * Mismo caso que /api/cart: el dueño de una lista de favoritos es una cookie,
@@ -80,6 +81,14 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    // Mismo riesgo que /api/cart: sin cookie, cada POST puede crear un fav_id
+    // nuevo. Auditoría 03/09/2026.
+    const h = await headers()
+    const ip = getClientIp(h)
+    if (!checkRateLimit(`favorites:${ip}`, { windowMs: 60_000, max: 40 })) {
+      return NextResponse.json({ error: 'Demasiados intentos. Esperá un minuto y volvé a intentar.' }, { status: 429 })
+    }
+
     const body = await req.json().catch(() => null)
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Solicitud inválida.' }, { status: 400 })

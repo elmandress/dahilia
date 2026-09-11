@@ -70,16 +70,47 @@ BEGIN
   FOREACH t IN ARRAY ARRAY[
     'products','categories','colors','product_media','product_sizes',
     'product_colors','custom_orders','site_settings','discounts',
-    'collections','testimonials','homepage_media'
+    'collections','testimonials','homepage_media',
+    -- Agregadas 2026-09-03 (auditoría): estas 3 migraciones se sumaron un
+    -- día después de escribirse este archivo (2026-07-08 vs. 2026-07-07,
+    -- ver git log) y nunca se incorporaron acá — hasta ahora, correr este
+    -- PASO 3 dejaba coupons/subscribers con la policy abierta original.
+    'coupons','subscribers',
+    -- 04/09/2026: costos internos del marcador de precios (costos-produccion-2026-09.sql).
+    'product_costs'
   ] LOOP
-    -- Recrea una única policy de administración basada en is_admin().
-    EXECUTE format('DROP POLICY IF EXISTS "Admin manage %1$s" ON %1$I', t);
-    EXECUTE format(
-      'CREATE POLICY "Admin manage %1$s" ON %1$I FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin())',
-      t
-    );
+    -- Si la tabla todavía no existe (una migración que no se corrió), se
+    -- saltea en vez de cortar el PASO 3 entero: DROP POLICY IF EXISTS falla
+    -- igual si la TABLA no existe — el IF EXISTS es sobre la policy.
+    IF to_regclass(format('public.%I', t)) IS NOT NULL THEN
+      -- Recrea una única policy de administración basada en is_admin().
+      EXECUTE format('DROP POLICY IF EXISTS "Admin manage %1$s" ON %1$I', t);
+      EXECUTE format(
+        'CREATE POLICY "Admin manage %1$s" ON %1$I FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin())',
+        t
+      );
+    END IF;
   END LOOP;
 END $$;
+
+-- coupon_redemptions y weaver_applications quedan FUERA del loop genérico a
+-- propósito: sus policies abiertas originales (schema-cupones.sql,
+-- schema-tejedoras.sql) se llamaron con un ESPACIO en el nombre ("Admin
+-- manage coupon redemptions", "Admin manage weaver applications"), no con
+-- guion bajo como el resto — el DROP POLICY del loop de arriba arma el
+-- nombre a partir del nombre de tabla (guion bajo) y nunca las habría
+-- encontrado. Sin este bloque aparte, correr el PASO 3 hubiera dejado la
+-- policy vieja "USING (true)" viva EN PARALELO a una nueva con is_admin():
+-- como las policies permisivas de Postgres se combinan con OR, la tabla
+-- habría seguido abierta a cualquier autenticado pese a "correr el fix".
+-- Hallazgo de la auditoría 03/09/2026 — nunca se ejecutó así en producción.
+DROP POLICY IF EXISTS "Admin manage coupon redemptions" ON coupon_redemptions;
+CREATE POLICY "Admin manage coupon_redemptions" ON coupon_redemptions
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admin manage weaver applications" ON weaver_applications;
+CREATE POLICY "Admin manage weaver_applications" ON weaver_applications
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- Storage: reemplazar el patrón "cualquier authenticated escribe" por admin.
 DROP POLICY IF EXISTS "Authenticated Upload" ON storage.objects;

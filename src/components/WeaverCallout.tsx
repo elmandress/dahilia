@@ -52,12 +52,14 @@ export function WeaverCallout() {
     return () => clearTimeout(timer)
   }, [])
 
-  // Solo en la vidriera: nunca en admin, carrito, encargo ni en la propia página.
+  // Solo en la vidriera: nunca en admin, carrito, encargo, la propia página,
+  // ni en /ig (landing tipo Linktree — cero overlays no pedidos).
   if (
     pathname.startsWith('/admin') ||
     pathname.startsWith('/carrito') ||
     pathname.startsWith('/encargo') ||
-    pathname.startsWith('/tejedoras')
+    pathname.startsWith('/tejedoras') ||
+    pathname === '/ig'
   ) return null
 
   if (!show) return null

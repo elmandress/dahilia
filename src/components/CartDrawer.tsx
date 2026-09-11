@@ -7,7 +7,6 @@ import Image from 'next/image'
 import { useCart } from './CartProvider'
 import { useScrollLock } from '@/lib/scroll-lock'
 import { useFocusTrap } from '@/lib/focus-trap'
-import { createClient } from '@/lib/supabase/client'
 import { dahila, Icon } from './ui/Primitives'
 import { PriceBlock } from './ui/PriceBlock'
 import type { Product } from '@/lib/types'
@@ -23,7 +22,7 @@ import { track } from '@/lib/analytics'
  * page; the WhatsApp checkout sits at the bottom (thumb zone on mobile). Calm,
  * on-brand: no countdowns or aggressive upsell.
  */
-export function CartDrawer() {
+export function CartDrawer({ products }: { products: Product[] }) {
   const {
     items, cartTotal, discounts, shippingEstimate, freeShippingThreshold, drawerOpen, closeDrawer, updateQty, removeFromCart, addToCart,
   } = useCart()
@@ -49,31 +48,22 @@ export function CartDrawer() {
     return () => window.removeEventListener('keydown', onKey)
   }, [drawerOpen, closeDrawer])
 
-  // Catálogo liviano para "Sumale un detalle": se trae una sola vez, la
-  // primera vez que el drawer se abre — no en cada render (el catálogo de
-  // Dahila es chico, así que traerlo entero al cliente es más simple que
-  // armar un endpoint dedicado). Misma selección que ya usa /carrito
-  // (pickAddonSuggestions): piezas chicas de categorías que no están en el
-  // pedido — así el mini-cart y el carrito completo sugieren lo mismo.
-  const [catalog, setCatalog] = useState<Product[] | null>(null)
-  useEffect(() => {
-    if (!drawerOpen || catalog !== null) return
-    const supabase = createClient()
-    supabase
-      .from('products')
-      .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*)')
-      .eq('status', 'active')
-      .order('sort_order', { ascending: true })
-      .limit(24)
-      .then(({ data }) => setCatalog((data ?? []) as Product[]))
-  }, [drawerOpen, catalog])
-
+  // Catálogo para "Sumale un detalle": ya no se pide aparte por Supabase — se
+  // recibe como prop del mismo payload cacheado que usa el resto del sitio
+  // (getCatalog() en el layout raíz). Antes cada apertura del drawer disparaba
+  // su propia consulta en vivo con varios joins, la única superficie del
+  // sitio que no pasaba por esa caché (auditoría 03/09/2026). Misma selección
+  // que /carrito (pickAddonSuggestions): piezas chicas de categorías que no
+  // están en el pedido.
   const visibleItems = items.filter((i) => !!i.product)
 
   const [addedId, setAddedId] = useState<string | null>(null)
   const addonSuggestions = useMemo(
-    () => (catalog ? pickAddonSuggestions(catalog, visibleItems, discounts) : []),
-    [catalog, visibleItems, discounts]
+    // getCatalog() incluye 'soldout' además de 'active' (para que la ficha de
+    // un producto agotado siga sirviendo desde caché) — filtrarlo acá replica
+    // el mismo criterio que ya usa /carrito, para no sugerir agregar algo sin stock.
+    () => pickAddonSuggestions(products.filter((p) => p.status === 'active'), visibleItems, discounts),
+    [products, visibleItems, discounts]
   )
 
   const handleAddonAdd = async (p: Product) => {
@@ -211,6 +201,7 @@ export function CartDrawer() {
                             onClick={() => updateQty(item.id, item.qty + 1)}
                             aria-label="Sumar uno"
                             disabled={item.qty >= 20}
+                            title={item.qty >= 20 ? 'Máximo 20 por pedido — escribinos por WhatsApp si necesitás más' : undefined}
                             style={{ ...qtyBtn, cursor: item.qty >= 20 ? 'default' : 'pointer', color: item.qty >= 20 ? dahila.ink300 : dahila.ink900 }}
                           ><Icon name="plus" size={12} /></button>
                         </div>

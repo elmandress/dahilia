@@ -70,11 +70,14 @@ export function VipCallout() {
     return () => clearTimeout(timer)
   }, [])
 
+  // /ig: landing tipo Linktree — cero overlays no pedidos, mismo criterio
+  // que WeaverCallout.
   if (
     pathname.startsWith('/admin') ||
     pathname.startsWith('/carrito') ||
     pathname.startsWith('/encargo') ||
-    pathname.startsWith('/tejedoras')
+    pathname.startsWith('/tejedoras') ||
+    pathname === '/ig'
   ) return null
 
   if (!show) return null

@@ -5,6 +5,7 @@
 
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export interface SubscribeResult {
   ok: boolean
@@ -16,19 +17,8 @@ export interface SubscribeResult {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const SOURCES = new Set(['footer', 'encargo', 'drop'])
 
-// Same in-process limiter pattern as the other public forms.
-const log = new Map<string, number[]>()
-const WINDOW_MS = 60_000
-const MAX_PER_WINDOW = 4
-
-function allow(key: string): boolean {
-  const now = Date.now()
-  const recent = (log.get(key) || []).filter((t) => now - t < WINDOW_MS)
-  if (recent.length >= MAX_PER_WINDOW) return false
-  recent.push(now)
-  log.set(key, recent)
-  return true
-}
+const RATE_WINDOW_MS = 60_000
+const RATE_MAX = 4
 
 export async function subscribeToVipList(rawEmail: string, rawSource?: string): Promise<SubscribeResult> {
   const email = String(rawEmail || '').trim().slice(0, 120)
@@ -37,8 +27,13 @@ export async function subscribeToVipList(rawEmail: string, rawSource?: string): 
   if (!EMAIL_RE.test(email)) return { ok: false, error: 'Ese email no parece válido.' }
 
   const h = await headers()
-  const ip = h.get('x-forwarded-for')?.split(',')[0].trim() || h.get('x-real-ip') || 'unknown'
-  if (!allow(ip)) return { ok: false, error: 'Demasiados intentos. Probá en un minuto.' }
+  const ip = getClientIp(h)
+  // Antes reinventaba su propio limitador en vez de usar lib/rate-limit.ts,
+  // que ya usan encargo/tejedoras/cupón (auditoría 03/09/2026) — mismo
+  // algoritmo, código repetido sin necesidad.
+  if (!checkRateLimit(`subscribe:${ip}`, { windowMs: RATE_WINDOW_MS, max: RATE_MAX })) {
+    return { ok: false, error: 'Demasiados intentos. Probá en un minuto.' }
+  }
 
   try {
     const supabase = await createClient()

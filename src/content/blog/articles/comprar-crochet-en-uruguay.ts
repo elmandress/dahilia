@@ -118,7 +118,7 @@ export const article: Article = {
     },
     {
       type: 'p',
-      text: 'Como muchas prendas se hacen a medida, no hacemos cambios por talle: por eso insistimos tanto con las medidas antes de empezar. Los detalles de envíos, pagos y devoluciones están en [Información](/info).',
+      text: 'Muchas prendas se hacen a medida, y por eso insistimos tanto con las medidas antes de empezar: con los centímetros correctos, la prenda sale bien de entrada. Los detalles de envíos y pagos están en [Información](/info).',
     },
 
     { type: 'h2', text: 'Preguntas frecuentes' },

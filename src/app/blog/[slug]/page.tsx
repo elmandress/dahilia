@@ -19,19 +19,24 @@ import { botImageUrl } from '@/lib/media'
 // base son los productos recomendados, y vienen del catálogo ya cacheado.
 export const revalidate = 3600
 
-// Los slugs válidos se conocen enteros en build (los artículos son código: una
-// nota nueva implica un deploy igual), así que cerrar los parámetros dinámicos
-// no le quita nada al blog y sí arregla algo concreto: con `dynamicParams`
-// activo, /blog/lo-que-sea entra a renderizar, el shell ya salió a la red
-// —hay un loading.tsx en la raíz, o sea streaming— y para cuando corre
-// notFound() el status 200 ya está mandado. Resultado: soft 404, una URL
-// basura que Google puede indexar. Con esto, Next resuelve el 404 ANTES de
-// renderizar y responde 404 de verdad.
+// SIN `dynamicParams = false` a propósito (se sacó el 04/09/2026).
 //
-// Ojo: esto NO se puede replicar tal cual en /tienda/[slug], porque ahí sí hay
-// slugs que aparecen después del build (un producto nuevo cargado en el admin).
-// Ese caso queda mitigado con `robots: noindex` en su generateMetadata.
-export const dynamicParams = false
+// Estaba puesto para que /blog/lo-que-sea respondiera 404 de verdad en vez de
+// un soft 404 (hay un loading.tsx en la raíz: el shell sale por streaming con
+// status 200 antes de que corra notFound()). Pero en producción las 8 notas
+// reales daban 404: los headers mostraban `Cache-Status: "Next.js"; hit` con
+// `fwd-status=404`, o sea un 404 GUARDADO en la caché de Next de Netlify —
+// mientras los productos tenían guardado un 200. `dynamicParams = false` es la
+// única configuración que hace que esta ruta conteste 404 a cualquier path que
+// no esté en la lista armada en el build; si la lista que usa el runtime de
+// Netlify no coincide (en el deploy o en una revalidación ISR), cada nota cae
+// en 404 y ese 404 queda cacheado. Con dynamicParams activo, un slug válido
+// siempre se renderiza aunque falte en esa lista.
+//
+// El soft 404 de un slug inválido queda mitigado igual que en /tienda/[slug]:
+// `robots: noindex` en generateMetadata, así Google no indexa la URL basura.
+// Es el mismo trade-off, y perder un soft 404 raro es mucho mejor que perder
+// el blog entero.
 
 export function generateStaticParams() {
   return getAllArticles().map((a) => ({ slug: a.slug }))
@@ -44,7 +49,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params
   const article = getArticle(slug)
-  if (!article) return {}
+  // Slug inválido: noindex (ver nota sobre dynamicParams arriba).
+  if (!article) return { title: 'Nota no encontrada', robots: { index: false, follow: false } }
 
   const url = `${SITE_URL}/blog/${article.slug}`
   return {

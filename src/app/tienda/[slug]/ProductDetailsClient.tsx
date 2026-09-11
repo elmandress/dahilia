@@ -10,11 +10,13 @@ import { ProductGallery } from '@/components/ProductGallery'
 import { ProductCard } from '@/components/ProductCard'
 import { RecentlyViewed } from '@/components/RecentlyViewed'
 import { SizeGuide } from '@/components/SizeGuide'
+import { ProcessStepper } from '@/components/ProcessStepper'
 import { ShareButton } from '@/components/ShareButton'
 import { PinterestButton } from '@/components/PinterestButton'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import type { Product, Discount } from '@/lib/types'
 import { getEffectivePrice, getFinalPrice, getPrimaryPhoto, getScarcity, readyDateEstimate, formatPrice, BLUR_DATA_URL } from '@/lib/types'
+import { useSizeSelection, getRestockWhatsAppUrl } from '@/lib/product-selection'
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import { dahila, Button, Eyebrow, Icon, Breadcrumb } from '@/components/ui/Primitives'
 import { track } from '@/lib/analytics'
@@ -63,17 +65,12 @@ export function ProductDetailsClient({
   ]
   const router = useRouter()
   const { addToCart } = useCart()
-  // Default to the first AVAILABLE size, not just the first one.
-  const firstAvailable = product.sizes?.find((s) => s.available)?.size
-  const [talle, setTalle] = useState<string>(firstAvailable || product.sizes?.[0]?.size || 'Único')
+  // Factorizado en un hook compartido con QuickViewModal (auditoría
+  // 03/09/2026: antes duplicado letra por letra en los dos archivos).
+  const { talle, setTalle, sizeAvailable } = useSizeSelection(product)
   const [added, setAdded] = useState(false)
 
   useEffect(() => { track('product_view', { product: product.slug }) }, [product.slug])
-
-  // Is the currently selected size in stock? (Products with no size rows are
-  // treated as available — they're single-size pieces.)
-  const selectedSizeRow = product.sizes?.find((s) => s.size === talle)
-  const sizeAvailable = !selectedSizeRow || selectedSizeRow.available
 
   const galleryImages = (product.media && product.media.length > 0
     ? [...product.media]
@@ -84,17 +81,19 @@ export function ProductDetailsClient({
 
   const listPrice = getEffectivePrice(product, talle)
   const hasDiscount = discountPercent > 0 && listPrice > 0
-  const finalPrice = hasDiscount ? Math.round((listPrice * (100 - discountPercent)) / 100) : listPrice
+  // Antes recalculaba el descuento a mano en vez de usar getFinalPrice (ya
+  // centralizada y usada más abajo en este mismo archivo, línea 349) — dan el
+  // mismo resultado hoy porque la página padre calcula discountPercent con la
+  // misma fórmula, pero quedaba frágil ante cualquier cambio futuro de regla
+  // de redondeo. Auditoría 03/09/2026.
+  const finalPrice = getFinalPrice(product, talle, discounts)
   const isSoldOut = product.status === 'soldout'
   const canBuy = !isSoldOut && !product.is_custom_only
   const scarcity = getScarcity(product)
 
   // Sold-out demand capture: a pre-filled WhatsApp message asking for a heads-up
   // when the piece is back. No backend/email — just opens the chat.
-  const restockText = encodeURIComponent(
-    `Hola! Vi "${product.name}" en la web pero está agotado. ¿Me avisás cuando vuelva? 🧶`
-  )
-  const restockUrl = `${whatsappUrl}${whatsappUrl.includes('?') ? '&' : '?'}text=${restockText}`
+  const restockUrl = getRestockWhatsAppUrl(product, whatsappUrl)
 
   const handleAdd = async () => {
     if (!sizeAvailable) return
@@ -211,7 +210,7 @@ export function ProductDetailsClient({
               </div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {product.sizes && product.sizes.length > 0 ? product.sizes.map((s) => (
-                  <button key={s.id} onClick={() => setTalle(s.size)} disabled={!s.available} style={{
+                  <button key={s.id} onClick={() => setTalle(s.size)} disabled={!s.available} aria-pressed={talle === s.size} style={{
                     minWidth: 44, height: 44, padding: '0 12px', borderRadius: 8,
                     fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
                     border: `1px solid ${talle === s.size ? dahila.ink900 : dahila.borderStrong}`,
@@ -222,7 +221,7 @@ export function ProductDetailsClient({
                     textDecoration: s.available ? 'none' : 'line-through',
                   }}>{s.size}</button>
                 )) : ['XS', 'S', 'M', 'L', 'XL'].map((t) => (
-                  <button key={t} onClick={() => setTalle(t)} style={{
+                  <button key={t} onClick={() => setTalle(t)} aria-pressed={talle === t} style={{
                     minWidth: 44, height: 44, borderRadius: 8,
                     fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
                     border: `1px solid ${talle === t ? dahila.ink900 : dahila.borderStrong}`,
@@ -251,43 +250,7 @@ export function ProductDetailsClient({
 
           {product.is_custom_only && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Process stepper — solo si está habilitado y tiene pasos */}
-              {processEnabled && processSteps.length > 0 && (
-                <div style={{
-                  background: dahila.cream50, borderRadius: 14,
-                  padding: '18px 20px', border: `1px solid ${dahila.border}`,
-                }}>
-                  <div style={{
-                    fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.18em',
-                    textTransform: 'uppercase', color: dahila.ink500, marginBottom: 14,
-                  }}>
-                    Cómo funciona
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {processSteps.map((step, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                        <div style={{
-                          flexShrink: 0, width: 32, height: 32, borderRadius: 999,
-                          background: dahila.cream200, display: 'flex',
-                          alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          <Icon name={step.icon} size={15} color={dahila.wine600} />
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingTop: 6 }}>
-                          <span style={{
-                            fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
-                            color: dahila.ink900,
-                          }}>{step.label}</span>
-                          <span style={{
-                            fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 300,
-                            color: dahila.ink700, lineHeight: 1.55,
-                          }}>{step.body}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {processEnabled && <ProcessStepper steps={processSteps} />}
               <Button variant="primary" full onClick={() => { track('encargo_click', { source: 'pdp_custom_only', product: product.slug }); router.push('/encargo') }}>Solicitar presupuesto</Button>
             </div>
           )}
@@ -511,7 +474,7 @@ export function ProductDetailsClient({
             )}
             <li style={liStyle}>
               <Icon name="check" size={16} color={dahila.ink500}/>
-              Hecho a tu medida — por eso no aceptamos cambios, pero te acompaño en todo el proceso para que quede perfecta.
+              Hecho a tu medida — te acompaño en todo el proceso para que quede perfecta.
             </li>
             <li style={liStyle}>
               <Icon name="tag" size={16} color={dahila.ink500}/>

@@ -21,6 +21,7 @@ function FAQ({ items }: { items: [string, string][] }) {
           <button
             onClick={() => setOpen(open === i ? -1 : i)}
             aria-expanded={open === i}
+            aria-controls={`faq-panel-${i}`}
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer',
               width: '100%', textAlign: 'left',
@@ -34,7 +35,7 @@ function FAQ({ items }: { items: [string, string][] }) {
             <Icon name={open === i ? 'minus' : 'plus'} size={16}/>
           </button>
           {open === i && (
-            <p style={{
+            <p id={`faq-panel-${i}`} style={{
               fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, lineHeight: 1.7,
               color: dahila.ink700, margin: 0, padding: '0 0 20px',
               maxWidth: 640,
@@ -152,8 +153,11 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
      val(settings, 'faq_2_a', 'Sí. Después de confirmar el modelo te muestro las lanas reales que tengo y elegimos juntas.')],
     [val(settings, 'faq_3_q', '¿Hacen envíos al exterior?'),
      val(settings, 'faq_3_a', 'Bajo consulta. Trabajé con clientas en Argentina, Brasil y España — escribime y vemos costos.')],
-    [val(settings, 'faq_4_q', '¿Aceptan devoluciones?'),
-     val(settings, 'faq_4_a', 'Como cada pieza se hace a medida, no aceptamos cambios. Por eso te acompaño durante todo el proceso.')],
+    // Antes: "¿Aceptan devoluciones?" — se sacó del sitio todo lo de cambios y
+    // devoluciones (04/09/2026). El valor real vive en site_settings; ver
+    // database/quitar-devoluciones-2026-09.sql, que lo actualiza a este mismo texto.
+    [val(settings, 'faq_4_q', '¿Cómo sé qué talle pedir?'),
+     val(settings, 'faq_4_a', 'Cada ficha tiene una tabla de medidas en centímetros. Si estás entre dos talles, mandame tus medidas por WhatsApp antes de comprar y te digo cuál conviene, o la tejo directamente con tus medidas.')],
     [val(settings, 'faq_5_q', '¿Dahila se escribe con H? ¿Es lo mismo que Dalia o Dahlia?'),
      val(settings, 'faq_5_a', 'Sí — somos Dahila Crochet. Mucha gente nos busca como "Dalia" o "Dahlia" y llega igual: es la misma marca, hecha a mano en Montevideo.')],
   ]

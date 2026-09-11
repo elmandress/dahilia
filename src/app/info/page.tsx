@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/public'
-import { dahila, Eyebrow } from '@/components/ui/Primitives'
+import { dahila, Eyebrow, Icon } from '@/components/ui/Primitives'
 import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
 
@@ -36,11 +36,6 @@ const BLOCKS: Array<{ key: string; title: string; fallback: string }> = [
     fallback: 'Coordinamos el pago por WhatsApp: transferencia o el medio que te quede cómodo.',
   },
   {
-    key: 'info_returns',
-    title: 'Cambios y devoluciones',
-    fallback: 'Como cada prenda se hace a mano y muchas veces a medida, no hacemos cambios por talle. Por eso te acompañamos durante todo el proceso para que quede perfecta. Si llega algo mal, escribinos y lo resolvemos.',
-  },
-  {
     key: 'info_care',
     title: 'Cuidados de las prendas',
     fallback: 'Lavá a mano con agua fría y jabón neutro. Secá en horizontal, a la sombra, sin colgar. No uses secarropas. Así tu prenda dura años.',
@@ -52,12 +47,15 @@ export default async function InfoPage() {
   const { data } = await supabase
     .from('site_settings')
     .select('key, value')
-    .in('key', BLOCKS.map((b) => b.key))
+    .in('key', [...BLOCKS.map((b) => b.key), 'contact_whatsapp_url'])
 
   const s = (data ?? []).reduce<Record<string, string>>(
     (acc, curr) => ({ ...acc, [curr.key]: String(curr.value ?? '') }),
     {}
   )
+  const whatsappUrl = s.contact_whatsapp_url?.trim() || 'https://wa.me/59899850073'
+  const closingText = encodeURIComponent('Hola! Tengo una duda que no encontré en la página de info.')
+  const closingUrl = `${whatsappUrl}${whatsappUrl.includes('?') ? '&' : '?'}text=${closingText}`
 
   return (
     <div style={{ maxWidth: 760, margin: '0 auto', padding: '48px 24px 96px' }}>
@@ -103,6 +101,33 @@ export default async function InfoPage() {
             </section>
           )
         })}
+      </div>
+
+      <div style={{
+        marginTop: 8, padding: '28px 0 0', borderTop: `1px solid ${dahila.border}`,
+        display: 'flex', flexDirection: 'column', gap: 14,
+      }}>
+        <p style={{
+          fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.6,
+          color: dahila.ink700, margin: 0,
+        }}>
+          ¿No encontraste tu respuesta? Escribinos por WhatsApp.
+        </p>
+        <a
+          href={closingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+            alignSelf: 'flex-start',
+            background: '#25D366', color: '#fff', textDecoration: 'none',
+            borderRadius: 10, padding: '14px 22px',
+            fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
+            letterSpacing: '0.06em', textTransform: 'uppercase',
+          }}
+        >
+          <Icon name="whatsapp-logo" size={18} /> Escribinos
+        </a>
       </div>
     </div>
   )

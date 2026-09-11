@@ -13,13 +13,18 @@ import { formatPrice } from '@/lib/types'
 
 interface Suggestion { slug: string; name: string; photo: string; price: number; soldout: boolean }
 
+// 7 ítems (antes 8): "Sobre nosotros" salió del header — sigue en el footer.
+// Regla del propio skill dahila-storefront (5-7 links horizontales, Miller's
+// Law/Hick's Law) y auditoría 03/09/2026. "Tejé con Dahila" se mantiene a
+// propósito pese a ser el otro candidato a recortar: hoy es el único canal de
+// reclutamiento de tejedoras del sitio, y esa es justo la pieza que más
+// necesita visibilidad ahora mismo.
 const NAV_ITEMS = [
   { id: '/tienda',      label: 'Tienda', mega: true },
   { id: '/colecciones', label: 'Colecciones' },
   { id: '/ofertas',     label: 'Ofertas', accent: true },
   { id: '/encargo',     label: 'A medida' },
   { id: '/blog',        label: 'Notas' },
-  { id: '/atelier',     label: 'Sobre nosotros' },
   { id: '/tejedoras',   label: 'Tejé con Dahila' },
   { id: '/contacto',    label: 'Contacto' },
 ]
@@ -51,6 +56,7 @@ export function Header({
   showOfertas = true,
   showColecciones = true,
   categories,
+  readyToShipCount = 0,
 }: {
   promo?: PromoBar
   showOfertas?: boolean
@@ -58,6 +64,9 @@ export function Header({
   /** Categorías reales del catálogo (las pasa el layout raíz). Vacío o ausente
    *  → se usa el fallback estático. */
   categories?: { slug: string; label: string }[]
+  /** Piezas ya tejidas, listas para despachar (isReadyToShip). En 0 el enlace
+   *  "En stock" del menú no se muestra: nunca se linkea una página vacía. */
+  readyToShipCount?: number
 }) {
   const megaCategories = categories && categories.length > 0 ? categories : MEGA_CATEGORIES_FALLBACK
   // "Ofertas" y "Colecciones" son ítems estacionales: el layout los prende
@@ -137,7 +146,10 @@ export function Header({
   }, [open])
 
   // Admin uses its own layout/chrome — never render the public header there.
-  if (pathname.startsWith('/admin')) return null
+  // /ig es la landing de la bio de Instagram: pensada como un Linktree (una
+  // columna, cero salidas que no sean las 3-4 que importan) — el mega-menú de
+  // 7 ítems y el buscador contradecían ese propósito (auditoría 03/09/2026).
+  if (pathname.startsWith('/admin') || pathname === '/ig') return null
 
   const iconBtn: React.CSSProperties = {
     background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0,
@@ -289,7 +301,9 @@ export function Header({
                     style={{
                       background: 'transparent', border: 'none',
                       fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink900,
-                      width: 160,
+                      // clamp en vez de un ancho fijo: en pantallas muy angostas
+                      // (<360px) 160px quedaba apretado contra el resto del header.
+                      width: 'clamp(110px, 32vw, 160px)',
                     }}
                   />
                   <button type="button" onClick={() => { setShowSearch(false); setSearchVal('') }} style={{ ...iconBtn, padding: 2 }} aria-label="Cerrar búsqueda">
@@ -437,6 +451,18 @@ export function Header({
                     Toda la colección
                   </Link>
                 </li>
+                {/* "En stock" vive acá y no como bloque destacado arriba de la
+                    grilla de /tienda (pedido de Mati, 04/09/2026): es una forma
+                    más de recorrer el catálogo, al lado de las categorías. */}
+                {readyToShipCount > 0 && (
+                  <li>
+                    <Link href="/tienda?ya=1" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink900, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <span aria-hidden style={{ width: 7, height: 7, borderRadius: 999, background: '#1E8449' }} />
+                      En stock, sin espera
+                      <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500 }}>({readyToShipCount})</span>
+                    </Link>
+                  </li>
+                )}
                 {megaCategories.map((c) => (
                   <li key={c.slug}>
                     <Link href={`/tienda/${c.slug}`} onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>
@@ -551,6 +577,18 @@ export function Header({
                     2 taps en vez de obligar a scrollear la tienda entera. */}
                 {it.mega && (
                   <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 10 }}>
+                    {/* Paridad con el mega-menú de desktop. */}
+                    {readyToShipCount > 0 && (
+                      <Link href="/tienda?ya=1" onClick={() => setOpen(false)} style={{
+                        textDecoration: 'none',
+                        fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 400,
+                        color: dahila.ink900, padding: '7px 0 7px 14px',
+                        letterSpacing: '0.03em', display: 'inline-flex', alignItems: 'center', gap: 8,
+                      }}>
+                        <span aria-hidden style={{ width: 7, height: 7, borderRadius: 999, background: '#1E8449' }} />
+                        En stock, sin espera ({readyToShipCount})
+                      </Link>
+                    )}
                     {megaCategories.map((c) => (
                       <Link key={c.slug} href={`/tienda/${c.slug}`} onClick={() => setOpen(false)} style={{
                         textDecoration: 'none',

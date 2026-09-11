@@ -607,10 +607,16 @@ a {
   .tienda-meta.has-criteria {
     display: flex !important;
   }
+  /* Chips más livianos en celular ("tosco", reporte 04/09/2026): menos
+     padding lateral, sin sombra en el activo y un gap más corto. Se mantiene
+     el alto de 44px, que es el touch target mínimo que usa todo el sitio. */
   .tienda-toolbar-cats button {
     min-height: 44px !important;
-    padding: 8px 15px !important;
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    box-shadow: none !important;
   }
+  .tienda-toolbar-cats > div { gap: 8px !important; }
   .tienda-toolbar-actions > button {
     min-height: 40px !important;
     padding: 7px 11px !important;
@@ -626,6 +632,15 @@ a {
   /* Outer wrapper: become a column so cats sit above actions */
   .tienda-toolbar {
     flex-direction: column !important;
+    /* nowrap: LA causa de que el riel de categorías no scrolleara en celular
+       (reporte de Mati, 04/09/2026). El estilo inline trae flexWrap:'wrap'
+       para desktop; en columna ese wrap vuelve el contenedor "multi-línea", y
+       en un flex multi-línea el ancho de cada línea lo fija el ítem MÁS ANCHO,
+       no el contenedor. El riel (cuyo contenido es width:max-content) estiraba
+       la línea al ancho de todos los chips juntos → el scroller medía lo mismo
+       que su contenido → nada que scrollear, y el sobrante lo recortaba el
+       overflow-x:clip del body. Single-line + stretch = ancho del contenedor. */
+    flex-wrap: nowrap !important;
     align-items: stretch !important;
     gap: 8px !important;
     margin-bottom: 12px !important;
@@ -723,5 +738,15 @@ a {
     left: 12px !important;
     right: 12px;
     max-width: none !important;
+  }
+}
+/* La invitación (Weaver/Vip) puede aparecer en la ficha de producto, donde en
+   mobile existe la barra sticky de "Agregar al carrito" (.pdp-sticky-bar,
+   ~84px de alto). Sin esto, la tarjeta cae encima de esa barra justo en la
+   página de mayor intención de compra del sitio. Mismo patrón :has() que
+   main:has(.pdp-sticky-bar) más arriba. */
+@media (max-width: 720px) {
+  body:has(.pdp-sticky-bar) .weaver-callout {
+    bottom: 100px !important;
   }
 }

@@ -52,6 +52,16 @@ export const CLUSTER_LABEL: Record<Cluster, string> = {
   'a-medida': 'Prendas a medida',
 }
 
+/** Una línea que explica de qué va cada tema. Se usa en el índice del blog:
+ *  sin esto, los grupos son solo títulos sueltos y la lectora no sabe qué va a
+ *  encontrar adentro (reporte de Mati, 04/09/2026). */
+export const CLUSTER_INTRO: Record<Cluster, string> = {
+  cuidados: 'Cómo lavar, secar y guardar una prenda tejida para que dure años.',
+  comprar: 'Qué mirar antes de comprar crochet: talles, fibras, precio y calidad.',
+  regalos: 'Ideas y criterios para regalar algo tejido a mano y no errarle.',
+  'a-medida': 'Cómo funciona encargar una prenda hecha para tu cuerpo y tus colores.',
+}
+
 export interface Article {
   slug: string
   /** H1 y título de la tarjeta. */

@@ -170,6 +170,218 @@ export function contribPerHour(row: PriceRow, price: number | null): number | nu
   return Math.round((price - row.materials) / row.hours)
 }
 
+// ─── Comparables de mercado (auditoría 03/09/2026) ─────────────
+// Fuente completa, con cada precio trazado a una URL y fecha de consulta:
+// research/auditoria-mercado-producto-2026-09.md, sección 2. No inventar
+// precios de competencia nuevos acá — si hace falta un dato que no está,
+// hay que volver a investigar, no estimarlo.
+
+export interface MarketComparable {
+  label: string
+  price: string
+  url?: string
+}
+
+export interface ProductMarketNote {
+  comparables: MarketComparable[]
+  recommendation: string
+}
+
+export const MARKET_FX_NOTE = 'Conversión con USD/UYU 40,24 (cierre BCU, 02/09/2026). Detalle completo y todas las fuentes: research/auditoria-mercado-producto-2026-09.md'
+
+/** Por slug de producto — comparables encontrados + una recomendación en
+ * lenguaje simple. Cubre los 32 productos de PRICE_TABLE (`chaleco` incluido,
+ * como caso de higiene de datos) más los 4 productos nuevos sin fila propia
+ * (ver ORPHAN_PRODUCTS). */
+export const MARKET_COMPARABLES: Record<string, ProductMarketNote> = {
+  'cowl-neck-top': {
+    comparables: [
+      { label: 'Moda crochet by me (UY)', price: '~$850 (jul-2026, sin reverificar)' },
+      { label: 'Etsy, tops simples', price: 'US$8,90–57,40 en el extremo bajo', url: 'https://www.etsy.com/market/crochet_tops' },
+    ],
+    recommendation: 'Puerta de entrada — no tocar. Ya está bien por debajo de todo comparable.',
+  },
+  'top-halter': {
+    comparables: [{ label: 'Etsy, tops en general', price: 'Rango amplio, sin un dato puntual confiable' }],
+    recommendation: 'Sin cambios que ameriten revisión ahora.',
+  },
+  'top-duna': {
+    comparables: [{ label: 'Etsy, tops en general', price: 'Rango amplio, sin un dato puntual confiable' }],
+    recommendation: 'Sin cambios que ameriten revisión ahora.',
+  },
+  'top-race': {
+    comparables: [
+      { label: 'Nacra (AR, indie)', price: 'ARS 54.000 ≈ $1.416 / US$35,2', url: 'https://www.shopnacra.com.ar/productos/top-ada-tejido-puro-hilo-de-algodon/' },
+      { label: 'Etsy, crop-tops', price: 'US$8,90–146,25 (grueso en US$40–90)' },
+    ],
+    recommendation: '30% más barato en dólares que Nacra por una pieza de la misma familia. Hay margen, pero no es la urgencia del catálogo — primero las piezas de más horas.',
+  },
+  'top-maresia': {
+    comparables: [
+      { label: 'Nacra (AR, indie)', price: 'ARS 54.000 ≈ $1.416 / US$35,2', url: 'https://www.shopnacra.com.ar/productos/top-ada-tejido-puro-hilo-de-algodon/' },
+      { label: 'Etsy, crop-tops', price: 'US$8,90–146,25 (grueso en US$40–90)' },
+    ],
+    recommendation: '30% más barato en dólares que Nacra por una pieza de la misma familia. Hay margen, pero no es la urgencia del catálogo — primero las piezas de más horas.',
+  },
+  'top-lagom': {
+    comparables: [
+      { label: 'Nacra (AR, indie)', price: 'ARS 54.000 ≈ $1.416 / US$35,2', url: 'https://www.shopnacra.com.ar/productos/top-ada-tejido-puro-hilo-de-algodon/' },
+      { label: 'Etsy, crop-tops', price: 'US$8,90–146,25 (grueso en US$40–90)' },
+    ],
+    recommendation: '30% más barato en dólares que Nacra por una pieza de la misma familia. Hay margen, pero no es la urgencia del catálogo — primero las piezas de más horas.',
+  },
+  'top-amelie': {
+    comparables: [
+      { label: 'Nacra (AR, indie)', price: 'US$35,2 — Amélie hoy es 44% más caro' },
+      { label: 'Etsy, tops trabajados', price: 'US$40–90 (Amélie, a US$50,9, cae adentro)' },
+    ],
+    recommendation: 'Subió 107% (de $990 a $2.050) el 27/08 sin quedar documentado en ningún lado. En dólares no es un precio disparatado — cae dentro del rango de un top elaborado en Etsy — pero nadie lo decidió a propósito. Confirmá que se sigue vendiendo bien antes de asumirlo como el nuevo estándar.',
+  },
+  'top-higgie': {
+    comparables: [],
+    recommendation: 'Sin comparable de mercado encontrado. Sin cambios, sin señal nueva.',
+  },
+  'top-cherry': {
+    comparables: [{ label: 'Etsy, tops trabajados', price: 'US$40–90 (tramo medio)' }],
+    recommendation: 'Sin cambios.',
+  },
+  'top-summer': {
+    comparables: [{ label: 'Etsy, tops trabajados', price: 'US$40–90 (tramo medio)' }],
+    recommendation: 'Sin cambios.',
+  },
+  'falda-serenada': {
+    comparables: [{ label: 'Etsy, tops trabajados', price: 'US$40–90 (tramo medio)' }],
+    recommendation: 'Mismo precio y horas que Top CHERRY/SUMMER, así que comparte su posicionamiento. Nota aparte: hoy no tiene categoría asignada en la base — no aparece en /tienda/tops. Revisalo en el editor de este producto.',
+  },
+  'top-flower': {
+    comparables: [{ label: 'Etsy, tops trabajados', price: 'US$40–90 (Flower, a US$49,7, cae adentro)' }],
+    recommendation: 'Subió 60% (de $1.250 a $1.999) el 23/08 sin quedar documentado. El resultado interno es excelente (segundo mejor $/h del catálogo de prendas) — pero por casualidad, no por decisión. Igual que Amélie: confirmá que se sigue vendiendo bien.',
+  },
+  'poncho': {
+    comparables: [
+      { label: 'Natalia Otero Deco (AR, indie)', price: 'ARS 48.000 con 20% off ≈ $1.258 / US$31,3', url: 'https://nataliaoterodeco.mitiendanube.com/productos/poncho-tejido-al-crochet/' },
+      { label: 'Manos del Uruguay (techo, lujo)', price: 'US$280–310' },
+    ],
+    recommendation: 'Empata casi exacto en dólares con una marca indie argentina real, y paga la hora peor que casi cualquier top del catálogo. Es la pieza que tu propia regla "más horas = más precio" usa de ejemplo — hoy no lo refleja. Candidato directo a subir.',
+  },
+  'sweater-senda': {
+    comparables: [{ label: 'Etsy, tops/cardigans trabajados', price: 'US$40–90 (Senda, a US$48,7, cae adentro)' }],
+    recommendation: 'No tiene fila en tu tabla de precios ni horas/materiales cargados. El precio en dólares no parece disparatado — falta estimar las horas para poder aplicar el mismo criterio que al resto del catálogo.',
+  },
+  'cardigan-3-4': {
+    comparables: [{ label: 'Indian (UY, retail a máquina)', price: '$999–1.499 lista, ~$849–1.274 con descuento', url: 'https://www.indian.com.uy/vestimenta/sacos-y-cardigans' }],
+    recommendation: 'Ya está dentro del rango de lista de Indian, pero paga entre las peores horas de todo el catálogo. La demanda de Cardigan amour sugiere que no hace falta esperar a feb-mar 2027 para subirlo.',
+  },
+  'cardigan-cruzado': {
+    comparables: [{ label: 'Indian (UY, retail a máquina)', price: '$999–1.499 lista — hoy quedaste por debajo de este piso' }],
+    recommendation: '⚠️ Bajó de $1.290 a $1.189 el 23/08 sin explicación — la única baja de todo el catálogo, y quedó con el peor $/h de todas las prendas, por debajo incluso de la ropa a máquina. Candidato más urgente a revertir de todo el análisis.',
+  },
+  'set-brisa': {
+    comparables: [{ label: 'Etsy, sets de 3 piezas', price: 'US$65–135', url: 'https://www.etsy.com/listing/1893697835/3-piece-handmade-crochet-set' }],
+    recommendation: 'Muy por debajo del piso de Etsy y con uno de los peores $/h del catálogo, pese a ser (según tu propia nota) "la pieza más regalada". Prioridad real de aumento.',
+  },
+  'set-de-bufanda-y-guantes': {
+    comparables: [],
+    recommendation: 'Subió de $790 a $980 (superando incluso tu meta a 12 meses) sin quedar documentado — pero el resultado es bueno: queda entre los mejores $/h de la categoría. Formalizalo como decisión, no hace falta revertirlo.',
+  },
+  'set-lueur': {
+    comparables: [{ label: 'Etsy, sets de 3 piezas', price: 'US$65–135' }],
+    recommendation: 'Igual que Set BRISA: por debajo del piso de Etsy y con $/h débil. Sin cambios desde julio.',
+  },
+  'set-lurex': {
+    comparables: [{ label: 'Etsy, sets de 3 piezas', price: 'US$65–135 (Lurex, a US$49,7, todavía por debajo)' }],
+    recommendation: 'Subió de $1.250 a $1.999 el 02/09 sin documentar. El $/h casi se duplicó — buen resultado, formalizalo.',
+  },
+  'beach-set': {
+    comparables: [{ label: 'Etsy, sets de 3 piezas', price: 'US$65–135 (Beach set, a US$59,6, cerca del piso)' }],
+    recommendation: 'Subió de $1.490 a $2.400 el 02/09 sin documentar. Es el mejor $/h de todo el catálogo de prendas — formalizalo, no hace falta revertirlo.',
+  },
+  'bandana': {
+    comparables: [{ label: 'Isadora/Todomoda (AR, fábrica, poliéster)', price: '$103–328 UYU equiv. — no comparable en calidad, solo marca un piso' }],
+    recommendation: 'No tocar — HOLD a propósito. La demanda de carrito (4 unidades, top-5 del catálogo) confirma que funciona como puerta de entrada.',
+  },
+  'mini-bufandas': {
+    comparables: [{ label: 'Mercado Libre UY, "bufanda lana"', price: 'Cae en el primer tercio de precio del mercado local', url: 'https://listado.mercadolibre.com.uy/bufanda-lana' }],
+    recommendation: 'No tocar — HOLD a propósito, compra de impulso y regalo.',
+  },
+  'bufanda-sophie': {
+    comparables: [
+      { label: 'Mercado Libre UY (fábrica, "Atrix")', price: '$284,76 en oferta — solo marca un piso, no es artesanal' },
+      { label: 'Etsy, bufandas handmade', price: 'US$18,75–90 (por debajo incluso del piso, pero Etsy es otro costo de vida)' },
+    ],
+    recommendation: 'Dentro del rango sano de la categoría. Sin evidencia local de que esté subvaluada.',
+  },
+  'calentadores': {
+    comparables: [],
+    recommendation: '⚠️ Subió 69% (de $590 a $1.000) sin quedar documentado, y no encontré NINGÚN comparable de mercado (ni local ni regional) que lo respalde — el resultado queda muy por fuera de lo normal para esta categoría. Confirmá si fue una decisión consciente o un error de carga antes de sacar cualquier conclusión.',
+  },
+  'mini-tote-bag': {
+    comparables: [{ label: 'Ceará Feito à Mão (BR, artesanal)', price: 'R$89,90 ≈ $698 / US$17,3 — casi idéntico', url: 'https://www.cearafeitoamao.com.br/bolsas-de-croche/bolsas-de-croche' }],
+    recommendation: 'Mantener. Cerca del techo de la categoría; el comparable regional es casi calcado.',
+  },
+  'tote-bag-de-playa': {
+    comparables: [{ label: 'Mercado Libre Argentina, bolsos de algodón artesanales', price: '$35.000–45.000 ARS ≈ $919–1.182 / US$22,8–29,3', url: 'https://articulo.mercadolibre.com.ar/MLA-1590879332-bolso-artesanal-tejido-crochet-hilo-de-algodon-_JM' }],
+    recommendation: 'Único caso de accesorios donde el mercado regional y tu $/h apuntan en la misma dirección: hay margen moderado. Coincide con el ajuste a $790 que ya tenés planeado para nov-2026 — no urge adelantarlo.',
+  },
+  'bolso-de-estudiante': {
+    comparables: [{ label: 'Mercado Libre Argentina, bolsos de algodón artesanales', price: '$919–1.182 UYU equiv. — el precio en vivo cae justo adentro' }],
+    recommendation: 'Subió de $720 a $990 (+37,5%) sin documentar, pero el resultado alinea con el único comparable regional sólido que encontré — no parece un error. Confirmá igual, sin alarma.',
+  },
+  'donut-bag': {
+    comparables: [{ label: 'Mercado Libre Argentina, bolsos de algodón artesanales', price: '$919–1.182 UYU equiv. — dentro del rango en pesos' }],
+    recommendation: 'Subió de $720 a $990 (+37,5%) sin documentar. Ya es el techo de $/h de la categoría — no urge subirlo más, sí confirmar que fue intencional.',
+  },
+  'bolso-a-cuadros': {
+    comparables: [{ label: 'Mercado Libre Argentina, bolsos de algodón artesanales', price: 'Medio del rango, $919–1.182 UYU equiv.' }],
+    recommendation: 'Mantener. Bien ubicado tanto en $/h como frente al comparable regional.',
+  },
+  'bolso-lola': {
+    comparables: [{ label: 'Mercado Libre Argentina (referencia de bolsos más chicos)', price: 'Por encima de $919–1.182 UYU — razonable, es la pieza de más horas de la categoría' }],
+    recommendation: 'Mantener. Ya captura el techo de contribución por hora de toda la categoría accesorios.',
+  },
+  'box-de-regalo': {
+    comparables: [
+      { label: 'Packaging genérico al por menor (UY)', price: '$11–65 — caro si es solo el envoltorio', url: 'https://packaging.uy/categoria-producto/regalos/' },
+      { label: 'Universo Regalos (UY), boxes curados con contenido', price: '$2.590–4.390 — pero estos SÍ incluyen el regalo adentro', url: 'https://universoregalos.com.uy/' },
+    ],
+    recommendation: 'No es una prenda, es un servicio de curaduría + presentación. Antes de fijarle precio en serio: ¿el cargo de $650 incluye una pieza o es solo el packaging? La comparación cambia mucho según la respuesta.',
+  },
+  'chaleco': {
+    comparables: [],
+    recommendation: 'Este producto no existe hoy en tu catálogo (tampoco hace 12 días) pero sigue en esta tabla. Google le sigue mostrando esa página a gente que busca "chaleco" (65 impresiones reales) — decidí si lo relanzás o si preferís que retiremos la fila y redirijamos esa URL a Cardigans.',
+  },
+}
+
+export interface OrphanProduct {
+  slug: string
+  name: string
+  category: string
+}
+
+/** Productos EN VIVO sin ninguna fila en PRICE_TABLE — sin horas/materiales
+ * cargados, así que hoy no se les puede calcular $/h. */
+export const ORPHAN_PRODUCTS: OrphanProduct[] = [
+  { slug: 'cardigan-amour', name: 'Cardigan amour', category: 'Cardigans' },
+  { slug: 'spring-cardigan', name: 'Spring cardigan', category: 'Cardigans' },
+  { slug: 'granny-s-cardigan', name: 'Granny’s cardigan', category: 'Cardigans' },
+  { slug: 'sweater-senda', name: 'Sweater Senda', category: 'Tops' },
+]
+
+MARKET_COMPARABLES['cardigan-amour'] = {
+  comparables: [
+    { label: 'Etsy, cardigans oversized/statement', price: 'US$125–249 — hoy estás a menos de la mitad del piso', url: 'https://www.etsy.com/listing/4392770470/handmade-purple-crochet-cardigan-xxl' },
+  ],
+  recommendation: '★ El hallazgo más importante de toda la auditoría: es el producto #1 en carritos reales de toda tu tienda (10 unidades) y el mercado internacional paga entre el doble y el cuádruple por algo comparable. Pero como no tenés horas ni materiales cargados para esta pieza, no hay forma de saber si subir el precio te pagaría bien la hora. Cronometrá esta pieza (medí cuánto tarda de verdad) antes de tocar el precio de nuevo.',
+}
+MARKET_COMPARABLES['spring-cardigan'] = {
+  comparables: [{ label: 'Etsy, cardigans oversized/statement', price: 'US$125–249 (hoy estás a US$69,6, más cerca del piso que Amour)' }],
+  recommendation: 'Sin fila de precio y sin señal de demanda fuerte reportada (a diferencia de Amour y Granny’s). Antes de tocarlo: mirá cuántas veces se agregó al carrito y cuánto tráfico recibe, y cronometrá las horas si hay tracción real.',
+}
+MARKET_COMPARABLES['granny-s-cardigan'] = {
+  comparables: [{ label: 'Etsy, cardigans oversized/statement', price: 'US$125–249 (hoy estás a US$82,0, por debajo incluso del piso)' }],
+  recommendation: 'Es el producto más nuevo y más caro de todo tu catálogo, y ya tiene 23 visitas directas a su ficha en 11 días — probablemente lo compartiste o lo compartieron en redes. Cronometralo pronto, antes de que se te forme una lista de espera como pasó con Amour.',
+}
+
 export const PRICING_PHASES = [
   {
     when: 'Hecho (jul 2026)',
@@ -315,6 +527,108 @@ export const WEAVER_SYSTEM = [
     body: 'El modelo de los grandes (Manos, SOKO): tu tejedora más constante pasa a ser la "referente" — recibe las piezas de las demás, hace el primer control contra la ficha y a vos solo llega lo dudoso. Se le paga ese rol (por pieza revisada o tarifa senior). Es el único camino para que el control de calidad no seas siempre vos.',
   },
 ]
+
+// ─── Cómo crecer: comparación de caminos (03/09/2026) ─────────
+// Pedido puntual: comparar varias formas de crecer (no solo "subir precio o
+// no") con la cuenta real de cada una, y decir cuál conviene y por qué.
+
+export const GROWTH_INTRO =
+  'Dijiste algo importante: cobrás precio medio/bajo, pero no tenés tejedoras como para vender más — y no te da el tiempo ni te queda tanta plata como para pagar publicidad a lo loco. Antes de elegir un camino, un dato que ya tenías escrito desde julio y todavía no se probó: nunca se hizo el video pidiendo tejedoras, y nunca se dio la primera clase piloto. Las dos cuestan tu tiempo, no plata — y las dos siguen sin marcarse en tu lista de "para hacer". Eso cambia la cuenta de todo lo de abajo.'
+
+export type GrowthVerdict = 'recomendado' | 'con-condicion' | 'no-recomendado'
+
+export interface GrowthStrategy {
+  id: string
+  name: string
+  what: string
+  pros: string[]
+  cons: string[]
+  verdict: GrowthVerdict
+  verdictNote: string
+}
+
+export const GROWTH_STRATEGIES: GrowthStrategy[] = [
+  {
+    id: 'solo-precio',
+    name: 'Subir precio, seguir tejiendo sola',
+    what: 'No sumás a nadie. Seguís vos tejiendo todo, y subís precio en las piezas que lo necesitan.',
+    pros: [
+      'Ya está pasando: 8 productos subieron de precio en agosto/septiembre sin que nadie lo planeara, y en 6 de los 8 casos el resultado quedó bien.',
+      'No gastás nada — es una decisión de precio, no de gente.',
+    ],
+    cons: [
+      'No resuelve "no me da el tiempo": por más que subas precio, seguís topeada en tus horas disponibles.',
+      'Ya hay demanda que hoy no llegás a atender (lista de espera, Cardigan amour a tope de carritos) — subir precio sin sumar manos deja esa venta arriba de la mesa.',
+    ],
+    verdict: 'con-condicion',
+    verdictNote: 'Seguí subiendo donde la cuenta de $/hora lo pide (ver pestaña Precios) — pero sola tenés un techo de facturación que no se mueve por más que subas precio.',
+  },
+  {
+    id: 'publicidad-tejedoras',
+    name: 'Pagar publicidad para conseguir tejedoras ya',
+    what: 'Subís precio Y pagás anuncios pidiendo tejedoras, para que Anush se quede con lo lindo/caro y otras tejan lo simple.',
+    pros: [
+      'En teoría es más rápido que esperar a que alguien se postule sola.',
+    ],
+    cons: [
+      'Nunca probaste el camino gratis: el video/story pidiendo tejedoras + el link a /tejedoras en la bio siguen sin hacerse desde julio. Gastar plata en algo que nunca probaste gratis es un salto al vacío.',
+      'Sin cronometrar una pieza real con una tejedora (no con vos), no sabés a qué tarifa por pieza le podés ofrecer trabajo — podrías atraer gente y no tener con qué pagarle bien.',
+    ],
+    verdict: 'no-recomendado',
+    verdictNote: 'Todavía no — probá el video gratis y cronometrá una pieza antes de gastar un peso acá.',
+  },
+  {
+    id: 'volumen-mismo-precio',
+    name: 'Cobrar lo mismo, conseguir tejedoras, vender más cantidad',
+    what: 'No tocás precio, sumás tejedoras, apuntás a vender más unidades de lo mismo.',
+    pros: [],
+    cons: [
+      'Con los precios de julio, pagarle a una tejedora ya daba pérdida en casi todo el catálogo (un top de 13 horas: $150/h de tejedora + lana costaba más de lo que la prenda cobraba).',
+      'Justo mejoraste tu pago por hora en varias piezas sin querer (ver pestaña Precios) — bajar precio ahora para vender más cantidad sería deshacer lo que ya te funcionó.',
+    ],
+    verdict: 'no-recomendado',
+    verdictNote: 'Es la opción que peor cierra con tus propios números: vender más de algo que paga mal la hora agranda el problema, no lo resuelve.',
+  },
+  {
+    id: 'clases-primero',
+    name: 'Clases primero, tejedoras como consecuencia',
+    what: 'Das el ciclo piloto de clases que ya tenés planeado (pestaña Clases). Cobrás por enseñar — tu mejor uso de una hora — y tus mejores alumnas del Nivel 3 (las que terminan una pieza a tu estándar) son candidatas ya probadas para tejer con vos.',
+    pros: [
+      'Una hora enseñando vale $291–500. Tejiendo, esa misma hora te deja $34–58. Es tu mejor negocio por hora, sin comparación.',
+      'Resuelve las dos quejas juntas: entra plata mejor pagada YA, y arma un canal de tejedoras que ya demostraron que saben seguir tu ficha — mucho mejor filtro que alguien que solo respondió un aviso.',
+      'No cuesta plata para arrancar: la clase piloto es con 3-4 conocidas, a precio amigo.',
+    ],
+    cons: [
+      'No es instantáneo: tarda meses en convertirse en tejedoras produciendo de verdad.',
+    ],
+    verdict: 'recomendado',
+    verdictNote: 'Es el camino con menos riesgo y doble beneficio. Además ya está escrito paso a paso en la pestaña Clases — solo falta empezarlo.',
+  },
+  {
+    id: 'separar-catalogo',
+    name: 'Separar el catálogo: piezas tuyas vs. piezas delegables',
+    what: 'En vez de pensar "todo o nada", dividís: las piezas caras y con cola (Cardigan amour, Granny’s, etc.) quedan siempre tuyas y subís su precio sin miedo — afuera se pagan 2 a 4 veces más. Los bolsos y accesorios (ya tu mejor pago por hora) son los primeros candidatos reales a delegar, porque ahí la cuenta ya casi cierra.',
+    pros: [
+      'No tenés que apostar todo el catálogo a una sola decisión — cada parte sigue el camino que ya le conviene según sus propios números.',
+      'Te da un orden claro de por dónde empezar a delegar (accesorios primero, nunca las piezas firma).',
+    ],
+    cons: [],
+    verdict: 'recomendado',
+    verdictNote: 'No es una alternativa a las otras — es el marco para aplicar cualquiera de las de arriba sin mezclar todo el catálogo en una sola regla.',
+  },
+]
+
+export const GROWTH_RECOMMENDATION = {
+  title: 'En una frase',
+  body:
+    'No es elegir una sola opción de la lista — es un orden: primero lo gratis que nunca se probó (el video pidiendo tejedoras + la primera clase piloto), después medir con datos reales (cronometrar una pieza con una tejedora de verdad, no con vos), y recién con esos dos datos en la mano decidís si hace falta gastar en publicidad de reclutamiento. Pagar publicidad sin haber probado el camino gratis es la única forma segura de gastar de más.',
+  steps: [
+    { step: 'Esta semana', detail: 'Grabá el video/story de "buscamos tejedoras" y poné el link a /tejedoras en la bio de Instagram. Costo: cero. Te dice si el reclutamiento gratis alcanza antes de gastar nada.' },
+    { step: 'Este mes', detail: 'Dá la clase piloto (3-4 conocidas, 4 encuentros, precio amigo). Es tu mejor $/hora y el filtro natural de futuras tejedoras.' },
+    { step: 'En paralelo', detail: 'Cronometrá una pieza real con la primera tejedora candidata (Cardigan amour o un bolso simple), contra una ficha técnica. Ese número solo, decide si delegar ya cierra o si hace falta subir precio primero.' },
+    { step: 'Recién ahí', detail: 'Si el video + la clase no te dan suficientes tejedoras candidatas, evaluá pagar publicidad de reclutamiento — con el dato del cronometraje ya en mano para saber qué tarifa por pieza podés ofrecer.' },
+  ],
+}
 
 // ─── Clases ──────────────────────────────────────────────────
 

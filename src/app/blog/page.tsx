@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getAllArticles, getUsedClusters, getClusterArticles } from '@/content/blog'
-import { CLUSTER_LABEL, type Article } from '@/content/blog/types'
+import { CLUSTER_LABEL, CLUSTER_INTRO, type Article } from '@/content/blog/types'
 import { readingMinutes } from '@/content/blog/toc'
 import { dahila, Eyebrow } from '@/components/ui/Primitives'
 import { SITE_URL } from '@/lib/env'
@@ -30,7 +30,9 @@ export const metadata: Metadata = {
 export default function BlogIndexPage() {
   const articles = getAllArticles()
   const clusters = getUsedClusters()
-  const [lead, ...rest] = articles
+  // La destacada es la primera del registro (criterio editorial, no fecha) y
+  // se excluye de su sección temática para no aparecer dos veces.
+  const lead = articles[0]
 
   // Blog + ItemList: le dice a Google que esto es un blog y cuáles son sus
   // notas, sin repetir el Article schema que ya publica cada nota.
@@ -77,54 +79,43 @@ export default function BlogIndexPage() {
       {/* Nota destacada — la primera del registro (criterio editorial, no fecha). */}
       {lead && <LeadCard article={lead} />}
 
-      {rest.length > 0 && (
-        <div className="blog-grid" style={{
-          display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-          gap: 28, rowGap: 40, marginTop: 44,
-        }}>
-          {rest.map((a) => <ArticleCard key={a.slug} article={a} />)}
-        </div>
-      )}
-
-      {/* Índice por tema: además de orientar a la lectora, deja en el HTML un
-          bloque de enlaces internos agrupados por cluster, que es exactamente
-          la señal de estructura temática que conviene para SEO. */}
-      <section style={{ marginTop: 72, paddingTop: 40, borderTop: `1px solid ${dahila.border}` }}>
-        <h2 style={{
-          fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 22,
-          letterSpacing: '0.06em', textTransform: 'uppercase',
-          color: dahila.ink900, margin: '0 0 28px',
-        }}>
-          Por tema
-        </h2>
-        <div className="blog-clusters" style={{
-          display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 32,
-        }}>
-          {clusters.map((c) => (
-            <div key={c}>
-              <h3 style={{
-                fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 500,
-                letterSpacing: '0.18em', textTransform: 'uppercase',
-                color: dahila.wine600, margin: '0 0 12px',
+      {/* El listado va AGRUPADO POR TEMA, no como una grilla mezclada. Con 8
+          notas una grilla plana se sostenía; pasando de diez, la lectora ya no
+          entiende qué separa una nota de otra (reporte de Mati, 04/09/2026), y
+          además se pierde la señal de estructura temática que le sirve a
+          Google. La nota destacada de arriba no se repite acá abajo. */}
+      {clusters.map((c) => {
+        const inCluster = getClusterArticles(c).filter((a) => a.slug !== lead?.slug)
+        if (inCluster.length === 0) return null
+        return (
+          <section key={c} style={{ marginTop: 56 }}>
+            <div style={{
+              display: 'flex', flexDirection: 'column', gap: 6,
+              paddingBottom: 18, marginBottom: 26,
+              borderBottom: `1px solid ${dahila.border}`,
+            }}>
+              <h2 style={{
+                fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 26,
+                lineHeight: 1.2, color: dahila.ink900, margin: 0,
               }}>
                 {CLUSTER_LABEL[c]}
-              </h3>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {getClusterArticles(c).map((a) => (
-                  <li key={a.slug}>
-                    <Link href={`/blog/${a.slug}`} style={{
-                      fontFamily: dahila.fontSans, fontSize: 14.5, fontWeight: 300,
-                      lineHeight: 1.5, color: dahila.ink700, textDecoration: 'none',
-                    }}>
-                      {a.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              </h2>
+              <p style={{
+                fontFamily: dahila.fontSans, fontSize: 14.5, fontWeight: 300,
+                lineHeight: 1.6, color: dahila.ink500, margin: 0,
+              }}>
+                {CLUSTER_INTRO[c]}
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
+            <div className="blog-grid" style={{
+              display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+              gap: 28, rowGap: 40,
+            }}>
+              {inCluster.map((a) => <ArticleCard key={a.slug} article={a} />)}
+            </div>
+          </section>
+        )
+      })}
     </div>
   )
 }

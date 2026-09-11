@@ -276,6 +276,19 @@ export function readyDateEstimate(minWeeks: number, maxWeeks: number): string | 
 // in /public so next/image can serve it normally.
 export const PHOTO_PLACEHOLDER = '/placeholder-product.svg';
 
+/**
+ * Texto de cuidados estándar del catálogo. Es el que ya tienen 35 de los 37
+ * productos activos; los otros dos se cargaron a mano y decían "agua tibia",
+ * que contradice al resto (el salto de temperatura entre lavado y enjuague es
+ * lo que apelmaza la fibra). Vive acá para que el alta de producto lo precargue
+ * y el texto no se vuelva a desviar. Ver database/unificar-cuidados-2026-09.sql.
+ */
+export const DEFAULT_CARE_INSTRUCTIONS = [
+  'Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.',
+  'Para secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.',
+  'Si la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.',
+].join('\n');
+
 // Tiny cream-tone blur placeholder for next/image `placeholder="blur"`.
 // A single solid colour keeps the data URL small (good for LCP) while
 // avoiding the harsh empty→image pop. Cream = #FAF1DF.
@@ -290,7 +303,13 @@ export function getPrimaryPhoto(product: Product): string {
   if (!product.media || product.media.length === 0) {
     return PHOTO_PLACEHOLDER;
   }
-  const primary = product.media.find(m => m.is_primary && m.type === 'image');
+  // Si más de una foto quedó marcada is_primary (dato inconsistente, visto en
+  // producción), `.find()` sin orden dependía del orden que devolviera
+  // Postgres — no garantizado sin un ORDER BY explícito. Ordenar por
+  // `position` primero hace el desempate determinístico: siempre gana la de
+  // menor posición, sin importar cómo llegue la fila de la base.
+  const sorted = [...product.media].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  const primary = sorted.find(m => m.is_primary && m.type === 'image') ?? sorted.find(m => m.type === 'image');
   return primary?.url || product.media[0].url || PHOTO_PLACEHOLDER;
 }
 

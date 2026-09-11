@@ -323,22 +323,6 @@ export function TiendaClient({
     return [...bestOrder.entries()].sort((a, b) => a[1] - b[1]).map(([size]) => size)
   }, [initialProducts])
 
-  // Sección "En stock" — las piezas ya tejidas, sin la espera del a-medida.
-  // Misma fuente que el filtro y que el bloque de la home (isReadyToShip →
-  // lead_time_weeks_min = 0, que Anush marca desde el editor de producto), así
-  // que no hay una segunda lista que mantener ni columna nueva en la base.
-  //
-  // Se acota a la categoría de la página: en /tienda/cardigans muestra los
-  // cardigans en stock, no bolsos. Ahí la sección SIRVE a la intención de la
-  // clienta en vez de contradecirla — y las categorías son ~1 de cada 5
-  // impresiones que el sitio recibe en Google.
-  const readyToShip = useMemo(
-    () => initialProducts.filter(
-      (p) => isReadyToShip(p) && (filter === 'todo' || p.category?.slug === filter)
-    ),
-    [initialProducts, filter]
-  )
-
   const filtered = useMemo(() => {
     const result = initialProducts.filter((p) => matchesFilters(p, {
       filter, search, colorIds: appliedColorIds, sizes: appliedSizes,
@@ -392,18 +376,6 @@ export function TiendaClient({
   // búsqueda (en mobile el input está oculto: sin esto, un ?q= del buscador
   // del header dejaría la grilla filtrada sin ninguna forma visible de volver).
   const hasActiveCriteria = activeFilterCount > 0 || search.trim().length > 0
-
-  // Distinto de hasActiveCriteria: la categoría NO cuenta como filtro de la
-  // clienta (en /tienda/cardigans es el contexto de la página, no algo que
-  // ella tocó). Solo esto esconde la sección "En stock" — mientras esté
-  // simplemente mirando el catálogo o una categoría, la sección ayuda.
-  const hasUserFilters =
-    appliedColorIds.length + appliedSizes.length > 0 ||
-    (appliedMaxPrice !== null && appliedMaxPrice < priceBounds.max) ||
-    appliedOnlyDiscount ||
-    appliedHideOutOfStock ||
-    appliedOnlyReadyToShip ||
-    search.trim().length > 0
 
   const clearAll = () => {
     setFilter('todo')
@@ -472,7 +444,22 @@ export function TiendaClient({
   }
 
   const activeCategory = filter !== 'todo' ? categories.find((c) => c.slug === filter) : undefined
-  const heading = activeCategory?.name || (filter !== 'todo' ? 'Colección' : appliedOnlyDiscount ? 'Ofertas' : 'Colección')
+  // H1 con el modificador que de verdad se puede ganar. El H1 genérico
+  // ("Cardigans") compite contra el retail de temporada — La Ópera, Mango,
+  // Indian — donde la intención de búsqueda es cardigan de punto industrial y
+  // Dahila no tiene con qué. Con el modificador ("Cardigans de crochet tejidos
+  // a mano") compite en una consulta que ninguna tienda uruguaya cubre.
+  // El <title> de la página ya decía esto; el H1 decía lo contrario.
+  // Auditoría SEO 04/09/2026.
+  // "de crochet tejido a mano" y no "tejidos a mano": así todo concuerda con
+  // "crochet" (masculino singular) y la frase sigue siendo correcta con
+  // cualquier categoría futura, incluida una femenina como "Faldas".
+  // "En stock, sin espera" cuando se llega desde el enlace del mega-menú
+  // (/tienda?ya=1): que la página diga lo mismo que el enlace que la abrió.
+  const heading = activeCategory
+    ? `${activeCategory.name} de crochet tejido a mano`
+    : appliedOnlyReadyToShip ? 'En stock, sin espera'
+    : appliedOnlyDiscount ? 'Ofertas' : 'Colección'
 
   return (
     <div className="tienda-page" style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
@@ -783,83 +770,6 @@ export function TiendaClient({
         )}
       </div>
 
-      {/* ── Sección "En stock" ────────────────────────────────────────────
-          Las piezas que ya están tejidas y salen sin espera. Va arriba de la
-          grilla y SOLO con el catálogo completo a la vista (sin filtros ni
-          búsqueda): si alguien ya está filtrando, esta sección competiría con
-          su intención en vez de ayudarla.
-
-          Por qué existe como sección y no solo como filtro: un filtro hay que
-          descubrirlo y activarlo — la mayoría nunca abre el panel. En un
-          catálogo hecho a mano, donde casi todo tiene semanas de espera, lo
-          que ya está listo es justo lo que más rápido convierte, y la
-          investigación de entrega es contundente: la falta de una fecha
-          concreta es de los motivos más citados de abandono. Acá la promesa
-          es concreta y honesta — sale ya. */}
-      {!hasUserFilters && readyToShip.length > 0 && readyToShip.length < filtered.length && (
-        <section
-          aria-labelledby="en-stock-titulo"
-          style={{
-            marginBottom: 48, paddingBottom: 40,
-            borderBottom: `1px solid ${dahila.border}`,
-          }}
-        >
-          <div style={{
-            display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
-            gap: 16, flexWrap: 'wrap', marginBottom: 18,
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <Eyebrow>En stock</Eyebrow>
-              <h2 id="en-stock-titulo" style={{
-                fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 23,
-                color: dahila.ink900, margin: 0,
-              }}>
-                Listo para llevar, sin espera
-              </h2>
-              <p style={{
-                fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300,
-                color: dahila.ink700, margin: 0, lineHeight: 1.6,
-              }}>
-                Estas piezas ya están tejidas — se despachan apenas confirmás.
-              </p>
-            </div>
-            {readyToShip.length > 4 && (
-              <button
-                onClick={() => {
-                  track('en_stock_ver_todas', { count: readyToShip.length })
-                  // Aplicado directo, no vía setReadyToShipOnly: ese helper
-                  // deja el filtro en borrador en mobile (espera el botón "Ver
-                  // resultados" del panel). Acá el click ES la confirmación, y
-                  // en mobile cae la mayor parte del tráfico de Instagram.
-                  setOnlyReadyToShipFilter(true)
-                  setAppliedOnlyReadyToShip(true)
-                }}
-                style={{
-                  background: 'transparent', border: 'none', cursor: 'pointer',
-                  fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600,
-                  textDecoration: 'underline', padding: 0,
-                }}
-              >
-                Ver las {readyToShip.length} →
-              </button>
-            )}
-          </div>
-
-          <div className="tienda-grid" style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22, rowGap: 44,
-          }}>
-            {readyToShip.slice(0, 4).map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                discounts={discounts}
-                onQuickView={() => { track('quickview_open', { product: p.slug, source: 'en_stock' }); setQuickView(p) }}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
       <RecentlyViewedStrip />
 
       {filtered.length === 0 ? (
@@ -893,11 +803,15 @@ export function TiendaClient({
         <div className="tienda-grid" style={{
           display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22, rowGap: 44,
         }}>
-          {filtered.map((p) => (
+          {filtered.map((p, i) => (
             <ProductCard
               key={p.id}
               product={p}
               discounts={discounts}
+              // Las primeras 4 fotos son el LCP real de esta página (no tiene
+              // hero). La sección "En stock" que antes iba arriba se mudó al
+              // mega-menú (04/09/2026), así que ya no compite por ese lugar.
+              priority={i < 4}
               onQuickView={() => { track('quickview_open', { product: p.slug }); setQuickView(p) }}
             />
           ))}

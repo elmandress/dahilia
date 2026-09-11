@@ -16,6 +16,7 @@ import { AttributionCapture } from '@/components/AttributionCapture'
 import { SITE_URL, SUPABASE_STORAGE_ORIGIN } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
 import { getCatalog } from '@/lib/catalog'
+import { isReadyToShip } from '@/lib/types'
 import './globals.css'
 
 export const viewport: Viewport = {
@@ -125,14 +126,8 @@ const organizationJsonLd = {
     telephone: '+59899850073',
     availableLanguage: ['Spanish'],
   },
-  // Store-wide return policy — piezas a medida no admiten cambios (coherente con
-  // la FAQ). Google recomienda declararla a nivel Organization cuando aplica a
-  // toda la tienda, y sirve como override base para el Product schema.
-  hasMerchantReturnPolicy: {
-    '@type': 'MerchantReturnPolicy',
-    applicableCountry: 'UY',
-    returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
-  },
+  // Sin hasMerchantReturnPolicy a propósito (04/09/2026): se sacó del sitio
+  // todo lo referido a cambios y devoluciones, también del structured data.
 }
 
 // WebSite (distinto de Organization arriba): Google lo lee aparte para
@@ -269,12 +264,13 @@ export default async function RootLayout({
               showOfertas={showOfertas}
               showColecciones={showColecciones}
               categories={catalog.categories.map((c) => ({ slug: c.slug, label: c.name }))}
+              readyToShipCount={catalog.products.filter(isReadyToShip).length}
             />
             <main id="contenido">
               {children}
             </main>
             <Footer tagline={tagline} showOfertas={showOfertas} showColecciones={showColecciones} />
-            <CartDrawer />
+            <CartDrawer products={catalog.products} />
             <BackToTop />
             <WhatsAppFloat enabled={waEnabled} waUrl={waUrl} />
             <WeaverCallout />

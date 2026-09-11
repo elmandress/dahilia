@@ -8,6 +8,19 @@ import { article as cuantoCuesta } from './articles/cuanto-cuesta-una-prenda-tej
 import { article as crochetODosAgujas } from './articles/crochet-o-dos-agujas-diferencias'
 import { article as regalosTejidos } from './articles/regalos-tejidos-a-mano'
 import { article as encargoAMedida } from './articles/como-encargar-prenda-a-medida'
+import { article as queTalle } from './articles/que-talle-de-prenda-tejida-me-queda'
+import { article as cuantoDemora } from './articles/cuanto-demora-una-prenda-tejida-a-mano'
+import { article as cardiganComoElegir } from './articles/cardigan-de-crochet-como-elegirlo'
+import { article as lanaPica } from './articles/la-lana-pica-fibras-piel-sensible'
+import { article as topsVerano } from './articles/tops-de-crochet-para-verano'
+import { article as bolsosDuran } from './articles/bolsos-de-crochet-por-que-duran'
+import { article as materiales } from './articles/materiales-de-una-prenda-tejida'
+import { article as setVsSueltas } from './articles/set-tejido-vs-piezas-sueltas'
+import { article as crochetAMaquina } from './articles/el-crochet-se-hace-a-maquina'
+import { article as holgura } from './articles/holgura-prenda-tejida'
+import { article as queDebajo } from './articles/que-ponerse-debajo-de-un-top-de-crochet'
+import { article as primerosAuxilios } from './articles/primeros-auxilios-prenda-tejida'
+import { article as entretiempo } from './articles/entretiempo-uruguay-prendas-tejidas'
 
 /**
  * Registro de artículos. Agregar una nota = crear el archivo en `articles/` e
@@ -20,8 +33,21 @@ import { article as encargoAMedida } from './articles/como-encargar-prenda-a-med
  */
 const ARTICLES: Article[] = [
   comprarUruguay,
+  crochetAMaquina,
+  queTalle,
+  holgura,
+  cardiganComoElegir,
+  entretiempo,
+  topsVerano,
+  queDebajo,
+  materiales,
+  setVsSueltas,
+  bolsosDuran,
   cuidarPrendas,
+  primerosAuxilios,
   encargoAMedida,
+  cuantoDemora,
+  lanaPica,
   regalosTejidos,
   cuantoCuesta,
   lavarCrochet,

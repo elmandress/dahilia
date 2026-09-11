@@ -601,3 +601,33 @@
 }
 .est-calc-result .verdict.under { background: rgba(230,147,167,0.14); color: #F4C6D1; }
 .est-calc-result .verdict.over { background: rgba(30,132,73,0.2); color: #A7E6C0; }
+
+/* ---------- Comparables de mercado (auditoría 03/09/2026) ---------- */
+.est-market-toggle {
+  background: transparent;
+  border: 1px solid #8F3B53;
+  color: #8F3B53;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.est-market-toggle:hover { background: rgba(143,59,83,0.08); }
+.est-market-panel { padding: 10px 2px; }
+.est-market-list {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  font-size: 0.82rem;
+  color: #4A4143;
+  line-height: 1.6;
+}
+.est-market-list a { color: #8F3B53; }
+.est-market-reco {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #1F1A1B;
+  line-height: 1.65;
+  font-style: italic;
+}

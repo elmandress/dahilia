@@ -84,6 +84,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Nota (04/09/2026): acá hubo un redirect /tienda/chaleco → /tienda/cardigans,
+  // agregado el 03/09 porque el producto `chaleco` no aparecía en el catálogo y
+  // Search Console medía 65 impresiones cayendo en un 404. Se quitó al día
+  // siguiente: el producto SÍ existe y está activo (creado 06/06/2026, debía
+  // estar en borrador cuando se auditó), así que el redirect habría tapado una
+  // ficha real. Si alguna vez se discontinúa de verdad, este es el lugar.
+  //
   // Proxy de Umami por el propio dominio — ver comentario junto a umamiOrigin
   // arriba. Sin la env var, no agrega rewrites (comportamiento actual).
   async rewrites() {

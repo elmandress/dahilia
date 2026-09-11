@@ -4,12 +4,22 @@ import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { dahila, Eyebrow, Field, TextInput, Button } from '@/components/ui/Primitives'
 import { EncargosDisponibles, type EncargosCuposState } from '@/components/EncargosDisponibles'
+import { SizeGuide } from '@/components/SizeGuide'
+import { ProcessStepper, type ProcessStep } from '@/components/ProcessStepper'
+import { ENCARGO_FAQ } from './faq'
 import { submitEncargo } from './actions'
 import { subscribeToVipList } from '@/lib/subscribe'
 import { track } from '@/lib/analytics'
 import { getAttribution } from '@/lib/attribution'
 
-export default function EncargoForm({ whatsappUrl, encargosCupos }: { whatsappUrl: string; encargosCupos: EncargosCuposState }) {
+export default function EncargoForm({
+  whatsappUrl, encargosCupos, processEnabled = false, processSteps = [],
+}: {
+  whatsappUrl: string
+  encargosCupos: EncargosCuposState
+  processEnabled?: boolean
+  processSteps?: ProcessStep[]
+}) {
   const router = useRouter()
   const [tipo, setTipo] = useState('Cardigan')
   const [talle, setTalle] = useState('M')
@@ -191,6 +201,12 @@ export default function EncargoForm({ whatsappUrl, encargosCupos }: { whatsappUr
         <EncargosDisponibles state={encargosCupos} />
       </div>
 
+      {processEnabled && (
+        <div style={{ marginBottom: 32 }}>
+          <ProcessStepper steps={processSteps} />
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }} noValidate>
 
         <Field label="¿Qué querés tejer?">
@@ -254,6 +270,9 @@ export default function EncargoForm({ whatsappUrl, encargosCupos }: { whatsappUr
               }}>{t}</button>
             ))}
           </div>
+          <div style={{ marginTop: 8 }}>
+            <SizeGuide />
+          </div>
         </Field>
 
         <Field label="Contame de tu prenda" helper="Para qué la querés, qué colores te gustan, en qué lana — cuanto más detalles, mejor.">
@@ -313,6 +332,39 @@ export default function EncargoForm({ whatsappUrl, encargosCupos }: { whatsappUr
           {isPending ? 'Enviando...' : 'Enviar encargo'}
         </Button>
       </form>
+
+      {/* Contenido propio debajo del formulario. Auditoría SEO 04/09/2026:
+          "tejidos a medida montevideo" es la única consulta del rubro sin
+          competencia real en Uruguay (devuelve clasificados y un directorio),
+          y esta página era title + H1 + formulario, sin una línea que
+          explicara cómo funciona. Las respuestas de acá alimentan además el
+          FAQPage JSON-LD que publica la página (ver page.tsx). */}
+      <section style={{ marginTop: 56, paddingTop: 36, borderTop: `1px solid ${dahila.border}` }}>
+        <h2 style={{
+          fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 26,
+          lineHeight: 1.2, color: dahila.ink900, margin: '0 0 20px',
+        }}>
+          Cómo funciona un encargo a medida
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {ENCARGO_FAQ.map((f) => (
+            <div key={f.q}>
+              <h3 style={{
+                fontFamily: dahila.fontSans, fontSize: 15.5, fontWeight: 500,
+                color: dahila.ink900, margin: '0 0 6px', lineHeight: 1.45,
+              }}>
+                {f.q}
+              </h3>
+              <p style={{
+                fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300,
+                lineHeight: 1.75, color: dahila.ink700, margin: 0,
+              }}>
+                {f.a}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }

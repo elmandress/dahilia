@@ -445,6 +445,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                     onClick={() => updateQty(item.id, item.qty + 1)}
                     aria-label="Sumar uno"
                     disabled={item.qty >= 20}
+                    title={item.qty >= 20 ? 'Máximo 20 por pedido — escribinos por WhatsApp si necesitás más' : undefined}
                     style={{
                       background: 'transparent', border: 'none', padding: 0,
                       cursor: item.qty >= 20 ? 'default' : 'pointer',
@@ -804,7 +805,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           <li>2 · Anush te confirma disponibilidad y fecha estimada.</li>
           <li>3 · Elegís cómo pagar (transferencia o Mercado Pago) y cómo recibirlo.</li>
           <li style={{ marginTop: 4 }}>
-            <Link href="/info" style={{ color: dahila.ink500 }}>¿Dudas? Mirá envíos, cambios y cuidados →</Link>
+            <Link href="/info" style={{ color: dahila.ink500 }}>¿Dudas? Mirá envíos, pagos y cuidados →</Link>
           </li>
         </ol>
       </aside>

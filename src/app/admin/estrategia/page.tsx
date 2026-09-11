@@ -5,15 +5,17 @@
 // El contenido vive en ./data.ts; lo vivo (precios, postulaciones, lista VIP,
 // checklist) se lee de Supabase al montar.
 
-import { useEffect, useState, useCallback } from 'react'
+import { Fragment, useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import {
   ULTIMA_REVISION, NORTE,
   MARKET_BANDS, MARKET_REFS,
   PRICING_WHY, PRICING_RULES, HOUR_REFS, PRICE_TABLE, PRICING_PHASES, contribPerHour,
+  MARKET_COMPARABLES, ORPHAN_PRODUCTS, MARKET_FX_NOTE,
   VALUE_ACTIONS,
   WEAVER_MODELS, WEAVER_PIPELINE, WEAVER_SYSTEM,
+  GROWTH_INTRO, GROWTH_STRATEGIES, GROWTH_RECOMMENDATION, type GrowthVerdict,
   CLASSES_INTRO, CLASSES_START, CLASSES_PRICING, CLASSES_LEVELS, CLASSES_SELLING, CLASSES_SESSION, CLASSES_SCALE, CLASSES_COMMUNITY, CLASSES_FLYWHEEL, CLASSES_FUNNEL,
   DROP_CALENDAR, DROP_STAGES, DROP_BENCHMARKS, DROP_SITE_TOOLS,
   LOYALTY_INTRO, LOYALTY_BENCHMARKS, LOYALTY_LADDER, REFERRAL_RULES, COUPON_RECIPES, COUPON_PRINCIPLES,
@@ -88,6 +90,20 @@ function PriceStateBadge({ state }: { state: PriceState }) {
   }
 }
 
+const GROWTH_VERDICT_LABEL: Record<GrowthVerdict, string> = {
+  recomendado: '✓ Recomendado',
+  'con-condicion': 'Con una condición',
+  'no-recomendado': 'Todavía no',
+}
+const GROWTH_VERDICT_CLASS: Record<GrowthVerdict, string> = {
+  recomendado: 'ok',
+  'con-condicion': 'pend',
+  'no-recomendado': 'riesgo-alta',
+}
+function GrowthVerdictBadge({ verdict }: { verdict: GrowthVerdict }) {
+  return <span className={`est-badge ${GROWTH_VERDICT_CLASS[verdict]}`}>{GROWTH_VERDICT_LABEL[verdict]}</span>
+}
+
 // Posición porcentual en escala logarítmica para el gráfico de bandas.
 const LOG_MIN = Math.log(300)
 const LOG_MAX = Math.log(15000)
@@ -111,6 +127,15 @@ export default function EstrategiaPage() {
   const [checked, setChecked] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
+  // Qué filas de la tabla de precios tienen abierto el panel de "comparables
+  // de mercado" (auditoría 03/09/2026) — colapsado por defecto para no
+  // recargar la pantalla, se abre fila por fila.
+  const [openMarket, setOpenMarket] = useState<Set<string>>(new Set())
+  const toggleMarket = (slug: string) => setOpenMarket((prev) => {
+    const next = new Set(prev)
+    if (next.has(slug)) next.delete(slug); else next.add(slug)
+    return next
+  })
 
   const load = useCallback(async () => {
     const supabase = createClient()
@@ -198,6 +223,32 @@ export default function EstrategiaPage() {
         <div className="est-checklist">{items.map(renderCheckItem)}</div>
       </div>
     )
+
+  // Panel de comparables de mercado de un producto (auditoría 03/09/2026) —
+  // compartido entre la tabla de escritorio y las tarjetas de mobile.
+  const renderMarketPanel = (slug: string) => {
+    const note = MARKET_COMPARABLES[slug]
+    if (!note) return null
+    return (
+      <div className="est-market-panel">
+        {note.comparables.length > 0 && (
+          <ul className="est-market-list">
+            {note.comparables.map((c, i) => (
+              <li key={i}>
+                {c.url ? (
+                  <a href={c.url} target="_blank" rel="noopener noreferrer">{c.label}</a>
+                ) : (
+                  <strong>{c.label}</strong>
+                )}
+                : {c.price}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="est-market-reco">{note.recommendation}</p>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
@@ -373,6 +424,7 @@ export default function EstrategiaPage() {
                     <th>$/h ahora</th>
                     <th>$/h meta</th>
                     <th>Estado</th>
+                    <th>Mercado</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -381,26 +433,42 @@ export default function EstrategiaPage() {
                     const state = priceState(r.today, live)
                     const phNow = contribPerHour(r, r.today ?? r.before)
                     const phTarget = contribPerHour(r, r.target)
+                    const hasMarket = !!MARKET_COMPARABLES[r.slug]
+                    const isOpen = openMarket.has(r.slug)
                     return (
-                      <tr key={r.slug}>
-                        <td className="name-cell">
-                          <span className={`est-dot prio-${r.priority}`} title={`Prioridad: ${PRIO_LABEL[r.priority]}`} />
-                          {r.name}
-                          {r.note && <small>{r.note}</small>}
-                        </td>
-                        <td>{r.hours != null ? `${r.hours} h` : '—'}</td>
-                        <td style={{ color: '#8C8285' }}>{money(r.before)}</td>
-                        <td>{r.today != null ? <span className="up">{money(r.today)}</span> : money(r.before)}</td>
-                        <td>{r.target != null ? money(r.target) : '—'}</td>
-                        <td>{phNow != null ? money(phNow) : '—'}</td>
-                        <td>{phTarget != null ? <span className="up">{money(phTarget)}</span> : '—'}</td>
-                        <td>
-                          <PriceStateBadge state={state} />
-                          {state === 'above' && live != null && (
-                            <small style={{ display: 'block', color: '#8C8285' }}>en la tienda: {money(live)}</small>
-                          )}
-                        </td>
-                      </tr>
+                      <Fragment key={r.slug}>
+                        <tr>
+                          <td className="name-cell">
+                            <span className={`est-dot prio-${r.priority}`} title={`Prioridad: ${PRIO_LABEL[r.priority]}`} />
+                            {r.name}
+                            {r.note && <small>{r.note}</small>}
+                          </td>
+                          <td>{r.hours != null ? `${r.hours} h` : '—'}</td>
+                          <td style={{ color: '#8C8285' }}>{money(r.before)}</td>
+                          <td>{r.today != null ? <span className="up">{money(r.today)}</span> : money(r.before)}</td>
+                          <td>{r.target != null ? money(r.target) : '—'}</td>
+                          <td>{phNow != null ? money(phNow) : '—'}</td>
+                          <td>{phTarget != null ? <span className="up">{money(phTarget)}</span> : '—'}</td>
+                          <td>
+                            <PriceStateBadge state={state} />
+                            {state === 'above' && live != null && (
+                              <small style={{ display: 'block', color: '#8C8285' }}>en la tienda: {money(live)}</small>
+                            )}
+                          </td>
+                          <td>
+                            {hasMarket && (
+                              <button type="button" className="est-market-toggle" onClick={() => toggleMarket(r.slug)} aria-expanded={isOpen}>
+                                {isOpen ? 'Ocultar' : 'Ver precios'}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                        {hasMarket && isOpen && (
+                          <tr>
+                            <td colSpan={9} style={{ background: '#FBF6EC' }}>{renderMarketPanel(r.slug)}</td>
+                          </tr>
+                        )}
+                      </Fragment>
                     )
                   })}
                 </tbody>
@@ -415,6 +483,8 @@ export default function EstrategiaPage() {
               const state = priceState(r.today, live)
               const phNow = contribPerHour(r, r.today ?? r.before)
               const phTarget = contribPerHour(r, r.target)
+              const hasMarket = !!MARKET_COMPARABLES[r.slug]
+              const isOpen = openMarket.has(r.slug)
               return (
                 <div key={r.slug} className="est-price-card">
                   <div className="row1">
@@ -436,14 +506,44 @@ export default function EstrategiaPage() {
                     {phTarget != null && <span>{money(phTarget)}/h en la meta</span>}
                   </div>
                   {r.note && <div className="pnote">{r.note}</div>}
+                  {hasMarket && (
+                    <>
+                      <button type="button" className="est-market-toggle" onClick={() => toggleMarket(r.slug)} aria-expanded={isOpen} style={{ marginTop: 8 }}>
+                        {isOpen ? 'Ocultar precios de la competencia' : 'Ver precios de la competencia'}
+                      </button>
+                      {isOpen && renderMarketPanel(r.slug)}
+                    </>
+                  )}
                 </div>
               )
             })}
           </div>
-          <p style={{ fontSize: '0.78rem', color: '#8C8285', margin: '0 0 2rem' }}>
+          <p style={{ fontSize: '0.78rem', color: '#8C8285', margin: '0 0 1rem' }}>
             Materiales y horas son estimados — ajustalos con tus números reales cuando puedas.
             El punto de color indica la prioridad con la que se decidió cada aumento.
           </p>
+          <p style={{ fontSize: '0.78rem', color: '#8C8285', margin: '0 0 2rem' }}>{MARKET_FX_NOTE}</p>
+
+          <SectionHead
+            kicker="Auditoría 03/09/2026"
+            title="Productos sin estrategia de precio todavía"
+            desc="Existen en tu tienda pero no tienen fila arriba — nadie cargó horas ni materiales, así que no se les puede calcular el $/h."
+          />
+          <div className="est-grid" style={{ marginBottom: '2rem' }}>
+            {ORPHAN_PRODUCTS.map((o) => {
+              const live = livePrices[o.slug]
+              const note = MARKET_COMPARABLES[o.slug]
+              return (
+                <div key={o.slug} className="est-card cream">
+                  <div className="est-card-top">
+                    <h4>{o.name}</h4>
+                    <span className="est-badge prio-hold">{live != null ? money(live) : '—'}</span>
+                  </div>
+                  {note && renderMarketPanel(o.slug)}
+                </div>
+              )
+            })}
+          </div>
 
           <SectionHead title="El plan de los próximos 12 meses" />
           <div className="est-timeline" style={{ marginBottom: '2rem' }}>
@@ -492,6 +592,53 @@ export default function EstrategiaPage() {
                 {weaverCount} postulación{weaverCount === 1 ? '' : 'es'} para revisar →
               </Link>
             )}
+          </div>
+
+          <SectionHead
+            kicker="03/09/2026"
+            title="¿Subir precio, sumar tejedoras, o las dos cosas?"
+            desc="Comparación de caminos con tus propios números — no hay una respuesta única, hay un orden."
+          />
+          <div className="est-callout" style={{ marginBottom: '1.5rem' }}>{GROWTH_INTRO}</div>
+
+          <div className="est-grid wide" style={{ marginBottom: '1.5rem' }}>
+            {GROWTH_STRATEGIES.map((s) => (
+              <div key={s.id} className="est-card">
+                <div className="est-card-top">
+                  <h4>{s.name}</h4>
+                  <GrowthVerdictBadge verdict={s.verdict} />
+                </div>
+                <p style={{ marginBottom: 10 }}>{s.what}</p>
+                {s.pros.length > 0 && (
+                  <ul style={{ margin: '0 0 8px', paddingLeft: 18, fontSize: '0.82rem', color: '#1E8449', lineHeight: 1.6 }}>
+                    {s.pros.map((p) => <li key={p.slice(0, 24)}>{p}</li>)}
+                  </ul>
+                )}
+                {s.cons.length > 0 && (
+                  <ul style={{ margin: '0 0 10px', paddingLeft: 18, fontSize: '0.82rem', color: '#B03A2E', lineHeight: 1.6 }}>
+                    {s.cons.map((c) => <li key={c.slice(0, 24)}>{c}</li>)}
+                  </ul>
+                )}
+                <p style={{
+                  margin: 0, paddingTop: 10, borderTop: '1px solid rgba(31,26,27,0.08)',
+                  fontSize: '0.85rem', color: '#1F1A1B', fontWeight: 500, lineHeight: 1.6,
+                }}>{s.verdictNote}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="est-card cream" style={{ marginBottom: '2rem' }}>
+            <h4>{GROWTH_RECOMMENDATION.title}</h4>
+            <p style={{ marginBottom: 14 }}>{GROWTH_RECOMMENDATION.body}</p>
+            <div className="est-pipeline">
+              {GROWTH_RECOMMENDATION.steps.map((s, i) => (
+                <div key={s.step} className="est-pipeline-step">
+                  <span className="num">{i + 1}</span>
+                  <div className="step">{s.step}</div>
+                  <div className="detail">{s.detail}</div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <SectionHead title="Cuatro modelos reales, cuatro lecciones" />

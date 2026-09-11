@@ -14,10 +14,16 @@ export function ProductCard({
   product,
   discounts,
   onQuickView,
+  priority = false,
 }: {
   product: Product
   discounts?: Discount[]
   onQuickView?: () => void
+  // La foto de las primeras tarjetas de una grilla sin hero (/tienda,
+  // /tienda/[categoría]) ES el LCP real de esa página — auditoría 03/09/2026.
+  // Next 16 deprecó `priority`; fetchPriority="high" + loading="eager" es el
+  // reemplazo, mismo patrón que ProductGallery/HomeClient/colecciones/[slug].
+  priority?: boolean
 }) {
   const { addToCart, queueNote } = useCart()
   const [hover, setHover] = useState(false)
@@ -79,6 +85,7 @@ export function ProductCard({
           alt={product.name}
           fill
           quality={82}
+          {...(priority ? { fetchPriority: 'high' as const, loading: 'eager' as const } : {})}
           placeholder="blur"
           blurDataURL={BLUR_DATA_URL}
           sizes="(max-width: 480px) 50vw, (max-width: 720px) 50vw, (max-width: 1280px) 25vw, 280px"

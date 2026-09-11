@@ -1,28 +1,17 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/public'
-import type { Product, Discount } from '@/lib/types'
+import { getCatalog } from '@/lib/catalog'
 import { ProductCard } from '@/components/ProductCard'
 
 export default async function NotFound() {
   // Show a few real pieces so a broken link still leads somewhere useful.
-  let products: Product[] = []
-  let discounts: Discount[] = []
-  try {
-    const supabase = await createClient()
-    const [pRes, dRes] = await Promise.all([
-      supabase
-        .from('products')
-        .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*)')
-        .eq('status', 'active')
-        .order('sort_order', { ascending: true })
-        .limit(4),
-      supabase.from('discounts').select('*').eq('active', true),
-    ])
-    products = (pRes.data ?? []) as Product[]
-    discounts = (dRes.data ?? []) as Discount[]
-  } catch {
-    // If the DB is unreachable, the page still renders without suggestions.
-  }
+  // Antes esto hacía su propia consulta a Supabase en CADA 404 real (sin
+  // caché, a diferencia de toda otra página del sitio) — justo la página cuyo
+  // trabajo es recuperar rápido a alguien de un mal momento. getCatalog() ya
+  // trae este mismo dato cacheado 1h, con su propio fallback a snapshot si la
+  // DB está caída (auditoría 03/09/2026).
+  const catalog = await getCatalog()
+  const products = catalog.products.filter((p) => p.status === 'active').slice(0, 4)
+  const discounts = catalog.discounts
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '96px 24px 64px' }}>

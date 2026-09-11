@@ -8,6 +8,7 @@ import { notifyReindex } from '@/lib/seo-notify'
 import { draftDescription } from '@/lib/description-draft'
 import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
 import type { Category, Color, Collection } from '@/lib/types'
+import { DEFAULT_CARE_INSTRUCTIONS } from '@/lib/types'
 
 interface SizeEntry {
   tempId: string
@@ -62,7 +63,13 @@ export default function NuevoProductoPage() {
   const [leadTimeMin, setLeadTimeMin] = useState('2')
   const [leadTimeMax, setLeadTimeMax] = useState('3')
   const [material, setMaterial] = useState('')
-  const [careInstructions, setCareInstructions] = useState('')
+  // Precargado con el texto estándar del catálogo en vez de vacío: cuando el
+  // campo arrancaba en blanco, cada producto nuevo se escribía a mano y el
+  // texto se iba desviando. El 04/09/2026 había tres versiones conviviendo, y
+  // dos decían "agua tibia" contra el resto que decía "agua fría" (el correcto:
+  // el salto de temperatura es lo que apelmaza la fibra). Se puede editar
+  // igual para una pieza que necesite algo distinto.
+  const [careInstructions, setCareInstructions] = useState(DEFAULT_CARE_INSTRUCTIONS)
   const [isCustomOnly, setIsCustomOnly] = useState(false)
 
   // Media
@@ -304,6 +311,12 @@ export default function NuevoProductoPage() {
     try {
       const supabase = createClient()
 
+      // Ver nota equivalente en admin/productos/[id]/page.tsx: "activa" solo
+      // puede guardarse si hay un % real, para no crear el mismo dato
+      // fantasma que encontró la auditoría 03/09/2026.
+      const resolvedDiscountPercent = Math.max(0, Math.min(90, parseInt(discountPercent) || 0))
+      const resolvedDiscountActive = discountActive && resolvedDiscountPercent > 0
+
       // Create product
       const { data: product, error: productError } = await supabase
         .from('products')
@@ -316,8 +329,8 @@ export default function NuevoProductoPage() {
           badge: badge.trim() || null,
           status,
           base_price_uyu: basePriceUyu ? parseInt(basePriceUyu) : null,
-          discount_percent: Math.max(0, Math.min(90, parseInt(discountPercent) || 0)),
-          discount_active: discountActive,
+          discount_percent: resolvedDiscountPercent,
+          discount_active: resolvedDiscountActive,
           // parseInt(x) || N pisaba un 0 real (falsy) con el default — un
           // problema concreto para marcar "disponible ahora, sin espera".
           lead_time_weeks_min: Number.isNaN(parseInt(leadTimeMin)) ? 2 : Math.max(0, parseInt(leadTimeMin)),

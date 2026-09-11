@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Product, Category } from '@/lib/types'
 import { formatPrice, getPrimaryPhoto } from '@/lib/types'
 import { notifyReindex } from '@/lib/seo-notify'
+import { recommendPrice, formatUyu, type PricingRecommendation, type PricingPeer } from '@/lib/pricing'
 
 export default function ProductosPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -21,11 +22,20 @@ export default function ProductosPage() {
   // mostraba "No hay productos / Creá tu primer producto": para quien no es
   // técnico eso se lee como "se borró todo el catálogo".
   const [loadError, setLoadError] = useState<string | null>(null)
+  // Horas y materiales por product_id (tabla interna product_costs). Vacío
+  // mientras no se corra database/costos-produccion-2026-09.sql: el marcador
+  // cae entonces a los datos de la tabla aprobada (ver lib/pricing.ts).
+  const [costs, setCosts] = useState<Record<string, { hours: number | null; materials: number | null }>>({})
+  // Productos activos, para que cada recomendación pueda mostrar si la misma
+  // categoría ya vende a ese nivel de precio.
+  const peers: PricingPeer[] = products
+    .filter((p) => p.status === 'active')
+    .map((p) => ({ slug: p.slug, name: p.name, price: p.base_price_uyu, categoryId: p.category?.id ?? null }))
 
   const loadData = useCallback(async () => {
     const supabase = createClient()
 
-    const [productsRes, categoriesRes] = await Promise.all([
+    const [productsRes, categoriesRes, costsRes] = await Promise.all([
       supabase
         .from('products')
         .select(`
@@ -36,11 +46,22 @@ export default function ProductosPage() {
         `)
         .order('sort_order', { ascending: true }),
       supabase.from('categories').select('*').order('sort_order'),
+      supabase.from('product_costs').select('product_id, labor_hours, materials_cost_uyu'),
     ])
 
     setLoadError(productsRes.error ? 'No se pudieron cargar los productos (no es que no haya: no se pudo leer la base). Probá recargar la página.' : null)
     setProducts((productsRes.data ?? []) as Product[])
     setCategories((categoriesRes.data ?? []) as Category[])
+    if (!costsRes.error) {
+      const map: Record<string, { hours: number | null; materials: number | null }> = {}
+      for (const c of (costsRes.data ?? []) as Array<{ product_id: string; labor_hours: number | string | null; materials_cost_uyu: number | null }>) {
+        map[c.product_id] = {
+          hours: c.labor_hours != null ? Number(c.labor_hours) : null,
+          materials: c.materials_cost_uyu,
+        }
+      }
+      setCosts(map)
+    }
     setLoading(false)
   }, [])
 
@@ -365,7 +386,19 @@ export default function ProductosPage() {
                       <span style={{ fontSize: '0.8rem', color: '#8C8285' }}>/{product.slug}</span>
                     </td>
                     <td className="col-hide-mobile">{product.category?.name || '—'}</td>
-                    <td>{product.base_price_uyu ? formatPrice(product.base_price_uyu) : '—'}</td>
+                    <td>
+                      {product.base_price_uyu ? formatPrice(product.base_price_uyu) : '—'}
+                      <PriceHint
+                        rec={recommendPrice({
+                          slug: product.slug,
+                          price: product.base_price_uyu,
+                          hours: costs[product.id]?.hours,
+                          materials: costs[product.id]?.materials,
+                          categoryId: product.category?.id ?? null,
+                          peers,
+                        })}
+                      />
+                    </td>
                     <td>
                       {product.status === 'soldout' ? (
                         <span className="admin-badge soldout">Agotado</span>
@@ -440,4 +473,26 @@ export default function ProductosPage() {
       )}
     </>
   )
+}
+
+/**
+ * Marcador de precio dinámico, debajo del precio de cada producto (ver
+ * lib/pricing.ts). El detalle completo —el porqué, todas las etapas y un botón
+ * para aplicar el próximo precio— está en el editor de cada producto; acá va
+ * el resumen, con el porqué en el tooltip.
+ */
+function PriceHint({ rec }: { rec: PricingRecommendation }) {
+  const tip = rec.reasons.join(' ')
+  const base: React.CSSProperties = { display: 'block', marginTop: 3, fontSize: '0.72rem', lineHeight: 1.35 }
+  if (rec.status === 'under' && rec.nextPrice != null) {
+    return (
+      <span title={tip} style={{ ...base, color: '#8F3B53', fontWeight: 500 }}>
+        ▲ Subir a {formatUyu(rec.nextPrice)}
+        <span style={{ fontWeight: 400, color: '#8C8285' }}> · etapa 1 de {rec.stages.length}</span>
+      </span>
+    )
+  }
+  if (rec.status === 'ok') return <span title={tip} style={{ ...base, color: '#1E8449' }}>✓ Paga el mínimo por hora</span>
+  if (rec.status === 'hold') return <span title={tip} style={{ ...base, color: '#8C8285' }}>Pieza de entrada</span>
+  return <span title={tip} style={{ ...base, color: '#8C8285' }}>Sin horas cargadas</span>
 }

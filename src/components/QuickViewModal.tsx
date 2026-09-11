@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import type { Product, Discount } from '@/lib/types'
@@ -8,11 +8,13 @@ import {
   getEffectivePrice, getFinalPrice, resolveDiscountPercent,
   getPrimaryPhoto, BLUR_DATA_URL,
 } from '@/lib/types'
+import { useSizeSelection, getRestockWhatsAppUrl } from '@/lib/product-selection'
 import { useCart } from './CartProvider'
 import { useScrollLock } from '@/lib/scroll-lock'
 import { useFocusTrap } from '@/lib/focus-trap'
 import { dahila, Button, Icon } from './ui/Primitives'
 import { PriceBlock } from './ui/PriceBlock'
+import { track } from '@/lib/analytics'
 
 /**
  * Quick-view: a focused product preview the shopper can open from the grid
@@ -23,18 +25,18 @@ export function QuickViewModal({
   product,
   discounts = [],
   onClose,
+  whatsappUrl = 'https://wa.me/59899850073',
 }: {
   product: Product
   discounts?: Discount[]
   onClose: () => void
+  whatsappUrl?: string
 }) {
   const router = useRouter()
   const { addToCart } = useCart()
-  // Mismo criterio que el PDP: arrancar en el primer talle DISPONIBLE, no en
-  // el primero de la lista (que puede estar agotado y dejaría el botón
-  // "Agregar" apuntando a un talle sin stock).
-  const firstAvailable = product.sizes?.find((s) => s.available)?.size
-  const [talle, setTalle] = useState<string>(firstAvailable || product.sizes?.[0]?.size || 'Único')
+  // Mismo criterio que el PDP, factorizado en un hook compartido (auditoría
+  // 03/09/2026: antes duplicado letra por letra en los dos archivos).
+  const { talle, setTalle, sizeAvailable } = useSizeSelection(product)
 
   const photo = getPrimaryPhoto(product)
   const listPrice = getEffectivePrice(product, talle)
@@ -43,13 +45,11 @@ export function QuickViewModal({
   const hasDiscount = discountPct > 0 && listPrice > 0
   const isSoldOut = product.status === 'soldout'
   const canBuy = !isSoldOut && !product.is_custom_only
-  // Mismo guard que el PDP: si el talle elegido está marcado no disponible, el
-  // botón no puede agregar. Pasa cuando NINGÚN talle está disponible pero el
-  // producto sigue en 'active' — ahí `firstAvailable` es undefined y el estado
-  // cae al primer talle de la lista, que está agotado. Sin esto el botón
-  // quedaba habilitado y la API respondía 409 con un toast genérico.
-  const selectedSizeRow = product.sizes?.find((s) => s.size === talle)
-  const sizeAvailable = !selectedSizeRow || selectedSizeRow.available
+
+  // Mismo flujo de captura de demanda que el PDP completo: sin esto, quien
+  // abre la vista rápida de un producto agotado se topa con un callejón sin
+  // salida (antes: un botón "Agotado" deshabilitado y nada más).
+  const restockUrl = getRestockWhatsAppUrl(product, whatsappUrl)
 
   useScrollLock(true)
 
@@ -170,6 +170,7 @@ export function QuickViewModal({
                     key={s.id}
                     onClick={() => setTalle(s.size)}
                     disabled={!s.available}
+                    aria-pressed={talle === s.size}
                     style={{
                       minWidth: 44, height: 44, padding: '0 12px', borderRadius: 8,
                       fontFamily: dahila.fontSans, fontSize: 13,
@@ -202,7 +203,21 @@ export function QuickViewModal({
                 Pedir a medida
               </Button>
             ) : (
-              <Button variant="secondary" size="lg" full disabled>Agotado</Button>
+              <a
+                href={restockUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => track('restock_click', { product: product.slug, source: 'quickview' })}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+                  background: '#25D366', color: '#fff', textDecoration: 'none',
+                  borderRadius: 10, padding: '15px 22px', width: '100%',
+                  fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                }}
+              >
+                <Icon name="whatsapp-logo" size={18} /> Avisame cuando vuelva
+              </a>
             )}
             <button
               onClick={() => router.push(`/tienda/${product.slug}`)}

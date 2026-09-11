@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/public'
+import { getSnapshotData } from '@/lib/catalog'
 import { SITE_URL } from '@/lib/env'
 import { botImageUrl } from '@/lib/media'
 import { getAllArticles } from '@/content/blog'
@@ -72,6 +73,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(a.updatedAt ?? a.publishedAt),
     changeFrequency: 'monthly' as const,
     priority: a.role === 'pillar' ? 0.7 : 0.6,
+    // La imagen de portada, igual que en los productos: sin esto las notas
+    // quedaban fuera de Google Imágenes, que para contenido de moda/tejido es
+    // una vía de descubrimiento real. Vía /_next/image por el mismo motivo que
+    // los productos (que el crawler no baje el original pesado).
+    ...(a.hero ? { images: [xmlEscape(botImageUrl(SITE_URL, a.hero.src))] } : {}),
   }))
 
   try {
@@ -179,6 +185,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (!message.includes('Dynamic server usage')) {
       console.error('sitemap fetch failed', e)
     }
-    return [...staticRoutes, ...blogRoutes]
+    // Con la DB caída esto antes devolvía el sitio "adelgazado" (sin un solo
+    // producto ni categoría) durante hasta 1h de caché — justo el tipo de
+    // incidente que ya pasó (cuota de Supabase agotada, jul-2026). El resto
+    // del sitio ya cae al snapshot estático en ese escenario; el sitemap no lo
+    // hacía (auditoría 03/09/2026). No incluye colecciones: el snapshot no las
+    // guarda, igual que antes de este fix.
+    const snap = getSnapshotData()
+    const categoryRoutes: MetadataRoute.Sitemap = snap.categories.map((c) => ({
+      url: xmlEscape(`${SITE_URL}/tienda/${c.slug}`),
+      changeFrequency: 'weekly' as const,
+      priority: 0.85,
+    }))
+    const productRoutes: MetadataRoute.Sitemap = snap.products.map((p) => {
+      const media = p.media ?? []
+      const primary = media.find((m) => m.is_primary && m.type === 'image') || media.find((m) => m.type === 'image')
+      const photo = primary?.url
+      return {
+        url: xmlEscape(`${SITE_URL}/tienda/${p.slug}`),
+        ...(p.updated_at ? { lastModified: new Date(p.updated_at) } : {}),
+        changeFrequency: 'weekly' as const,
+        priority: p.status === 'active' ? 0.8 : 0.7,
+        ...(photo ? { images: [xmlEscape(botImageUrl(SITE_URL, photo))] } : {}),
+      }
+    })
+    return [...staticRoutes, ...blogRoutes, ...categoryRoutes, ...productRoutes]
   }
 }

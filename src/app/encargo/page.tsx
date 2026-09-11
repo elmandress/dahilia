@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/public'
 import EncargoForm from './EncargoForm'
+import { ENCARGO_FAQ } from './faq'
 import { getEncargosCuposState } from '@/components/EncargosDisponibles'
 import { OG_BASE } from '@/lib/og'
 import { SITE_URL } from '@/lib/env'
@@ -48,6 +49,21 @@ const serviceJsonLd = {
   },
 }
 
+// FAQPage con las MISMAS preguntas que se ven en la página (fuente única en
+// ./faq.ts). Google pide que el marcado coincida con el contenido visible —
+// por eso no se escriben aparte. Hasta el 04/09/2026 esta página publicaba
+// `Service` pero no tenía FAQ ni visible ni marcada.
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  '@id': `${SITE_URL}/encargo#faq`,
+  mainEntity: ENCARGO_FAQ.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+}
+
 export default async function EncargoPage() {
   const supabase = await createClient()
   const { data } = await supabase
@@ -56,20 +72,35 @@ export default async function EncargoPage() {
     .in('key', [
       'contact_whatsapp_url',
       'encargos_cupos_enabled', 'encargos_cupos_total', 'encargos_cupos_taken', 'encargos_cupos_label',
+      'pdp_process_enabled',
+      'pdp_process_step_1_icon', 'pdp_process_step_1_label', 'pdp_process_step_1_body',
+      'pdp_process_step_2_icon', 'pdp_process_step_2_label', 'pdp_process_step_2_body',
+      'pdp_process_step_3_icon', 'pdp_process_step_3_label', 'pdp_process_step_3_body',
     ])
 
   const settings = (data ?? []).reduce<Record<string, string>>(
     (acc, r) => ({ ...acc, [r.key as string]: String(r.value ?? '') }), {}
   )
+  const getSetting = (key: string) => settings[key] ?? ''
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <EncargoForm
         whatsappUrl={settings.contact_whatsapp_url || 'https://wa.me/59899850073'}
         encargosCupos={getEncargosCuposState(settings)}
+        processEnabled={getSetting('pdp_process_enabled') === 'true'}
+        processSteps={[
+          { icon: getSetting('pdp_process_step_1_icon') || 'chat-text',  label: getSetting('pdp_process_step_1_label') || 'Escribís',        body: getSetting('pdp_process_step_1_body') || 'Contame qué prenda querés, tu medida y colores favoritos.' },
+          { icon: getSetting('pdp_process_step_2_icon') || 'scissors',   label: getSetting('pdp_process_step_2_label') || 'Elegimos juntas', body: getSetting('pdp_process_step_2_body') || 'Te muestro las lanas disponibles y confirmamos todos los detalles.' },
+          { icon: getSetting('pdp_process_step_3_icon') || 'needle',     label: getSetting('pdp_process_step_3_label') || 'Te lo tejo',      body: getSetting('pdp_process_step_3_body') || 'Trabajo en tu prenda y te aviso cuando está lista para enviar.' },
+        ].filter((s) => s.label.trim())}
       />
     </>
   )

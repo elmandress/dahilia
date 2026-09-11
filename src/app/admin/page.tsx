@@ -5,6 +5,120 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Product, CustomOrder } from '@/lib/types'
 
+/** Un problema concreto detectado en el catálogo, con dónde arreglarlo. */
+interface CatalogIssue {
+  id: string
+  label: string
+  detail: string
+  href: string
+  /** 'alta' = se ve en la tienda o rompe algo; 'media' = oportunidad perdida. */
+  level: 'alta' | 'media'
+}
+
+/** Fila de producto con los joins que necesita el chequeo de salud. */
+type ProductCheckRow = Pick<
+  Product,
+  'id' | 'slug' | 'name' | 'status' | 'discount_active' | 'discount_percent' | 'description' | 'category_id' | 'lead_time_weeks_min'
+> & {
+  media?: { id: string }[] | null
+  sizes?: { id: string }[] | null
+  colors?: { color_id: string }[] | null
+}
+
+/**
+ * Chequeo de salud del catálogo. Nació de la auditoría del 03/09/2026, donde
+ * varios problemas reales (un producto sin categoría que no aparecía en su
+ * página, una oferta prendida al 0%, piezas sin colores cargados) solo se
+ * encontraron mirando la base a mano. Esto los detecta solo, cada vez que
+ * Anush entra al panel.
+ */
+function findCatalogIssues(products: ProductCheckRow[]): CatalogIssue[] {
+  const issues: CatalogIssue[] = []
+  const active = products.filter((p) => p.status === 'active')
+
+  // Nivel medio y no alto a propósito: hay piezas que legítimamente no van en
+  // ninguna categoría (el box de regalo es un servicio, no una prenda), así
+  // que esto se informa para que Anush confirme, no se grita como error.
+  const sinCategoria = active.filter((p) => !p.category_id)
+  if (sinCategoria.length > 0) {
+    issues.push({
+      id: 'sin-categoria',
+      level: 'media',
+      label: `${sinCategoria.length} producto${sinCategoria.length === 1 ? '' : 's'} sin categoría`,
+      detail: `No aparece${sinCategoria.length === 1 ? '' : 'n'} en ninguna página de categoría de la tienda: ${sinCategoria.map((p) => p.name).join(', ')}. Si es una prenda, conviene asignarle categoría; si es un servicio (como el box de regalo), está bien así.`,
+      href: '/admin/productos',
+    })
+  }
+
+  const ofertaVacia = active.filter((p) => p.discount_active && (p.discount_percent ?? 0) <= 0)
+  if (ofertaVacia.length > 0) {
+    issues.push({
+      id: 'oferta-vacia',
+      level: 'alta',
+      label: `${ofertaVacia.length} producto${ofertaVacia.length === 1 ? '' : 's'} con la oferta prendida al 0%`,
+      detail: `Hoy no muestra${ofertaVacia.length === 1 ? '' : 'n'} nada, pero se activa sola si alguien carga un porcentaje sin revisar el toggle: ${ofertaVacia.map((p) => p.name).join(', ')}.`,
+      href: '/admin/descuentos',
+    })
+  }
+
+  const sinFoto = active.filter((p) => (p.media?.length ?? 0) === 0)
+  if (sinFoto.length > 0) {
+    issues.push({
+      id: 'sin-foto',
+      level: 'alta',
+      label: `${sinFoto.length} producto${sinFoto.length === 1 ? '' : 's'} sin foto`,
+      detail: `Se ve${sinFoto.length === 1 ? '' : 'n'} con la imagen de relleno en la tienda: ${sinFoto.map((p) => p.name).join(', ')}.`,
+      href: '/admin/productos',
+    })
+  }
+
+  const sinDescripcion = active.filter((p) => !(p.description ?? '').trim())
+  if (sinDescripcion.length > 0) {
+    issues.push({
+      id: 'sin-descripcion',
+      level: 'media',
+      label: `${sinDescripcion.length} producto${sinDescripcion.length === 1 ? '' : 's'} sin descripción`,
+      detail: 'La descripción es lo que Google muestra en el resultado de búsqueda y lo que responde las dudas antes de que pregunten por WhatsApp.',
+      href: '/admin/productos',
+    })
+  }
+
+  const sinColores = active.filter((p) => (p.colors?.length ?? 0) === 0)
+  if (sinColores.length > 0) {
+    issues.push({
+      id: 'sin-colores',
+      level: 'media',
+      label: `${sinColores.length} producto${sinColores.length === 1 ? '' : 's'} sin colores cargados`,
+      detail: 'Sin colores no se muestra el selector en la ficha ni los puntitos de color en la tarjeta — la clienta no sabe que puede pedirlo en otro color.',
+      href: '/admin/colores',
+    })
+  }
+
+  const sinTalles = active.filter((p) => (p.sizes?.length ?? 0) === 0)
+  if (sinTalles.length > 0) {
+    issues.push({
+      id: 'sin-talles',
+      level: 'media',
+      label: `${sinTalles.length} producto${sinTalles.length === 1 ? '' : 's'} sin talles`,
+      detail: 'Correcto si son piezas de talle único (bolsos, accesorios). Si es una prenda, conviene cargarle los talles.',
+      href: '/admin/productos',
+    })
+  }
+
+  const enStock = active.filter((p) => p.lead_time_weeks_min === 0)
+  if (enStock.length === 0 && active.length > 0) {
+    issues.push({
+      id: 'sin-stock-inmediato',
+      level: 'media',
+      label: 'Ninguna pieza marcada como "En stock"',
+      detail: 'Si tenés algo ya tejido, marcalo con el check "En stock" en el producto: aparece solo un enlace "En stock, sin espera" en el menú Tienda, que hoy está oculto porque no hay nada que mostrar.',
+      href: '/admin/productos',
+    })
+  }
+
+  return issues
+}
+
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
     totalProducts: 0,
@@ -17,6 +131,7 @@ export default function AdminDashboardPage() {
     activeCarts: 0,
     totalCollections: 0,
   })
+  const [issues, setIssues] = useState<CatalogIssue[]>([])
   const [recentOrders, setRecentOrders] = useState<CustomOrder[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -24,7 +139,9 @@ export default function AdminDashboardPage() {
     const supabase = createClient()
 
     const [productsRes, ordersRes, newCountRes, weaversRes, cartsRes, collectionsRes] = await Promise.all([
-      supabase.from('products').select('id, status, discount_active, discount_percent, description'),
+      supabase
+        .from('products')
+        .select('id, slug, name, status, discount_active, discount_percent, description, category_id, lead_time_weeks_min, media:product_media(id), sizes:product_sizes(id), colors:product_colors(color_id)'),
       supabase.from('custom_orders').select('*').order('created_at', { ascending: false }).limit(5),
       supabase.from('custom_orders').select('*', { count: 'exact', head: true }).eq('status', 'new'),
       // Postulaciones nuevas (graceful — la tabla puede no existir todavía)
@@ -37,9 +154,7 @@ export default function AdminDashboardPage() {
       ).catch(() => ({ count: 0 })),
     ])
 
-    const products = (productsRes.data ?? []) as Array<
-      Pick<Product, 'id' | 'status' | 'discount_active' | 'discount_percent' | 'description'>
-    >
+    const products = (productsRes.data ?? []) as unknown as ProductCheckRow[]
     const orders = (ordersRes.data ?? []) as CustomOrder[]
 
     setStats({
@@ -55,6 +170,7 @@ export default function AdminDashboardPage() {
       ).size,
       totalCollections: (collectionsRes as { count: number | null }).count ?? 0,
     })
+    setIssues(findCatalogIssues(products))
     setRecentOrders(orders)
     setLoading(false)
   }, [])
@@ -160,6 +276,46 @@ export default function AdminDashboardPage() {
           </Link>
         )}
       </div>
+
+      {/* Chequeo de salud del catálogo — se calcula solo con los datos que ya
+          trajo el dashboard, sin consultas extra. Si no hay nada que revisar,
+          la sección directamente no aparece. */}
+      {issues.length > 0 && (
+        <div className="admin-card" style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', marginBottom: '0.9rem' }}>
+            <h3 style={{ margin: 0 }}>Cosas para revisar</h3>
+            <span style={{ fontSize: '0.8rem', color: '#8C8285' }}>
+              Detectado solo, mirando tu catálogo
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {issues.map((issue) => (
+              <Link
+                key={issue.id}
+                href={issue.href}
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 12,
+                  textDecoration: 'none', color: 'inherit',
+                  background: issue.level === 'alta' ? '#FDECEA' : '#FCFAF6',
+                  border: `1px solid ${issue.level === 'alta' ? 'rgba(176,58,46,0.22)' : '#eee9e0'}`,
+                  borderRadius: 12, padding: '13px 16px',
+                }}
+              >
+                <span aria-hidden style={{
+                  flexShrink: 0, marginTop: 3,
+                  width: 8, height: 8, borderRadius: 999,
+                  background: issue.level === 'alta' ? '#B03A2E' : '#A37B53',
+                }} />
+                <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
+                  <span style={{ fontSize: '0.92rem', fontWeight: 600, color: '#1F1A1B' }}>{issue.label}</span>
+                  <span style={{ fontSize: '0.82rem', color: '#5c5556', lineHeight: 1.55 }}>{issue.detail}</span>
+                </span>
+                <span style={{ marginLeft: 'auto', color: '#8F3B53', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>Ir →</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent Orders */}
       <div className="admin-card" style={{ marginBottom: '1.5rem' }}>

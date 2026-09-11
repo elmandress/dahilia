@@ -19,14 +19,26 @@ export function BackToTop() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  if (pathname.startsWith('/admin')) return null
+  if (pathname.startsWith('/admin') || pathname === '/ig') return null
+
+  // El guard global de prefers-reduced-motion (globals.css) anula animaciones
+  // y transiciones CSS, pero scrollTo({behavior:'smooth'}) es una API nativa
+  // del navegador — no la cubre ningún media query CSS, hay que chequearla acá.
+  const scrollToTop = () => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' })
+  }
 
   return (
     <button
-      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      onClick={scrollToTop}
       aria-label="Volver arriba"
       style={{
-        position: 'fixed', right: 18, bottom: 18, zIndex: 40,
+        // bottom: 92 apila el botón arriba de WhatsAppFloat (bottom:28, 52px
+        // de alto → borde superior en 80) con margen — antes ambos competían
+        // por el mismo rincón (bottom:18/44px) y WhatsApp tapaba ~70% de este
+        // botón al montarse después en el DOM con el mismo z-index.
+        position: 'fixed', right: 18, bottom: 92, zIndex: 40,
         width: 44, height: 44, borderRadius: 999,
         background: 'rgba(255,255,255,0.96)', color: dahila.ink900,
         border: `1px solid ${dahila.border}`, boxShadow: dahila.shadowMd,

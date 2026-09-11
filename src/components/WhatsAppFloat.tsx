@@ -31,11 +31,14 @@ export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: str
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Hide on admin, cart (has its own CTA), and order form
+  // Hide on admin, cart (has its own CTA), order form, and /ig (ya tiene su
+  // propio link grande de WhatsApp inline — la burbuja flotante sería un
+  // segundo camino redundante en una página pensada para tener solo uno).
   if (
     pathname.startsWith('/admin') ||
     pathname.startsWith('/carrito') ||
-    pathname.startsWith('/encargo')
+    pathname.startsWith('/encargo') ||
+    pathname === '/ig'
   ) return null
 
   if (!enabled) return null

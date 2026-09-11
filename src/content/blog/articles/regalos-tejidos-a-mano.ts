@@ -114,8 +114,8 @@ export const article: Article = {
           a: 'Para un accesorio ya tejido, poco. Para una prenda a medida, lo antes posible: el plazo depende del modelo y se acuerda al principio, por WhatsApp.',
         },
         {
-          q: '¿Se puede cambiar si no le gusta?',
-          a: 'En piezas hechas a medida no hacemos cambios por talle, justamente porque se tejieron para esa persona. Por eso, si es un regalo y no estás segura del talle, conviene ir por un accesorio. Las condiciones están en [Información](/info).',
+          q: '¿Y si no sé su talle?',
+          a: 'Andá por algo que no dependa de medidas: un bolso, una bufanda o un set de accesorios. Si igual querés regalar una prenda, un cardigan es lo que más perdona el talle, porque no cierra sobre el cuerpo.',
         },
         {
           q: '¿Hacen envíos a todo el país?',

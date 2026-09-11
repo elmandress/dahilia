@@ -19,9 +19,17 @@ export function TestimonialsStrip({ items }: { items: Testimonial[] }) {
   const prev = () => setCurrent((c) => (c - 1 + count) % count)
   const next = () => setCurrent((c) => (c + 1) % count)
 
-  // Auto-advance every 5s; pause on manual interaction
+  // Auto-advance every 5s; pause on manual interaction. Pero en touch no
+  // existe "mouseenter" — nadie puede pausarlo tocando la tarjeta, así que en
+  // dispositivos sin hover real (la inmensa mayoría del tráfico) el
+  // auto-avance directamente no arranca: queda solo la navegación manual
+  // (flechas/puntos), que sí resetea el timer si el dispositivo puede pausar.
+  const canAutoAdvance = () =>
+    typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(hover: hover)').matches
+
   const resetTimer = () => {
     if (timerRef.current) clearTimeout(timerRef.current)
+    if (!canAutoAdvance()) return
     timerRef.current = setTimeout(() => setCurrent((c) => (c + 1) % count), 5000)
   }
   // Con el cursor encima, la rotación se pausa: que el texto cambie mientras

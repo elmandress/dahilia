@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 interface OrderItemInput {
   name: string
@@ -14,12 +16,20 @@ interface OrderItemInput {
 // si esto falla, la venta no se pierde, solo no queda registrada.
 export async function POST(req: NextRequest) {
   try {
+    // Auditoría 03/09/2026: era el único formulario público sin límite de
+    // frecuencia (encargo/tejedoras/cupón ya lo tienen) y sin tope de ítems.
+    const h = await headers()
+    const ip = getClientIp(h)
+    if (!checkRateLimit(`orders:${ip}`, { windowMs: 60_000, max: 10 })) {
+      return NextResponse.json({ error: 'Demasiados intentos. Esperá un minuto y volvé a intentar.' }, { status: 429 })
+    }
+
     const body = await req.json().catch(() => null)
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Solicitud inválida.' }, { status: 400 })
     }
 
-    const rawItems = Array.isArray(body.items) ? body.items : []
+    const rawItems = (Array.isArray(body.items) ? body.items : []).slice(0, 30)
     const items: OrderItemInput[] = rawItems
       .filter((i: unknown): i is Record<string, unknown> => !!i && typeof i === 'object')
       .map((i: Record<string, unknown>) => ({

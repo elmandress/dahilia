@@ -29,8 +29,13 @@ function BlockView({ block }: { block: Block }) {
       return <p style={bodyText}><RichText text={block.text} /></p>
 
     case 'h2':
+      // El h2 abre sección: además del espacio, lleva una regla corta arriba.
+      // Antes la única señal de "acá empieza otra sección" era el margen, y en
+      // una nota con listas y callouts seguidos las secciones se pisaban
+      // visualmente (reporte de Mati, 04/09/2026).
       return (
         <h2 id={headingId(block.text)} style={h2Style}>
+          <span aria-hidden style={h2Rule} />
           {block.text}
         </h2>
       )
@@ -132,14 +137,16 @@ function BlockView({ block }: { block: Block }) {
 
     case 'faq':
       return (
-        <div style={{ marginTop: 12 }}>
+        <div style={{ margin: '4px 0 28px' }}>
           {block.items.map((item, i) => (
             <div key={i} style={faqItem}>
               {/* h3 y no un <details>: el contenido queda siempre visible para
                   el lector y para el crawler, que es lo que hace elegible el
                   rich result de FAQ. */}
-              <h3 style={{ ...h3Style, marginTop: 0, marginBottom: 6 }}>{item.q}</h3>
-              <p style={{ ...bodyText, margin: 0 }}><RichText text={item.a} /></p>
+              <h3 style={faqQuestion}>{item.q}</h3>
+              <p style={{ ...bodyText, margin: 0, fontSize: 15.5 }}>
+                <RichText text={item.a} />
+              </p>
             </div>
           ))}
         </div>
@@ -161,12 +168,29 @@ const h2Style: React.CSSProperties = {
   fontFamily: dahila.fontDisplay, fontWeight: 300,
   fontSize: 'clamp(24px, 3.4vw, 30px)', lineHeight: 1.2,
   letterSpacing: '-0.01em', color: dahila.ink900,
-  margin: '40px 0 14px', scrollMarginTop: 90,
+  // 52px arriba (antes 40): con la regla de acento, el aire de arriba tiene
+  // que ser claramente mayor al de abajo para que la sección "abra".
+  margin: '52px 0 16px', scrollMarginTop: 90,
+  display: 'flex', flexDirection: 'column', gap: 14,
+}
+
+/** Regla corta de acento arriba de cada h2 — marca el inicio de sección. */
+const h2Rule: React.CSSProperties = {
+  display: 'block', width: 34, height: 2, borderRadius: 2,
+  background: dahila.wine600,
 }
 
 const h3Style: React.CSSProperties = {
   fontFamily: dahila.fontDisplay, fontWeight: 400, fontSize: 19,
-  lineHeight: 1.3, color: dahila.ink900, margin: '26px 0 8px',
+  lineHeight: 1.3, color: dahila.ink900, margin: '30px 0 8px',
+}
+
+/** Pregunta de FAQ: es un h3 semántico, pero no tiene que leerse como una
+ *  subsección del artículo — por eso va en sans, más chica y sin el aire de
+ *  arriba que separa subsecciones de verdad. */
+const faqQuestion: React.CSSProperties = {
+  fontFamily: dahila.fontSans, fontWeight: 500, fontSize: 15.5,
+  lineHeight: 1.45, color: dahila.ink900, margin: '0 0 8px',
 }
 
 const listStyle: React.CSSProperties = {
@@ -220,16 +244,24 @@ const stepNumber: React.CSSProperties = {
   marginTop: 2,
 }
 
+// Antes usaba `borderTop` de ancho completo: una línea horizontal en medio
+// del texto se lee como "acá termina la sección", que es justo lo que NO es.
+// Con la barra a la izquierda queda claro que es una aclaración al margen.
 const noteStyle: React.CSSProperties = {
   fontFamily: dahila.fontSans, fontSize: 13.5, fontWeight: 300,
   lineHeight: 1.7, color: dahila.ink500,
-  margin: '0 0 24px', paddingTop: 14,
-  borderTop: `1px solid ${dahila.border}`,
+  margin: '4px 0 28px', padding: '2px 0 2px 16px',
+  borderLeft: `2px solid ${dahila.border}`,
 }
 
+// Las preguntas van como tarjetas y no como filas separadas por hairlines:
+// esas líneas de ancho completo competían con la separación real de secciones.
 const faqItem: React.CSSProperties = {
-  padding: '18px 0',
-  borderTop: `1px solid ${dahila.border}`,
+  background: dahila.cream50,
+  border: `1px solid ${dahila.border}`,
+  borderRadius: 14,
+  padding: '18px 20px',
+  marginBottom: 10,
 }
 
 const ctaStyle: React.CSSProperties = {

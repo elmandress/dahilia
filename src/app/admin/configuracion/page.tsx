@@ -188,7 +188,7 @@ const SECTIONS = [
     ],
   },
   {
-    title: 'Información (envíos, cambios, cuidados)',
+    title: 'Información (envíos, pagos, cuidados)',
     description: 'Se muestra en la página "Información" (link en el footer) y donde corresponda.',
     fields: [
       { key: 'size_guide_note',  label: 'Nota de la tabla de talles', type: 'textarea' },
@@ -198,7 +198,6 @@ const SECTIONS = [
       { key: 'pdp_trust_2', label: 'Garantía 2 (en cada producto)', type: 'text', placeholder: 'Hecho a mano' },
       { key: 'pdp_trust_3', label: 'Garantía 3 (en cada producto)', type: 'text', placeholder: 'Coordinás por WhatsApp' },
       { key: 'info_shipping',    label: 'Envíos',          type: 'textarea' },
-      { key: 'info_returns',     label: 'Cambios y devoluciones', type: 'textarea' },
       { key: 'info_care',        label: 'Cuidados de las prendas', type: 'textarea' },
       { key: 'info_custom',      label: 'Cómo encargar a medida', type: 'textarea' },
       { key: 'info_payment',     label: 'Formas de pago', type: 'textarea' },

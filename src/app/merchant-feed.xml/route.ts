@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/public'
+import { getSnapshotData } from '@/lib/catalog'
 import { SITE_URL } from '@/lib/env'
 import { getFinalPrice, getPrimaryPhoto } from '@/lib/types'
 import { botImageUrl } from '@/lib/media'
@@ -74,11 +75,16 @@ function genderFor(categoryName: string | undefined): string {
 }
 
 export async function GET() {
-  let items = ''
-
+  // Con la DB caída, esto devolvía un feed vacío — "mejor que uno roto", pero
+  // un feed vacío recurrente puede leerse en Merchant Center como señal de
+  // sacar el catálogo de circulación. El resto del sitio ya cae al snapshot
+  // estático ante este escenario (misma cuota agotada de jul-2026); el feed
+  // no lo hacía (auditoría 03/09/2026).
+  let products: Product[] = []
+  let discounts: Discount[] = []
   try {
     const supabase = await createClient()
-    const [{ data: prods }, { data: disc }] = await Promise.all([
+    const [{ data: prods, error: prodErr }, { data: disc, error: discErr }] = await Promise.all([
       supabase
         .from('products')
         .select('*, category:categories(name), media:product_media(url, is_primary, type), sizes:product_sizes(size, price_uyu, available)')
@@ -86,10 +92,19 @@ export async function GET() {
         .order('sort_order', { ascending: true }),
       supabase.from('discounts').select('*').eq('active', true),
     ])
+    if (prodErr) throw prodErr
+    if (discErr) throw discErr
+    discounts = (disc ?? []) as Discount[]
+    products = (prods ?? []) as Product[]
+  } catch (e) {
+    console.error('merchant-feed fetch failed, usando snapshot', e)
+    const snap = getSnapshotData()
+    products = snap.products as Product[]
+    discounts = snap.discounts as Discount[]
+  }
 
-    const discounts = (disc ?? []) as Discount[]
-    const products = (prods ?? []) as Product[]
-
+  let items = ''
+  try {
     items = products
       .map((p) => {
         const photo = getPrimaryPhoto(p)

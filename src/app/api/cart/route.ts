@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { randomUUID } from 'node:crypto'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 /**
  * El carrito de un visitante anónimo NO se puede scopear con RLS: no hay
@@ -73,6 +74,15 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    // Sin cookie, cada POST genera un cart_id nuevo (randomUUID) → una fila
+    // nueva en cart_items por request, sin tope. Auditoría 03/09/2026:
+    // ningún otro endpoint público del sitio quedaba sin este límite.
+    const h = await headers()
+    const ip = getClientIp(h)
+    if (!checkRateLimit(`cart:${ip}`, { windowMs: 60_000, max: 40 })) {
+      return NextResponse.json({ error: 'Demasiados intentos. Esperá un minuto y volvé a intentar.' }, { status: 429 })
+    }
+
     const body = await req.json().catch(() => null)
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Solicitud inválida.' }, { status: 400 })

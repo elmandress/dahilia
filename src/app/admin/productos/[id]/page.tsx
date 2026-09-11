@@ -7,6 +7,7 @@ import { slugify, mediaPath, prepareImageForUpload, STORAGE_CACHE_SECONDS } from
 import { notifyReindex } from '@/lib/seo-notify'
 import { draftDescription } from '@/lib/description-draft'
 import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
+import { recommendPrice, formatUyu, type PricingRecommendation, type PricingPeer } from '@/lib/pricing'
 import type { Category, Color, Collection, Product, ProductMedia, ProductSize, ProductColor } from '@/lib/types'
 
 type LoadedProductColor = Partial<ProductColor> & { color_id?: string; color?: { id: string } }
@@ -73,6 +74,12 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
   const [material, setMaterial] = useState('')
   const [careInstructions, setCareInstructions] = useState('')
   const [isCustomOnly, setIsCustomOnly] = useState(false)
+  // Marcador de precio (lib/pricing.ts): horas y materiales de la tabla
+  // interna product_costs (null mientras no se corra
+  // database/costos-produccion-2026-09.sql: el marcador usa entonces la tabla
+  // de precios aprobada) + productos activos, para comparar con la categoría.
+  const [costs, setCosts] = useState<{ hours: number | null; materials: number | null } | null>(null)
+  const [peers, setPeers] = useState<PricingPeer[]>([])
 
   // Media
   const [mediaEntries, setMediaEntries] = useState<MediaEntry[]>([])
@@ -177,16 +184,28 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
     const initPage = async () => {
       const supabase = createClient()
 
-      const [catRes, colRes, collRes] = await Promise.all([
+      const [catRes, colRes, collRes, costRes, peersRes] = await Promise.all([
         supabase.from('categories').select('*').order('sort_order'),
         supabase.from('colors').select('*').order('sort_order'),
         supabase.from('collections').select('*').order('sort_order'),
+        supabase.from('product_costs').select('labor_hours, materials_cost_uyu').eq('product_id', productId).maybeSingle(),
+        supabase.from('products').select('slug, name, base_price_uyu, category_id').eq('status', 'active'),
       ])
 
       setCategories((catRes.data ?? []) as Category[])
       setColors((colRes.data ?? []) as Color[])
       // Collections are optional (table may not exist yet) — ignore errors.
       if (collRes.data) setCollections(collRes.data as Collection[])
+      // Opcionales, como collections: si falla (tabla sin crear), el marcador
+      // igual funciona con la tabla de precios aprobada.
+      if (!costRes.error && costRes.data) {
+        const c = costRes.data as { labor_hours: number | string | null; materials_cost_uyu: number | null }
+        setCosts({ hours: c.labor_hours != null ? Number(c.labor_hours) : null, materials: c.materials_cost_uyu })
+      }
+      if (peersRes.data) {
+        setPeers((peersRes.data as Array<{ slug: string; name: string; base_price_uyu: number | null; category_id: string | null }>)
+          .map((p) => ({ slug: p.slug, name: p.name, price: p.base_price_uyu, categoryId: p.category_id })))
+      }
 
       try {
         const { data: productData, error: productErr } = await supabase
@@ -438,6 +457,16 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
     try {
       const supabase = createClient()
 
+      // Un producto con la oferta prendida pero 0% de descuento es un dato
+      // fantasma: hoy no muestra nada (el guard de la tienda exige percent>0),
+      // pero queda armado para activarse solo el día que alguien cargue un %
+      // sin revisar el toggle. Se corrige acá, sin pedirle nada extra a
+      // Anush: "activa" solo puede quedar guardado si de verdad hay un
+      // porcentaje. Hallazgo de la auditoría 03/09/2026 ("Set de bufanda y
+      // guantes" tenía justo esta combinación).
+      const resolvedDiscountPercent = Math.max(0, Math.min(90, parseInt(discountPercent) || 0))
+      const resolvedDiscountActive = discountActive && resolvedDiscountPercent > 0
+
       // Update product entry
       const { error: productError } = await supabase
         .from('products')
@@ -450,8 +479,8 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           badge: badge.trim() || null,
           status,
           base_price_uyu: basePriceUyu ? parseInt(basePriceUyu) : null,
-          discount_percent: Math.max(0, Math.min(90, parseInt(discountPercent) || 0)),
-          discount_active: discountActive,
+          discount_percent: resolvedDiscountPercent,
+          discount_active: resolvedDiscountActive,
           // parseInt(x) || N pisaba un 0 real (falsy) con el default — un
           // problema concreto para marcar "disponible ahora, sin espera".
           lead_time_weeks_min: Number.isNaN(parseInt(leadTimeMin)) ? 2 : Math.max(0, parseInt(leadTimeMin)),
@@ -784,6 +813,20 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
               )}
             </div>
           </div>
+
+          {!isCustomOnly && (
+            <PricingPanel
+              rec={recommendPrice({
+                slug: slug.trim(),
+                price: basePriceUyu ? parseInt(basePriceUyu) : null,
+                hours: costs?.hours,
+                materials: costs?.materials,
+                categoryId: categoryId || null,
+                peers,
+              })}
+              onApply={(p) => setBasePriceUyu(String(p))}
+            />
+          )}
 
           <div className="admin-form-grid">
             <div className="admin-field">
@@ -1164,5 +1207,60 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
         </button>
       </div>
     </>
+  )
+}
+
+/**
+ * Marcador de precio dinámico (lib/pricing.ts): se recalcula mientras se
+ * escribe el precio. "Usar" solo completa el campo; se guarda con el botón de
+ * siempre, así nada cambia en la tienda sin que Anush lo confirme.
+ */
+function PricingPanel({ rec, onApply }: { rec: PricingRecommendation; onApply: (price: number) => void }) {
+  const tone = rec.status === 'under' ? '#8F3B53' : rec.status === 'ok' ? '#1E8449' : '#8C8285'
+  const headline =
+    rec.status === 'under'
+      ? `Está ${formatUyu(rec.gap)} por debajo del precio justo (${rec.gapPct}% menos)`
+      : rec.status === 'ok'
+        ? 'En precio: ya paga al menos el mínimo por hora'
+        : rec.status === 'hold'
+          ? 'Pieza de entrada: no se recomienda subirla'
+          : 'Faltan datos para calcular'
+  return (
+    <div style={{ margin: '4px 0 20px', padding: '14px 16px', borderRadius: 10, border: `1px solid ${tone}40`, background: `${tone}0D` }}>
+      <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8C8285', marginBottom: 4 }}>
+        Marcador de precio
+      </div>
+      <div style={{ fontWeight: 600, color: tone, marginBottom: 8 }}>{headline}</div>
+      {rec.status === 'under' && rec.price != null && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 13 }}>
+          <span>Hoy {formatUyu(rec.price)}</span>
+          {rec.stages.map((st, i) => (
+            <span key={st}>
+              → <strong style={{ color: i === 0 ? tone : undefined }}>{formatUyu(st)}</strong>
+            </span>
+          ))}
+          {rec.nextPrice != null && (
+            <button
+              type="button"
+              className="admin-btn admin-btn-secondary"
+              style={{ marginLeft: 8, padding: '4px 10px', fontSize: 12 }}
+              onClick={() => onApply(rec.nextPrice as number)}
+            >
+              Usar {formatUyu(rec.nextPrice)}
+            </button>
+          )}
+        </div>
+      )}
+      <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.55, color: '#4A4043' }}>
+        {rec.reasons.map((r) => <li key={r}>{r}</li>)}
+      </ul>
+      {rec.source && (
+        <p style={{ margin: '8px 0 0', fontSize: 11.5, color: '#8C8285' }}>
+          Horas y materiales: {rec.source === 'cargado'
+            ? 'los cargados en la tabla product_costs de Supabase'
+            : 'los de la tabla de precios aprobada (/admin/estrategia)'}.
+        </p>
+      )}
+    </div>
   )
 }

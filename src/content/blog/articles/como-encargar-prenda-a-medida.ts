@@ -86,7 +86,7 @@ export const article: Article = {
     { type: 'h2', text: 'Lo que conviene saber antes de confirmar' },
     {
       type: 'p',
-      text: 'Una prenda a medida se teje para vos, así que **no hacemos cambios por talle**. No es una letra chica: es la consecuencia lógica de que la pieza exista porque vos la pediste. Por eso insistimos tanto con las medidas al principio y por eso te acompañamos durante todo el proceso, para que no haya sorpresas al final. Las condiciones completas están en [Información](/info).',
+      text: 'Una prenda a medida se teje para vos, con tus números. Por eso insistimos tanto con las medidas al principio y te acompañamos durante todo el proceso: cada detalle se confirma antes de dar la primera puntada, para que no haya sorpresas al final.',
     },
     {
       type: 'quote',

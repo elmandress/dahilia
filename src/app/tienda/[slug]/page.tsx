@@ -445,12 +445,8 @@ async function ProductPage({ slug }: { slug: string }) {
               : 'https://schema.org/BackOrder',
       itemCondition: 'https://schema.org/NewCondition',
       priceValidUntil,
-      // Hecho a medida: no se aceptan cambios (coherente con la FAQ del sitio).
-      hasMerchantReturnPolicy: {
-        '@type': 'MerchantReturnPolicy',
-        applicableCountry: 'UY',
-        returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
-      },
+      // Sin hasMerchantReturnPolicy (04/09/2026): se sacó del sitio todo lo
+      // referido a cambios y devoluciones. Es un campo opcional para Google.
       // Merchant listings: destino + tiempos. El "handling" es el tejido de la
       // pieza (semanas del producto → días); el tránsito es el courier en UY.
       shippingDetails: {

@@ -1,26 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { timingSafeEqual } from 'node:crypto'
 import { createClient } from '@/lib/supabase/server'
 import { sendDailySummary, reportSystemError, type DailySummaryData } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 
-// Protected daily-digest endpoint. Point any scheduler at it (see below); it
-// builds the summary and emails the owner.
+// Protected daily-digest endpoint. `.github/workflows/daily-summary.yml` es
+// el único caller real hoy y ya usa el header — builds the summary and emails
+// the owner.
 //
-// SCHEDULING (falta programar el scheduler):
-//   - Netlify Scheduled Functions, or
-//   - a free external cron (cron-job.org, GitHub Actions) hitting:
-//       GET https://<dominio>/api/cron/daily-summary?secret=<CRON_SECRET>
-//     or with header  Authorization: Bearer <CRON_SECRET>
+// SCHEDULING: GitHub Actions (ya configurado) u otro cron externo, pegándole con
+//   GET https://<dominio>/api/cron/daily-summary
+//   Header  Authorization: Bearer <CRON_SECRET>
 //
 // Requires CRON_SECRET in the environment; without it the endpoint stays closed.
+// Auditoría 03/09/2026: antes también aceptaba el secreto por ?secret=
+// (puede quedar en logs de acceso del hosting/proxy) y comparaba con === (no
+// constant-time) — se saca la query string y se compara con timingSafeEqual.
+
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a)
+  const bufB = Buffer.from(b)
+  return bufA.length === bufB.length && timingSafeEqual(bufA, bufB)
+}
 
 function authorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET
   if (!secret) return false
-  const header = req.headers.get('authorization')
-  const q = req.nextUrl.searchParams.get('secret')
-  return header === `Bearer ${secret}` || q === secret
+  const header = req.headers.get('authorization') || ''
+  return safeEqual(header, `Bearer ${secret}`)
 }
 
 async function buildStats(): Promise<DailySummaryData> {

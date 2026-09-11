@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/public'
+import { getSnapshotData } from '@/lib/catalog'
 import { SITE_URL } from '@/lib/env'
 import { formatPrice, getFinalPrice } from '@/lib/types'
 import { getAllArticles } from '@/content/blog'
@@ -59,8 +60,28 @@ export async function GET() {
     if (faqs.length > 0) {
       faqBlock = `\n## Preguntas frecuentes\n${faqs.map((f) => `**${f.q.trim()}**\n${f.a.trim()}`).join('\n\n')}\n`
     }
-  } catch {
-    productLines = ''
+  } catch (e) {
+    // Antes esto dejaba el bloque ## Catálogo vacío ante cualquier caída de la
+    // DB — el resto de la página (marca, FAQ estáticas, notas de blog) sigue
+    // andando porque no depende de Supabase, pero el catálogo es justo lo que
+    // un asistente de IA vendría a buscar acá. Mismo fallback que el resto del
+    // sitio (auditoría 03/09/2026).
+    console.error('llms.txt fetch failed, usando snapshot', e)
+    const snap = getSnapshotData()
+    productLines = snap.products
+      .filter((p) => p.status === 'active')
+      .map((p) => {
+        const price = formatPrice(getFinalPrice(p, undefined, snap.discounts))
+        const desc = p.description ? ` — ${p.description.replace(/\s+/g, ' ').trim()}` : ''
+        return `- [${p.name}](${SITE_URL}/tienda/${p.slug}): ${price}${desc}`
+      })
+      .join('\n')
+    const faqs = [1, 2, 3, 4, 5]
+      .map((n) => ({ q: snap.settings[`faq_${n}_q`], a: snap.settings[`faq_${n}_a`] }))
+      .filter((f) => f.q?.trim() && f.a?.trim())
+    if (faqs.length > 0) {
+      faqBlock = `\n## Preguntas frecuentes\n${faqs.map((f) => `**${f.q.trim()}**\n${f.a.trim()}`).join('\n\n')}\n`
+    }
   }
 
   const body = `# Dahila Crochet
@@ -79,7 +100,7 @@ export async function GET() {
 - [Encargos a medida](${SITE_URL}/encargo): pedí una prenda tejida a tu medida y colores.
 - [Colecciones](${SITE_URL}/colecciones): las colecciones por temporada, en cantidades chicas.
 - [Sobre el atelier](${SITE_URL}/atelier): quiénes somos y cómo trabajamos.
-- [Envíos y cambios](${SITE_URL}/info): información de envíos, cuidados y pagos.
+- [Envíos, pagos y cuidados](${SITE_URL}/info): información de envíos, pagos y cuidado de las prendas.
 - [Contacto](${SITE_URL}/contacto): WhatsApp e Instagram.
 - [Tejé con Dahila](${SITE_URL}/tejedoras): red de tejedoras — postulate para tejer con la marca.
 
