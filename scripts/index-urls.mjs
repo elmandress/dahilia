@@ -5,28 +5,47 @@
 // to Google's Indexing API via a Service Account JWT (RS256, native crypto).
 //
 // Usage:
-//   npm run index-urls -- --dry-run           # list URLs, no API calls
-//   npm run index-urls -- --all               # submit ALL sitemap URLs
-//   npm run index-urls -- --filter=/blog      # only URLs containing "/blog"
-//   npm run index-urls -- --limit=10          # cap at 10 submissions
-//   npm run index-urls -- --type=URL_DELETED  # notify Google of removal
+//   npm run index-urls -- --dry-run              # list URLs, no API calls
+//   npm run index-urls -- --all                  # submit ALL sitemap URLs
+//   npm run index-urls -- --filter=/blog         # only URLs containing "/blog"
+//   npm run index-urls -- --limit=10             # cap at 10 submissions
+//   npm run index-urls -- --type=URL_DELETED     # notify Google of removal
+//   npm run index-urls -- --key=C:/keys/sa.json  # key stored outside the repo
 //
-// Credentials: .secrets/google-indexing-sa.json  (or GOOGLE_INDEXING_KEY_FILE)
-// Requires:    Node ≥ 18 (crypto.subtle, global fetch)
+// Credentials: .secrets/google-indexing-sa.json  (or GOOGLE_INDEXING_KEY_FILE / --key)
+// Requires:    Node ≥ 18 (global fetch + native crypto)
+//
+// Quota (default, per Google Cloud project): 200 publish requests/day and
+// 380 requests/min. The script waits between calls, retries transient errors
+// (per-minute 429, 5xx) and stops at the first error that would repeat for
+// every URL: API not enabled, service account not an Owner in Search
+// Console, invalid token, or daily quota reached.
+//
+// Scope: Google documents this API only for pages with JobPosting or
+// BroadcastEvent markup. For a blog or a shop a 200 means "notification
+// received", not "indexed", and Google may revoke access if it's abused.
+// Use it for new or changed URLs, not to resubmit the whole site every day.
 
 import { readFileSync, existsSync } from 'node:fs'
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import { createPrivateKey, sign as cryptoSign } from 'node:crypto'
+import path from 'node:path'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const SITE_URL = 'https://dahila.uy'
+// Same source as src/lib/env.ts: the env var if set, else the canonical domain.
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://dahila.uy').replace(/\/+$/, '')
 const DEFAULT_KEY_PATH = '.secrets/google-indexing-sa.json'
 const INDEXING_API = 'https://indexing.googleapis.com/v3/urlNotifications:publish'
 const TOKEN_URI = 'https://oauth2.googleapis.com/token'
 const SCOPE = 'https://www.googleapis.com/auth/indexing'
+// 400 ms between calls ≈ 150 requests/min, well under the 380/min limit.
+const DELAY_MS = 400
+const MAX_RETRIES = 3
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /** Base64url encode (no padding, URL-safe alphabet). */
 function b64url(input) {
@@ -47,17 +66,17 @@ function parseArgs(argv) {
 // ─── Security: abort if key file could be committed ───────────────────────────
 
 function assertKeyProtected(keyPath) {
-  // Only check if we're inside a git repo and the key file exists on disk.
   if (!existsSync(keyPath)) return
+  // A key outside the repo (the safest place for it) can't be committed.
+  // `git check-ignore` fails on those paths, which used to abort the script.
+  const rel = path.relative(process.cwd(), path.resolve(keyPath))
+  if (rel.startsWith('..') || path.isAbsolute(rel)) return
   try {
-    const result = execSync(
-      `git check-ignore -q "${keyPath}"`,
-      { stdio: ['pipe', 'pipe', 'pipe'] },
-    )
-    // Exit code 0 → file IS ignored → safe.
-    void result
-  } catch {
-    // Exit code 1 → file is NOT ignored → DANGER.
+    // Exit code 0 → the file IS ignored → safe.
+    execFileSync('git', ['check-ignore', '-q', rel], { stdio: 'ignore' })
+  } catch (err) {
+    // Exit code 1 → NOT ignored → danger. Anything else (no git) can't be verified.
+    if (err.status !== 1) return
     console.error(
       '\n🛑  ABORTING: the key file is NOT covered by .gitignore.\n' +
       `   Path: ${keyPath}\n` +
@@ -142,17 +161,44 @@ async function fetchSitemapUrls() {
 
 // ─── Indexing API submission ─────────────────────────────────────────────────
 
+/** One notification. Retries only transient errors, with growing waits. */
 async function submitUrl(url, accessToken, type) {
-  const res = await fetch(INDEXING_API, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({ url, type }),
-  })
-  const body = await res.json().catch(() => ({}))
-  return { status: res.status, body }
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(INDEXING_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ url, type }),
+    })
+    const body = await res.json().catch(() => ({}))
+    const message = body.error?.message || ''
+    const dailyQuota = res.status === 429 && /per day/i.test(message)
+    const transient = (res.status === 429 && !dailyQuota) || res.status >= 500
+    if (transient && attempt < MAX_RETRIES) {
+      const wait = 2000 * 2 ** attempt
+      console.log(`   ⏳  ${res.status} — retrying in ${wait / 1000}s…`)
+      await sleep(wait)
+      continue
+    }
+    return { status: res.status, body, message, dailyQuota }
+  }
+}
+
+/** Plain-language reason for the errors that would repeat for every URL. */
+function stopReason({ status, message, dailyQuota }) {
+  if (dailyQuota) return 'daily quota reached for this Google Cloud project (resets at midnight Pacific time).'
+  if (/has not been used|is disabled|SERVICE_DISABLED/i.test(message)) {
+    return 'the Web Search Indexing API is not enabled in the Google Cloud project.\n' +
+      '   Enable it: Google Cloud Console → APIs & Services → Library → "Web Search Indexing API" → Enable.'
+  }
+  if (/ownership/i.test(message)) {
+    return 'the service account is not an Owner of the property in Search Console.\n' +
+      '   Search Console → Settings → Users and permissions → add it as Owner.'
+  }
+  if (status === 401) return 'invalid token — the key may have been deleted or rotated.'
+  return 'permission denied.'
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -164,6 +210,15 @@ async function main() {
   const filter = typeof args['filter'] === 'string' ? args['filter'] : null
   const limit = typeof args['limit'] === 'string' ? parseInt(args['limit'], 10) : Infinity
   const type = typeof args['type'] === 'string' ? args['type'] : 'URL_UPDATED'
+
+  if (Number.isNaN(limit) || limit < 1) {
+    console.error('❌  --limit must be a whole number, 1 or more.')
+    process.exit(1)
+  }
+  if (!['URL_UPDATED', 'URL_DELETED'].includes(type)) {
+    console.error('❌  --type must be URL_UPDATED or URL_DELETED.')
+    process.exit(1)
+  }
 
   console.log('╔══════════════════════════════════════════════════════════╗')
   console.log('║  Dahila — Google Indexing API                           ║')
@@ -226,21 +281,35 @@ async function main() {
   // 5. Get OAuth2 access token
   const accessToken = await getAccessToken(sa)
 
-  // 6. Submit each URL (sequential to respect rate limits — 200/min)
+  // 6. Submit each URL, one at a time, with a pause between calls.
   let ok = 0
   let fail = 0
-  for (const url of urls) {
+  for (let i = 0; i < urls.length; i++) {
+    const url = urls[i]
     const result = await submitUrl(url, accessToken, type)
     if (result.status === 200) {
       ok++
-      console.log(`   ✅  ${url}`)
+      const when = result.body.urlNotificationMetadata?.latestUpdate?.notifyTime
+      console.log(`   ✅  200  ${url}${when ? `  (notifyTime ${when})` : ''}`)
     } else {
       fail++
-      console.log(`   ❌  ${url} → ${result.status}: ${JSON.stringify(result.body)}`)
+      console.log(`   ❌  ${result.status}  ${url} → ${result.message || JSON.stringify(result.body)}`)
     }
+
+    // Errors that repeat for every URL: stop instead of burning quota.
+    if (result.dailyQuota || result.status === 401 || result.status === 403) {
+      const pending = urls.length - i - 1
+      fail += pending
+      console.log(`\n🛑  Stopped: ${stopReason(result)}`)
+      if (pending > 0) console.log(`   ${pending} URL(s) not sent.`)
+      break
+    }
+    if (i < urls.length - 1) await sleep(DELAY_MS)
   }
 
   console.log(`\n📊  Results: ${ok} succeeded, ${fail} failed out of ${urls.length} total.`)
+  if (ok > 0) console.log('   A 200 means Google received the notification — not that the page is indexed.')
+  if (fail > 0) process.exitCode = 1
 }
 
 main().catch((err) => {

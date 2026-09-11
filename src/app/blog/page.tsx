@@ -8,10 +8,13 @@ import { dahila, Eyebrow } from '@/components/ui/Primitives'
 import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
 import { BLUR_DATA_URL } from '@/lib/types'
+import { getCatalog } from '@/lib/catalog'
+import { withHeroOverride } from '@/content/blog/hero'
 
-// Contenido 100% estático (vive en src/content/blog). No hay revalidate porque
-// no hay nada que revalidar: cambia cuando se hace deploy.
-export const dynamic = 'force-static'
+// El texto vive en el repo (src/content/blog); de la base sale solo la foto de
+// portada que se cambie desde /admin/blog, y viene del catálogo ya cacheado.
+// El admin revalida al guardar: la hora es solo la red de seguridad.
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'Notas sobre crochet, cuidado de prendas y tejido a mano',
@@ -27,8 +30,10 @@ export const metadata: Metadata = {
   },
 }
 
-export default function BlogIndexPage() {
-  const articles = getAllArticles()
+export default async function BlogIndexPage() {
+  const { settings } = await getCatalog()
+  const withHero = (a: Article) => withHeroOverride(a, settings)
+  const articles = getAllArticles().map(withHero)
   const clusters = getUsedClusters()
   // La destacada es la primera del registro (criterio editorial, no fecha) y
   // se excluye de su sección temática para no aparecer dos veces.
@@ -85,7 +90,7 @@ export default function BlogIndexPage() {
           además se pierde la señal de estructura temática que le sirve a
           Google. La nota destacada de arriba no se repite acá abajo. */}
       {clusters.map((c) => {
-        const inCluster = getClusterArticles(c).filter((a) => a.slug !== lead?.slug)
+        const inCluster = getClusterArticles(c).map(withHero).filter((a) => a.slug !== lead?.slug)
         if (inCluster.length === 0) return null
         return (
           <section key={c} style={{ marginTop: 56 }}>

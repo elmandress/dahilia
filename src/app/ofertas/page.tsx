@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/public'
 import type { Product, Discount } from '@/lib/types'
 import { getFinalPrice, getEffectivePrice } from '@/lib/types'
 import { OfertasClient } from './OfertasClient'
-import { OG_BASE } from '@/lib/og'
+import { OG_BASE_NO_IMAGE } from '@/lib/og'
 
 export const revalidate = 1800
 
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: 'Piezas de crochet con descuento real, tejidas una por una en Montevideo. Pocas unidades de cada modelo — cuando se van, se van. Envío a todo Uruguay.',
   alternates: { canonical: '/ofertas' },
   openGraph: {
-    ...OG_BASE,
+    ...OG_BASE_NO_IMAGE,
     title: 'Ofertas en prendas tejidas a mano',
     description: 'Piezas de crochet con descuento real, tejidas una por una en Montevideo. Pocas unidades de cada modelo.',
     url: '/ofertas',

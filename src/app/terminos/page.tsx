@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/public'
 import { dahila, Eyebrow } from '@/components/ui/Primitives'
+import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 86400
 
@@ -8,6 +9,12 @@ export const metadata: Metadata = {
   title: 'Términos y condiciones',
   description: 'Términos y condiciones de compra y política de privacidad de Dahila Crochet.',
   alternates: { canonical: '/terminos' },
+  openGraph: {
+    ...OG_BASE,
+    title: 'Términos y condiciones — Dahila Crochet',
+    description: 'Términos y condiciones de compra y política de privacidad de Dahila Crochet.',
+    url: '/terminos',
+  },
   robots: { index: true, follow: true },
 }
 

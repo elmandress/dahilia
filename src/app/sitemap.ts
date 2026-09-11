@@ -1,9 +1,10 @@
 import type { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/public'
-import { getSnapshotData } from '@/lib/catalog'
+import { getCatalog, getSnapshotData } from '@/lib/catalog'
 import { SITE_URL } from '@/lib/env'
 import { botImageUrl } from '@/lib/media'
 import { getAllArticles } from '@/content/blog'
+import { withHeroOverride } from '@/content/blog/hero'
 
 export const revalidate = 3600
 
@@ -68,7 +69,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // sitemap igual publica el blog completo. `lastModified` sale de la fecha
   // real de publicación/actualización de cada nota — nunca de "ahora", por el
   // mismo motivo documentado arriba para las rutas estáticas.
-  const blogRoutes: MetadataRoute.Sitemap = getAllArticles().map((a) => ({
+  // Portadas cambiadas desde /admin/blog (settings del catálogo cacheado). Si
+  // la base no responde quedan las del repo: el blog del sitemap sigue sin
+  // depender de Supabase.
+  let blogSettings: Record<string, string> = {}
+  try {
+    blogSettings = (await getCatalog()).settings
+  } catch {
+    // Sin la base: portadas originales.
+  }
+  const blogRoutes: MetadataRoute.Sitemap = getAllArticles().map((raw) => withHeroOverride(raw, blogSettings)).map((a) => ({
     url: `${SITE_URL}/blog/${a.slug}`,
     lastModified: new Date(a.updatedAt ?? a.publishedAt),
     changeFrequency: 'monthly' as const,

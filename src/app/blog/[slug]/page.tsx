@@ -13,10 +13,11 @@ import { BLUR_DATA_URL } from '@/lib/types'
 import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
 import { botImageUrl } from '@/lib/media'
+import { withHeroOverride } from '@/content/blog/hero'
 
 // Una página estática por nota, generada en el build. El contenido vive en el
-// repo, así que no hay ninguna consulta que revalidar: lo único que sale de la
-// base son los productos recomendados, y vienen del catálogo ya cacheado.
+// repo; de la base salen solo los productos recomendados y la foto de portada
+// si se cambió desde /admin/blog — ambos del catálogo ya cacheado.
 export const revalidate = 3600
 
 // SIN `dynamicParams = false` a propósito (se sacó el 04/09/2026).
@@ -48,9 +49,10 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
   const { slug } = await params
-  const article = getArticle(slug)
+  const found = getArticle(slug)
   // Slug inválido: noindex (ver nota sobre dynamicParams arriba).
-  if (!article) return { title: 'Nota no encontrada', robots: { index: false, follow: false } }
+  if (!found) return { title: 'Nota no encontrada', robots: { index: false, follow: false } }
+  const article = withHeroOverride(found, (await getCatalog()).settings)
 
   const url = `${SITE_URL}/blog/${article.slug}`
   return {
@@ -84,8 +86,10 @@ export default async function ArticlePage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const article = getArticle(slug)
-  if (!article) notFound()
+  const found = getArticle(slug)
+  if (!found) notFound()
+  // La portada elegida en /admin/blog, si hay (settings del catálogo cacheado).
+  const article = withHeroOverride(found, (await getCatalog()).settings)
 
   const toc = tableOfContents(article.body)
   const related = getRelatedArticles(article)

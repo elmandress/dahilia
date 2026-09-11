@@ -6,7 +6,7 @@ import { SITE_URL } from '@/lib/env'
 import { TiendaClient } from './TiendaClient'
 import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
 import { MaintenanceScreen } from '@/components/MaintenanceScreen'
-import { OG_BASE } from '@/lib/og'
+import { OG_BASE_NO_IMAGE } from '@/lib/og'
 
 export const revalidate = 3600
 
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description: 'Tops, cardigans, bolsos y sets tejidos a mano en Montevideo, con precios claros. Cada pieza se puede pedir en tu talle y tus colores. Envío a todo Uruguay.',
   alternates: { canonical: '/tienda' },
   openGraph: {
-    ...OG_BASE,
+    ...OG_BASE_NO_IMAGE,
     title: 'Ropa de crochet hecha a mano en Uruguay',
     description: 'Tops, cardigans, bolsos y sets tejidos a mano en Montevideo, con precios claros. Envío a todo Uruguay.',
     url: '/tienda',

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/public'
 import { dahila, Eyebrow, Icon } from '@/components/ui/Primitives'
 import { SITE_URL } from '@/lib/env'
-import { OG_BASE } from '@/lib/og'
+import { OG_BASE_NO_IMAGE } from '@/lib/og'
 
 export const revalidate = 3600
 
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: 'Todo claro antes de comprar: cómo llega tu pedido a cualquier punto de Uruguay, cómo pagás (transferencia o Mercado Pago) y cómo cuidar una prenda tejida a mano.',
   alternates: { canonical: '/info' },
   openGraph: {
-    ...OG_BASE,
+    ...OG_BASE_NO_IMAGE,
     title: 'Envíos, pagos y cuidados de tu prenda',
     description: 'Cómo llega tu pedido, cómo pagás y cómo cuidar una prenda tejida a mano.',
     url: `${SITE_URL}/info`,

@@ -14,7 +14,7 @@ import { ClarityScript } from '@/components/ClarityScript'
 import { GoogleAnalyticsScript } from '@/components/GoogleAnalyticsScript'
 import { AttributionCapture } from '@/components/AttributionCapture'
 import { SITE_URL, SUPABASE_STORAGE_ORIGIN } from '@/lib/env'
-import { OG_BASE } from '@/lib/og'
+import { OG_BASE, OG_DEFAULT_IMAGE } from '@/lib/og'
 import { getCatalog } from '@/lib/catalog'
 import { isReadyToShip } from '@/lib/types'
 import './globals.css'
@@ -71,22 +71,16 @@ export const metadata: Metadata = {
     // Antes: /logo-full.jpg — correcto de marca, pero un share con prenda
     // real convierte más que un isotipo. Fallback estático si /og fallara:
     // los crawlers reintentan; el resto del metadata no depende de esto.
-    images: [
-      {
-        url: '/og',
-        width: 1200,
-        height: 630,
-        alt: 'Dahila Crochet — prendas tejidas a mano en Uruguay',
-        type: 'image/jpeg',
-      },
-    ],
+    images: [OG_DEFAULT_IMAGE],
   },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Dahila Crochet — tejido a mano en Uruguay, a tu medida',
-    description: 'Cada prenda se teje especialmente para vos: tu talle, tus colores. Envío a todo Uruguay.',
-    images: ['/og'],
-  },
+  // Solo el tipo de tarjeta, a propósito (11/09/2026): con título,
+  // descripción e imagen fijos acá, toda página sin `twitter` propio
+  // (/tienda, /encargo, /contacto, /atelier…) heredaba los de la home y se
+  // compartía en X con el título equivocado. Sin ellos, Next completa la
+  // tarjeta con el openGraph de cada página (postProcessMetadata en
+  // next/dist/lib/metadata/resolve-metadata.js), y la home toma el openGraph
+  // de arriba, que dice lo mismo.
+  twitter: { card: 'summary_large_image' },
   robots: {
     index: true,
     follow: true,
