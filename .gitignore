@@ -52,3 +52,7 @@ assets/
 
 *.rar
 *.zip
+
+# Secrets / service accounts (NEVER commit)
+.secrets/
+*service-account*.json
