@@ -178,9 +178,9 @@ async function main() {
     urls = urls.filter((u) => u.includes(filter))
     console.log(`🔍  Filter "${filter}" → ${urls.length} matching URLs.`)
   }
-  if (!all && !filter && !dryRun) {
+  if (!all && !filter && !dryRun && !Number.isFinite(limit)) {
     console.error(
-      '⚠️  Safety: pass --all to submit every URL, or --filter=<path> to narrow scope.\n' +
+      '⚠️  Safety: pass --all to submit every URL, or --filter=<path> to narrow scope, or --limit=N.\n' +
       '   Use --dry-run to preview without submitting.',
     )
     process.exit(1)
@@ -213,7 +213,8 @@ async function main() {
     process.exit(1)
   }
 
-  const sa = JSON.parse(readFileSync(keyPath, 'utf8'))
+  const rawKey = readFileSync(keyPath, 'utf8').replace(/^\uFEFF/, '')
+  const sa = JSON.parse(rawKey)
   if (!sa.client_email || !sa.private_key) {
     console.error('❌  Invalid service account JSON: missing client_email or private_key.')
     process.exit(1)
