@@ -1,10 +1,13 @@
 import { createClient } from '@/lib/supabase/public'
+import { brandProfileUrls, googleBusinessUrl } from '@/lib/profiles'
 import { getCatalog } from '@/lib/catalog'
 import type { Testimonial } from '@/components/TestimonialsStrip'
 import { HomeClient } from './HomeClient'
 import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
 import { MaintenanceScreen } from '@/components/MaintenanceScreen'
 import { SITE_URL } from '@/lib/env'
+import { getHomeArticles } from '@/content/blog'
+import { withHeroOverride } from '@/content/blog/hero'
 
 export const revalidate = 3600
 
@@ -65,18 +68,9 @@ export default async function Home() {
     })),
   } : null
 
-  // WebSite schema — enables Google SERP search box for the domain.
-  const websiteJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'Dahila Crochet',
-    url: SITE_URL,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/tienda?q={search_term_string}` },
-      'query-input': 'required name=search_term_string',
-    },
-  }
+  // (El WebSite vive solo en el layout, con @id y las variantes de la marca.
+  // Acá había un segundo WebSite para el cuadro de búsqueda de Google, que
+  // Google retiró en noviembre de 2024 — auditoría 12/09/2026.)
 
   // LocalBusiness — shows brand panel in Google with location, contact, links.
   const waUrl = settings.contact_whatsapp_url || 'https://wa.me/59899850073'
@@ -97,7 +91,14 @@ export default async function Home() {
       addressLocality: 'Montevideo',
       addressCountry: 'UY',
     },
-    sameAs: [igUrl, waUrl],
+    // Perfiles oficiales (Configuración → Contacto) + WhatsApp. hasMap ata
+    // esta ficha al Perfil de Negocio de Google cuando el link está cargado.
+    sameAs: [...new Set([igUrl, ...brandProfileUrls(settings), waUrl])],
+    ...(googleBusinessUrl(settings) ? { hasMap: googleBusinessUrl(settings) } : {}),
+    areaServed: [
+      { '@type': 'City', name: 'Montevideo' },
+      { '@type': 'Country', name: 'Uruguay' },
+    ],
     priceRange: '$$',
     currenciesAccepted: 'UYU',
     // Coherente con lo que el carrito realmente ofrece (CarritoClient.tsx):
@@ -112,10 +113,6 @@ export default async function Home() {
       {source === 'snapshot' && <CatalogReadOnlyBanner waUrl={waUrl} />}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
-      />
-      <script
-        type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
       />
       {faqJsonLd && (
@@ -124,7 +121,16 @@ export default async function Home() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
         />
       )}
-      <HomeClient products={products} newest={newest} settings={settings} discounts={discounts} testimonials={testimonials} dropCollectionHref={dropCollectionHref} />
+      <HomeClient
+        products={products}
+        newest={newest}
+        settings={settings}
+        discounts={discounts}
+        testimonials={testimonials}
+        dropCollectionHref={dropCollectionHref}
+        // Solo lo que muestra la tarjeta: el cuerpo de las notas no viaja al cliente.
+        notes={getHomeArticles().map((a) => withHeroOverride(a, settings)).map(({ slug, title, excerpt, hero }) => ({ slug, title, excerpt, hero }))}
+      />
     </>
   )
 }

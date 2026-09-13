@@ -5,14 +5,14 @@ export const article: Article = {
   title: 'Cuánto demora una prenda tejida a mano (y por qué)',
   metaTitle: 'Cuánto demora tejer una prenda a mano a crochet',
   description:
-    'Cuántas horas lleva tejer a crochet un top, un cardigan o un bolso, cuánto se tarda desde que hacés el pedido hasta que llega, y qué hace que una pieza demore más que otra.',
+    'Cuántas horas lleva tejer a crochet un top, un cardigan o un bolso, cuánto tarda desde el pedido hasta que llega y qué hace que una pieza demore más.',
   excerpt:
     'Un bolso chico son unas cinco horas de trabajo. Un cardigan pasa las veinte. Acá está el detalle de por qué una prenda tejida a mano tarda lo que tarda.',
   cluster: 'a-medida',
   role: 'support',
   funnel: 'BOFU',
   publishedAt: '2026-09-04',
-  hero: { src: '/photos/atelier-tejiendo.jpg', alt: 'Manos tejiendo a crochet en el taller' },
+  hero: { src: '/photos/blog/top-maresia-flor-tejida.jpg', alt: 'Top MARESIA tejido a crochet en blanco, con una flor lila tejida en el frente', position: '50% 50%' },
   relatedCategorySlug: 'cardigans',
   relatedProductSlugs: ['cardigan-3-4', 'bolso-lola', 'top-summer'],
   relatedArticleSlugs: ['como-encargar-prenda-a-medida', 'cuanto-cuesta-una-prenda-tejida-a-mano'],
@@ -52,7 +52,7 @@ export const article: Article = {
     { type: 'h2', text: 'Por qué un cardigan lleva cuatro veces más que un bolso' },
     {
       type: 'p',
-      text: 'No es solo tamaño. En un bolso, el tejido es parejo y repetitivo: una vez que arrancó, avanza. Una prenda que se usa sobre el cuerpo tiene que resolver además la forma — sisas, escote, hombros, mangas — y cada una de esas partes se teje contando puntos, se prueba, y a veces se destejé y se rehace.',
+      text: 'No es solo tamaño. En un bolso, el tejido es parejo y repetitivo: una vez que arrancó, avanza. Una prenda que se usa sobre el cuerpo tiene que resolver además la forma (sisas, escote, hombros, mangas), y cada una de esas partes se teje contando puntos, se prueba, y a veces se desteje y se rehace.',
     },
     {
       type: 'p',
@@ -130,7 +130,7 @@ export const article: Article = {
         },
         {
           q: '¿Tienen algo listo para llevar ya?',
-          a: 'A veces sí. Las piezas que ya están tejidas aparecen marcadas como disponibles sin espera en la tienda — son las que salen más rápido porque no hay que tejerlas.',
+          a: 'A veces sí. Las piezas que ya están tejidas aparecen marcadas "En stock" en la tienda: son las que salen más rápido porque no hay que tejerlas.',
         },
       ],
     },

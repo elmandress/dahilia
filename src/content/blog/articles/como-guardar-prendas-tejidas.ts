@@ -13,8 +13,9 @@ export const article: Article = {
   funnel: 'TOFU',
   publishedAt: '2026-08-31',
   hero: {
-    src: '/photos/bufanda-verde.png',
-    alt: 'Bufanda verde tejida a mano a crochet, doblada',
+    src: '/photos/blog/bufanda-sophie-camel.jpg',
+    alt: 'Bufanda SOPHIE tejida a crochet en camel, apoyada en plano junto a una planta',
+    position: '50% 50%',
   },
   relatedCategorySlug: 'accesorios',
   relatedProductSlugs: ['bufanda-sophie', 'calentadores'],

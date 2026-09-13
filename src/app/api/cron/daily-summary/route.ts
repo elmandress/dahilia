@@ -40,8 +40,12 @@ async function buildStats(): Promise<DailySummaryData> {
     return data as unknown as DailySummaryData
   }
 
-  // Fallback: cart-only stats from anon-readable cart_items (encargo counts need
-  // the RPC because custom_orders is admin-only).
+  // Fallback si el RPC falla. Ojo: desde cerrar-carritos-favoritos.sql,
+  // cart_items ya no es legible con este cliente (anon, sin sesión), así que
+  // esta consulta vuelve vacía y el resumen saldría en cero aunque haya habido
+  // carritos. El error queda en el log de la función para que un "0" del
+  // fallback no se lea como "no pasó nada".
+  console.error('daily-summary: get_daily_summary falló; el fallback no ve cart_items', error?.message ?? 'sin datos')
   const { data: rows } = await supabase
     .from('cart_items')
     .select('cart_id, qty, product:products(name, base_price_uyu)')

@@ -5,14 +5,14 @@ export const article: Article = {
   title: 'Qué ponerse debajo de un top de crochet (y de una falda)',
   metaTitle: 'Qué ponerse debajo de un top o falda de crochet',
   description:
-    'Las cuatro formas de usar un top calado de crochet —del corpiño a la vista al forro— y qué va debajo de una falda tejida para que no transparente ni marque.',
+    'Las cuatro formas de usar un top calado de crochet (del corpiño a la vista al forro) y qué va debajo de una falda tejida para que no transparente ni marque.',
   excerpt:
     'Un top calado deja ver lo que va debajo, y esa es la gracia. La pregunta no es cómo taparlo, sino qué elegir para que lo de abajo sume en vez de cortar el diseño.',
   cluster: 'comprar',
   role: 'support',
   funnel: 'MOFU',
   publishedAt: '2026-09-04',
-  hero: { src: '/photos/top-lace-parque.jpg', alt: 'Top de crochet con punto calado' },
+  hero: { src: '/photos/blog/top-duna-calado.jpg', alt: 'Top DUNA tejido a crochet en punto calado, puesto', position: '50% 40%' },
   relatedCategorySlug: 'tops',
   relatedProductSlugs: ['top-summer', 'top-halter', 'falda-serenada'],
   relatedArticleSlugs: [
@@ -23,7 +23,7 @@ export const article: Article = {
   body: [
     {
       type: 'p',
-      text: 'Es la duda que frena la compra de muchos tops tejidos: "me encanta, pero ¿qué me pongo abajo?". La respuesta depende de cuánto querés que se vea y de dónde lo vas a usar — y hay cuatro caminos, de menos a más cobertura.',
+      text: 'Es la duda que frena la compra de muchos tops tejidos: "me encanta, pero ¿qué me pongo abajo?". La respuesta depende de cuánto querés que se vea y de dónde lo vas a usar, y hay cuatro caminos, de menos a más cobertura.',
     },
     {
       type: 'callout',
@@ -56,6 +56,16 @@ export const article: Article = {
     {
       type: 'note',
       text: 'Estos criterios son de estilismo general (fuentes: Leonisa, Moda Retro e InStyle, consultadas el 04/09/2026), no una política de Dahila. Si querés una prenda con forro, preguntalo al encargar.',
+    },
+
+    {
+      type: 'image',
+      src: '/photos/blog/cowl-neck-top.jpg',
+      alt: 'Top COWL NECK tejido a crochet en tono arena, con cuello volcado',
+      width: 828,
+      height: 1104,
+      caption: 'El [top COWL NECK](/tienda/cowl-neck-top), con el cuello volcado que le da el nombre.',
+      href: '/tienda/cowl-neck-top',
     },
 
     { type: 'h2', text: 'Qué color va debajo' },

@@ -9,10 +9,15 @@ import Script from 'next/script'
 // los hosts de Clarity a la CSP (script-src/connect-src) en el mismo build.
 const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID
 
+// lazyOnload (13/09/2026): Clarity graba el DOM entero y es de lo más pesado
+// que corre en la página. Con afterInteractive competía con la primera pintura
+// en el celular (Lighthouse: la foto de la home tardaba 1,4 s en pintarse ya
+// descargada). Ahora arranca cuando la página terminó de cargar: se pierde el
+// primer par de segundos de cada grabación, no la sesión.
 export function ClarityScript() {
   if (!CLARITY_ID) return null
   return (
-    <Script id="ms-clarity" strategy="afterInteractive">
+    <Script id="ms-clarity" strategy="lazyOnload">
       {`(function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
         t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;

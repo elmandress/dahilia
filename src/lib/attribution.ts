@@ -76,7 +76,16 @@ export function channelLabel(a: Pick<Attribution, 'utm_source' | 'referrer_host'
   if (raw.includes('facebook') || raw.includes('fb.')) return 'Facebook'
   if (raw.includes('whatsapp')) return 'WhatsApp'
   if (raw.includes('tiktok')) return 'TikTok'
+  // Asistentes de IA (12/09/2026), ANTES que 'google': gemini.google.com
+  // contiene "google" y se contaba como búsqueda de Google. ChatGPT además
+  // agrega utm_source=chatgpt.com a los links que cita.
+  if (raw.includes('chatgpt') || raw.includes('openai')) return 'ChatGPT'
+  if (raw.includes('perplexity')) return 'Perplexity'
+  if (raw.includes('gemini') || raw.includes('bard.google')) return 'Gemini'
+  if (raw.includes('copilot')) return 'Copilot'
+  if (raw.includes('claude')) return 'Claude'
   if (raw.includes('google')) return 'Google'
+  if (raw.includes('bing')) return 'Bing'
   if (raw.includes('pinterest')) return 'Pinterest'
   return a?.utm_source || a?.referrer_host || 'Directo'
 }

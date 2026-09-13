@@ -25,13 +25,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: 'Colecciones tejidas a mano, por temporada',
-    description: 'Cada colección sale en cantidades chicas — es crochet tejido a mano en Montevideo. Mirá la actual, y anotate para ver la próxima antes que nadie.',
+    description: 'Cada colección sale en cantidades chicas: es crochet tejido a mano en Montevideo. Mirá la actual, y anotate para ver la próxima antes que nadie.',
     alternates: { canonical: '/colecciones' },
     ...(hasVisible ? {} : { robots: { index: false, follow: true } }),
     openGraph: {
       ...OG_BASE,
       title: 'Colecciones tejidas a mano, por temporada',
-      description: 'Cada colección sale en cantidades chicas — es crochet tejido a mano en Montevideo.',
+      description: 'Cada colección sale en cantidades chicas: es crochet tejido a mano en Montevideo.',
       url: '/colecciones',
     },
   }

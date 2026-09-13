@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { confirmLeaveWithUnsaved } from '@/lib/use-unsaved-warning'
 import './admin.css'
 
 // Ordenado por frecuencia de uso real de la dueña: lo diario arriba
@@ -209,6 +210,7 @@ export default function AdminChrome({ children }: { children: React.ReactNode })
   }, [isLoginPage])
 
   const handleLogout = async () => {
+    if (!confirmLeaveWithUnsaved()) return
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/admin/login')
@@ -230,7 +232,7 @@ export default function AdminChrome({ children }: { children: React.ReactNode })
       <button
         className="admin-mobile-toggle"
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        aria-label="Toggle sidebar"
+        aria-label={sidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
         aria-expanded={sidebarOpen}
       >
         <svg width="20" height="20" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -283,7 +285,15 @@ export default function AdminChrome({ children }: { children: React.ReactNode })
                   key={item.href}
                   href={item.href}
                   className={isActive(item.href) ? 'active' : ''}
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={(e) => {
+                    // La navegación interna no dispara beforeunload: el aviso
+                    // de cambios sin guardar lo hace el menú (use-unsaved-warning).
+                    if (!confirmLeaveWithUnsaved()) {
+                      e.preventDefault()
+                      return
+                    }
+                    setSidebarOpen(false)
+                  }}
                 >
                   {item.icon}
                   {item.label}

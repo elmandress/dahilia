@@ -3,7 +3,10 @@ import type { Article } from '../types'
 export const article: Article = {
   slug: 'comprar-crochet-en-uruguay',
   title: 'Comprar crochet en Uruguay: cómo elegir bien (y qué mirar antes)',
-  metaTitle: 'Comprar crochet en Uruguay: guía para elegir bien',
+  // 13/09/2026: 46 impresiones, 4,3% de CTR, posición 7,2. La búsqueda que la
+  // trae es "crochet uruguay": el título ahora arranca con esas palabras.
+  // Medir el 11/10.
+  metaTitle: 'Crochet en Uruguay: dónde comprar y qué mirar antes',
   description:
     'Dónde y cómo comprar prendas de crochet hechas a mano en Uruguay: qué mirar antes de pagar, cómo reconocer trabajo bien hecho y qué preguntar sobre talles y plazos.',
   excerpt:
@@ -13,11 +16,15 @@ export const article: Article = {
   funnel: 'BOFU',
   publishedAt: '2026-08-31',
   hero: {
-    src: '/photos/top-lace-parque.jpg',
-    alt: 'Top tejido a mano a crochet, usado al aire libre',
+    src: '/photos/blog/cardigan-granny-crochet.jpg',
+    alt: 'Granny’s cardigan tejido a crochet con cuadrados en rosa, bordó y crudo',
+    position: '50% 30%',
   },
   relatedCategorySlug: 'tops',
-  relatedProductSlugs: ['top-flower', 'cardigan-3-4', 'set-brisa'],
+  // Las piezas que más se agregan al carrito (base, 12/09/2026). Esta nota
+  // entra por "crochet uruguay", la búsqueda genérica más valiosa en la que ya
+  // estamos en la primera página de Google.
+  relatedProductSlugs: ['cardigan-amour', 'set-de-bufanda-y-guantes', 'sweater-senda', 'bandana'],
   relatedArticleSlugs: [
     'cuanto-cuesta-una-prenda-tejida-a-mano',
     'crochet-o-dos-agujas-diferencias',
@@ -50,6 +57,16 @@ export const article: Article = {
       type: 'callout',
       title: 'Cómo mirarlo en una foto',
       text: 'Buscá el relieve y la sombra entre punto y punto, y fijate si hay pequeñas variaciones entre una zona y otra. Un tejido a mano es regular, pero nunca matemáticamente idéntico. Esa mínima irregularidad es la firma de que lo hizo una persona.',
+    },
+
+    {
+      type: 'image',
+      src: '/photos/blog/cardigan-granny-lazo.jpg',
+      alt: 'Granny’s cardigan tejido a crochet, atado adelante con un lazo tejido',
+      width: 1080,
+      height: 1439,
+      caption: 'El punto hecho a mano, de cerca: el [Granny’s cardigan](/tienda/granny-s-cardigan).',
+      href: '/tienda/granny-s-cardigan',
     },
 
     { type: 'h2', text: 'Uruguay y la lana: una ventaja de contexto' },

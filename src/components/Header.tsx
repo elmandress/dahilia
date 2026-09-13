@@ -11,7 +11,9 @@ import { useScrollLock } from '@/lib/scroll-lock'
 import { dahila, Icon } from './ui/Primitives'
 import { formatPrice } from '@/lib/types'
 
-interface Suggestion { slug: string; name: string; photo: string; price: number; soldout: boolean }
+// `from`: el precio cambia según el talle y `price` es el más bajo (mismo
+// criterio que la tarjeta de la tienda, ver getListingPrice).
+interface Suggestion { slug: string; name: string; photo: string; price: number; from?: boolean; soldout: boolean }
 
 // 7 ítems (antes 8): "Sobre nosotros" salió del header — sigue en el footer.
 // Regla del propio skill dahila-storefront (5-7 links horizontales, Miller's
@@ -343,7 +345,7 @@ export function Header({
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 14, color: dahila.ink900, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sug.name}</div>
                               <div style={{ fontFamily: dahila.fontSans, fontSize: 12, color: sug.soldout ? dahila.ink500 : dahila.ink700 }}>
-                                {sug.soldout ? 'Agotado' : formatPrice(sug.price)}
+                                {sug.soldout ? 'Agotado' : `${sug.from ? 'desde ' : ''}${formatPrice(sug.price)}`}
                               </div>
                             </div>
                           </Link>

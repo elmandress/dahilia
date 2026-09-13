@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/public'
+import { getCatalog } from '@/lib/catalog'
 import { FavoritosClient } from './FavoritosClient'
 
 export const revalidate = 3600
@@ -12,15 +12,10 @@ export const metadata: Metadata = {
 }
 
 export default async function FavoritosPage() {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('site_settings')
-    .select('key, value')
-    .eq('key', 'contact_whatsapp_url')
+  // WhatsApp y descuentos desde el catálogo cacheado (antes, una consulta
+  // propia a site_settings por visita y sin descuentos para la vista rápida).
+  const { settings, discounts } = await getCatalog()
+  const whatsappUrl = settings.contact_whatsapp_url?.trim() || 'https://wa.me/59899850073'
 
-  const whatsappUrl =
-    ((data ?? []).find((r) => r.key === 'contact_whatsapp_url')?.value as string | undefined) ||
-    'https://wa.me/59899850073'
-
-  return <FavoritosClient whatsappUrl={whatsappUrl} />
+  return <FavoritosClient whatsappUrl={whatsappUrl} discounts={discounts} />
 }

@@ -7,7 +7,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Product, Category, Color, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
-import { getFinalPrice, BLUR_DATA_URL, isReadyToShip, normalizeText } from '@/lib/types'
+import { getListingPrice, resolveDiscountPercent, BLUR_DATA_URL, isReadyToShip, normalizeText } from '@/lib/types'
+import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Chip, Icon, Breadcrumb, Button } from '@/components/ui/Primitives'
 import { track } from '@/lib/analytics'
 import { readRecentlyViewed, type RecentItem } from '@/lib/recentlyViewed'
@@ -103,9 +104,12 @@ function matchesFilters(p: Product, opts: {
   const matchesSize =
     opts.sizes.length === 0 ||
     (p.sizes ?? []).some((s) => opts.sizes.includes(s.size) && s.available !== false)
-  const finalPrice = getFinalPrice(p, undefined, opts.discounts)
+  // Precio "desde" (el mismo que muestra la tarjeta). "Con descuento" = hay un
+  // descuento que aplica: comparar contra el precio base marcaba como rebajada
+  // cualquier pieza con un talle más barato que la base.
+  const finalPrice = getListingPrice(p, opts.discounts)
   const matchesPrice = opts.maxEff <= 0 || finalPrice <= opts.maxEff
-  const matchesDiscount = !opts.onlyDiscount || finalPrice < (p.base_price_uyu ?? Infinity)
+  const matchesDiscount = !opts.onlyDiscount || resolveDiscountPercent(p, opts.discounts) > 0
   const matchesStock = !opts.hideOutOfStock || p.status !== 'soldout'
   const matchesReady = !opts.onlyReadyToShip || isReadyToShip(p)
   return matchesCat && matchesSearch && matchesColor && matchesSize && matchesPrice && matchesDiscount && matchesStock && matchesReady
@@ -125,6 +129,7 @@ export function TiendaClient({
   initialSize,
   initialHideOutOfStock,
   initialOnlyReadyToShip,
+  guides = [],
 }: {
   initialProducts: Product[]
   categories: Category[]
@@ -139,6 +144,8 @@ export function TiendaClient({
   initialSize?: string
   initialHideOutOfStock?: boolean
   initialOnlyReadyToShip?: boolean
+  /** Notas del blog de esta categoría (solo en /tienda/[categoría]). */
+  guides?: { slug: string; title: string; excerpt: string }[]
 }) {
   const router = useRouter()
 
@@ -218,11 +225,12 @@ export function TiendaClient({
   const [onlyReadyToShipFilter, setOnlyReadyToShipFilter] = useState(!!initialOnlyReadyToShip)
   const [showFilters, setShowFilters] = useState(false)
   const [quickView, setQuickView] = useState<Product | null>(null)
+  const { queueNote } = useCart()
 
   // Price bounds derived from the catalogue (discounted price).
   const priceBounds = useMemo(() => {
     const prices = initialProducts
-      .map((p) => getFinalPrice(p, undefined, discounts))
+      .map((p) => getListingPrice(p, discounts))
       .filter((n) => n > 0)
     if (prices.length === 0) return { min: 0, max: 0 }
     return { min: Math.min(...prices), max: Math.max(...prices) }
@@ -330,7 +338,7 @@ export function TiendaClient({
       hideOutOfStock: appliedHideOutOfStock, onlyReadyToShip: appliedOnlyReadyToShip, discounts,
     }))
 
-    const withFinal = result.map((p) => ({ p, price: getFinalPrice(p, undefined, discounts) }))
+    const withFinal = result.map((p) => ({ p, price: getListingPrice(p, discounts) }))
     switch (sort) {
       case 'precio-asc':
         withFinal.sort((a, b) => a.price - b.price)
@@ -488,6 +496,20 @@ export function TiendaClient({
             color: dahila.ink700, margin: '2px 0 0', maxWidth: 560,
           }}>
             {activeCategory.description}
+          </p>
+        )}
+        {/* Cuánto tarda, a la vista antes de elegir: con cola activa la tarjeta
+            oculta su plazo, y el aviso solo aparecía en la ficha y en el
+            carrito (auditoría 12/09/2026). No aplica a "En stock, sin espera". */}
+        {queueNote && !appliedOnlyReadyToShip && (
+          <p style={{
+            display: 'flex', alignItems: 'flex-start', gap: 7, margin: '4px 0 0', maxWidth: 560,
+            fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700, lineHeight: 1.5,
+          }}>
+            <span style={{ flexShrink: 0, marginTop: 1 }}>
+              <Icon name="arrow-clockwise" size={15} color={dahila.ink500} />
+            </span>
+            <span>{queueNote}</span>
           </p>
         )}
       </div>
@@ -816,6 +838,33 @@ export function TiendaClient({
             />
           ))}
         </div>
+      )}
+
+      {/* Notas del blog de esta categoría. Las notas ya enlazaban a su
+          categoría, pero la categoría no enlazaba a ninguna nota: para Google
+          eran páginas sin camino desde la tienda (Search Console, 13/09/2026:
+          las notas de cardigans, tops y sets figuraban como desconocidas). Y a
+          quien duda entre dos piezas le contesta antes de que tenga que
+          preguntar. Solo con la categoría con la que se entró. */}
+      {guides.length > 0 && filter === initialFilter && (
+        <section aria-labelledby="tienda-guias" style={{ marginTop: 48 }}>
+          <h2 id="tienda-guias" style={{
+            fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24,
+            color: dahila.ink900, margin: '0 0 16px',
+          }}>Antes de elegir</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 16 }}>
+            {guides.map((g) => (
+              <Link key={g.slug} href={`/blog/${g.slug}`} style={{
+                display: 'flex', flexDirection: 'column', gap: 6, textDecoration: 'none',
+                padding: '16px 18px', borderRadius: 12, border: `1px solid ${dahila.border}`, background: '#fff',
+              }}>
+                <span style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 500, color: dahila.ink900, lineHeight: 1.35 }}>{g.title}</span>
+                <span style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink700, lineHeight: 1.55 }}>{g.excerpt}</span>
+                <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.wine600, marginTop: 'auto', paddingTop: 4 }}>Leer la nota →</span>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Puente al encargo — al pie del catálogo, para quien lo recorrió y no

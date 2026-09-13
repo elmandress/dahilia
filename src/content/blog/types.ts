@@ -35,6 +35,10 @@ export type Block =
   | { type: 'shopCta'; title: string; text: Inline; href: string; label: string }
   /** Preguntas frecuentes. Alimenta también el JSON-LD FAQPage. */
   | { type: 'faq'; items: { q: string; a: Inline }[] }
+  /** Foto dentro del texto (archivos de public/photos/blog). width/height son
+   *  los reales del archivo: el espacio queda reservado y la foto no mueve el
+   *  texto al cargar. Con href, la foto lleva a la ficha del producto. */
+  | { type: 'image'; src: string; alt: string; width: number; height: number; caption?: Inline; href?: string }
 
 /** Etapa del embudo. Sirve para no llenar el blog de tráfico que no compra. */
 export type Funnel = 'TOFU' | 'MOFU' | 'BOFU'
@@ -79,7 +83,10 @@ export interface Article {
   /** ISO date. `updatedAt` solo si de verdad se revisó el contenido. */
   publishedAt: string
   updatedAt?: string
-  hero?: { src: string; alt: string }
+  /** Portada. `position` es el object-position del recorte (la foto es
+   *  vertical y la portada apaisada): '50% 30%' sube el encuadre hacia la
+   *  prenda. Por defecto, centrada. */
+  hero?: { src: string; alt: string; position?: string }
   body: Block[]
   /** Slugs de productos reales para el bloque de recomendados del pie. */
   relatedProductSlugs?: string[]

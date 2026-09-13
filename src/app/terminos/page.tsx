@@ -81,9 +81,9 @@ export default async function TerminosPage() {
 
         <Block title="3. Productos y prendas a medida">
           <p>
-            Todos los productos ofrecidos en este sitio son <strong>tejidos a mano de forma artesanal</strong> en
+            Todos los productos ofrecidos en este sitio son <strong>tejidos a mano</strong>, uno por uno, en
             Montevideo, Uruguay. Las prendas pueden presentar pequeñas variaciones entre sí, propias del proceso manual,
-            lo cual forma parte de su naturaleza artesanal y no constituye un defecto.
+            y esas variaciones no constituyen un defecto.
           </p>
           <p style={{ marginTop: 12 }}>
             Las prendas <strong>a medida o por encargo</strong> se confeccionan según las especificaciones de cada

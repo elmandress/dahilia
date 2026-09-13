@@ -241,6 +241,19 @@ export default function NuevoProductoPage() {
     setDragIndex(null)
   }
 
+  // Ordenar con flechas: el drag and drop nativo no funciona con el dedo en
+  // el celular, y es desde ahí que se suben las fotos recién sacadas.
+  const moveMedia = (index: number, delta: -1 | 1) => {
+    setMediaEntries(prev => {
+      const to = index + delta
+      if (to < 0 || to >= prev.length) return prev
+      const items = [...prev]
+      const [moved] = items.splice(index, 1)
+      items.splice(to, 0, moved)
+      return items.map((m, i) => ({ ...m, position: i }))
+    })
+  }
+
   // ---- Sizes ----
   const addSize = () => {
     setSizes(prev => [
@@ -531,7 +544,7 @@ export default function NuevoProductoPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
               </svg>
               <p>Arrastrá varias fotos aquí o hacé clic para elegirlas</p>
-              <div className="dropzone-hint">Podés subir varias a la vez · Arrastralas para ordenarlas · La primera es la principal</div>
+              <div className="dropzone-hint">Podés subir varias a la vez · Ordenalas arrastrando o con las flechas ◀ ▶ · La primera es la principal</div>
             </div>
 
             <input
@@ -582,7 +595,11 @@ export default function NuevoProductoPage() {
                       {!media.is_primary && (
                         <button onClick={() => setPrimary(media.tempId)}>★ Principal</button>
                       )}
-                      <button className="danger" onClick={() => removeMedia(media.tempId)}>✕</button>
+                      <span style={{ display: 'inline-flex', gap: 4 }}>
+                        <button type="button" onClick={() => moveMedia(index, -1)} disabled={index === 0} aria-label="Mover antes">◀</button>
+                        <button type="button" onClick={() => moveMedia(index, 1)} disabled={index === mediaEntries.length - 1} aria-label="Mover después">▶</button>
+                      </span>
+                      <button className="danger" onClick={() => removeMedia(media.tempId)} aria-label="Quitar">✕</button>
                     </div>
                   </div>
                 ))}

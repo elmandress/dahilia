@@ -230,6 +230,69 @@ export function getFinalPrice(product: Product, sizeLabel?: string, batch?: Disc
   return Math.round((list * (100 - pct)) / 100);
 }
 
+// ── Precio "de listado" y orden de talles ────────────────────────────
+// Auditoría 12/09/2026: la tarjeta y la ficha tomaban el precio del PRIMER
+// talle que devolvía la base (sin ordenar), mientras /ig, el buscador, el
+// orden por precio y el JSON-LD usaban base_price_uyu. El Granny's cardigan
+// salía 3.300 en /ig y 3.800 en la tienda. Todo lo que muestra UN precio por
+// producto usa ahora el mismo: el del talle disponible más barato, con
+// "desde" cuando el precio cambia según el talle.
+
+/** Talles en el orden que eligió la dueña (sort_order); sin orden, al final. */
+export function sortSizes<T extends { sort_order?: number | null }>(sizes: T[] | null | undefined): T[] {
+  return [...(sizes ?? [])].sort(
+    (a, b) => (a.sort_order ?? Number.MAX_SAFE_INTEGER) - (b.sort_order ?? Number.MAX_SAFE_INTEGER)
+  );
+}
+
+/** El talle disponible más barato (define el precio "desde"). Sin talles disponibles → undefined. */
+export function getListingSize(product: Product): string | undefined {
+  let best: string | undefined;
+  let bestPrice = Infinity;
+  for (const s of sortSizes(product.sizes)) {
+    if (s.available === false) continue;
+    const price = getEffectivePrice(product, s.size);
+    if (price < bestPrice) {
+      best = s.size;
+      bestPrice = price;
+    }
+  }
+  return best;
+}
+
+/** Precio final que se muestra por producto en listados, JSON-LD y buscador. */
+export function getListingPrice(product: Product, batch?: Discount[]): number {
+  return getFinalPrice(product, getListingSize(product), batch);
+}
+
+/** ¿El precio cambia según el talle (entre los disponibles)? → se antepone "desde". */
+export function hasPriceRange(product: Product): boolean {
+  const prices = new Set(
+    (product.sizes ?? []).filter((s) => s.available !== false).map((s) => getEffectivePrice(product, s.size))
+  );
+  return prices.size > 1;
+}
+
+/** "UYU 2.560" o "desde UYU 2.560", para textos y listas. */
+export function formatListingPrice(product: Product, batch?: Discount[]): string {
+  const price = formatPrice(getListingPrice(product, batch));
+  return hasPriceRange(product) ? `desde ${price}` : price;
+}
+
+/** Cuánto tarda una pieza, en una frase: lo mismo en la ficha y en la vista
+ *  rápida. Pieza ya tejida → "en stock" (la cola es de los encargos y no la
+ *  alcanza); si no, el aviso de cola manda sobre la fecha estimada (prometer
+ *  "lista en 3 semanas" con cola sería mentir). null si no hay nada cierto
+ *  que decir. */
+export function leadTimeMessage(product: Product, queueNote: string): { text: string; ready: boolean } | null {
+  if (product.status === 'soldout') return null;
+  if (isReadyToShip(product)) return { text: 'En stock: sale sin la espera de los encargos.', ready: true };
+  const note = queueNote.trim();
+  if (note) return { text: note, ready: false };
+  const estimate = readyDateEstimate(product.lead_time_weeks_min, product.lead_time_weeks_max);
+  return estimate ? { text: `Se teje al encargar: si la pedís hoy, lista ${estimate}.`, ready: false } : null;
+}
+
 // Normalizacion de texto para busqueda: saca tildes y pasa a minusculas, asi
 // "amelie" encuentra "Top AMELIE". Vive aca (y no duplicada) porque la usan
 // DOS lugares que TIENEN que coincidir: el dropdown del header (/api/search)
@@ -292,25 +355,43 @@ export const DEFAULT_CARE_INSTRUCTIONS = [
 // Tiny cream-tone blur placeholder for next/image `placeholder="blur"`.
 // A single solid colour keeps the data URL small (good for LCP) while
 // avoiding the harsh empty→image pop. Cream = #FAF1DF.
+// Ya codificado (es este SVG: un rectángulo de 4×5 color #FAF1DF). Antes se
+// armaba con btoa/Buffer al cargar: la sola mención de `Buffer` en un archivo
+// que usa el navegador le sumaba a TODAS las páginas un polyfill de Buffer de
+// ~9 KB comprimidos (auditoría de velocidad, 13/09/2026).
 export const BLUR_DATA_URL =
-  'data:image/svg+xml;base64,' +
-  (typeof btoa !== 'undefined'
-    ? btoa('<svg xmlns="http://www.w3.org/2000/svg" width="4" height="5"><rect width="4" height="5" fill="#FAF1DF"/></svg>')
-    : Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="4" height="5"><rect width="4" height="5" fill="#FAF1DF"/></svg>').toString('base64'));
+  'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjUiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjUiIGZpbGw9IiNGQUYxREYiLz48L3N2Zz4=';
 
 // Helper: get primary photo URL
+// Si más de una foto quedó marcada is_primary (dato inconsistente, visto en
+// producción), `.find()` sin orden dependía del orden que devolviera
+// Postgres — no garantizado sin un ORDER BY explícito. Ordenar por
+// `position` primero hace el desempate determinístico: siempre gana la de
+// menor posición, sin importar cómo llegue la fila de la base.
+function getPrimaryMedia(product: Product): ProductMedia | undefined {
+  const sorted = [...(product.media ?? [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  return sorted.find(m => m.is_primary && m.type === 'image') ?? sorted.find(m => m.type === 'image');
+}
+
 export function getPrimaryPhoto(product: Product): string {
   if (!product.media || product.media.length === 0) {
     return PHOTO_PLACEHOLDER;
   }
-  // Si más de una foto quedó marcada is_primary (dato inconsistente, visto en
-  // producción), `.find()` sin orden dependía del orden que devolviera
-  // Postgres — no garantizado sin un ORDER BY explícito. Ordenar por
-  // `position` primero hace el desempate determinístico: siempre gana la de
-  // menor posición, sin importar cómo llegue la fila de la base.
-  const sorted = [...product.media].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
-  const primary = sorted.find(m => m.is_primary && m.type === 'image') ?? sorted.find(m => m.type === 'image');
-  return primary?.url || product.media[0].url || PHOTO_PLACEHOLDER;
+  return getPrimaryMedia(product)?.url || product.media[0].url || PHOTO_PLACEHOLDER;
+}
+
+// Texto alternativo de las fotos de producto (12/09/2026): las 101 fotos
+// cargadas no tienen descripción, y el nombre solo ("Spring cardigan") no le
+// dice a Google Imágenes ni a un lector de pantalla qué es. "Pieza" sirve
+// para cualquier categoría (prenda, bolso, accesorio) sin errores de género.
+// Si Anush escribe una descripción en el admin, esa manda siempre.
+export function productPhotoAlt(name: string, index = 0): string {
+  const base = `${name} — pieza de crochet tejida a mano por Dahila`;
+  return index > 0 ? `${base} (foto ${index + 1})` : base;
+}
+
+export function getPrimaryPhotoAlt(product: Product): string {
+  return getPrimaryMedia(product)?.alt?.trim() || productPhotoAlt(product.name);
 }
 
 // "Disponible ahora": la pieza ya está tejida y lista, sin la espera habitual

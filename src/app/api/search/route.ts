@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCatalog } from '@/lib/catalog'
-import { getPrimaryPhoto, getFinalPrice, normalizeText as normalize } from '@/lib/types'
+import { getPrimaryPhoto, getListingPrice, hasPriceRange, normalizeText as normalize } from '@/lib/types'
 import type { Product } from '@/lib/types'
 
 export const revalidate = 0
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
   const q = normalize(raw)
 
   try {
-    const { products } = await getCatalog()
+    const { products, discounts } = await getCatalog()
 
     // Rank: name match beats description match; earlier position beats later.
     const scored = products
@@ -56,7 +56,10 @@ export async function GET(req: NextRequest) {
       slug: prod.slug,
       name: prod.name,
       photo: getPrimaryPhoto(prod),
-      price: getFinalPrice(prod),
+      // Mismo precio que la tarjeta (talle disponible más barato, con los
+      // descuentos por lote, que antes se ignoraban acá).
+      price: getListingPrice(prod, discounts),
+      from: hasPriceRange(prod),
       soldout: prod.status === 'soldout',
     }))
 

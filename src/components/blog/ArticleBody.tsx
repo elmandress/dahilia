@@ -1,6 +1,8 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Block } from '@/content/blog/types'
 import { dahila } from '@/components/ui/Primitives'
+import { BLUR_DATA_URL } from '@/lib/types'
 import { RichText } from './RichText'
 import { headingId } from '@/content/blog/toc'
 
@@ -135,6 +137,36 @@ function BlockView({ block }: { block: Block }) {
         </div>
       )
 
+    case 'image': {
+      // Fotos reales de las prendas en el cuerpo de la nota (13/09/2026: las
+      // 21 notas se repartían 5 fotos). Son verticales: a todo el ancho de la
+      // columna ocupaban una pantalla entera. Van a lo sumo a 460 px de ancho
+      // y a unos 560 de alto (el ancho sale de la proporción de cada foto).
+      const img = (
+        <Image
+          src={block.src}
+          alt={block.alt}
+          width={block.width}
+          height={block.height}
+          quality={82}
+          sizes="(max-width: 520px) 100vw, 460px"
+          placeholder="blur"
+          blurDataURL={BLUR_DATA_URL}
+          style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 14 }}
+        />
+      )
+      return (
+        <figure style={{ ...figureStyle, maxWidth: Math.min(460, Math.round((560 * block.width) / block.height)) }}>
+          {block.href ? <Link href={block.href} style={{ display: 'block' }}>{img}</Link> : img}
+          {block.caption && (
+            <figcaption style={captionStyle}>
+              <RichText text={block.caption} />
+            </figcaption>
+          )}
+        </figure>
+      )
+    }
+
     case 'faq':
       return (
         <div style={{ margin: '4px 0 28px' }}>
@@ -262,6 +294,16 @@ const faqItem: React.CSSProperties = {
   borderRadius: 14,
   padding: '18px 20px',
   marginBottom: 10,
+}
+
+const figureStyle: React.CSSProperties = {
+  margin: '8px auto 32px', width: '100%', maxWidth: 460,
+}
+
+const captionStyle: React.CSSProperties = {
+  fontFamily: dahila.fontSans, fontSize: 13.5, fontWeight: 300,
+  lineHeight: 1.6, color: dahila.ink500, margin: '10px 2px 0',
+  textAlign: 'center',
 }
 
 const ctaStyle: React.CSSProperties = {

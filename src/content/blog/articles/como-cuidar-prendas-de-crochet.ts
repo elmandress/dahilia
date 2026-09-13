@@ -3,7 +3,10 @@ import type { Article } from '../types'
 export const article: Article = {
   slug: 'como-cuidar-prendas-de-crochet',
   title: 'Cómo cuidar una prenda de crochet para que dure años',
-  metaTitle: 'Cómo cuidar una prenda de crochet (guía completa)',
+  // 13/09/2026: con "(guía completa)" tuvo 90 impresiones y 0 clics en
+  // posición 5,8 (Search Console, 28 días). Prueba: el título promete el
+  // resultado ("que dure años") en vez de un formato. Medir a los 28 días.
+  metaTitle: 'Cómo cuidar una prenda de crochet para que dure años',
   description:
     'Lavado, secado, guardado y arreglos: la guía completa para cuidar una prenda tejida a mano a crochet y que siga como el primer día.',
   excerpt:
@@ -13,8 +16,9 @@ export const article: Article = {
   funnel: 'TOFU',
   publishedAt: '2026-08-31',
   hero: {
-    src: '/photos/detalle-tejido.jpg',
-    alt: 'Detalle del punto de una prenda tejida a crochet a mano',
+    src: '/photos/blog/bufanda-y-guantes-crochet-crudo.jpg',
+    alt: 'Bufanda y guantes tejidos a crochet en crudo, con la etiqueta de Dahila',
+    position: '50% 50%',
   },
   relatedCategorySlug: 'cardigans',
   relatedProductSlugs: ['cardigan-3-4', 'top-flower', 'bufanda-sophie'],

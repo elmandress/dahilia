@@ -776,6 +776,24 @@
   color: #c62828;
 }
 
+/* En pantallas táctiles no existe :hover: sin esto, "Principal" y "Quitar"
+   no se podían tocar desde el celular (auditoría 12/09/2026). */
+@media (hover: none), (pointer: coarse) {
+  .admin-media-item .media-overlay {
+    opacity: 1;
+  }
+  .admin-media-item .media-overlay button {
+    min-height: 32px;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.75rem;
+  }
+}
+
+.admin-media-item .media-overlay button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .admin-media-item .primary-badge {
   position: absolute;
   top: 0.35rem;

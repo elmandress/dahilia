@@ -25,7 +25,7 @@ import {
   NEXT_ACTIONS,
   RISKS,
   NOVEDADES_INTRO, NOVEDADES_ARTESANAL, NOVEDADES_CEPS, NOVEDADES_SEO,
-  NOVEDADES_SEO_IA, NOVEDADES_CANALES_EXTRA, NOVEDADES_URUGUAY, NOVEDADES_INFORME_COMPLETO,
+  NOVEDADES_SEO_IA, NOVEDADES_CANALES_EXTRA, NOVEDADES_URUGUAY, NOVEDADES_INFORME_COMPLETO, SEO_IA_PLAN, SEO_IA_TEMPLATES,
   FOTOS_INTRO, FOTOS_LUZ, FOTOS_ORDEN, FOTOS_ERRORES, FOTOS_VIDEO, FOTOS_EDICION,
   NOVEDADES_PINTEREST_HOWTO, NOVEDADES_WHATSAPP_HOWTO, NOVEDADES_MOMENTUM, NOVEDADES_BOCA_A_BOCA,
   type TodoAction, type ActionItem, type PricePriority,
@@ -1064,6 +1064,35 @@ export default function EstrategiaPage() {
           </div>
 
           <SectionHead
+            title="Plan para que te encuentren Google y las IAs — en orden"
+            desc="Lo que más rinde primero. Casi nada es técnico: el sitio ya está preparado y lo que falta pasa fuera de él. Investigado el 12/09/2026; detalle y fuentes en research/seo-ia-2026-09.md."
+          />
+          <div className="est-pipeline" style={{ marginBottom: '2rem' }}>
+            {SEO_IA_PLAN.map((s, i) => (
+              <div key={s.step} className="est-pipeline-step">
+                <span className="num">{i + 1}</span>
+                <div className="step">{s.step}</div>
+                <div className="detail">{s.detail}</div>
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
+            title="Textos listos para copiar"
+            desc="Para no arrancar de cero cada vez. Cambiá lo que está entre llaves por lo real."
+          />
+          <div className="est-grid wide" style={{ marginBottom: '2rem' }}>
+            {SEO_IA_TEMPLATES.map((t) => (
+              <div key={t.title} className="est-card">
+                <h4>{t.title}</h4>
+                <p style={{ whiteSpace: 'pre-line' }}>{t.text}</p>
+                <p style={{ fontSize: 12.5, opacity: 0.75 }}>{t.note}</p>
+                <CopyButton text={t.text} />
+              </div>
+            ))}
+          </div>
+
+          <SectionHead
             kicker="Instagram y TikTok ya están funcionando"
             title="No hace falta salir a buscar alcance todavía"
             desc={NOVEDADES_MOMENTUM}
@@ -1192,5 +1221,24 @@ export default function EstrategiaPage() {
         </section>
       )}
     </>
+  )
+}
+
+/** Copia una plantilla al portapapeles (Novedades → "Textos listos para copiar"). */
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <button
+      type="button"
+      className="admin-btn admin-btn-secondary admin-btn-sm"
+      onClick={() => {
+        navigator.clipboard?.writeText(text).then(() => {
+          setCopied(true)
+          setTimeout(() => setCopied(false), 1800)
+        }).catch(() => {})
+      }}
+    >
+      {copied ? 'Copiado ✓' : 'Copiar'}
+    </button>
   )
 }

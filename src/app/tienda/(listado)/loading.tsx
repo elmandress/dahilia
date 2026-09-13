@@ -1,3 +1,14 @@
+// Esqueleto SOLO del listado /tienda (el grupo "(listado)" no cambia la URL).
+// /tienda se arma en cada visita (lee los filtros de la URL), y acá el
+// esqueleto sí sirve: sale al instante mientras el servidor termina.
+//
+// Antes vivía en app/tienda/ y envolvía también a las fichas (/tienda/[slug]),
+// que son estáticas. Un loading.tsx envuelve la página en un Suspense, y en
+// una página estática eso hace que el HTML traiga primero el esqueleto y la
+// página real escondida en un <div hidden>, que React revela después con un
+// script (y un freno de ~300 ms a propósito). La foto principal ya descargada
+// tardaba 1,3-1,5 s en pintarse (Lighthouse, 13/09/2026). Por lo mismo se
+// sacaron el loading.tsx de la raíz y el de las fichas.
 export default function TiendaLoading() {
   return (
     <div role="status" aria-live="polite" style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>

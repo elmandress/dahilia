@@ -21,6 +21,12 @@ import { article as holgura } from './articles/holgura-prenda-tejida'
 import { article as queDebajo } from './articles/que-ponerse-debajo-de-un-top-de-crochet'
 import { article as primerosAuxilios } from './articles/primeros-auxilios-prenda-tejida'
 import { article as entretiempo } from './articles/entretiempo-uruguay-prendas-tejidas'
+import { article as amigoInvisible } from './articles/regalos-amigo-invisible-tejidos'
+import { article as regalosNavidad } from './articles/regalos-de-navidad-tejidos-a-mano'
+import { article as regaloAmiga } from './articles/regalos-para-una-amiga-tejidos'
+import { article as accesoriosPlaya } from './articles/accesorios-tejidos-para-la-playa'
+import { article as chalecoCombinar } from './articles/chaleco-tejido-como-combinarlo'
+import { article as pelotitas } from './articles/pelotitas-en-prendas-tejidas'
 
 /**
  * Registro de artículos. Agregar una nota = crear el archivo en `articles/` e
@@ -37,18 +43,24 @@ const ARTICLES: Article[] = [
   queTalle,
   holgura,
   cardiganComoElegir,
+  chalecoCombinar,
   entretiempo,
   topsVerano,
   queDebajo,
   materiales,
   setVsSueltas,
   bolsosDuran,
+  accesoriosPlaya,
   cuidarPrendas,
   primerosAuxilios,
+  pelotitas,
   encargoAMedida,
   cuantoDemora,
   lanaPica,
   regalosTejidos,
+  regalosNavidad,
+  amigoInvisible,
+  regaloAmiga,
   cuantoCuesta,
   lavarCrochet,
   crochetODosAgujas,
@@ -63,6 +75,29 @@ export function getArticle(slug: string): Article | undefined {
   return ARTICLES.find((a) => a.slug === slug)
 }
 
+/**
+ * Notas para la franja "Notas del taller" de la home. La home es la página que
+ * Google rastrea más seguido (Search Console, 13/09/2026): un enlace desde ahí
+ * es la forma más rápida de que descubra una nota nueva. Se eligen a mano, por
+ * criterio editorial y de temporada; si alguna deja de existir, se completa
+ * con las más nuevas.
+ */
+const HOME_ARTICLE_SLUGS = [
+  'regalos-de-navidad-tejidos-a-mano',
+  'accesorios-tejidos-para-la-playa',
+  'pelotitas-en-prendas-tejidas',
+]
+
+export function getHomeArticles(limit = 3): Article[] {
+  const picked = HOME_ARTICLE_SLUGS
+    .map((slug) => getArticle(slug))
+    .filter((a): a is Article => !!a)
+  const newest = [...ARTICLES]
+    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+    .filter((a) => !picked.includes(a))
+  return [...picked, ...newest].slice(0, limit)
+}
+
 /** Artículos de un cluster, con el pilar primero. */
 export function getClusterArticles(cluster: Cluster): Article[] {
   return ARTICLES
@@ -75,6 +110,23 @@ export function getUsedClusters(): Cluster[] {
   const seen: Cluster[] = []
   for (const a of ARTICLES) if (!seen.includes(a.cluster)) seen.push(a.cluster)
   return seen
+}
+
+/**
+ * Notas para el pie de una categoría de la tienda (/tienda/cardigans…): las que
+ * empujan hacia esa categoría, primero las que la nombran en el slug
+ * ("cardigan-de-crochet-como-elegirlo" en cardigans). Las notas ya enlazaban a
+ * su categoría, pero las categorías no enlazaban a ninguna nota, y una nota
+ * nueva depende de esos enlaces para que Google la encuentre (Search Console,
+ * 13/09/2026: las 3 notas que "no reconoce" son las de cardigans, tops y sets).
+ */
+export function getCategoryGuides(categorySlug: string, limit = 3): Article[] {
+  const root = categorySlug.replace(/s$/, '')
+  const score = (a: Article) => (a.slug.includes(root) ? 2 : 0) + (a.role === 'pillar' ? 1 : 0)
+  return ARTICLES
+    .filter((a) => a.relatedCategorySlug === categorySlug)
+    .sort((a, b) => score(b) - score(a) || b.publishedAt.localeCompare(a.publishedAt))
+    .slice(0, limit)
 }
 
 /**

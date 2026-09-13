@@ -11,10 +11,13 @@ import { useEffect } from 'react'
  * recuperarlo. El navegador solo permite el diálogo nativo — el texto lo pone
  * él, no nosotros — pero alcanza para frenar el accidente.
  *
- * Ojo con el alcance: esto cubre cerrar pestaña, recargar y navegar fuera del
- * sitio. La navegación interna del App Router no dispara `beforeunload`; para
- * eso haría falta interceptar el router, que es bastante más invasivo.
+ * La navegación interna del App Router no dispara `beforeunload`. Para ese
+ * caso (tocar otra sección en el menú del admin, lo más probable), el hook
+ * deja una marca en <html> y el menú pregunta antes de salir con
+ * `confirmLeaveWithUnsaved()`. Sin interceptar el router.
  */
+const FLAG = 'unsavedChanges'
+
 export function useUnsavedWarning(hasUnsavedChanges: boolean): void {
   useEffect(() => {
     if (!hasUnsavedChanges) return
@@ -25,6 +28,20 @@ export function useUnsavedWarning(hasUnsavedChanges: boolean): void {
       e.returnValue = ''
     }
     window.addEventListener('beforeunload', onBeforeUnload)
-    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+    document.documentElement.dataset[FLAG] = 'true'
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+      delete document.documentElement.dataset[FLAG]
+    }
   }, [hasUnsavedChanges])
+}
+
+/**
+ * Para los links del menú del admin: devuelve true si se puede salir de la
+ * página actual (no hay cambios sin guardar, o la persona confirmó que los
+ * descarta).
+ */
+export function confirmLeaveWithUnsaved(): boolean {
+  if (document.documentElement.dataset[FLAG] !== 'true') return true
+  return window.confirm('Tenés cambios sin guardar. Si salís ahora, se pierden. ¿Salir igual?')
 }

@@ -12,7 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'MOFU',
   publishedAt: '2026-09-04',
-  hero: { src: '/photos/detalle-tejido.jpg', alt: 'Detalle de la fibra y el punto de una prenda tejida a mano' },
+  hero: { src: '/photos/blog/calentadores-chenille-rojos.jpg', alt: 'Calentadores tejidos a crochet en chenille rojo', position: '50% 50%' },
   relatedCategorySlug: 'tops',
   relatedProductSlugs: ['top-summer', 'bolso-lola', 'cardigan-3-4'],
   relatedArticleSlugs: [
@@ -34,11 +34,11 @@ export const article: Article = {
     { type: 'h2', text: 'Algodón' },
     {
       type: 'p',
-      text: 'Es la fibra más usada en el tejido a mano de acá, y por buenas razones: absorbe la humedad y la suelta, no pica y aguanta el lavado. Es poco elástico: no estira cuando lo tirás, pero tampoco tiene la "memoria" de la lana — con el peso y el uso puede alargarse de a poco y no vuelve solo. Por eso una prenda de algodón se guarda doblada y se le devuelve la forma al lavarla.',
+      text: 'Es la fibra más usada en el tejido a mano de acá, y por buenas razones: absorbe la humedad y la suelta, no pica y aguanta el lavado. Es poco elástico: no estira cuando lo tirás, pero tampoco tiene la "memoria" de la lana: con el peso y el uso puede alargarse de a poco y no vuelve solo. Por eso una prenda de algodón se guarda doblada y se le devuelve la forma al lavarla.',
     },
     {
       type: 'p',
-      text: 'Su contra es que abriga menos que la lana para el mismo grosor, y que tarda más en secarse. Para el clima uruguayo —húmedo casi todo el año— esa capacidad de absorber y soltar humedad es justamente lo que la hace cómoda.',
+      text: 'Su contra es que abriga menos que la lana para el mismo grosor, y que tarda más en secarse. Para el clima uruguayo, húmedo casi todo el año, esa capacidad de absorber y soltar humedad es justamente lo que la hace cómoda.',
     },
     { type: 'h3', text: 'Algodón mercerizado' },
     {
@@ -54,7 +54,7 @@ export const article: Article = {
     { type: 'h2', text: 'Trapillo reciclado' },
     {
       type: 'p',
-      text: 'Es tela de punto cortada en tiras y enrollada en ovillo — sobrantes reales de la industria textil que en vez de ir a la basura se vuelven hilo. Es grueso, pesado y muy resistente.',
+      text: 'Es tela de punto cortada en tiras y enrollada en ovillo: sobrantes reales de la industria textil que en vez de ir a la basura se vuelven hilo. Es grueso, pesado y muy resistente.',
     },
     {
       type: 'p',
@@ -68,7 +68,7 @@ export const article: Article = {
     },
     {
       type: 'p',
-      text: 'A cambio, es el material más delicado de la lista: el roce constante puede desprender fibra del núcleo, así que conviene para piezas que no se frotan mucho —mantas, accesorios, prendas de estar— y no para algo que va a rozar contra una mochila todos los días.',
+      text: 'A cambio, es el material más delicado de la lista: el roce constante puede desprender fibra del núcleo, así que conviene para piezas que no se frotan mucho (mantas, accesorios, prendas de estar) y no para algo que va a rozar contra una mochila todos los días.',
     },
 
     { type: 'h2', text: 'Acrílico y acrílico antipilling' },
@@ -92,7 +92,7 @@ export const article: Article = {
     },
     {
       type: 'note',
-      text: 'Las características de cada fibra son información textil general. Qué material tiene cada pieza está siempre en su ficha de producto — y si una prenda se teje a pedido, el material se puede elegir antes de empezar.',
+      text: 'Las características de cada fibra son información textil general. Qué material tiene cada pieza está siempre en su ficha de producto, y si una prenda se teje a pedido, el material se puede elegir antes de empezar.',
     },
 
     { type: 'h2', text: 'Cuál conviene según lo que busques' },

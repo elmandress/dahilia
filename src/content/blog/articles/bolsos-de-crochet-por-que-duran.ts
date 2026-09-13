@@ -12,7 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'MOFU',
   publishedAt: '2026-09-04',
-  hero: { src: '/photos/atelier-escritorio.png', alt: 'Piezas tejidas a crochet sobre la mesa del taller' },
+  hero: { src: '/photos/blog/bolso-lola-trapillo.jpg', alt: 'Bolso LOLA tejido a crochet en trapillo rosa y amarillo', position: '50% 50%' },
   relatedCategorySlug: 'accesorios',
   relatedProductSlugs: ['bolso-lola', 'tote-bag-de-playa', 'mini-tote-bag'],
   relatedArticleSlugs: [
@@ -23,18 +23,18 @@ export const article: Article = {
   body: [
     {
       type: 'p',
-      text: 'De todo lo que se teje a crochet, los bolsos son lo que más castigo aguanta: se cargan, se apoyan en el piso, se llenan de arena y se lavan más seguido que cualquier prenda. Y aun así, un bolso tejido bien hecho suele durar más que uno de tela — porque el tejido no tiene costuras que se descosan ni telas que se rasguen en línea recta.',
+      text: 'De todo lo que se teje a crochet, los bolsos son lo que más castigo aguanta: se cargan, se apoyan en el piso, se llenan de arena y se lavan más seguido que cualquier prenda. Y aun así, un bolso tejido bien hecho suele durar más que uno de tela, porque el tejido no tiene costuras que se descosan ni telas que se rasguen en línea recta.',
     },
     {
       type: 'callout',
       title: 'La versión corta',
-      text: 'Mirá el punto (tiene que ser cerrado y firme, no elástico), el asa (donde se rompe el 90% de los bolsos) y si tiene forro. Esas tres cosas separan un bolso que dura años de uno que se deforma en un verano.',
+      text: 'Mirá el punto (tiene que ser cerrado y firme, no elástico), el asa (el punto que más falla) y si tiene forro. Esas tres cosas separan un bolso que dura años de uno que se deforma en un verano.',
     },
 
     { type: 'h2', text: 'Por qué el tejido aguanta tanto' },
     {
       type: 'p',
-      text: 'Una tela se corta y se cose: la resistencia depende de la costura, y cuando esa costura cede, el bolso se abre. Un bolso tejido es una sola pieza continua de nudos entrelazados — no hay una línea débil por donde empiece a fallar. Si un punto se corta, los de alrededor lo sostienen en vez de desarmarse.',
+      text: 'Una tela se corta y se cose: la resistencia depende de la costura, y cuando esa costura cede, el bolso se abre. Un bolso tejido es una sola pieza continua de nudos entrelazados: no hay una línea débil por donde empiece a fallar. Si un punto se corta, los de alrededor lo sostienen en vez de desarmarse.',
     },
     {
       type: 'p',
@@ -55,13 +55,23 @@ export const article: Article = {
         },
         {
           title: 'El forro: opcional pero decisivo',
-          text: 'Un forro interno evita que las cosas chicas se cuelen y ayuda a que el bolso mantenga la forma cuando está vacío. No todos lo llevan, y no está mal que no lo lleven — pero si vas a cargar cosas chicas, buscalo.',
+          text: 'Un forro interno evita que las cosas chicas se cuelen y ayuda a que el bolso mantenga la forma cuando está vacío. No todos lo llevan, y no está mal que no lo lleven. Pero si vas a cargar cosas chicas, buscalo.',
         },
       ],
     },
     {
       type: 'note',
       text: 'Estos criterios valen para cualquier bolso tejido, no solo los de Dahila. Si estás mirando uno en otro lado, son las mismas tres cosas que conviene revisar.',
+    },
+
+    {
+      type: 'image',
+      src: '/photos/blog/donut-bag-bolsa-dona.jpg',
+      alt: 'Dos DONUT bag tejidas a crochet en trapillo, una roja y una negra',
+      width: 1012,
+      height: 1289,
+      caption: 'La [DONUT bag](/tienda/donut-bag), o bolsa dona: redonda y tejida en trapillo reciclado.',
+      href: '/tienda/donut-bag',
     },
 
     { type: 'h2', text: 'Qué bolso conviene según el uso' },
@@ -119,7 +129,7 @@ export const article: Article = {
         },
         {
           q: '¿Cuánto lleva tejer un bolso?',
-          a: 'Entre 5 y 10 horas según el tamaño y el punto — bastante menos que una prenda. Es de las piezas de plazo más corto del catálogo.',
+          a: 'Entre 5 y 10 horas según el tamaño y el punto: bastante menos que una prenda. Es de las piezas de plazo más corto del catálogo.',
         },
         {
           q: '¿Sirve para el invierno o es solo de verano?',

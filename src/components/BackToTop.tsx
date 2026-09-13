@@ -31,6 +31,9 @@ export function BackToTop() {
 
   return (
     <button
+      // Clase para la regla de globals.css que lo sube junto con WhatsAppFloat
+      // cuando hay barra fija de compra en la ficha (mobile).
+      className="back-to-top"
       onClick={scrollToTop}
       aria-label="Volver arriba"
       style={{

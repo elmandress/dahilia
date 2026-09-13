@@ -6,7 +6,7 @@ import Image from 'next/image'
 import type { Product, Discount } from '@/lib/types'
 import {
   getEffectivePrice, getFinalPrice, resolveDiscountPercent,
-  getPrimaryPhoto, BLUR_DATA_URL,
+  getPrimaryPhoto, BLUR_DATA_URL, getPrimaryPhotoAlt, leadTimeMessage, sortSizes,
 } from '@/lib/types'
 import { useSizeSelection, getRestockWhatsAppUrl } from '@/lib/product-selection'
 import { useCart } from './CartProvider'
@@ -25,7 +25,7 @@ export function QuickViewModal({
   product,
   discounts = [],
   onClose,
-  whatsappUrl = 'https://wa.me/59899850073',
+  whatsappUrl,
 }: {
   product: Product
   discounts?: Discount[]
@@ -33,7 +33,10 @@ export function QuickViewModal({
   whatsappUrl?: string
 }) {
   const router = useRouter()
-  const { addToCart } = useCart()
+  // queueNote y el WhatsApp del sitio salen del contexto: ninguna de las
+  // páginas que abren la vista rápida se los pasaba, así que el modal no decía
+  // cuánto tarda y "avisame cuando vuelva" usaba un número fijo en el código.
+  const { addToCart, queueNote, whatsappUrl: siteWhatsappUrl } = useCart()
   // Mismo criterio que el PDP, factorizado en un hook compartido (auditoría
   // 03/09/2026: antes duplicado letra por letra en los dos archivos).
   const { talle, setTalle, sizeAvailable } = useSizeSelection(product)
@@ -49,7 +52,8 @@ export function QuickViewModal({
   // Mismo flujo de captura de demanda que el PDP completo: sin esto, quien
   // abre la vista rápida de un producto agotado se topa con un callejón sin
   // salida (antes: un botón "Agotado" deshabilitado y nada más).
-  const restockUrl = getRestockWhatsAppUrl(product, whatsappUrl)
+  const restockUrl = getRestockWhatsAppUrl(product, whatsappUrl || siteWhatsappUrl)
+  const leadTime = leadTimeMessage(product, queueNote)
 
   useScrollLock(true)
 
@@ -117,7 +121,7 @@ export function QuickViewModal({
         <div className="quickview-img" style={{ position: 'relative', aspectRatio: '4/5', background: dahila.cream50 }}>
           <Image
             src={photo}
-            alt={product.name}
+            alt={getPrimaryPhotoAlt(product)}
             fill
             quality={90}
             placeholder="blur"
@@ -148,6 +152,19 @@ export function QuickViewModal({
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
               <PriceBlock list={listPrice} final={finalPrice} size="md" soldOut={isSoldOut} />
             </div>
+            {leadTime && (
+              <p style={{
+                display: 'flex', alignItems: 'flex-start', gap: 7, margin: '10px 0 0',
+                fontFamily: dahila.fontSans, fontSize: 13, lineHeight: 1.45,
+                color: leadTime.ready ? dahila.wine600 : dahila.ink700,
+                fontWeight: leadTime.ready ? 500 : 400,
+              }}>
+                <span style={{ flexShrink: 0, marginTop: 1 }}>
+                  <Icon name={leadTime.ready ? 'check' : 'arrow-clockwise'} size={15} color={leadTime.ready ? dahila.wine600 : dahila.ink500} />
+                </span>
+                <span>{leadTime.text}</span>
+              </p>
+            )}
           </div>
 
           {product.description && (
@@ -165,7 +182,7 @@ export function QuickViewModal({
                 Talle
               </div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {product.sizes.map((s) => (
+                {sortSizes(product.sizes).map((s) => (
                   <button
                     key={s.id}
                     onClick={() => setTalle(s.size)}

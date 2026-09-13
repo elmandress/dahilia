@@ -125,6 +125,12 @@ CREATE POLICY "Admin Delete Media" ON storage.objects
 */
 
 
+-- ⚠️ SUPERADO (nota del 12/09/2026) — NO CORRER ESTE PASO 4.
+--   cart_items y favorites ya quedaron cerradas con
+--   database/cerrar-carritos-favoritos.sql (ya corrido), que además deja a la
+--   admin leerlas vía is_admin(). Las route handlers ya usan la service role.
+--   Si se descomenta lo de abajo, /admin/carritos deja de ver los carritos
+--   (USING (false) no tiene excepción para la admin).
 -- ============================================================
 -- PASO 4 (OPCIONAL, defensa en profundidad) — Cerrar cart_items / favorites.
 --   Hoy tienen `FOR ALL USING (true)`: cualquiera con la anon key puede LEER,

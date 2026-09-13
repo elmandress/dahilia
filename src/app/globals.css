@@ -410,6 +410,35 @@ a {
   .producto-detail { gap: 16px !important; }
 }
 
+/* Galería de la ficha: riel con scroll-snap. En el celular es el swipe nativo
+   (ProductGallery.tsx); en desktop se mueve con las miniaturas o el trackpad. */
+.pdp-gallery-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.pdp-gallery-track::-webkit-scrollbar { display: none; }
+.pdp-gallery-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+
+/* "¿No se abrió WhatsApp?" del carrito (CarritoClient): en el celular se fija
+   arriba de la barra de abajo, donde está el dedo que acaba de tocar el botón. */
+@media (max-width: 720px) {
+  .cart-fallback {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 96px;
+    z-index: 46;
+    box-shadow: 0 12px 30px -12px rgba(31, 26, 27, 0.35);
+  }
+}
+
 /* Product detail sticky add-to-cart (mobile only) */
 .pdp-sticky-bar {
   display: none;
@@ -748,5 +777,15 @@ a {
 @media (max-width: 720px) {
   body:has(.pdp-sticky-bar) .weaver-callout {
     bottom: 100px !important;
+  }
+  /* Lo mismo para la burbuja de WhatsApp (bottom 28, z-index 40 < 45 de la
+     barra): quedaba tapada del todo en la ficha. Sube a 100px, y "volver
+     arriba" (que se apila encima de ella) sube a 164px para no pisarla.
+     !important porque ambos fijan su posición con estilo en línea. */
+  body:has(.pdp-sticky-bar) .whatsapp-float {
+    bottom: 100px !important;
+  }
+  body:has(.pdp-sticky-bar) .back-to-top {
+    bottom: 164px !important;
   }
 }

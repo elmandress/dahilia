@@ -12,6 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'TOFU',
   publishedAt: '2026-08-31',
+  hero: { src: '/photos/blog/mini-bufanda-rayas-en-plano.jpg', alt: 'Mini bufanda tejida a crochet a rayas verdes y crudas, apoyada en plano', position: '50% 50%' },
   relatedCategorySlug: 'tops',
   relatedProductSlugs: ['top-summer', 'cardigan-cruzado'],
   relatedArticleSlugs: ['como-cuidar-prendas-de-crochet', 'como-guardar-prendas-tejidas'],

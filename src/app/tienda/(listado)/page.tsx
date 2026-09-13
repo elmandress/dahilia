@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { getCatalog } from '@/lib/catalog'
-import { getPrimaryPhoto, getFinalPrice } from '@/lib/types'
+import { getPrimaryPhoto, getListingPrice, isReadyToShip } from '@/lib/types'
 import { botImageUrl } from '@/lib/media'
 import { SITE_URL } from '@/lib/env'
-import { TiendaClient } from './TiendaClient'
+import { TiendaClient } from '../TiendaClient'
 import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
 import { MaintenanceScreen } from '@/components/MaintenanceScreen'
 import { OG_BASE_NO_IMAGE } from '@/lib/og'
@@ -81,14 +81,19 @@ export default async function TiendaPage({
             // fotos originales directo del storage. Misma canilla de egress
             // que el fix de julio tapó en la ficha de producto pero no acá.
             image: botImageUrl(SITE_URL, photo),
+            // Mismo precio que la tarjeta y misma disponibilidad que la ficha
+            // (auditoría 12/09/2026): antes declaraba InStock para TODO lo
+            // activo, y la ficha del mismo producto decía BackOrder.
             offers: {
               '@type': 'Offer',
-              price: getFinalPrice(p, undefined, discounts).toFixed(2),
+              price: getListingPrice(p, discounts).toFixed(2),
               priceCurrency: 'UYU',
               availability:
-                p.status === 'active'
-                  ? 'https://schema.org/InStock'
-                  : 'https://schema.org/OutOfStock',
+                p.status !== 'active'
+                  ? 'https://schema.org/OutOfStock'
+                  : isReadyToShip(p)
+                    ? 'https://schema.org/InStock'
+                    : 'https://schema.org/BackOrder',
             },
           },
         }

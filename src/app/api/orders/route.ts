@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { headers } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { CART_COOKIE } from '@/lib/cart-cookie'
 
 interface OrderItemInput {
   name: string
@@ -46,9 +47,7 @@ export async function POST(req: NextRequest) {
 
     // Atribución de canal — opcional, capturada en el navegador (ver
     // src/lib/attribution.ts). Vive en columnas agregadas por
-    // schema-orders-attribution.sql; si esa migración todavía no corrió,
-    // reintentamos sin esos campos para no perder el registro del pedido
-    // (lo esencial) por columnas que son un extra.
+    // schema-orders-attribution.sql.
     const attribution = body.attribution && typeof body.attribution === 'object'
       ? body.attribution as Record<string, unknown>
       : null
@@ -61,28 +60,42 @@ export async function POST(req: NextRequest) {
       free_shipping: !!body.free_shipping,
       gift_note: body.gift_note ? String(body.gift_note).slice(0, 500) : null,
     }
-
-    const supabase = await createClient()
-    let { error } = await supabase.from('orders').insert({
-      ...baseRow,
+    const attributionCols = {
       utm_source: attribution?.utm_source ? String(attribution.utm_source).slice(0, 100) : null,
       utm_medium: attribution?.utm_medium ? String(attribution.utm_medium).slice(0, 100) : null,
       utm_campaign: attribution?.utm_campaign ? String(attribution.utm_campaign).slice(0, 100) : null,
       referrer_host: attribution?.referrer_host ? String(attribution.referrer_host).slice(0, 200) : null,
-    })
-    // Columna inexistente (schema-orders-attribution.sql no corrió todavía).
-    // En la práctica Supabase/PostgREST devuelve PGRST204 acá, no el 42703
-    // crudo de Postgres — por eso el chequeo también mira el mensaje, mismo
-    // criterio defensivo que ya usan las otras páginas del admin
-    // (tejedoras/suscriptores/cupones) para "migración no corrida".
-    const missingColumn = error?.code === '42703' || error?.code === 'PGRST204'
-      || /utm_source|utm_medium|utm_campaign|referrer_host/.test(error?.message || '')
-    if (missingColumn) {
-      ;({ error } = await supabase.from('orders').insert(baseRow))
+    }
+
+    // De qué carrito sale el pedido (embudo-pedidos-2026-09.sql): así
+    // /admin/carritos sabe qué carritos terminaron en un pedido por WhatsApp
+    // en vez de mostrarlos todos como "activos". La cookie la crea /api/cart;
+    // se valida el formato igual que allá.
+    const store = await cookies()
+    const rawCartId = store.get(CART_COOKIE)?.value
+    const cartId = rawCartId && /^[0-9a-fA-F-]{20,40}$/.test(rawCartId) ? rawCartId : null
+
+    // De la fila más completa a la mínima: si una migración opcional no corrió
+    // todavía, se reintenta sin esas columnas para no perder el registro del
+    // pedido, que es lo esencial. PostgREST devuelve PGRST204 para una columna
+    // inexistente (no el 42703 crudo de Postgres): por eso también se mira el
+    // mensaje, mismo criterio que usan las páginas del admin.
+    const supabase = await createClient()
+    const attempts = [
+      { ...baseRow, ...attributionCols, cart_id: cartId },
+      { ...baseRow, ...attributionCols },
+      baseRow,
+    ]
+    let error: { code?: string; message?: string } | null = null
+    for (const row of attempts) {
+      ;({ error } = await supabase.from('orders').insert(row))
+      const missingColumn = error?.code === '42703' || error?.code === 'PGRST204'
+        || /cart_id|utm_source|utm_medium|utm_campaign|referrer_host/.test(error?.message || '')
+      if (!error || !missingColumn) break
     }
     // La tabla `orders` es opcional (migración no corrida todavía) — no
     // convertir eso en un error visible para la clienta, solo loguear.
-    if (error) console.error('POST /api/orders (¿corriste schema-orders.sql / schema-orders-attribution.sql?)', error)
+    if (error) console.error('POST /api/orders (¿corriste schema-orders.sql / embudo-pedidos-2026-09.sql?)', error)
 
     return NextResponse.json({ ok: !error })
   } catch (e) {

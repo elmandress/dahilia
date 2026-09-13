@@ -3,7 +3,10 @@ import type { Article } from '../types'
 export const article: Article = {
   slug: 'regalos-tejidos-a-mano',
   title: 'Regalos tejidos a mano: ideas que se usan de verdad',
-  metaTitle: 'Regalos tejidos a mano: 8 ideas para acertar',
+  // 13/09/2026: la nota con más impresiones del blog (117) y 2,6% de CTR en
+  // posición 7. El título ahora nombra el problema que resuelve (no saber el
+  // talle) en vez de un número de ideas. Medir el 11/10.
+  metaTitle: 'Regalos tejidos a mano: ideas para acertar sin saber el talle',
   description:
     'Ideas de regalos tejidos a mano para acertar sin saber el talle: accesorios, sets y piezas a medida, con el detalle de qué regalar según la ocasión.',
   excerpt:
@@ -13,8 +16,9 @@ export const article: Article = {
   funnel: 'BOFU',
   publishedAt: '2026-08-31',
   hero: {
-    src: '/photos/bufanda-verde.png',
-    alt: 'Bufanda verde tejida a mano a crochet',
+    src: '/photos/blog/box-de-regalo-tejido.jpg',
+    alt: 'Box de regalo con piezas tejidas a crochet en trapillo rosa y una taza',
+    position: '50% 50%',
   },
   relatedCategorySlug: 'accesorios',
   relatedProductSlugs: ['box-de-regalo', 'bufanda-sophie', 'bandana', 'mini-tote-bag'],
@@ -49,6 +53,16 @@ export const article: Article = {
       text: 'Bufandas, bandanas, bolsos y calentadores tejidos uno por uno. Sin problema de talle.',
       href: '/tienda/accesorios',
       label: 'Ver accesorios',
+    },
+
+    {
+      type: 'image',
+      src: '/photos/blog/bandana-flecos-cadera.jpg',
+      alt: 'Bandana tejida a crochet con flecos, atada a la cintura sobre un jean',
+      width: 1080,
+      height: 1378,
+      caption: 'La [bandana](/tienda/bandana), atada a la cintura. También se usa en el pelo, al cuello o en la cartera.',
+      href: '/tienda/bandana',
     },
 
     { type: 'h2', text: 'Cuando querés que sea algo más importante' },

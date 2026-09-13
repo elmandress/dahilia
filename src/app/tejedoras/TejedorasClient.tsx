@@ -145,7 +145,7 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
           lineHeight: 1.05, letterSpacing: '-0.02em', color: dahila.ink900, margin: 0,
         }}>¿Tejés a crochet? Trabajemos juntas</h1>
         <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: 0 }}>
-          Estamos armando una red de tejedoras uruguayas para crecer sin perder lo artesanal.
+          Estamos armando una red de tejedoras uruguayas para crecer sin dejar de tejer todo a mano.
           Trabajás desde tu casa, a tu ritmo, con <strong style={{ fontWeight: 500 }}>pago por pieza aprobada</strong> y
           la lana la ponemos nosotras.
         </p>

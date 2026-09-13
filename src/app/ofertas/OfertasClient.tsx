@@ -16,9 +16,12 @@ const QuickViewModal = dynamic(
 export function OfertasClient({
   products,
   discounts,
+  fallbackProducts = [],
 }: {
   products: Product[]
   discounts: Discount[]
+  /** Sin ofertas vigentes: piezas en stock y lo más nuevo, para no dejar un callejón sin salida. */
+  fallbackProducts?: Product[]
 }) {
   const router = useRouter()
   const [quickView, setQuickView] = useState<Product | null>(null)
@@ -53,7 +56,9 @@ export function OfertasClient({
           color: dahila.ink900, margin: 0,
         }}>Ofertas</h1>
         <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, color: dahila.ink700, margin: 0 }}>
-          Prendas con descuento, por tiempo limitado.
+          {products.length > 0
+            ? 'Prendas con descuento, por tiempo limitado.'
+            : 'Acá aparecen las piezas con descuento, cuando las hay.'}
         </p>
       </div>
 
@@ -90,22 +95,37 @@ export function OfertasClient({
       )}
 
       {products.length === 0 ? (
-        <div style={{
-          textAlign: 'center', padding: '80px 24px',
-          background: dahila.cream100, borderRadius: 16,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
-        }}>
-          <Eyebrow>Por ahora no hay ofertas</Eyebrow>
-          <h2 style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, color: dahila.ink900, margin: 0 }}>
-            Volvé pronto.
-          </h2>
-          <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, color: dahila.ink700, margin: 0, maxWidth: 460, lineHeight: 1.7 }}>
-            Mientras tanto, mirá toda la colección.
-          </p>
-          <div style={{ marginTop: 6 }}>
-            <Button variant="primary" onClick={() => router.push('/tienda')}>Ver la tienda</Button>
+        // Sin ofertas vigentes. Antes era un callejón sin salida ("Volvé
+        // pronto") para quien llegaba desde Google; ahora muestra piezas reales.
+        <>
+          <div style={{
+            textAlign: 'center', padding: '40px 24px',
+            background: dahila.cream100, borderRadius: 16,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+          }}>
+            <Eyebrow>Hoy no hay ofertas</Eyebrow>
+            <h2 style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, color: dahila.ink900, margin: 0 }}>
+              Ninguna pieza tiene descuento en este momento.
+            </h2>
+            <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, color: dahila.ink700, margin: 0, maxWidth: 460, lineHeight: 1.7 }}>
+              Mientras tanto, mirá lo que sale sin espera y lo más nuevo.
+            </p>
+            <div style={{ marginTop: 4 }}>
+              <Button variant="primary" onClick={() => router.push('/tienda')}>Ver toda la tienda</Button>
+            </div>
           </div>
-        </div>
+          {fallbackProducts.length > 0 && (
+            <section aria-label="Piezas para mirar" style={{ marginTop: 40 }}>
+              <div className="tienda-grid" style={{
+                display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22, rowGap: 44,
+              }}>
+                {fallbackProducts.map((p) => (
+                  <ProductCard key={p.id} product={p} discounts={discounts} onQuickView={() => setQuickView(p)} />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       ) : (
         <div className="tienda-grid" style={{
           display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22, rowGap: 44,

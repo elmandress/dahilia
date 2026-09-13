@@ -1,20 +1,32 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useFavorites } from '@/components/FavoritesProvider'
 import { ProductCard } from '@/components/ProductCard'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 import { formatPrice, getFinalPrice } from '@/lib/types'
+import type { Discount, Product } from '@/lib/types'
 
-export function FavoritosClient({ whatsappUrl }: { whatsappUrl: string }) {
+// El mismo modal que /tienda y /ofertas. Antes el botón decía "Vista rápida"
+// pero navegaba a la ficha completa: se perdía el agregado rápido justo en la
+// página de quien ya eligió lo que le gusta (auditoría 12/09/2026).
+const QuickViewModal = dynamic(
+  () => import('@/components/QuickViewModal').then((m) => m.QuickViewModal),
+  { ssr: false }
+)
+
+export function FavoritosClient({ whatsappUrl, discounts = [] }: { whatsappUrl: string; discounts?: Discount[] }) {
   const router = useRouter()
   const { items, count, hasMounted } = useFavorites()
+  const [quickView, setQuickView] = useState<Product | null>(null)
 
   // Pre-fill a WhatsApp message listing the saved pieces — turns the wishlist
   // into a conversation, which is how this brand actually sells.
   const consultUrl = (() => {
-    const lines = items.map((it) => `• ${it.product.name} — ${formatPrice(getFinalPrice(it.product))}`)
+    const lines = items.map((it) => `• ${it.product.name} — ${formatPrice(getFinalPrice(it.product, undefined, discounts))}`)
     const text = encodeURIComponent(
       `Hola! Estuve mirando la web y guardé estas piezas en favoritos:\n\n${lines.join('\n')}\n\n¿Me contás disponibilidad? 🧶`
     )
@@ -85,9 +97,18 @@ export function FavoritosClient({ whatsappUrl }: { whatsappUrl: string }) {
         display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22, rowGap: 44,
       }}>
         {items.map((it) => (
-          <ProductCard key={it.id} product={it.product} onQuickView={() => router.push(`/tienda/${it.product.slug}`)} />
+          <ProductCard key={it.id} product={it.product} discounts={discounts} onQuickView={() => setQuickView(it.product)} />
         ))}
       </div>
+
+      {quickView && (
+        <QuickViewModal
+          product={quickView}
+          discounts={discounts}
+          whatsappUrl={whatsappUrl}
+          onClose={() => setQuickView(null)}
+        />
+      )}
 
       <p style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink500, marginTop: 32 }}>
         ¿Buscás algo más? <Link href="/tienda" style={{ color: dahila.wine600 }}>Seguí explorando la tienda →</Link>

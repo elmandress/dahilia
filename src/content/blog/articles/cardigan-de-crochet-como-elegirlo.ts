@@ -12,7 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'MOFU',
   publishedAt: '2026-09-04',
-  hero: { src: '/photos/bufanda-verde.png', alt: 'Prenda tejida a crochet en tono verde' },
+  hero: { src: '/photos/blog/spring-cardigan-flores.jpg', alt: 'Spring cardigan tejido a crochet en crudo, con flores tejidas de colores', position: '50% 40%' },
   relatedCategorySlug: 'cardigans',
   relatedProductSlugs: ['cardigan-3-4', 'cardigan-cruzado', 'spring-cardigan'],
   relatedArticleSlugs: [
@@ -23,7 +23,7 @@ export const article: Article = {
   body: [
     {
       type: 'p',
-      text: 'El cardigan es la prenda tejida que más se usa: se pone y se saca varias veces por día, aguanta el aire acondicionado en verano y la entretiempo del resto del año. También es la que más deja ver si está bien tejida — un cardigan mal hecho se deforma en los hombros a los pocos meses y ya no vuelve.',
+      text: 'El cardigan es la prenda tejida que más se usa: se pone y se saca varias veces por día, aguanta el aire acondicionado en verano y el entretiempo del resto del año. También es la que más deja ver si está bien tejida: un cardigan mal hecho se deforma en los hombros a los pocos meses y ya no vuelve.',
     },
     {
       type: 'callout',
@@ -40,7 +40,7 @@ export const article: Article = {
       type: 'ul',
       items: [
         '**Corto o 3/4.** Llega a la cintura o un poco abajo, con manga tres cuartos. Es el más versátil: no compite con el largo de lo que llevás abajo y sirve todo el año.',
-        '**Cruzado.** Se cruza adelante y se ata o se deja suelto. Marca la cintura y da forma sin necesidad de botones — bien para siluetas donde un cardigan recto queda cuadrado.',
+        '**Cruzado.** Se cruza adelante y se ata o se deja suelto. Marca la cintura y da forma sin necesidad de botones. Va bien en siluetas donde un cardigan recto queda cuadrado.',
         '**Oversize o largo.** Cae suelto, con más tela y más caída. El que más abriga y el que más lana lleva, así que también el que más se nota si la fibra es liviana o pesada.',
       ],
     },
@@ -70,6 +70,16 @@ export const article: Article = {
           text: 'Un borde que se enrolla sobre sí mismo suele ser falta de un remate final. Se nota mucho en los delanteros de un cardigan abierto, que son lo primero que se ve puesto.',
         },
       ],
+    },
+
+    {
+      type: 'image',
+      src: '/photos/blog/cardigan-amour-costado.jpg',
+      alt: 'Cardigan amour tejido a crochet en crudo con corazones rojos, visto de costado',
+      width: 1080,
+      height: 1440,
+      caption: 'El [Cardigan amour](/tienda/cardigan-amour), en acrílico antipilling y con corazones tejidos.',
+      href: '/tienda/cardigan-amour',
     },
 
     { type: 'h2', text: 'Qué fibra conviene según cómo lo vayas a usar' },
@@ -103,14 +113,14 @@ export const article: Article = {
         '**Con un top liso debajo.** Si el cardigan tiene textura o calado, lo de abajo tiene que ser plano para que el tejido se vea.',
         '**Sobre un vestido.** El cardigan corto marca cintura sobre un vestido suelto; el largo hace lo contrario, alarga la línea.',
         '**Con jean.** El combo más obvio y el que mejor funciona: el peso del denim equilibra la liviandad del tejido.',
-        '**Cerrado, como prenda principal.** Un cardigan cruzado o con botones se puede usar sin nada visible debajo — se convierte en la prenda, no en el abrigo.',
+        '**Cerrado, como prenda principal.** Un cardigan cruzado o con botones se puede usar sin nada visible debajo: se convierte en la prenda, no en el abrigo.',
       ],
     },
 
     { type: 'h2', text: 'Cómo cuidarlo para que dure' },
     {
       type: 'p',
-      text: 'Dos cosas hacen casi toda la diferencia en un cardigan: no colgarlo en percha (el peso propio estira los hombros — se guarda doblado) y lavarlo solo cuando hace falta, a mano y en frío. El resto del cuidado está en la [guía completa de cuidado de prendas de crochet](/blog/como-cuidar-prendas-de-crochet).',
+      text: 'Dos cosas hacen casi toda la diferencia en un cardigan: no colgarlo en percha (el peso propio estira los hombros: se guarda doblado) y lavarlo solo cuando hace falta, a mano y en frío. El resto del cuidado está en la [guía completa de cuidado de prendas de crochet](/blog/como-cuidar-prendas-de-crochet).',
     },
 
     { type: 'h2', text: 'Preguntas frecuentes' },

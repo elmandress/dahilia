@@ -76,7 +76,7 @@ function VipSignup() {
           textTransform: 'uppercase', color: dahila.ink500, marginBottom: 8,
         }}>Lista VIP</div>
         <p style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, lineHeight: 1.6, color: dahila.ink700, margin: 0 }}>
-          Cada colección sale en cantidades chicas — es tejido a mano.
+          Cada colección sale en cantidades chicas: es tejido a mano.
           Anotate y comprá 24 horas antes que el resto.
         </p>
       </div>
@@ -134,6 +134,10 @@ export function Footer({
   const pathname = usePathname()
 
   if (pathname.startsWith('/admin')) return null
+  // /ig es la landing de la bio de Instagram (una columna, un propósito): el
+  // header y los 4 flotantes ya se esconden ahí; los 13 links del footer
+  // también sobran. Queda la lista VIP, porque /ig invita a anotarse "al pie".
+  const isIgLanding = pathname === '/ig'
 
   // Misma regla estacional que el header: los links a páginas sin contenido
   // real no se muestran (nadie debería aterrizar en un "pronto…").
@@ -149,48 +153,53 @@ export function Footer({
       background: '#fff',
       borderTop: `1px solid ${dahila.border}`,
       padding: '64px 24px 28px',
-      marginTop: 96,
+      // En /ig solo queda la lista VIP: sin la grilla, 96px dejaban un hueco.
+      marginTop: isIgLanding ? 40 : 96,
     }}>
       <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-        <div className="footer-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)',
-          gap: 48, alignItems: 'start',
-        }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <Image src="/isotype-color.png" alt="" width={36} height={36} style={{ objectFit: 'contain' }} />
-              <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, letterSpacing: '0.18em', color: dahila.ink900 }}>DAHILA</span>
+        {!isIgLanding && (
+          <div className="footer-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)',
+            gap: 48, alignItems: 'start',
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <Image src="/isotype-color.png" alt="" width={36} height={36} style={{ objectFit: 'contain' }} />
+                <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, letterSpacing: '0.18em', color: dahila.ink900 }}>DAHILA</span>
+              </div>
+              <p style={{ fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300, fontSize: 16, lineHeight: 1.55, color: dahila.ink700, maxWidth: 320, margin: 0 }}>
+                {tagline}
+              </p>
             </div>
-            <p style={{ fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300, fontSize: 16, lineHeight: 1.55, color: dahila.ink700, maxWidth: 320, margin: 0 }}>
-              {tagline}
-            </p>
-          </div>
 
-          <FooterCol
-            title="Tienda"
-            items={tiendaLinks}
-          />
-          <FooterCol
-            title="Info"
-            items={[
-              { label: 'Envíos y cambios',  href: '/info' },
-              { label: 'Notas',             href: '/blog' },
-              { label: 'Sobre nosotros',    href: '/atelier' },
-              { label: 'Contacto',          href: '/contacto' },
-              { label: 'Estado de encargo', href: '/encargo/estado' },
-              { label: 'Tejé con Dahila',   href: '/tejedoras' },
-              { label: 'Términos y cond.',  href: '/terminos' },
-            ]}
-          />
-          <FooterCol
-            title="Contacto"
-            items={[
-              { label: '@dahila.crochet',         href: 'https://www.instagram.com/dahila.crochet/' },
-              { label: 'WhatsApp · 99 850 073',   href: 'https://wa.me/59899850073' },
-            ]}
-          />
-        </div>
+            <FooterCol
+              title="Tienda"
+              items={tiendaLinks}
+            />
+            <FooterCol
+              title="Info"
+              items={[
+                // "Envíos y cambios" quedó de antes de la limpieza legal del
+                // 04/09: /info ya no habla de cambios (y el sitio no los ofrece).
+                { label: 'Envíos y pagos',    href: '/info' },
+                { label: 'Notas',             href: '/blog' },
+                { label: 'Sobre nosotros',    href: '/atelier' },
+                { label: 'Contacto',          href: '/contacto' },
+                { label: 'Estado de encargo', href: '/encargo/estado' },
+                { label: 'Tejé con Dahila',   href: '/tejedoras' },
+                { label: 'Términos y cond.',  href: '/terminos' },
+              ]}
+            />
+            <FooterCol
+              title="Contacto"
+              items={[
+                { label: '@dahila.crochet',         href: 'https://www.instagram.com/dahila.crochet/' },
+                { label: 'WhatsApp · 99 850 073',   href: 'https://wa.me/59899850073' },
+              ]}
+            />
+          </div>
+        )}
 
         <VipSignup />
 

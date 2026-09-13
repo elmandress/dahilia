@@ -13,8 +13,9 @@ export const article: Article = {
   funnel: 'TOFU',
   publishedAt: '2026-08-31',
   hero: {
-    src: '/photos/detalle-tejido.jpg',
-    alt: 'Detalle de la textura de un tejido a crochet hecho a mano',
+    src: '/photos/blog/cardigan-crochet-calado-rosa.jpg',
+    alt: 'Cardigan 3/4 tejido a crochet en rosa, con punto calado',
+    position: '50% 40%',
   },
   relatedCategorySlug: 'tops',
   relatedProductSlugs: ['top-flower', 'bolso-lola', 'cardigan-cruzado'],

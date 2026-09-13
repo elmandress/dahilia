@@ -9,12 +9,12 @@ import { BLUR_DATA_URL } from '@/lib/types'
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'Quién teje tus prendas — el taller',
+  title: 'Quién teje tus prendas: el taller',
   description: 'Conocé a Anush y el taller de Montevideo donde nace cada pieza: lana elegida a mano, tu medida real y tejido sin apuro. Así se hace lo que ninguna máquina puede.',
   alternates: { canonical: '/atelier' },
   openGraph: {
     ...OG_BASE_NO_IMAGE,
-    title: 'Quién teje tus prendas — el taller',
+    title: 'Quién teje tus prendas: el taller',
     description: 'Conocé a Anush y el taller de Montevideo donde nace cada pieza: lana elegida a mano, tu medida real y tejido sin apuro.',
     url: '/atelier',
   },
@@ -85,7 +85,7 @@ export default async function AtelierPage() {
         <div style={{ position: 'relative', width: '100%', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden' }}>
           <Image
             src={heroImage}
-            alt="Tejiendo en Dahila"
+            alt="Anush, la tejedora detrás de Dahila"
             fill
             // Hero is /atelier's LCP element (Next 16: fetchPriority replaces priority).
             fetchPriority="high"

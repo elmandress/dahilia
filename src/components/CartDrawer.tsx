@@ -12,6 +12,7 @@ import { PriceBlock } from './ui/PriceBlock'
 import type { Product } from '@/lib/types'
 import {
   getPrimaryPhoto, getEffectivePrice, getFinalPrice, formatPrice, BLUR_DATA_URL,
+  getListingPrice, getListingSize,
 } from '@/lib/types'
 import { pickAddonSuggestions } from '@/lib/addons'
 import { track } from '@/lib/analytics'
@@ -67,8 +68,8 @@ export function CartDrawer({ products }: { products: Product[] }) {
   )
 
   const handleAddonAdd = async (p: Product) => {
-    const avail = (p.sizes ?? []).filter((s) => s.available)
-    const size = avail.length > 0 ? avail[0].size : 'Único'
+    // El talle del precio que se muestra (el disponible más barato).
+    const size = getListingSize(p) ?? 'Único'
     setAddedId(p.id)
     await addToCart(p, size, 1, { openDrawer: false })
     track('cart_addon_add', { product: p.slug })
@@ -229,7 +230,7 @@ export function CartDrawer({ products }: { products: Product[] }) {
                   </span>
                   {addonSuggestions.map((p) => {
                     const photo = getPrimaryPhoto(p)
-                    const price = getFinalPrice(p, undefined, discounts)
+                    const price = getListingPrice(p, discounts)
                     const justAdded = addedId === p.id
                     return (
                       <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

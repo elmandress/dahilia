@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og'
 import { createClient } from '@/lib/supabase/server'
-import { getFinalPrice, getEffectivePrice } from '@/lib/types'
+import { getFinalPrice, getEffectivePrice, getListingSize, hasPriceRange } from '@/lib/types'
 import type { Product } from '@/lib/types'
 import { SITE_URL } from '@/lib/env'
 import { botImageUrl } from '@/lib/media'
@@ -20,7 +20,7 @@ export async function renderProductOgCard(slug: string): Promise<ImageResponse> 
   const supabase = await createClient()
   const { data } = await supabase
     .from('products')
-    .select('name, description, base_price_uyu, discount_percent, discount_active, media:product_media(url, is_primary)')
+    .select('name, description, base_price_uyu, discount_percent, discount_active, media:product_media(url, is_primary), sizes:product_sizes(size, price_uyu, available, sort_order)')
     .eq('slug', slug)
     .maybeSingle()
 
@@ -56,8 +56,13 @@ export async function renderProductOgCard(slug: string): Promise<ImageResponse> 
 
   // Precio final (descuento por producto incluido) + precio de lista tachado
   // cuando hay rebaja — la tarjeta cuenta la oferta sin abrir el link.
-  const listPrice = product ? getEffectivePrice(product) : 0
-  const finalPrice = product ? getFinalPrice(product) : 0
+  // Mismo precio "desde" que la tarjeta de la tienda (talle disponible más
+  // barato), no el precio base: si no, la tarjeta que viaja por WhatsApp decía
+  // un número y la ficha otro.
+  const listingSize = product ? getListingSize(product) : undefined
+  const listPrice = product ? getEffectivePrice(product, listingSize) : 0
+  const finalPrice = product ? getFinalPrice(product, listingSize) : 0
+  const priceFrom = product ? hasPriceRange(product) : false
   const hasDiscount = finalPrice > 0 && finalPrice < listPrice
 
   return new ImageResponse(
@@ -154,7 +159,7 @@ export async function renderProductOgCard(slug: string): Promise<ImageResponse> 
                     borderRadius: 999,
                   }}
                 >
-                  {`UYU ${finalPrice.toLocaleString('es-UY')}`}
+                  {`${priceFrom ? 'desde ' : ''}UYU ${finalPrice.toLocaleString('es-UY')}`}
                 </div>
                 {hasDiscount ? (
                   <div

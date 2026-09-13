@@ -5,14 +5,14 @@ export const article: Article = {
   title: 'La holgura: cuánto más grande que vos tiene que ser una prenda tejida',
   metaTitle: 'Holgura en prendas tejidas: cuánto más grande elegir',
   description:
-    'Tenés tus medidas, pero la prenda no mide lo mismo que tu cuerpo. Cuánta holgura conviene para un calce ajustado, cómodo u oversize, y las dos medidas que casi nadie mira.',
+    'Tus medidas no son las de la prenda. Cuánta holgura conviene para un calce ajustado, cómodo u oversize, y las dos medidas que casi nadie mira.',
   excerpt:
     'Medirte es el primer paso. El segundo, que casi nadie explica, es decidir cuánto más grande que tu cuerpo tiene que ser la prenda para que caiga como querés.',
   cluster: 'comprar',
   role: 'support',
   funnel: 'BOFU',
   publishedAt: '2026-09-04',
-  hero: { src: '/photos/top-lace-parque.jpg', alt: 'Top tejido a crochet puesto, con caída suelta' },
+  hero: { src: '/photos/blog/sweater-senda-rayas.jpg', alt: 'Sweater Senda tejido a crochet a rayas rojas, bordó y negras, con caída holgada', position: '50% 40%' },
   relatedCategorySlug: 'cardigans',
   relatedProductSlugs: ['cardigan-3-4', 'sweater-senda', 'top-summer'],
   relatedArticleSlugs: [
@@ -23,12 +23,12 @@ export const article: Article = {
   body: [
     {
       type: 'p',
-      text: 'Con la cinta métrica sabés cuánto medís. Lo que la cinta no te dice es cuánto tiene que medir la prenda. Ese hueco —entre la medida de tu cuerpo y la de la prenda— se llama holgura, y es lo que decide si algo te queda ajustado, cómodo o suelto.',
+      text: 'Con la cinta métrica sabés cuánto medís. Lo que la cinta no te dice es cuánto tiene que medir la prenda. Ese hueco (entre la medida de tu cuerpo y la de la prenda) se llama holgura, y es lo que decide si algo te queda ajustado, cómodo o suelto.',
     },
     {
       type: 'callout',
       title: 'La versión corta',
-      text: 'Unos 5 cm más que tu medida de busto dan un calce cómodo. 10 cm o más, un calce relajado u oversize. Cero, o incluso menos, un calce al cuerpo — y eso solo funciona en puntos que estiran. Y además del busto, mirá el largo total y el contorno de brazo, que son las dos medidas que más fallan.',
+      text: 'Unos 5 cm más que tu medida de busto dan un calce cómodo. 10 cm o más, un calce relajado u oversize. Cero, o incluso menos, un calce al cuerpo, y eso solo funciona en puntos que estiran. Y además del busto, mirá el largo total y el contorno de brazo, que son las dos medidas que más fallan.',
     },
 
     { type: 'h2', text: 'Qué es la holgura' },
@@ -53,6 +53,16 @@ export const article: Article = {
     {
       type: 'note',
       text: 'Estos rangos son las referencias que se usan habitualmente en tejido (fuente: I Like Crochet, "Making it fit", consultada el 04/09/2026). Son un punto de partida, no una regla fija: cada modelo tiene su calce pensado.',
+    },
+
+    {
+      type: 'image',
+      src: '/photos/blog/sweater-senda-puesto.jpg',
+      alt: 'Sweater Senda tejido a crochet a rayas, puesto con caída holgada',
+      width: 1080,
+      height: 1440,
+      caption: 'Un calce holgado: el [Sweater Senda](/tienda/sweater-senda), puesto.',
+      href: '/tienda/sweater-senda',
     },
 
     { type: 'h2', text: 'Las dos medidas que casi nadie mira' },
@@ -82,7 +92,7 @@ export const article: Article = {
     {
       type: 'ul',
       items: [
-        '**La fibra:** la lana es elástica y tiene "memoria" — cede y vuelve. El algodón es poco elástico y no tiene esa memoria: no estira cuando lo tirás, pero con el peso y el uso puede alargarse de a poco y no vuelve solo.',
+        '**La fibra:** la lana es elástica y tiene "memoria": cede y vuelve. El algodón es poco elástico y no tiene esa memoria: no estira cuando lo tirás, pero con el peso y el uso puede alargarse de a poco y no vuelve solo.',
         '**El punto:** un punto calado o abierto cede más que uno cerrado.',
         '**La técnica:** a igual hilo, el crochet cede menos que el tejido de dos agujas, porque cada punto es un nudo cerrado y no un bucle abierto.',
       ],
@@ -102,7 +112,7 @@ export const article: Article = {
       items: [
         {
           title: 'Medite',
-          text: 'Busto, cintura, cadera — el paso a paso está en [qué talle de prenda tejida me queda](/blog/que-talle-de-prenda-tejida-me-queda).',
+          text: 'Busto, cintura, cadera: el paso a paso está en [qué talle de prenda tejida me queda](/blog/que-talle-de-prenda-tejida-me-queda).',
         },
         {
           title: 'Decidí el calce',

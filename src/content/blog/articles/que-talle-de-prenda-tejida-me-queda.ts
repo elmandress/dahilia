@@ -12,7 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'BOFU',
   publishedAt: '2026-09-04',
-  hero: { src: '/photos/detalle-tejido.jpg', alt: 'Detalle del punto de una prenda tejida a crochet' },
+  hero: { src: '/photos/blog/sweater-crochet-rojo-cereza.jpg', alt: 'Sweater cherry tejido a crochet en rojo, puesto', position: '50% 40%' },
   relatedCategorySlug: 'tops',
   relatedProductSlugs: ['top-summer', 'cardigan-3-4', 'set-brisa'],
   relatedArticleSlugs: ['comprar-crochet-en-uruguay', 'como-encargar-prenda-a-medida'],
@@ -47,7 +47,7 @@ export const article: Article = {
         },
         {
           title: 'Cintura',
-          text: 'La parte más angosta del torso, que suele estar un poco arriba del ombligo. Un truco para encontrarla sin pensar: inclinate hacia un costado — el pliegue que se forma es tu cintura natural.',
+          text: 'La parte más angosta del torso, que suele estar un poco arriba del ombligo. Un truco para encontrarla sin pensar: inclinate hacia un costado: el pliegue que se forma es tu cintura natural.',
         },
         {
           title: 'Cadera',
@@ -103,7 +103,7 @@ export const article: Article = {
     },
     {
       type: 'p',
-      text: 'En la práctica eso significa dos cosas. La primera, que si estás justo en el borde entre dos talles, se puede tejer en el medio. La segunda, que si tenés una medida que se sale de la tabla — brazos más largos, torso más corto, un busto que no acompaña al resto — eso se resuelve tejiendo, no eligiendo otro talle.',
+      text: 'En la práctica eso significa dos cosas. La primera, que si estás justo en el borde entre dos talles, se puede tejer en el medio. La segunda, que si tenés una medida que se sale de la tabla (brazos más largos, torso más corto, un busto que no acompaña al resto), eso se resuelve tejiendo, no eligiendo otro talle.',
     },
     {
       type: 'quote',
@@ -113,7 +113,7 @@ export const article: Article = {
     { type: 'h2', text: 'El tejido también da de sí (y cuánto)' },
     {
       type: 'p',
-      text: 'El crochet tiene elasticidad propia: el punto es una estructura de nudos con aire entre medio, así que la prenda cede un poco al usarse y vuelve al ventilarse. Cuánto cede depende de la fibra: la lana es elástica y tiene memoria (cede y vuelve), mientras que el algodón es poco elástico y no tiene esa memoria — no estira al tirarlo, pero con el peso y el uso puede alargarse de a poco y no vuelve solo. Las mezclas quedan en el medio.',
+      text: 'El crochet tiene elasticidad propia: el punto es una estructura de nudos con aire entre medio, así que la prenda cede un poco al usarse y vuelve al ventilarse. Cuánto cede depende de la fibra: la lana es elástica y tiene memoria (cede y vuelve), mientras que el algodón es poco elástico y no tiene esa memoria: no estira al tirarlo, pero con el peso y el uso puede alargarse de a poco y no vuelve solo. Las mezclas quedan en el medio.',
     },
     {
       type: 'p',
@@ -153,7 +153,7 @@ export const article: Article = {
 
     {
       type: 'p',
-      text: 'Si querés que la prenda salga directamente con tus medidas en vez de elegir un talle de tabla, eso es un [encargo a medida](/blog/como-encargar-prenda-a-medida) — el proceso completo está explicado ahí.',
+      text: 'Si querés que la prenda salga directamente con tus medidas en vez de elegir un talle de tabla, eso es un [encargo a medida](/blog/como-encargar-prenda-a-medida). El proceso completo está explicado ahí.',
     },
 
     {

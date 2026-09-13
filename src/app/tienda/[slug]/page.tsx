@@ -2,7 +2,10 @@ import { createClient } from '@/lib/supabase/public'
 import { notFound, permanentRedirect, unstable_rethrow } from 'next/navigation'
 import type { Metadata } from 'next'
 import type { Product, Category, Discount } from '@/lib/types'
-import { getPrimaryPhoto, getFinalPrice, resolveDiscountPercent } from '@/lib/types'
+import {
+  getPrimaryPhoto, getFinalPrice, resolveDiscountPercent, getListingPrice, isReadyToShip,
+  hasPriceRange as productHasPriceRange,
+} from '@/lib/types'
 import { getCatalog, getProductBySlug, getSnapshotData } from '@/lib/catalog'
 import { ProductDetailsClient } from './ProductDetailsClient'
 import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
@@ -14,6 +17,7 @@ import { OG_BASE } from '@/lib/og'
 import { botImageUrl } from '@/lib/media'
 import { COMPLEMENT_PREFS } from '@/lib/complements'
 import { slugRedirectTarget } from '@/lib/slug'
+import { getCategoryGuides } from '@/content/blog'
 
 export const revalidate = 3600
 
@@ -112,10 +116,36 @@ export async function generateMetadata({
     // mismos términos con intención local o artesanal están en el top 10
     // ("cardigan tejido a mano" 7, "crochet uruguay" 16, "tienda crochet" 6).
     // El title apunta a la pelea que se puede ganar.
-    const title = `${cat.name} de crochet tejidos a mano en Uruguay`
-    const desc =
+    // 13/09/2026: con la fórmula general, Accesorios tuvo 70 impresiones y 0
+    // clics, y a Tops la buscan como "top de hilo" y "tops tejidos". Estas
+    // categorías nombran lo que de verdad tienen adentro (según su propia
+    // descripción: bolsos, bufandas y bandanas; tops de algodón y de hilo
+    // acrílico; sets de playa, de salida y de abrigo). El resto, la fórmula.
+    const CATEGORY_TITLES: Record<string, string> = {
+      tops: 'Tops de crochet y de hilo tejidos a mano en Uruguay',
+      accesorios: 'Bolsos, bufandas y bandanas tejidos a crochet en Uruguay',
+      sets: 'Sets de crochet tejidos a mano: playa, salida y abrigo',
+    }
+    const title = CATEGORY_TITLES[slug] ?? `${cat.name} de crochet tejidos a mano en Uruguay`
+    // Precio de entrada al principio, como ya hacen las fichas: en Google, un
+    // número concreto le dice a quien busca si está en su rango antes de
+    // entrar. Es el precio de listado más bajo de la categoría (el de las
+    // tarjetas, sin reglas de lote). Si el catálogo no responde, va sin precio.
+    let fromBit = ''
+    try {
+      const { products } = await getCatalog()
+      const prices = products
+        .filter((p) => p.status === 'active' && !p.is_custom_only && p.category?.slug === slug)
+        .map((p) => getListingPrice(p))
+        .filter((n) => n > 0)
+      if (prices.length) fromBit = `Desde UYU ${Math.min(...prices).toLocaleString('es-UY')}. `
+    } catch (e) {
+      unstable_rethrow(e)
+    }
+    const desc = fromBit + (
       cat.description ||
       `${cat.name} hechos a mano en Montevideo, en tu talle y tus colores. Precios claros, envío a todo Uruguay — y si querés algo distinto, se teje a medida para vos.`
+    )
     return {
       title,
       description: desc,
@@ -147,7 +177,7 @@ export async function generateMetadata({
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('*, media:product_media(*)')
+      .select('*, media:product_media(*), sizes:product_sizes(*)')
       .eq('slug', slug)
       .maybeSingle()
     if (error) throw error
@@ -162,10 +192,16 @@ export async function generateMetadata({
   // medida") y la descripción VENDE — precio incluido cuando existe (los
   // estudios de e-commerce coinciden: precio/beneficio en el snippet trae
   // clicks calificados; la genérica "Comprar X" no le da razones a nadie).
-  // getFinalPrice sin reglas de lote: el precio exacto ya viaja en el schema.
-  const finalPrice = getFinalPrice(product)
-  const priceBit = finalPrice > 0 ? `UYU ${finalPrice.toLocaleString('es-UY')}, ` : ''
-  const valueLine = `Tejido a mano en Montevideo — ${priceBit}a tu talle y en tus colores. Envío a todo Uruguay.`
+  // Sin reglas de lote: el precio exacto ya viaja en el schema. Es el mismo
+  // precio "desde" que la tarjeta (antes: el precio base, que en algunos
+  // productos no es el de ningún talle disponible — auditoría 12/09/2026).
+  const finalPrice = getListingPrice(product)
+  const priceBit = finalPrice > 0
+    ? `${productHasPriceRange(product) ? 'Desde ' : ''}UYU ${finalPrice.toLocaleString('es-UY')}, `
+    : ''
+  const valueLine = priceBit
+    ? `Tejido a mano en Montevideo. ${priceBit}a tu talle y en tus colores. Envío a todo Uruguay.`
+    : 'Tejido a mano en Montevideo, a tu talle y en tus colores. Envío a todo Uruguay.'
   const ownDesc = (product.description ?? '').replace(/\s+/g, ' ').trim()
   const ownDescCut = ownDesc.length > 90 ? `${ownDesc.slice(0, 87).trimEnd()}…` : ownDesc
   const description = ownDesc
@@ -247,15 +283,19 @@ async function CategoryPage({ slug, category }: { slug: string; category: Catego
             image: botImageUrl(SITE_URL, photo),
             offers: {
               '@type': 'Offer',
-              price: getFinalPrice(p, undefined, discounts).toFixed(2),
+              price: getListingPrice(p, discounts).toFixed(2),
               priceCurrency: 'UYU',
               // Mismo criterio que la ficha del producto (ver productJsonLd):
               // solo InStock si sale ya; lo que se teje a pedido es BackOrder.
               // Si los dos lugares se contradicen, Merchant Center lo marca.
+              // "Sale ya" = isReadyToShip (mínimo en 0), el mismo criterio que
+              // el filtro "En stock" y el mega-menú: antes el JSON-LD exigía
+              // además máximo en 0, y las 2 piezas en stock salían BackOrder
+              // acá mientras la tienda las ofrecía "sin espera" (12/09/2026).
               availability:
                 p.status !== 'active'
                   ? 'https://schema.org/OutOfStock'
-                  : p.lead_time_weeks_min === 0 && p.lead_time_weeks_max === 0
+                  : isReadyToShip(p)
                     ? 'https://schema.org/InStock'
                     : 'https://schema.org/BackOrder',
             },
@@ -279,6 +319,7 @@ async function CategoryPage({ slug, category }: { slug: string; category: Catego
         colors={colors}
         discounts={discounts}
         initialFilter={slug}
+        guides={getCategoryGuides(slug).map(({ slug: s, title, excerpt }) => ({ slug: s, title, excerpt }))}
       />
     </>
   )
@@ -429,7 +470,9 @@ async function ProductPage({ slug }: { slug: string }) {
             highPrice: highPrice.toFixed(2),
             offerCount: allPrices.length,
           }
-        : { price: finalPrice.toFixed(2) }),
+        // lowPrice (no el base): con un solo talle disponible, el precio real
+        // es el de ese talle.
+        : { price: lowPrice.toFixed(2) }),
       priceCurrency: 'UYU',
       availability:
         // Honestidad con Google (y con la clienta): "InStock" solo si la pieza
@@ -440,7 +483,7 @@ async function ProductPage({ slug }: { slug: string }) {
           ? 'https://schema.org/OutOfStock'
           : product.status !== 'active'
             ? 'https://schema.org/PreOrder'
-            : product.lead_time_weeks_min === 0 && product.lead_time_weeks_max === 0
+            : isReadyToShip(product)
               ? 'https://schema.org/InStock'
               : 'https://schema.org/BackOrder',
       itemCondition: 'https://schema.org/NewCondition',

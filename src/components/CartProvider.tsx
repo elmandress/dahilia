@@ -17,6 +17,9 @@ interface CartContextType {
   freeShippingThreshold: number
   /** Aviso de lista de espera ("los pedidos nuevos empiezan en agosto"). Vacío = no mostrar. */
   queueNote: string
+  /** WhatsApp del sitio (site_settings.contact_whatsapp_url), para los CTAs de
+   *  componentes cliente que no reciben settings (vista rápida). */
+  whatsappUrl: string
   hasMounted: boolean
   isLoading: boolean
   drawerOpen: boolean
@@ -84,12 +87,14 @@ export function CartProvider({
   shippingEstimate = '',
   freeShippingThreshold = 0,
   queueNote = '',
+  whatsappUrl = 'https://wa.me/59899850073',
 }: {
   children: React.ReactNode
   initialDiscounts?: Discount[]
   shippingEstimate?: string
   freeShippingThreshold?: number
   queueNote?: string
+  whatsappUrl?: string
 }) {
   const [items, setItems] = useState<CartItemWithProduct[]>([])
   // Seeded from the server layout so the very first paint already prices with
@@ -251,11 +256,11 @@ export function CartProvider({
   }, 0)
 
   const value = useMemo(() => ({
-    items, cartCount, cartTotal, discounts, shippingEstimate, freeShippingThreshold, queueNote, hasMounted, isLoading,
+    items, cartCount, cartTotal, discounts, shippingEstimate, freeShippingThreshold, queueNote, whatsappUrl, hasMounted, isLoading,
     drawerOpen, addError, openDrawer, closeDrawer, refresh,
     addToCart, updateQty, removeFromCart,
   }), [
-    items, cartCount, cartTotal, discounts, shippingEstimate, freeShippingThreshold, queueNote, hasMounted, isLoading,
+    items, cartCount, cartTotal, discounts, shippingEstimate, freeShippingThreshold, queueNote, whatsappUrl, hasMounted, isLoading,
     drawerOpen, addError, openDrawer, closeDrawer, refresh,
     addToCart, updateQty, removeFromCart,
   ])

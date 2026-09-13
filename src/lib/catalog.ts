@@ -14,6 +14,7 @@
 import { unstable_cache } from 'next/cache'
 import { unstable_rethrow } from 'next/navigation'
 import type { Product, Category, Color, Discount, Collection } from '@/lib/types'
+import { sortSizes } from '@/lib/types'
 import { createClient } from '@/lib/supabase/public'
 import snapshot from '@/lib/catalog-snapshot.json'
 
@@ -43,6 +44,8 @@ interface Snapshot {
 }
 
 const SNAPSHOT = snapshot as unknown as Snapshot
+// Mismo orden de talles que los datos en vivo (ver normalizeProducts).
+const SNAPSHOT_PRODUCTS: Product[] = SNAPSHOT.products.map((p) => ({ ...p, sizes: sortSizes(p.sizes) }))
 
 /** El snapshot no tiene productos → no hay catálogo que servir en una caída, así
  *  que `proxy.ts` muestra el cartel de mantenimiento en vez del catálogo. */
@@ -58,19 +61,26 @@ export function getSnapshotData(): {
   settings: Record<string, string>
 } {
   return {
-    products: SNAPSHOT.products,
+    products: SNAPSHOT_PRODUCTS,
     categories: SNAPSHOT.categories,
     discounts: SNAPSHOT.discounts,
     settings: SNAPSHOT.settings,
   }
 }
 
-/** Aplana el join product_colors → Color[] (mismo criterio en todas las rutas). */
+/** Aplana el join product_colors → Color[] y ordena los talles (mismo criterio
+ *  en todas las rutas). PostgREST no ordena los embebidos: sin el orden, los
+ *  talles llegaban como caían (Granny's: M/L antes que S) y el talle por
+ *  defecto, y con él el precio de la tarjeta, dependía del azar. */
 function normalizeProducts(rows: unknown[]): Product[] {
   return rows.map((p) => {
     const row = p as Product & { colors?: Array<{ color: Color | null }> }
     const joined = (row.colors ?? []) as Array<{ color: Color | null }>
-    return { ...row, colors: joined.map((c) => c.color).filter((c): c is Color => !!c) }
+    return {
+      ...row,
+      colors: joined.map((c) => c.color).filter((c): c is Color => !!c),
+      sizes: sortSizes(row.sizes),
+    }
   }) as Product[]
 }
 
@@ -79,7 +89,7 @@ const PRODUCT_SELECT =
 
 function snapshotCatalog(): Catalog {
   return {
-    products: SNAPSHOT.products,
+    products: SNAPSHOT_PRODUCTS,
     categories: SNAPSHOT.categories,
     colors: SNAPSHOT.colors,
     discounts: SNAPSHOT.discounts,
@@ -215,7 +225,7 @@ export async function getProductBySlug(
     return { product: await fetchProductBySlugCached(slug), source: 'live' }
   } catch (e) {
     unstable_rethrow(e) // no tragar el bailout dinámico / notFound de Next
-    const fromSnap = SNAPSHOT.products.find((p) => p.slug === slug) ?? null
+    const fromSnap = SNAPSHOT_PRODUCTS.find((p) => p.slug === slug) ?? null
     return { product: fromSnap, source: 'snapshot' }
   }
 }

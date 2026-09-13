@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/public'
 import type { Product, Discount } from '@/lib/types'
-import { getPrimaryPhoto, getFinalPrice, formatPrice, BLUR_DATA_URL } from '@/lib/types'
+import { getPrimaryPhoto, formatListingPrice, BLUR_DATA_URL } from '@/lib/types'
 import { dahila, Icon } from '@/components/ui/Primitives'
 
 export const revalidate = 300
@@ -124,7 +124,10 @@ export default async function IgLandingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
             {newest.map((p) => {
               const photo = getPrimaryPhoto(p)
-              const price = getFinalPrice(p, undefined, discounts)
+              // Mismo precio que la tarjeta de la tienda y la ficha (antes esta
+              // página mostraba el precio base: el Granny's salía 3.300 acá y
+              // 3.800 en la tienda).
+              const price = formatListingPrice(p, discounts)
               return (
                 <Link key={p.id} href={`/tienda/${p.slug}`} style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ position: 'relative', aspectRatio: '3/4', borderRadius: 12, overflow: 'hidden', background: dahila.cream50, display: 'block' }}>
@@ -140,7 +143,7 @@ export default async function IgLandingPage() {
                     />
                   </span>
                   <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 14, color: dahila.ink900, lineHeight: 1.25 }}>{p.name}</span>
-                  <span style={{ fontFamily: dahila.fontSans, fontSize: 12.5, color: dahila.ink700 }}>{formatPrice(price)}</span>
+                  <span style={{ fontFamily: dahila.fontSans, fontSize: 12.5, color: dahila.ink700 }}>{price}</span>
                 </Link>
               )
             })}
@@ -180,7 +183,7 @@ export default async function IgLandingPage() {
         fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 300, color: dahila.ink500,
         textAlign: 'center', margin: '26px 0 0', lineHeight: 1.6,
       }}>
-        Cada colección sale en cantidades chicas — la lista VIP la ve 24 horas antes.
+        Cada colección sale en cantidades chicas, y la lista VIP la ve 24 horas antes.
         Anotate al pie de la página.
       </p>
     </div>

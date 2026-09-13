@@ -87,7 +87,7 @@ export async function GET() {
   const body = `# Dahila Crochet
 
 > Prendas tejidas a crochet, hechas a mano y a medida, desde Montevideo, Uruguay.
-> Tienda artesanal (slow fashion): tops, cardigans, bolsos, accesorios y sets.
+> Ropa y accesorios tejidos a mano (slow fashion): tops, cardigans, bolsos, accesorios y sets.
 > Envíos a todo Uruguay. Los pedidos y encargos a medida se coordinan por WhatsApp.
 
 ## Cómo comprar

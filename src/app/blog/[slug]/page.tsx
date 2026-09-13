@@ -23,8 +23,9 @@ export const revalidate = 3600
 // SIN `dynamicParams = false` a propósito (se sacó el 04/09/2026).
 //
 // Estaba puesto para que /blog/lo-que-sea respondiera 404 de verdad en vez de
-// un soft 404 (hay un loading.tsx en la raíz: el shell sale por streaming con
-// status 200 antes de que corra notFound()). Pero en producción las 8 notas
+// un soft 404 (con el loading.tsx que había en la raíz hasta el 13/09/2026, el
+// shell salía por streaming con status 200 antes de que corriera notFound()).
+// Pero en producción las 8 notas
 // reales daban 404: los headers mostraban `Cache-Status: "Next.js"; hit` con
 // `fwd-status=404`, o sea un 404 GUARDADO en la caché de Next de Netlify —
 // mientras los productos tenían guardado un 200. `dynamicParams = false` es la
@@ -56,7 +57,11 @@ export async function generateMetadata({
 
   const url = `${SITE_URL}/blog/${article.slug}`
   return {
-    title: article.metaTitle ?? article.title,
+    // Sin "| Dahila Crochet": con el agregado, los títulos de las notas iban de
+    // 57 a 78 caracteres y Google corta o reescribe los largos (Zyppy, 2021:
+    // los de 51 a 60 caracteres son los que menos reescribe). El nombre del
+    // sitio ya aparece aparte en el resultado (WebSite en el layout).
+    title: { absolute: article.metaTitle ?? article.title },
     description: article.description,
     alternates: { canonical: `/blog/${article.slug}` },
     openGraph: {
@@ -162,7 +167,7 @@ export default async function ArticlePage({
               sizes="(max-width: 780px) 100vw, 720px"
               placeholder="blur"
               blurDataURL={BLUR_DATA_URL}
-              style={{ objectFit: 'cover' }}
+              style={{ objectFit: 'cover', objectPosition: article.hero.position }}
             />
           </div>
         )}

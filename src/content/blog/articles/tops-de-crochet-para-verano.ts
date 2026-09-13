@@ -12,7 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'MOFU',
   publishedAt: '2026-09-04',
-  hero: { src: '/photos/top-lace-parque.jpg', alt: 'Top tejido a crochet con punto calado' },
+  hero: { src: '/photos/blog/top-summer-rosa.jpg', alt: 'Top SUMMER tejido a crochet en rosa, puesto junto a una ventana', position: '50% 35%' },
   relatedCategorySlug: 'tops',
   relatedProductSlugs: ['top-summer', 'top-cherry', 'beach-set'],
   relatedArticleSlugs: [
@@ -68,11 +68,21 @@ export const article: Article = {
       text: 'La relación entre punto abierto, fibra vegetal y sensación de frescura es información textil general. Qué fibra usa cada top de Dahila está en su ficha de producto.',
     },
 
+    {
+      type: 'image',
+      src: '/photos/blog/top-higgie-turquesa.jpg',
+      alt: 'Top HIGGIE tejido a crochet en algodón turquesa, con la parte de abajo calada',
+      width: 926,
+      height: 946,
+      caption: 'El [top HIGGIE](/tienda/top-higgie), en algodón: calado abajo y más cerrado arriba.',
+      href: '/tienda/top-higgie',
+    },
+
     { type: 'h2', text: 'Los tres usos típicos, y qué conviene en cada uno' },
     {
       type: 'ul',
       items: [
-        '**Playa, sobre la malla.** Acá el calado es una ventaja y no hace falta nada debajo. Buscá algo que se seque rápido y que no se manche con protector solar — el algodón claro mancha más que un tono medio.',
+        '**Playa, sobre la malla.** Acá el calado es una ventaja y no hace falta nada debajo. Buscá algo que se seque rápido y que no se manche con protector solar: el algodón claro mancha más que un tono medio.',
         '**Ciudad de día.** Un top de punto medio con un short o un jean, o con un top liso debajo si el calado es grande. Es el uso donde más importa que la forma sea prolija.',
         '**Salida de noche.** Punto más cerrado o hilado con brillo. Acá el tejido a mano se nota, y esa es justamente la gracia.',
       ],

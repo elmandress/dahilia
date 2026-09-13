@@ -13,13 +13,33 @@ const STEPS: { key: EncargoStatus; label: string; blurb: string; step: number }[
   { key: 'done',        label: 'Listo',         blurb: 'Tu pieza está terminada. Coordinamos la entrega.', step: 4 },
 ]
 
-function StatusView({ result }: { result: EncargoStatusResult }) {
+// Los dos "escribinos por WhatsApp" de esta página eran texto plano, y en
+// /encargo* no aparece la burbuja flotante: quien tenía una duda sobre su
+// encargo no tenía ningún camino de un toque. Ahora son links, con el código
+// ya escrito para que no haya que pedirlo de nuevo.
+function waLink(base: string, text: string): string {
+  return `${base.replace(/\/+$/, '')}?text=${encodeURIComponent(text)}`
+}
+
+const waLinkStyle: React.CSSProperties = {
+  color: dahila.wine600, textDecoration: 'underline', textUnderlineOffset: 3,
+}
+
+function StatusView({ result, code, whatsappUrl }: { result: EncargoStatusResult; code: string; whatsappUrl: string }) {
+  const codeBit = code ? ` (código ${code})` : ''
   if (result.status === 'cancelled') {
     return (
       <div style={{ background: dahila.cream100, borderRadius: 14, padding: '28px 24px', textAlign: 'center' }}>
         <h2 style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, color: dahila.ink900, margin: 0 }}>Encargo cancelado</h2>
         <p style={{ fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink700, margin: '8px 0 0' }}>
-          Si creés que es un error, escribinos por WhatsApp y lo vemos.
+          Si creés que es un error,{' '}
+          <a
+            href={waLink(whatsappUrl, `Hola! Mi encargo${codeBit} figura como cancelado y creo que es un error.`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={waLinkStyle}
+          >escribinos por WhatsApp</a>{' '}
+          y lo vemos.
         </p>
       </div>
     )
@@ -71,14 +91,21 @@ function StatusView({ result }: { result: EncargoStatusResult }) {
         })}
       </ol>
 
-      <p style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, marginTop: 8 }}>
-        ¿Dudas? Escribinos por WhatsApp y te respondemos.
+      <p style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700, marginTop: 8 }}>
+        ¿Dudas?{' '}
+        <a
+          href={waLink(whatsappUrl, `Hola! Tengo una duda sobre mi encargo${codeBit}.`)}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={waLinkStyle}
+        >Escribinos por WhatsApp</a>{' '}
+        y te respondemos.
       </p>
     </div>
   )
 }
 
-export function EstadoClient() {
+export function EstadoClient({ whatsappUrl }: { whatsappUrl: string }) {
   const params = useSearchParams()
   const [code, setCode] = useState('')
   const [result, setResult] = useState<EncargoStatusResult | null>(null)
@@ -140,7 +167,9 @@ export function EstadoClient() {
         </div>
       )}
 
-      {result && result.found && <StatusView result={result} />}
+      {result && result.found && (
+        <StatusView result={result} code={code.trim().toUpperCase()} whatsappUrl={whatsappUrl} />
+      )}
     </div>
   )
 }

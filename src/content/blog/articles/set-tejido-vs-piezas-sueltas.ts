@@ -12,7 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'MOFU',
   publishedAt: '2026-09-04',
-  hero: { src: '/photos/top-lace-parque.jpg', alt: 'Prenda tejida a crochet en punto calado' },
+  hero: { src: '/photos/blog/set-lueur-lurex.jpg', alt: 'Set LUEUR tejido a crochet en hilado con lurex: ponchito calado y bufanda fina, puestos', position: '50% 40%' },
   relatedCategorySlug: 'sets',
   relatedProductSlugs: ['set-brisa', 'beach-set', 'set-lueur'],
   relatedArticleSlugs: [
@@ -66,6 +66,16 @@ export const article: Article = {
     {
       type: 'note',
       text: 'El material de cada set está en su ficha: los hay en algodón, algodón mercerizado, algodón con lurex y lana. Qué implica cada uno está explicado en [la guía de materiales](/blog/materiales-de-una-prenda-tejida).',
+    },
+
+    {
+      type: 'image',
+      src: '/photos/blog/set-brisa-playa.jpg',
+      alt: 'Set BRISA tejido a crochet en algodón crudo: bikini y salida de playa, puestos',
+      width: 1017,
+      height: 1033,
+      caption: 'El [set BRISA](/tienda/set-brisa): gargantilla, bikini y salida de playa, las tres en algodón mercerizado.',
+      href: '/tienda/set-brisa',
     },
 
     { type: 'h2', text: 'El talle, que en un set tiene una vuelta extra' },

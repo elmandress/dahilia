@@ -6,6 +6,7 @@
 //
 // Usage:
 //   npm run index-urls -- --dry-run              # list URLs, no API calls
+//   npm run index-urls -- --status               # read-only: when Google last got a notice per URL
 //   npm run index-urls -- --all                  # submit ALL sitemap URLs
 //   npm run index-urls -- --filter=/blog         # only URLs containing "/blog"
 //   npm run index-urls -- --limit=10             # cap at 10 submissions
@@ -24,7 +25,12 @@
 // Scope: Google documents this API only for pages with JobPosting or
 // BroadcastEvent markup. For a blog or a shop a 200 means "notification
 // received", not "indexed", and Google may revoke access if it's abused.
-// Use it for new or changed URLs, not to resubmit the whole site every day.
+//
+// Verified for dahila.uy on 13/09/2026: the 68 URLs sent on 11-12/09 all got a
+// 200, and `--status` shows Google registered none of them ("Requested entity
+// was not found."). For this shop the API does nothing. What works instead:
+// the sitemap in Search Console (read by Google on 13/09, no errors), internal
+// links, and "Request indexing" in Search Console's URL Inspection.
 
 import { readFileSync, existsSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
@@ -37,10 +43,12 @@ import path from 'node:path'
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://dahila.uy').replace(/\/+$/, '')
 const DEFAULT_KEY_PATH = '.secrets/google-indexing-sa.json'
 const INDEXING_API = 'https://indexing.googleapis.com/v3/urlNotifications:publish'
+const METADATA_API = 'https://indexing.googleapis.com/v3/urlNotifications/metadata'
 const TOKEN_URI = 'https://oauth2.googleapis.com/token'
 const SCOPE = 'https://www.googleapis.com/auth/indexing'
 // 400 ms between calls ≈ 150 requests/min, well under the 380/min limit.
 const DELAY_MS = 400
+const STATUS_DELAY_MS = 1000
 const MAX_RETRIES = 3
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -201,11 +209,57 @@ function stopReason({ status, message, dailyQuota }) {
   return 'permission denied.'
 }
 
+// ─── Status (read-only) ──────────────────────────────────────────────────────
+
+/**
+ * --status: for each URL, when Google last received a notification (Indexing
+ * API metadata). Confirms that the API and the credentials work WITHOUT
+ * sending anything (re-sending unchanged URLs is against the project rules).
+ * It does NOT say whether a page is indexed: that's the URL Inspection check
+ * in scripts/seo-report.mjs.
+ */
+async function printStatus(urls, accessToken) {
+  console.log(`🔎  Checking notification status for ${urls.length} URLs (read-only)...\n`)
+  let notified = 0
+  let never = 0
+  for (let i = 0; i < urls.length; i++) {
+    const url = urls[i]
+    const res = await fetch(`${METADATA_API}?url=${encodeURIComponent(url)}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    const body = await res.json().catch(() => ({}))
+    if (res.ok) {
+      notified++
+      const when = body.latestUpdate?.notifyTime ?? body.latestRemove?.notifyTime ?? '?'
+      console.log(`   ✅  ${String(when).slice(0, 16).replace('T', ' ')}  ${url}`)
+    } else if (res.status === 404) {
+      never++
+      // First 404: show Google's exact message once, so it can be quoted.
+      const note = never === 1 && body.error?.message ? `  (Google: "${body.error.message}")` : ''
+      console.log(`   ·   never notified    ${url}${note}`)
+    } else {
+      const message = body.error?.message || ''
+      console.log(`   ❌  ${res.status}  ${url} → ${message}`)
+      if (res.status === 401 || res.status === 403) {
+        console.log(`\n🛑  Stopped: ${stopReason({ status: res.status, message, dailyQuota: false })}`)
+        process.exitCode = 1
+        return
+      }
+    }
+    // The read quota per minute is lower than the publish one: at 400 ms the
+    // 72-URL sitemap hit 429 near the end. 1 s per read stays under it.
+    if (i < urls.length - 1) await sleep(STATUS_DELAY_MS)
+  }
+  console.log(`\n📊  ${notified} notified at least once · ${never} never notified.`)
+  console.log('   This only says Google got the notice. Whether a URL is indexed: npm run seo-report.')
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
   const args = parseArgs(process.argv)
   const dryRun = Boolean(args['dry-run'])
+  const status = Boolean(args['status'])
   const all = Boolean(args['all'])
   const filter = typeof args['filter'] === 'string' ? args['filter'] : null
   const limit = typeof args['limit'] === 'string' ? parseInt(args['limit'], 10) : Infinity
@@ -233,7 +287,7 @@ async function main() {
     urls = urls.filter((u) => u.includes(filter))
     console.log(`🔍  Filter "${filter}" → ${urls.length} matching URLs.`)
   }
-  if (!all && !filter && !dryRun && !Number.isFinite(limit)) {
+  if (!all && !filter && !dryRun && !status && !Number.isFinite(limit)) {
     console.error(
       '⚠️  Safety: pass --all to submit every URL, or --filter=<path> to narrow scope, or --limit=N.\n' +
       '   Use --dry-run to preview without submitting.',
@@ -276,10 +330,17 @@ async function main() {
   }
 
   console.log(`🔑  Using service account: ${sa.client_email}`)
-  console.log(`📤  Submitting ${urls.length} URLs (type: ${type})...\n`)
 
   // 5. Get OAuth2 access token
   const accessToken = await getAccessToken(sa)
+
+  // --status: read-only, nothing is sent.
+  if (status) {
+    await printStatus(urls, accessToken)
+    return
+  }
+
+  console.log(`📤  Submitting ${urls.length} URLs (type: ${type})...\n`)
 
   // 6. Submit each URL, one at a time, with a pause between calls.
   let ok = 0

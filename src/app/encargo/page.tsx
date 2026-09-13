@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/public'
-import EncargoForm from './EncargoForm'
+import EncargoForm, { type EncargoReferencia } from './EncargoForm'
+import { getCatalog } from '@/lib/catalog'
 import { ENCARGO_FAQ } from './faq'
 import { getEncargosCuposState } from '@/components/EncargosDisponibles'
 import { OG_BASE } from '@/lib/og'
@@ -82,6 +83,17 @@ export default async function EncargoPage() {
     (acc, r) => ({ ...acc, [r.key as string]: String(r.value ?? '') }), {}
   )
   const getSetting = (key: string) => settings[key] ?? ''
+
+  // Prendas que pueden llegar como referencia desde su ficha (?desde=slug).
+  // Salen del catálogo en caché: no suman consultas a la base.
+  const { products, categories } = await getCatalog()
+  const categorySlug = new Map(categories.map((c) => [c.id, c.slug]))
+  const referencias: EncargoReferencia[] = products.map((p) => ({
+    slug: p.slug,
+    name: p.name,
+    category: p.category_id ? categorySlug.get(p.category_id) ?? null : null,
+  }))
+
   return (
     <>
       <script
@@ -95,6 +107,7 @@ export default async function EncargoPage() {
       <EncargoForm
         whatsappUrl={settings.contact_whatsapp_url || 'https://wa.me/59899850073'}
         encargosCupos={getEncargosCuposState(settings)}
+        referencias={referencias}
         processEnabled={getSetting('pdp_process_enabled') === 'true'}
         processSteps={[
           { icon: getSetting('pdp_process_step_1_icon') || 'chat-text',  label: getSetting('pdp_process_step_1_label') || 'Escribís',        body: getSetting('pdp_process_step_1_body') || 'Contame qué prenda querés, tu medida y colores favoritos.' },

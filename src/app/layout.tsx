@@ -15,8 +15,10 @@ import { GoogleAnalyticsScript } from '@/components/GoogleAnalyticsScript'
 import { AttributionCapture } from '@/components/AttributionCapture'
 import { SITE_URL, SUPABASE_STORAGE_ORIGIN } from '@/lib/env'
 import { OG_BASE, OG_DEFAULT_IMAGE } from '@/lib/og'
+import { brandProfileUrls } from '@/lib/profiles'
 import { getCatalog } from '@/lib/catalog'
-import { isReadyToShip } from '@/lib/types'
+import { isReadyToShip, getListingPrice } from '@/lib/types'
+import { ADDON_MAX_UYU } from '@/lib/addons'
 import './globals.css'
 
 export const viewport: Viewport = {
@@ -93,35 +95,39 @@ export const metadata: Metadata = {
   },
 }
 
-const organizationJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: 'Dahila Crochet',
-  // Variantes de escritura reales (Dalia/Dahlia) que la gente usa al buscar
-  // — le dice a Google que son la misma entidad, sin tocar el copy visible
-  // ni el <title> (evita keyword stuffing).
-  alternateName: ['Dahila', 'Dalia Crochet', 'Dahlia Crochet', 'Dahilia Crochet', 'Dailhia Crochet'],
-  url: SITE_URL,
-  // ImageObject explícito (no solo la URL) — Google recomienda ancho/alto
-  // declarados para el logo del panel de marca; el isotype ya es 512×512.
-  logo: { '@type': 'ImageObject', url: `${SITE_URL}/isotype-color.png`, width: 512, height: 512 },
-  image: { '@type': 'ImageObject', url: `${SITE_URL}/logo-full.jpg`, width: 1200, height: 630 },
-  description: 'Prendas tejidas a crochet, hechas a mano y a medida, desde Montevideo, Uruguay.',
-  sameAs: ['https://www.instagram.com/dahila.crochet/'],
-  address: {
-    '@type': 'PostalAddress',
-    addressLocality: 'Montevideo',
-    addressCountry: 'UY',
-  },
-  areaServed: { '@type': 'Country', name: 'Uruguay' },
-  contactPoint: {
-    '@type': 'ContactPoint',
-    contactType: 'customer service',
-    telephone: '+59899850073',
-    availableLanguage: ['Spanish'],
-  },
-  // Sin hasMerchantReturnPolicy a propósito (04/09/2026): se sacó del sitio
-  // todo lo referido a cambios y devoluciones, también del structured data.
+function organizationJsonLd(settings: Record<string, string>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': `${SITE_URL}/#organization`,
+    name: 'Dahila Crochet',
+    // Variantes de escritura reales (Dalia/Dahlia) que la gente usa al buscar
+    // — le dice a Google que son la misma entidad, sin tocar el copy visible
+    // ni el <title> (evita keyword stuffing).
+    alternateName: ['Dahila', 'Dalia Crochet', 'Dahlia Crochet', 'Dahilia Crochet', 'Dailhia Crochet'],
+    url: SITE_URL,
+    // ImageObject explícito (no solo la URL) — Google recomienda ancho/alto
+    // declarados para el logo del panel de marca; el isotype ya es 512×512.
+    logo: { '@type': 'ImageObject', url: `${SITE_URL}/isotype-color.png`, width: 512, height: 512 },
+    image: { '@type': 'ImageObject', url: `${SITE_URL}/logo-full.jpg`, width: 1200, height: 630 },
+    description: 'Prendas tejidas a crochet, hechas a mano y a medida, desde Montevideo, Uruguay.',
+    // Instagram y los demás perfiles cargados en Configuración → Contacto.
+    sameAs: brandProfileUrls(settings),
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Montevideo',
+      addressCountry: 'UY',
+    },
+    areaServed: { '@type': 'Country', name: 'Uruguay' },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'customer service',
+      telephone: '+59899850073',
+      availableLanguage: ['Spanish'],
+    },
+    // Sin hasMerchantReturnPolicy a propósito (04/09/2026): se sacó del sitio
+    // todo lo referido a cambios y devoluciones, también del structured data.
+  }
 }
 
 // WebSite (distinto de Organization arriba): Google lo lee aparte para
@@ -129,12 +135,18 @@ const organizationJsonLd = {
 // panel de marca, pero no todo lo que decide cómo emparejar una búsqueda con
 // "el sitio" pasa por ahí. Mismas variantes de escritura, mismo motivo: cero
 // costo de keyword stuffing porque no toca copy visible.
+// Es el ÚNICO WebSite del sitio (12/09/2026): la home publicaba otro, sin
+// @id ni variantes, solo por el SearchAction del cuadro de búsqueda en Google,
+// que Google retiró en noviembre de 2024. Dos WebSite distintos para el mismo
+// sitio eran ruido justo en el problema activo de la marca (dahila → dahlia).
 const websiteJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
+  '@id': `${SITE_URL}/#website`,
   name: 'Dahila Crochet',
   alternateName: ['Dahila', 'Dalia Crochet', 'Dahlia Crochet', 'Dahilia Crochet', 'Dailhia Crochet'],
   url: SITE_URL,
+  publisher: { '@id': `${SITE_URL}/#organization` },
 }
 
 export default async function RootLayout({
@@ -219,12 +231,32 @@ export default async function RootLayout({
   const waEnabled = settings.whatsapp_float_enabled === 'true'
   const waUrl = settings.contact_whatsapp_url?.trim() || 'https://wa.me/59899850073'
 
+  // Candidatos del "Sumale un detalle" del mini-carrito. Antes viajaba el
+  // catálogo entero (37 productos con fotos, talles y colores anidados: ~114 KB
+  // de JSON en el HTML de CADA página, y CPU para deserializarlo antes de
+  // pintar el LCP) solo para elegir 3 piezas baratas (auditoría 12/09/2026).
+  // Ahora van solo las que pueden salir sugeridas, con su foto principal.
+  const addonCandidates = catalog.products
+    .filter((p) => p.status === 'active' && !p.is_custom_only && getListingPrice(p, discounts) <= ADDON_MAX_UYU)
+    .map((p) => ({
+      ...p,
+      description: null,
+      care_instructions: null,
+      category: undefined,
+      collection: undefined,
+      colors: [],
+      media: (p.media ?? [])
+        .filter((m) => m.type === 'image')
+        .sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.position - b.position)
+        .slice(0, 1),
+    }))
+
   return (
     <html lang="es-UY" className={`${fraunces.variable} ${inter.variable}`}>
       <head>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd(settings)) }}
         />
         <script
           type="application/ld+json"
@@ -251,7 +283,7 @@ export default async function RootLayout({
       </head>
       <body>
         <a href="#contenido" className="skip-link">Saltar al contenido</a>
-        <CartProvider initialDiscounts={discounts} shippingEstimate={shippingEstimate} freeShippingThreshold={freeShippingThreshold} queueNote={queueNote}>
+        <CartProvider initialDiscounts={discounts} shippingEstimate={shippingEstimate} freeShippingThreshold={freeShippingThreshold} queueNote={queueNote} whatsappUrl={waUrl}>
           <FavoritesProvider>
             <Header
               promo={promo}
@@ -260,11 +292,15 @@ export default async function RootLayout({
               categories={catalog.categories.map((c) => ({ slug: c.slug, label: c.name }))}
               readyToShipCount={catalog.products.filter(isReadyToShip).length}
             />
+            {/* Sin loading.tsx en la raíz, a propósito (13/09/2026): envolvía
+                todas las páginas en un Suspense, y en las estáticas la página
+                real llegaba escondida y se revelaba tarde (ver
+                app/tienda/(listado)/loading.tsx). */}
             <main id="contenido">
               {children}
             </main>
             <Footer tagline={tagline} showOfertas={showOfertas} showColecciones={showColecciones} />
-            <CartDrawer products={catalog.products} />
+            <CartDrawer products={addonCandidates} />
             <BackToTop />
             <WhatsAppFloat enabled={waEnabled} waUrl={waUrl} />
             <WeaverCallout />

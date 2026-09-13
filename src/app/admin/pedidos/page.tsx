@@ -13,6 +13,16 @@ interface OrderItem {
   unit_price_uyu: number
 }
 
+// Cómo terminó el pedido (database/embudo-pedidos-2026-09.sql). Sin marcar
+// esto, "pedidos enviados" no dice cuántos se vendieron de verdad.
+type OrderStatus = 'nuevo' | 'vendido' | 'no_concreto'
+
+const STATUS_OPTIONS: Array<{ value: OrderStatus; label: string; color: string }> = [
+  { value: 'nuevo', label: 'Sin marcar', color: '#5B5356' },
+  { value: 'vendido', label: 'Vendido', color: '#1E8449' },
+  { value: 'no_concreto', label: 'No se concretó', color: '#B6314A' },
+]
+
 interface OrderRow {
   id: string
   created_at: string
@@ -25,7 +35,10 @@ interface OrderRow {
   gift_note: string | null
   utm_source: string | null
   referrer_host: string | null
+  status?: OrderStatus | null
 }
+
+const DAY = 86_400_000
 
 export default function PedidosAdminPage() {
   const [orders, setOrders] = useState<OrderRow[]>([])
@@ -39,6 +52,10 @@ export default function PedidosAdminPage() {
   // página decía "todavía no se envió ningún pedido" mientras la base podía
   // tener decenas. El propio schema-orders.sql avisa de esta trampa.
   const [notAdmin, setNotAdmin] = useState(false)
+  const [statusError, setStatusError] = useState<string | null>(null)
+  // Momento de la última carga: "los últimos 30 días" se cuentan desde ahí
+  // (llamar a Date.now() durante el render lo prohíbe la regla de pureza).
+  const [loadedAt, setLoadedAt] = useState(0)
 
   const load = useCallback(async () => {
     setError(null)
@@ -50,7 +67,7 @@ export default function PedidosAdminPage() {
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(100)
+        .limit(300)
       if (err) {
         // PGRST205 es lo que Supabase/PostgREST devuelve en la práctica cuando
         // la tabla no existe (42P01 es el código de Postgres crudo, casi nunca
@@ -64,6 +81,7 @@ export default function PedidosAdminPage() {
       }
       const rows = (data ?? []) as OrderRow[]
       setOrders(rows)
+      setLoadedAt(Date.now())
       // Lista vacía: ¿no hay pedidos, o RLS los está escondiendo? La función
       // is_admin() lo responde sin escribir nada. Si no existe (migración
       // vieja), el rpc falla y se deja la pantalla como estaba.
@@ -84,14 +102,37 @@ export default function PedidosAdminPage() {
     load()
   }, [load])
 
+  // `select('*')` trae la columna si la migración corrió: con una sola fila
+  // alcanza para saberlo.
+  const hasStatus = orders.some((o) => o.status !== undefined)
+
+  const updateStatus = async (id: string, status: OrderStatus) => {
+    setStatusError(null)
+    const previous = orders.find((o) => o.id === id)?.status ?? 'nuevo'
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)))
+    const { data, error: err } = await createClient().from('orders').update({ status }).eq('id', id).select('id')
+    // Sin la policy de UPDATE, la base no da error: devuelve 0 filas.
+    if (err || !data || data.length === 0) {
+      setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: previous } : o)))
+      setStatusError('No se pudo guardar el estado. Revisá que se haya corrido database/embudo-pedidos-2026-09.sql en Supabase.')
+    }
+  }
+
   if (loading) return <div className="admin-loading"><div className="admin-spinner" /></div>
+
+  const since = loadedAt - 30 * DAY
+  const recent = orders.filter((o) => new Date(o.created_at).getTime() >= since)
+  const sold = recent.filter((o) => o.status === 'vendido')
+  const lost = recent.filter((o) => o.status === 'no_concreto')
+  const unmarked = recent.length - sold.length - lost.length
+  const closeRate = sold.length + lost.length > 0 ? Math.round((sold.length / (sold.length + lost.length)) * 100) : null
 
   return (
     <div>
       <div className="admin-page-header">
         <div>
           <h2>Pedidos enviados</h2>
-          <p>Cada vez que alguien toca &quot;Coordinar por WhatsApp&quot; queda una foto del pedido acá — coordinás igual que siempre por WhatsApp, esto es solo para el historial.</p>
+          <p>Cada vez que alguien toca &quot;Coordinar por WhatsApp&quot; queda una foto del pedido acá. Después de hablar con la clienta, marcá si se vendió: así se sabe cuánto de lo que llega por el sitio termina en venta.</p>
         </div>
         <button className="admin-btn admin-btn-secondary admin-btn-sm" onClick={() => load()}>Actualizar</button>
       </div>
@@ -109,6 +150,13 @@ export default function PedidosAdminPage() {
         }}>{error}</div>
       )}
 
+      {statusError && (
+        <div role="alert" style={{
+          background: 'rgba(182,49,74,0.06)', border: '1px solid rgba(182,49,74,0.24)',
+          color: '#7a1e2f', padding: '12px 14px', borderRadius: 8, marginBottom: 18, fontSize: 13,
+        }}>{statusError}</div>
+      )}
+
       {notAdmin && !needsMigration && (
         <div role="alert" style={{
           background: 'rgba(182,49,74,0.06)', border: '1px solid rgba(182,49,74,0.24)',
@@ -121,6 +169,38 @@ export default function PedidosAdminPage() {
         </div>
       )}
 
+      {orders.length > 0 && (
+        <>
+          <div className="admin-stats-grid" style={{ marginBottom: 14 }}>
+            <div className="admin-stat-card">
+              <div className="stat-label">Pedidos · 30 días</div>
+              <div className="stat-value">{recent.length}</div>
+              <div className="stat-sub">tocaron &quot;Coordinar por WhatsApp&quot;</div>
+            </div>
+            {hasStatus && (
+              <>
+                <div className="admin-stat-card">
+                  <div className="stat-label">Vendidos</div>
+                  <div className="stat-value">{sold.length}</div>
+                  <div className="stat-sub">{formatPrice(sold.reduce((s, o) => s + (Number(o.total_uyu) || 0), 0))} en total</div>
+                </div>
+                <div className="admin-stat-card">
+                  <div className="stat-label">Cierre</div>
+                  <div className="stat-value">{closeRate === null ? '—' : `${closeRate}%`}</div>
+                  <div className="stat-sub">{lost.length} no se concretaron · {unmarked} sin marcar</div>
+                </div>
+              </>
+            )}
+          </div>
+          {!hasStatus && (
+            <div className="admin-card" style={{ marginBottom: 14, fontSize: 13, color: '#4A4143' }}>
+              Para marcar qué pedidos se vendieron (y ver el porcentaje de cierre), corré
+              {' '}<code>database/embudo-pedidos-2026-09.sql</code> en el SQL Editor de Supabase.
+            </div>
+          )}
+        </>
+      )}
+
       {!needsMigration && !error && !notAdmin && orders.length === 0 ? (
         <div className="admin-card admin-empty"><p>Todavía no se envió ningún pedido por acá.</p></div>
       ) : (
@@ -130,6 +210,7 @@ export default function PedidosAdminPage() {
             // toda la página con un TypeError en vez de mostrar el resto.
             const items = Array.isArray(o.items) ? o.items : []
             const unitCount = items.reduce((s, it) => s + (it?.qty ?? 0), 0)
+            const current = STATUS_OPTIONS.find((s) => s.value === (o.status ?? 'nuevo')) ?? STATUS_OPTIONS[0]
             return (
               <article key={o.id} className="admin-card">
                 <header style={{
@@ -153,7 +234,22 @@ export default function PedidosAdminPage() {
                       <span style={{ fontSize: '0.78rem', color: '#1E8449', marginLeft: 8 }}>Envío gratis</span>
                     )}
                   </div>
-                  <strong style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: '#1F1A1B' }}>{formatPrice(o.total_uyu)}</strong>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {hasStatus && (
+                      <select
+                        aria-label="Cómo terminó este pedido"
+                        value={current.value}
+                        onChange={(e) => updateStatus(o.id, e.target.value as OrderStatus)}
+                        style={{
+                          fontSize: 12, padding: '4px 8px', borderRadius: 6,
+                          border: '1px solid rgba(31,26,27,0.18)', background: '#fff', color: current.color,
+                        }}
+                      >
+                        {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                      </select>
+                    )}
+                    <strong style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: '#1F1A1B' }}>{formatPrice(o.total_uyu)}</strong>
+                  </div>
                 </header>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

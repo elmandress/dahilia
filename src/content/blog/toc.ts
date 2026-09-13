@@ -45,6 +45,8 @@ function blockText(blocks: Block[]): string {
         chunks.push(b.title, b.text); break
       case 'faq':
         chunks.push(b.items.map((f) => `${f.q} ${f.a}`).join(' ')); break
+      case 'image':
+        chunks.push(b.caption ?? ''); break
     }
   }
   // Las marcas de enlace no son palabras que se lean: [texto](/url) → texto.

@@ -5,7 +5,10 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Button, Icon } from '@/components/ui/Primitives'
-import { getPrimaryPhoto, formatPrice, getEffectivePrice, getFinalPrice, readyDateEstimate, BLUR_DATA_URL } from '@/lib/types'
+import {
+  getPrimaryPhoto, formatPrice, getEffectivePrice, getFinalPrice, readyDateEstimate, BLUR_DATA_URL,
+  getListingPrice, getListingSize, hasPriceRange, formatListingPrice, isReadyToShip,
+} from '@/lib/types'
 import type { Product, Discount } from '@/lib/types'
 import { computeCouponEffect, type PublicCoupon } from '@/lib/coupons'
 import { pickAddonSuggestions } from '@/lib/addons'
@@ -39,6 +42,14 @@ const couponMemory = {
   },
 }
 
+// Botones del aviso "¿No se abrió WhatsApp?": mismo alto táctil (44 px) que
+// el resto de los botones del carrito.
+const fallbackBtn: React.CSSProperties = {
+  flex: '1 1 140px', minHeight: 44, borderRadius: 10, padding: '0 14px',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+  fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500, textDecoration: 'none', cursor: 'pointer',
+}
+
 interface Props {
   whatsappUrl: string
   whatsappLabel: string
@@ -49,7 +60,7 @@ interface Props {
 // Misma urgencia honesta que el PDP: fecha estimada concreta, no "N semanas".
 function leadTimeLabel(min: number, max: number): string {
   const estimate = readyDateEstimate(min, max)
-  return estimate ? `Se teje al encargar — lista ${estimate}` : ''
+  return estimate ? `Se teje al encargar: lista ${estimate}` : ''
 }
 
 /** Build a clean, multi-line WhatsApp message from the cart contents. */
@@ -77,6 +88,8 @@ function buildWhatsAppMessage(
       lines.push(`${idx + 1}. ${item.product.name}`)
       lines.push(`   • Talle: ${item.size}`)
       lines.push(`   • Cantidad: ${item.qty}`)
+      // Anush sabe de entrada que no hay que tejerla.
+      if (isReadyToShip(item.product)) lines.push('   • En stock')
       if (discounted) {
         lines.push(`   • Precio unitario: ${formatPrice(unit)} (antes ${formatPrice(list)})`)
       }
@@ -99,7 +112,9 @@ function buildWhatsAppMessage(
     lines.push(`🎁 Nota de regalo: "${giftNote}"`)
   }
   lines.push('')
-  lines.push('¿Me confirmás stock, plazos y forma de pago? ¡Gracias!')
+  // El envío va en la pregunta (auditoría 12/09/2026): es la duda que más
+  // frena, y así la primera respuesta ya puede traer el costo.
+  lines.push('¿Me confirmás el plazo, el costo de envío a mi zona y la forma de pago? ¡Gracias!')
 
   return lines.join('\n')
 }
@@ -119,6 +134,10 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
   // carrera (una se rechaza, pero limpia el cupón igual) y dos filas en el
   // log de /api/orders para el mismo pedido.
   const [checkingOut, setCheckingOut] = useState(false)
+  // El pedido que se acaba de mandar a WhatsApp: para ofrecer "Abrir de nuevo"
+  // y "Copiar mi pedido" si la app no se abrió (ver el bloque .cart-fallback).
+  const [sentOrder, setSentOrder] = useState<{ url: string; message: string } | null>(null)
+  const [copied, setCopied] = useState(false)
 
   // Re-validar un cupón recordado de una visita anterior (silencioso).
   useEffect(() => {
@@ -157,13 +176,19 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
   // sobre el total final para no prometer de más si un cupón baja el monto.
   const overThreshold = freeShippingThreshold > 0 && total >= freeShippingThreshold
   const missingForFree = freeShippingThreshold > 0 ? Math.max(0, freeShippingThreshold - total) : 0
+  // Envío junto al total (hipótesis 1 de la auditoría 12/09/2026: el costo
+  // que aparece recién al final es la causa n.º 1 de abandono). Sale de
+  // Configuración → "Envío — línea corta". Solo se muestra acá si trae montos
+  // (algún número); si no, queda la frase de siempre.
+  const shipping = shippingEstimate.trim()
+  const shippingHasCost = /\d/.test(shipping)
 
   const addonSuggestions = pickAddonSuggestions(featuredProducts, items, discounts)
   const [addedAddonId, setAddedAddonId] = useState<string | null>(null)
 
   const handleAddonAdd = async (p: Product) => {
-    const avail = (p.sizes ?? []).filter((s) => s.available)
-    const size = avail.length > 0 ? avail[0].size : 'Único'
+    // El talle del precio que se muestra (el disponible más barato).
+    const size = getListingSize(p) ?? 'Único'
     setAddedAddonId(p.id)
     await addToCart(p, size, 1, { openDrawer: false })
     track('cart_addon_add', { product: p.slug })
@@ -203,13 +228,42 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
     couponMemory.clear()
   }
 
+  // Copia el mismo texto que se mandó a WhatsApp, para pegarlo a mano si la
+  // app no se abrió. Los navegadores in-app a veces niegan el portapapeles:
+  // ahí se usa el método viejo (textarea + execCommand), como en ShareButton.
+  const copyOrder = async () => {
+    if (!sentOrder) return
+    try {
+      await navigator.clipboard.writeText(sentOrder.message)
+    } catch {
+      const ta = document.createElement('textarea')
+      ta.value = sentOrder.message
+      ta.setAttribute('readonly', '')
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      try { document.execCommand('copy') } catch { /* sin portapapeles: no hay más que hacer */ }
+      document.body.removeChild(ta)
+    }
+    setCopied(true)
+    track('order_copy', { items: items.length })
+  }
+
   const handleCheckout = async () => {
     if (typeof window === 'undefined') return
     if (checkingOut) return
     setCheckingOut(true)
+    const redeem = !!coupon && (couponDiscount > 0 || freeShipping)
+    // Con cupón hay que esperar el canje (abajo) antes de mandar el pedido, y
+    // Safari en el iPhone (y el navegador de Instagram, que usa su mismo motor)
+    // bloquea window.open si pasa cerca de 1 s desde el toque (Don't Panic
+    // Labs, jul. 2025). Por eso la pestaña se abre ya, en blanco, dentro del
+    // toque, y recibe la dirección de WhatsApp cuando el canje contesta.
+    const pending = redeem ? window.open('', '_blank') : null
     // Registrar el canje ANTES de abrir WhatsApp. Si justo se agotó, avisamos
     // y NO abrimos el chat con un total que ya no es válido.
-    if (coupon && (couponDiscount > 0 || freeShipping)) {
+    if (redeem && coupon) {
       try {
         const r = await fetch('/api/coupon', {
           method: 'POST',
@@ -218,6 +272,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
         })
         const res = await r.json()
         if (!res.ok) {
+          pending?.close()
           clearCoupon()
           setCouponError('Ese cupón se agotó justo ahora. El total quedó actualizado — volvé a tocar el botón.')
           setCheckingOut(false)
@@ -236,6 +291,8 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
     // Strip any trailing slash from the base URL so we can append cleanly.
     const base = whatsappUrl.replace(/\/+$/, '')
     const url = `${base}?text=${encodeURIComponent(message)}`
+    setSentOrder({ url, message })
+    setCopied(false)
     track('order_sent', { items: items.length, total })
     // Registro del pedido — sin esperar la respuesta: no debe demorar ni
     // bloquear la apertura de WhatsApp (ver comentario de iOS Safari abajo).
@@ -266,17 +323,36 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
         attribution: getAttribution(),
       }),
     }).catch(() => {})
-    // Con cupón hay un fetch (await) antes de llegar acá, y iOS Safari suele
-    // bloquear window.open fuera del gesto original — si lo bloquea, navegamos
-    // en la misma pestaña: wa.me abre la app igual y la venta no se pierde.
-    const win = window.open(url, '_blank', 'noopener,noreferrer')
-    if (!win) window.location.assign(url)
+    // Sin 'noopener' en las opciones: con él, window.open devuelve null SIEMPRE
+    // (así lo define el estándar HTML), el código lo tomaba por "bloqueado" y
+    // además llevaba ESTA pestaña a wa.me: dos pestañas de WhatsApp y el
+    // carrito perdido (verificado con Playwright, 13/09/2026). El opener se
+    // corta a mano. Si el navegador sí lo bloquea, se navega en esta pestaña:
+    // wa.me abre la app igual y la venta no se pierde.
+    if (pending) {
+      pending.opener = null
+      pending.location.href = url
+    } else {
+      const win = window.open(url, '_blank')
+      if (win) win.opener = null
+      else window.location.assign(url)
+    }
     setCheckingOut(false)
   }
 
   if (isLoading) {
     return (
-      <div role="status" aria-live="polite" style={{ maxWidth: 880, margin: '0 auto', padding: '40px 24px 80px' }}>
+      // minHeight: el carrito se carga después de pintar (CartProvider difiere
+      // el fetch) y al llegar el contenido real (o el estado vacío, con su
+      // grilla de sugerencias) el footer saltaba ~2000 px a la vista: CLS 0,455
+      // en Lighthouse. Con el esqueleto ocupando la pantalla, el footer arranca
+      // fuera de ella y ese salto no se ve ni cuenta (auditoría 12/09/2026).
+      // key distinta en cada estado (cargando / vacío / con piezas): sin
+      // ella, React reutilizaba estos <div> para el estado vacío (mismo tipo,
+      // misma posición) y el bloque de sugerencias contaba como un elemento
+      // que "se movió" (CLS 0,200 aun con el minHeight). Con key se montan
+      // nodos nuevos, y el contenido insertado no es un desplazamiento.
+      <div key="cargando" role="status" aria-live="polite" style={{ maxWidth: 880, margin: '0 auto', padding: '40px 24px 80px', minHeight: '85vh' }}>
         <span className="sr-only">Cargando tu carrito…</span>
         <div className="sk-shimmer" style={{ width: 60, height: 11, borderRadius: 4 }} />
         <div className="sk-shimmer" style={{ width: 200, height: 44, borderRadius: 6, marginTop: 12, marginBottom: 40 }} />
@@ -296,7 +372,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
 
   if (items.length === 0) {
     return (
-      <div style={{ maxWidth: 880, margin: '0 auto', padding: '80px 24px' }}>
+      <div key="vacio" style={{ maxWidth: 880, margin: '0 auto', padding: '80px 24px' }}>
         <div style={{ textAlign: 'center', marginBottom: featuredProducts.length > 0 ? 56 : 0 }}>
           <div style={{ marginBottom: 20, color: dahila.ink300 }}>
             <Icon name="shopping-bag" size={44} />
@@ -326,7 +402,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
             }}>
               {featuredProducts.slice(0, 4).map((p) => {
                 const photo = getPrimaryPhoto(p)
-                const price = getFinalPrice(p, undefined, serverDiscounts)
+                const price = formatListingPrice(p, serverDiscounts)
                 return (
                   <Link
                     key={p.id}
@@ -352,7 +428,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                       {p.name}
                     </div>
                     <div style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700 }}>
-                      {formatPrice(price)}
+                      {price}
                     </div>
                   </Link>
                 )
@@ -365,7 +441,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
   }
 
   return (
-    <div style={{ maxWidth: 1120, margin: '0 auto', padding: '40px 24px 80px' }}>
+    <div key="con-piezas" style={{ maxWidth: 1120, margin: '0 auto', padding: '40px 24px 80px' }}>
       <Eyebrow>Tu pedido</Eyebrow>
       <h1 style={{
         fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(32px, 5vw, 48px)',
@@ -408,7 +484,13 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                 {/* Lead time — solo cuando hay dato real Y no hay lista de espera
                     activa (el aviso global manda; prometer "lista en 3 semanas"
                     con cola hasta agosto sería mentir). */}
-                {!queueNote && leadTimeLabel(item.product.lead_time_weeks_min, item.product.lead_time_weeks_max) && (
+                {isReadyToShip(item.product) ? (
+                  // Pieza ya tejida: no le aplica ni la cola ni el "se teje al
+                  // encargar" (mismo criterio que la ficha).
+                  <div style={{ marginTop: 2, fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 500, color: dahila.wine600 }}>
+                    En stock: sale sin la espera de los encargos
+                  </div>
+                ) : !queueNote && leadTimeLabel(item.product.lead_time_weeks_min, item.product.lead_time_weeks_max) && (
                   <div style={{
                     display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 2,
                     fontFamily: 'var(--font-sans)', fontSize: 11, color: '#8C8285',
@@ -484,7 +566,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           <div className="cart-addons" style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
             {addonSuggestions.map((p) => {
               const photo = getPrimaryPhoto(p)
-              const price = getFinalPrice(p, undefined, discounts)
+              const price = getListingPrice(p, discounts)
               const availableSizes = (p.sizes ?? []).filter((s) => s.available)
               const oneTap = availableSizes.length <= 1
               const justAdded = addedAddonId === p.id
@@ -523,7 +605,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                         fontFamily: dahila.fontSans, fontSize: 12, color: dahila.wine600,
                         textDecoration: 'underline', textUnderlineOffset: 3, display: 'inline-block', padding: '2px 0',
                       }}>
-                        {`Elegir talle · ${formatPrice(price)}`}
+                        {`Elegir talle · ${hasPriceRange(p) ? 'desde ' : ''}${formatPrice(price)}`}
                       </Link>
                     )}
                   </div>
@@ -682,15 +764,18 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
             </span>
           ) : overThreshold ? (
             <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: '#1E8449' }}>
-              ✓ Envío gratis — tu pedido supera los {formatPrice(freeShippingThreshold)}
+              ✓ Envío gratis: tu pedido supera los {formatPrice(freeShippingThreshold)}
             </span>
           ) : missingForFree > 0 ? (
-            <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500 }}>
-              Te faltan {formatPrice(missingForFree)} para el envío gratis — el costo exacto te lo paso por WhatsApp
+            <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700 }}>
+              Te faltan {formatPrice(missingForFree)} para el envío gratis.{' '}
+              {shippingHasCost ? `Envío: ${shipping}.` : 'El costo exacto te lo paso por WhatsApp.'}
             </span>
           ) : (
-            <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500 }}>
-              El envío no está incluido — te paso el costo exacto por WhatsApp según tu zona
+            <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700 }}>
+              {shippingHasCost
+                ? `Envío: ${shipping}. Se suma al total.`
+                : 'El envío va aparte: te paso el costo exacto por WhatsApp según tu zona.'}
             </span>
           )}
         </div>
@@ -709,7 +794,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
               }}
             >
               <Icon name="gift" size={14} color={dahila.ink500} />
-              Es un regalo — agregar nota
+              Es un regalo: agregar nota
             </button>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -779,6 +864,70 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           {checkingOut ? 'Abriendo WhatsApp…' : 'Coordinar por WhatsApp'}
         </button>
 
+        {/* Qué pasa al tocar el botón, dicho antes de tocarlo (12/09/2026):
+            nada en la pantalla aclaraba que escribir por WhatsApp no obliga a
+            pagar, que es la duda típica antes de hablarle a una persona. */}
+        {/* (12/09/2026, auditoría) Sin "juntas": quien compra puede ser
+            cualquiera, o estar comprando un regalo. ink700 en vez de ink500:
+            es la frase que baja el miedo a escribir, tiene que leerse bien. */}
+        <p style={{
+          margin: 0, textAlign: 'center',
+          fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700, lineHeight: 1.5,
+        }}>
+          No pagás nada ahora: se abre WhatsApp con tu pedido ya escrito y coordinamos talle, envío y pago.
+        </p>
+
+        {/* Después del clic, una salida visible por si WhatsApp no se abrió: el
+            navegador de Instagram a veces se queda en la web de wa.me, y en una
+            compu sin WhatsApp no pasa nada. Solo aparece después de tocar el
+            botón (a quien le funcionó no le cambia nada) y no adivina el
+            navegador. En el celular se fija arriba de la barra de abajo. */}
+        {sentOrder && (
+          <div className="cart-fallback" role="status" style={{
+            display: 'flex', flexDirection: 'column', gap: 8,
+            background: '#fff', border: `1px solid ${dahila.borderStrong}`, borderRadius: 12,
+            padding: '10px 12px 12px 14px', fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <strong style={{ fontWeight: 500, color: dahila.ink900 }}>¿No se abrió WhatsApp?</strong>
+              <button
+                type="button"
+                onClick={() => setSentOrder(null)}
+                aria-label="Cerrar"
+                style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer', color: dahila.ink500,
+                  width: 36, height: 36, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <Icon name="x" size={14} />
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <a
+                href={sentOrder.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => track('order_reopen', { items: items.length })}
+                style={{ ...fallbackBtn, background: '#25D366', color: '#fff', border: 'none' }}
+              >
+                Abrir de nuevo
+              </a>
+              <button
+                type="button"
+                onClick={copyOrder}
+                style={{ ...fallbackBtn, background: '#fff', color: dahila.ink900, border: `1px solid ${dahila.borderStrong}` }}
+              >
+                {copied ? '✓ Pedido copiado' : 'Copiar mi pedido'}
+              </button>
+            </div>
+            {copied && (
+              <span style={{ fontSize: 12, lineHeight: 1.5 }}>
+                Pegalo en un chat de WhatsApp con {whatsappLabel}.
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Lista de espera — la expectativa de plazo se fija acá, pegada al
             botón: nadie descubre en WhatsApp que su pedido empieza en un mes. */}
         {queueNote && (
@@ -795,15 +944,16 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           </div>
         )}
 
-        {/* Qué pasa al tocar el botón — la duda #1 antes de un checkout por chat */}
+        {/* Qué pasa después de escribir — la duda #1 antes de un checkout por
+            chat. El paso "se abre WhatsApp, no pagás nada" ya lo dice la frase
+            de arriba del botón; repetido acá era la misma línea dos veces. */}
         <ol className="cart-steps" style={{
           listStyle: 'none', margin: 0, padding: 0,
           display: 'flex', flexDirection: 'column', gap: 5,
           fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, lineHeight: 1.5,
         }}>
-          <li>1 · Se abre WhatsApp con tu pedido ya armado — no pagás nada todavía.</li>
-          <li>2 · Anush te confirma disponibilidad y fecha estimada.</li>
-          <li>3 · Elegís cómo pagar (transferencia o Mercado Pago) y cómo recibirlo.</li>
+          <li>1 · Anush te confirma disponibilidad y fecha estimada.</li>
+          <li>2 · Elegís cómo pagar (transferencia o Mercado Pago) y cómo recibirlo.</li>
           <li style={{ marginTop: 4 }}>
             <Link href="/info" style={{ color: dahila.ink500 }}>¿Dudas? Mirá envíos, pagos y cuidados →</Link>
           </li>

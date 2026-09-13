@@ -13,8 +13,9 @@ export const article: Article = {
   funnel: 'BOFU',
   publishedAt: '2026-08-31',
   hero: {
-    src: '/photos/atelier-escritorio.png',
-    alt: 'Mesa de trabajo del taller donde se tejen las prendas de Dahila',
+    src: '/photos/blog/anush-dahila-crochet.jpg',
+    alt: 'Anush, la tejedora detrás de Dahila',
+    position: '50% 30%',
   },
   relatedCategorySlug: 'cardigans',
   relatedProductSlugs: ['cardigan-3-4', 'set-brisa', 'top-lagom'],

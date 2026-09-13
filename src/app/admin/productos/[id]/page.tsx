@@ -391,6 +391,19 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
     setDragIndex(null)
   }
 
+  // Ordenar con flechas: el drag and drop nativo no funciona con el dedo en
+  // el celular, y es desde ahí que se suben las fotos recién sacadas.
+  const moveMedia = (index: number, delta: -1 | 1) => {
+    setMediaEntries(prev => {
+      const to = index + delta
+      if (to < 0 || to >= prev.length) return prev
+      const items = [...prev]
+      const [moved] = items.splice(index, 1)
+      items.splice(to, 0, moved)
+      return items.map((m, i) => ({ ...m, position: i }))
+    })
+  }
+
   // ---- Sizes ----
   const addSize = () => {
     setSizes(prev => [
@@ -897,7 +910,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
               </svg>
               <p>Arrastrá varias fotos aquí o hacé clic para elegirlas</p>
-              <div className="dropzone-hint">Podés subir varias a la vez · Arrastralas para ordenarlas · La primera es la principal</div>
+              <div className="dropzone-hint">Podés subir varias a la vez · Ordenalas arrastrando o con las flechas ◀ ▶ · La primera es la principal</div>
             </div>
 
             {/* Agregar por URL de Storage */}
@@ -1000,6 +1013,10 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                           Principal
                         </button>
                       )}
+                      <span style={{ display: 'inline-flex', gap: 4 }}>
+                        <button type="button" onClick={() => moveMedia(index, -1)} disabled={index === 0} aria-label="Mover antes">◀</button>
+                        <button type="button" onClick={() => moveMedia(index, 1)} disabled={index === mediaEntries.length - 1} aria-label="Mover después">▶</button>
+                      </span>
                       <button className="danger" onClick={() => removeMedia(m.tempId)}>
                         Quitar
                       </button>

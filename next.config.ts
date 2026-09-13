@@ -25,19 +25,28 @@ const umamiOrigin = (() => {
 })()
 const clarityEnabled = Boolean(process.env.NEXT_PUBLIC_CLARITY_ID)
 const gaEnabled = Boolean(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID)
+// Clarity: el loader de www.clarity.ms baja el script real desde
+// scripts.clarity.ms y manda su beacon como imagen a c.clarity.ms / c.bing.com.
+// Con solo 'https://www.clarity.ms' en script-src (y nada en img-src) la CSP
+// bloqueaba ambos: Clarity no grababa ninguna sesión en producción y cada
+// página tiraba 2 errores de consola (auditoría 12/09/2026, Lighthouse).
 const analyticsScriptSrc = [
-  clarityEnabled ? 'https://www.clarity.ms' : '',
+  clarityEnabled ? 'https://*.clarity.ms https://c.bing.com' : '',
   gaEnabled ? 'https://www.googletagmanager.com' : '',
 ].filter(Boolean).join(' ')
 const analyticsConnectSrc = [
   clarityEnabled ? 'https://*.clarity.ms https://c.bing.com' : '',
   gaEnabled ? 'https://www.googletagmanager.com https://www.google-analytics.com https://*.analytics.google.com' : '',
 ].filter(Boolean).join(' ')
+const analyticsImgSrc = [
+  clarityEnabled ? 'https://*.clarity.ms https://c.bing.com' : '',
+  gaEnabled ? 'https://www.googletagmanager.com https://*.google-analytics.com' : '',
+].filter(Boolean).join(' ')
 const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}${analyticsScriptSrc ? ' ' + analyticsScriptSrc : ''};
   style-src 'self' 'unsafe-inline';
-  img-src 'self' blob: data: https://*.supabase.co;
+  img-src 'self' blob: data: https://*.supabase.co${analyticsImgSrc ? ' ' + analyticsImgSrc : ''};
   font-src 'self' data:;
   connect-src 'self' https://*.supabase.co wss://*.supabase.co${analyticsConnectSrc ? ' ' + analyticsConnectSrc : ''};
   object-src 'none';

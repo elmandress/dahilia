@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useTransition, useEffect, useRef } from 'react'
+import { useState, useTransition, useEffect, useRef, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
-import { dahila, Eyebrow, Field, TextInput, Button } from '@/components/ui/Primitives'
+import { dahila, Eyebrow, Field, TextInput, Button, Icon } from '@/components/ui/Primitives'
 import { EncargosDisponibles, type EncargosCuposState } from '@/components/EncargosDisponibles'
 import { SizeGuide } from '@/components/SizeGuide'
 import { ProcessStepper, type ProcessStep } from '@/components/ProcessStepper'
@@ -11,18 +11,46 @@ import { submitEncargo } from './actions'
 import { subscribeToVipList } from '@/lib/subscribe'
 import { track } from '@/lib/analytics'
 import { getAttribution } from '@/lib/attribution'
+import { SITE_URL } from '@/lib/env'
+
+/** Prenda del catálogo que puede llegar como referencia desde su ficha. */
+export type EncargoReferencia = { slug: string; name: string; category: string | null }
+
+const TALLES = ['XS', 'S', 'M', 'L', 'XL']
+// Categoría de la prenda de referencia → opción de "¿Qué querés tejer?".
+const TIPO_POR_CATEGORIA: Record<string, string> = { cardigans: 'Cardigan', tops: 'Top', sets: 'Set' }
+const MESSAGE_MAX = 1500 // el mismo tope que aplica actions.ts
+const noSubscribe = () => () => {}
+const readSearch = () => window.location.search
 
 export default function EncargoForm({
-  whatsappUrl, encargosCupos, processEnabled = false, processSteps = [],
+  whatsappUrl, encargosCupos, processEnabled = false, processSteps = [], referencias = [],
 }: {
   whatsappUrl: string
   encargosCupos: EncargosCuposState
   processEnabled?: boolean
   processSteps?: ProcessStep[]
+  referencias?: EncargoReferencia[]
 }) {
   const router = useRouter()
-  const [tipo, setTipo] = useState('Cardigan')
-  const [talle, setTalle] = useState('M')
+  // Desde la ficha se llega con ?desde=<slug>&talle=<talle>: la prenda que
+  // estaba mirando queda como referencia, con el tipo y el talle ya marcados,
+  // en vez de un formulario en blanco que le hace contar de nuevo lo que ya
+  // eligió. Se lee con useSyncExternalStore (vacío en el servidor): la página
+  // sigue siendo estática y no hay error de hidratación.
+  const search = useSyncExternalStore(noSubscribe, readSearch, () => '')
+  const params = new URLSearchParams(search)
+  const desde = referencias.find((p) => p.slug === params.get('desde')) ?? null
+  const talleDesde = params.get('talle')
+  const [sinReferencia, setSinReferencia] = useState(false)
+  const referencia = sinReferencia ? null : desde
+  const [tipoElegido, setTipo] = useState<string | null>(null)
+  const tipo = tipoElegido ?? (desde ? TIPO_POR_CATEGORIA[desde.category ?? ''] ?? 'Otro' : 'Cardigan')
+  const [talleElegido, setTalle] = useState<string | null>(null)
+  const talle = talleElegido ?? (talleDesde && TALLES.includes(talleDesde) ? talleDesde : 'M')
+  // La referencia viaja al principio del mensaje: Anush la ve en el admin y en
+  // el mail del encargo, con el link a la ficha.
+  const referenciaLinea = referencia ? `Referencia: ${referencia.name} (${SITE_URL}/tienda/${referencia.slug})` : ''
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
@@ -155,7 +183,7 @@ export default function EncargoForm({
     fd.set('whatsapp', whatsapp)
     fd.set('tipo', tipo)
     fd.set('talle', talle)
-    fd.set('message', message)
+    fd.set('message', referenciaLinea ? `${referenciaLinea}\n\n${message}` : message)
     const attribution = getAttribution()
     if (attribution) {
       if (attribution.utm_source) fd.set('utm_source', attribution.utm_source)
@@ -168,7 +196,7 @@ export default function EncargoForm({
       if (res.ok) {
         // El encargo a medida es la otra "venta" del sitio — sin este evento,
         // el embudo de Umami solo veía el camino carrito→WhatsApp.
-        track('encargo_sent', { tipo })
+        track('encargo_sent', referencia ? { tipo, desde: referencia.slug } : { tipo })
         // Alta en la lista VIP si la pidió — nunca bloquea el encargo.
         if (vipOptIn && email.trim()) {
           subscribeToVipList(email.trim(), 'encargo').catch(() => { /* best-effort */ })
@@ -208,6 +236,30 @@ export default function EncargoForm({
       )}
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }} noValidate>
+
+        {referencia && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            background: dahila.cream100, borderRadius: 10, padding: '10px 6px 10px 14px',
+            fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700, lineHeight: 1.5,
+          }}>
+            <span style={{ flex: 1 }}>
+              Tu referencia: <strong style={{ fontWeight: 500, color: dahila.ink900 }}>{referencia.name}</strong>. Abajo contame qué le cambiarías: colores, largo, lana.
+            </span>
+            <button
+              type="button"
+              onClick={() => setSinReferencia(true)}
+              aria-label={`Quitar ${referencia.name} como referencia`}
+              style={{
+                flexShrink: 0, width: 36, height: 36, background: 'transparent', border: 'none',
+                cursor: 'pointer', color: dahila.ink500,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <Icon name="x" size={14} />
+            </button>
+          </div>
+        )}
 
         <Field label="¿Qué querés tejer?">
           <div className="encargo-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8, marginTop: 8 }}>
@@ -278,7 +330,9 @@ export default function EncargoForm({
         <Field label="Contame de tu prenda" helper="Para qué la querés, qué colores te gustan, en qué lana — cuanto más detalles, mejor.">
           <textarea
             rows={5}
-            maxLength={1500}
+            // La línea de referencia sale del mismo tope: sin restarla, el
+            // servidor recortaba el final de lo que escribió la clienta.
+            maxLength={referenciaLinea ? MESSAGE_MAX - referenciaLinea.length - 2 : MESSAGE_MAX}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             style={{
@@ -310,6 +364,7 @@ export default function EncargoForm({
               <a
                 href={`${whatsappUrl.replace(/\/+$/, '')}?text=${encodeURIComponent(
                   `Hola Anush! Intenté mandar un encargo por la web y no pasó. Soy ${name.trim()}.\n` +
+                  (referenciaLinea ? `${referenciaLinea}\n` : '') +
                   `Tipo de prenda: ${tipo || 'a definir'}\nTalle: ${talle || 'a definir'}\n` +
                   (message.trim() ? `Idea: ${message.trim()}\n` : '') +
                   '¿Lo coordinamos por acá?'

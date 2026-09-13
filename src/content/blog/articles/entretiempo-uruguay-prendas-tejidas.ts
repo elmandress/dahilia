@@ -12,7 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'MOFU',
   publishedAt: '2026-09-04',
-  hero: { src: '/photos/bufanda-verde.png', alt: 'Prenda tejida a crochet para usar en entretiempo' },
+  hero: { src: '/photos/blog/cardigan-cruzado-camel.jpg', alt: 'Cardigan cruzado tejido a crochet en color camel, puesto', position: '50% 35%' },
   relatedCategorySlug: 'cardigans',
   relatedProductSlugs: ['cardigan-3-4', 'poncho', 'chaleco'],
   relatedArticleSlugs: [
@@ -23,12 +23,12 @@ export const article: Article = {
   body: [
     {
       type: 'p',
-      text: 'Pensamos la ropa en dos temporadas: verano e invierno. Pero si mirás los datos del clima de Montevideo, el año se parte distinto — y la mayor parte del tiempo no es ni una cosa ni la otra.',
+      text: 'Pensamos la ropa en dos temporadas: verano e invierno. Pero si mirás los datos del clima de Montevideo, el año se parte distinto, y la mayor parte del tiempo no es ni una cosa ni la otra.',
     },
     {
       type: 'callout',
       title: 'La versión corta',
-      text: 'El frío de verdad va de fines de mayo a fines de agosto, unos tres meses. El calor, de principios de diciembre a mediados de marzo. El resto —casi seis meses— es entretiempo. Y el tejido calado, que abriga por capas y no por espesor, es justamente ropa de entretiempo.',
+      text: 'El frío de verdad va de fines de mayo a fines de agosto, unos tres meses. El calor, de principios de diciembre a mediados de marzo. El resto, casi seis meses, es entretiempo. Y el tejido calado, que abriga por capas y no por espesor, es justamente ropa de entretiempo.',
     },
 
     { type: 'h2', text: 'Cuánto dura cada estación en Montevideo' },
@@ -70,6 +70,16 @@ export const article: Article = {
     {
       type: 'p',
       text: 'Sweaters de lana o mezclas con lana, bufandas y calentadores. Acá sí importa el espesor y la fibra: la lana abriga mucho más que el algodón para el mismo grosor.',
+    },
+
+    {
+      type: 'image',
+      src: '/photos/blog/poncho-azul.jpg',
+      alt: 'Poncho tejido a crochet en azul marino, sobre una musculosa blanca',
+      width: 1080,
+      height: 1440,
+      caption: 'El [poncho](/tienda/poncho), tejido en algodón, sobre una musculosa.',
+      href: '/tienda/poncho',
     },
 
     { type: 'h2', text: 'Cuántas veces vas a usar una prenda de entretiempo' },

@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { CART_COOKIE } from '@/lib/cart-cookie'
 
 /**
  * El carrito de un visitante anónimo NO se puede scopear con RLS: no hay
@@ -24,7 +25,6 @@ async function getDb() {
   return createAdminClient() ?? (await createClient())
 }
 
-const CART_COOKIE = 'dahila_cart_id'
 const CART_COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
 const MAX_QTY_PER_ITEM = 20
 

@@ -12,7 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'TOFU',
   publishedAt: '2026-09-04',
-  hero: { src: '/photos/detalle-tejido.jpg', alt: 'Detalle del punto y la fibra de una prenda tejida' },
+  hero: { src: '/photos/blog/bufanda-lana-cruda-puesta.jpg', alt: 'Bufanda de lana tejida a crochet en crudo, puesta al cuello', position: '50% 40%' },
   relatedCategorySlug: 'tops',
   relatedProductSlugs: ['top-summer', 'cardigan-3-4', 'bufanda-sophie'],
   relatedArticleSlugs: [
@@ -23,7 +23,7 @@ export const article: Article = {
   body: [
     {
       type: 'p',
-      text: 'Casi todo el mundo tiene una prenda de lana que no se puede poner sobre la piel. De ahí sale la idea de que "la lana pica" — pero la lana no pica toda igual, y entender por qué cambia bastante lo que conviene elegir.',
+      text: 'Casi todo el mundo tiene una prenda de lana que no se puede poner sobre la piel. De ahí sale la idea de que "la lana pica". Pero la lana no pica toda igual, y entender por qué cambia bastante lo que conviene elegir.',
     },
     {
       type: 'callout',
@@ -67,7 +67,7 @@ export const article: Article = {
     {
       type: 'callout',
       title: 'Una prueba de 30 segundos',
-      text: 'Antes de comprar, apoyá la prenda (o una foto no sirve acá — pedí probarla o consultá el material) en la cara interna del antebrazo o el cuello, que son las zonas más sensibles. Si ahí no molesta, no va a molestar en ningún lado.',
+      text: 'Antes de comprar, apoyá la prenda (con una foto no alcanza: pedí probarla o consultá el material) en la cara interna del antebrazo o el cuello, que son las zonas más sensibles. Si ahí no molesta, no va a molestar en ningún lado.',
     },
 
     { type: 'h2', text: 'Qué elegir según tu caso' },
@@ -80,7 +80,7 @@ export const article: Article = {
         },
         {
           title: 'Si te pica solo algunas prendas',
-          text: 'Es cuestión de grosor de fibra, no de lana en general. Preguntá qué material es antes de comprar y buscá fibras finas — vas a poder usar lana sin problema.',
+          text: 'Es cuestión de grosor de fibra, no de lana en general. Preguntá qué material es antes de comprar y buscá fibras finas: vas a poder usar lana sin problema.',
         },
         {
           title: 'Si es para un regalo y no sabés',

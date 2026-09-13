@@ -18,6 +18,7 @@ export function PriceBlock({
   size = 'sm',
   align = 'start',
   soldOut = false,
+  from = false,
 }: {
   /** List (pre-discount) price. */
   list: number
@@ -27,9 +28,17 @@ export function PriceBlock({
   align?: 'start' | 'end'
   /** When true, show "Agotado" instead of a price. */
   soldOut?: boolean
+  /** El precio cambia según el talle y se muestra el más bajo: antepone
+   *  "Desde" para que la ficha no "suba" el precio por sorpresa. */
+  from?: boolean
 }) {
   const s = SIZES[size]
   const discounted = final < list && list > 0
+  const fromLabel = from ? (
+    <span style={{ fontFamily: dahila.fontSans, fontSize: s.list, fontWeight: 400, color: dahila.ink700, marginRight: 4 }}>
+      Desde
+    </span>
+  ) : null
 
   if (soldOut) {
     return (
@@ -42,7 +51,7 @@ export function PriceBlock({
   if (!discounted) {
     return (
       <span style={{ fontFamily: dahila.fontSans, fontSize: s.final, fontWeight: 400, color: dahila.ink900, whiteSpace: 'nowrap' }}>
-        {formatPrice(final)}
+        {fromLabel}{formatPrice(final)}
       </span>
     )
   }
@@ -58,8 +67,11 @@ export function PriceBlock({
       gap: stacked ? 0 : 8,
       whiteSpace: 'nowrap',
     }}>
-      <span style={{ fontFamily: dahila.fontSans, fontSize: s.final, fontWeight: 500, color: SALE }}>
-        {formatPrice(final)}
+      <span style={{ whiteSpace: 'nowrap' }}>
+        {fromLabel}
+        <span style={{ fontFamily: dahila.fontSans, fontSize: s.final, fontWeight: 500, color: SALE }}>
+          {formatPrice(final)}
+        </span>
       </span>
       <span style={{ fontFamily: dahila.fontSans, fontSize: s.list, color: dahila.ink500, textDecoration: 'line-through' }}>
         {formatPrice(list)}

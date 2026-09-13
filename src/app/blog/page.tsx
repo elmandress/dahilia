@@ -143,7 +143,7 @@ function LeadCard({ article }: { article: Article }) {
             sizes="(max-width: 860px) 100vw, 560px"
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}
-            style={{ objectFit: 'cover' }}
+            style={{ objectFit: 'cover', objectPosition: article.hero.position }}
           />
         </div>
       )}
@@ -191,7 +191,7 @@ function ArticleCard({ article }: { article: Article }) {
             sizes="(max-width: 720px) 100vw, 340px"
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}
-            style={{ objectFit: 'cover' }}
+            style={{ objectFit: 'cover', objectPosition: article.hero.position }}
           />
         </div>
       )}

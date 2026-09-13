@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { dahila, Icon } from './ui/Primitives'
@@ -11,59 +11,86 @@ import type { GalleryImage } from './ProductLightbox'
 // it on demand so it stays out of the product page's first-load JS.
 const ProductLightbox = dynamic(() => import('./ProductLightbox'), { ssr: false })
 
+// La foto principal es un riel con scroll-snap: en el celular se desliza con
+// el dedo (antes solo cambiaba tocando las miniaturas, y deslizar la foto no
+// hacía nada). Sin librería: el swipe es el scroll nativo del navegador. Las
+// miniaturas y el lightbox mueven el riel; el riel actualiza la foto activa.
 export function ProductGallery({ images, productName }: { images: GalleryImage[]; productName: string }) {
   const safeImages = images.length > 0 ? images : [{ url: '/placeholder-product.svg', alt: productName }]
   const [active, setActive] = useState(0)
   const [lightbox, setLightbox] = useState(false)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const count = safeImages.length
 
-  const current = safeImages[Math.min(active, safeImages.length - 1)]
+  // Deslizamiento → foto activa (para el contador y las miniaturas).
+  const onScroll = useCallback(() => {
+    const el = trackRef.current
+    if (!el || el.clientWidth === 0) return
+    const i = Math.round(el.scrollLeft / el.clientWidth)
+    setActive((prev) => (prev === i ? prev : i))
+  }, [])
+
+  // Miniatura o lightbox → mueve el riel hasta esa foto.
+  const scrollTo = useCallback((i: number) => {
+    setActive(i)
+    const el = trackRef.current
+    if (!el) return
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    el.scrollTo({ left: i * el.clientWidth, behavior: reduceMotion ? 'auto' : 'smooth' })
+  }, [])
 
   const go = useCallback(
-    (dir: number) => {
-      setActive((prev) => {
-        const n = safeImages.length
-        return ((prev + dir) % n + n) % n
-      })
-    },
-    [safeImages.length]
+    (dir: number) => scrollTo(((active + dir) % count + count) % count),
+    [active, count, scrollTo]
   )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* Main image */}
-      <button
-        onClick={() => setLightbox(true)}
-        aria-label="Ampliar imagen"
-        style={{
-          position: 'relative',
-          aspectRatio: '4/5',
-          borderRadius: 12,
-          overflow: 'hidden',
-          background: dahila.cream50,
-          border: 'none',
-          padding: 0,
-          cursor: 'zoom-in',
-          width: '100%',
-        }}
-      >
-        <Image
-          src={current.url}
-          alt={current.alt || productName}
-          fill
-          // PDP main image is the LCP element. Next 16 deprecated `priority`;
-          // fetchPriority="high" + eager loading is the recommended replacement.
-          fetchPriority="high"
-          loading="eager"
-          quality={90}
-          placeholder="blur"
-          blurDataURL={BLUR_DATA_URL}
-          sizes="(max-width: 720px) 100vw, 640px"
-          style={{ objectFit: 'cover' }}
-        />
+      <div style={{ position: 'relative' }}>
+        <div
+          ref={trackRef}
+          className="pdp-gallery-track"
+          onScroll={onScroll}
+          role="region"
+          aria-label={count > 1 ? `Fotos de ${productName}: deslizá para ver las ${count}` : `Foto de ${productName}`}
+          style={{ borderRadius: 12, background: dahila.cream50 }}
+        >
+          {safeImages.map((img, i) => (
+            <button
+              key={img.url + i}
+              type="button"
+              className="pdp-gallery-slide"
+              onClick={() => { setActive(i); setLightbox(true) }}
+              aria-label={count > 1 ? `Ampliar foto ${i + 1} de ${count}` : 'Ampliar imagen'}
+              style={{
+                position: 'relative', aspectRatio: '4/5',
+                background: dahila.cream50, border: 'none', padding: 0, cursor: 'zoom-in',
+              }}
+            >
+              <Image
+                src={img.url}
+                alt={img.alt || productName}
+                fill
+                // La primera foto es el LCP de la ficha. Next 16 deprecó
+                // `priority`: fetchPriority="high" + eager es el reemplazo. Las
+                // demás cargan cuando se acercan (swipe o miniatura).
+                {...(i === 0
+                  ? { fetchPriority: 'high' as const, loading: 'eager' as const }
+                  : { loading: 'lazy' as const })}
+                quality={90}
+                placeholder="blur"
+                blurDataURL={BLUR_DATA_URL}
+                sizes="(max-width: 720px) 100vw, 640px"
+                style={{ objectFit: 'cover' }}
+              />
+            </button>
+          ))}
+        </div>
+
         <span
           aria-hidden
           style={{
-            position: 'absolute', bottom: 12, right: 12,
+            position: 'absolute', bottom: 12, right: 12, pointerEvents: 'none',
             width: 36, height: 36, borderRadius: 999,
             background: 'rgba(255,255,255,0.92)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -72,22 +99,39 @@ export function ProductGallery({ images, productName }: { images: GalleryImage[]
         >
           <Icon name="magnifying-glass-plus" size={16} />
         </span>
-      </button>
+
+        {/* Cuántas fotos hay y cuál se está viendo: sin esto, que se puede
+            deslizar no se descubre. */}
+        {count > 1 && (
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute', bottom: 12, left: 12, pointerEvents: 'none',
+              background: 'rgba(255,255,255,0.92)', borderRadius: 999, padding: '5px 11px',
+              fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 500, color: dahila.ink900,
+              boxShadow: dahila.shadowSm, fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {active + 1} / {count}
+          </span>
+        )}
+      </div>
 
       {/* Thumbnails — only show if more than one */}
-      {safeImages.length > 1 && (
+      {count > 1 && (
         <div
           className="producto-thumbs"
           style={{
             display: 'grid',
-            gridTemplateColumns: `repeat(${Math.min(safeImages.length, 5)}, 1fr)`,
+            gridTemplateColumns: `repeat(${Math.min(count, 5)}, 1fr)`,
             gap: 10,
           }}
         >
           {safeImages.map((img, i) => (
             <button
               key={img.url + i}
-              onClick={() => setActive(i)}
+              type="button"
+              onClick={() => scrollTo(i)}
               aria-label={`Ver imagen ${i + 1}`}
               aria-current={i === active}
               style={{
@@ -120,7 +164,7 @@ export function ProductGallery({ images, productName }: { images: GalleryImage[]
           images={safeImages}
           index={active}
           onClose={() => setLightbox(false)}
-          onChange={setActive}
+          onChange={scrollTo}
           onNav={go}
           productName={productName}
         />

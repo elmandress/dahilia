@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/public'
 import type { Collection, Product, Discount, Color } from '@/lib/types'
-import { getFinalPrice } from '@/lib/types'
+import { getListingPrice, isReadyToShip } from '@/lib/types'
 import { botImageUrl } from '@/lib/media'
 import { ProductCard } from '@/components/ProductCard'
 import { dahila, Eyebrow, Breadcrumb } from '@/components/ui/Primitives'
@@ -34,14 +34,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const supabase = await createClient()
   const { data } = await supabase.from('collections').select('name, description, cover_url').eq('slug', slug).eq('published', true).maybeSingle()
   if (!data) return { title: 'Colección' }
-  const desc = data.description || `Colección ${data.name} — piezas tejidas a crochet, hechas a mano por Dahila Crochet.`
+  const desc = data.description || `Colección ${data.name}: piezas tejidas a crochet, hechas a mano por Dahila Crochet.`
   return {
     title: data.name,
     description: desc,
     alternates: { canonical: `/colecciones/${slug}` },
     openGraph: {
       ...OG_BASE,
-      title: `${data.name} — colección tejida a mano`,
+      title: `${data.name}, colección tejida a mano`,
       description: desc,
       url: `${SITE_URL}/colecciones/${slug}`,
       ...(data.cover_url ? { images: [{ url: data.cover_url, alt: data.name }] } : {}),
@@ -86,7 +86,7 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: collection.name,
-    description: collection.description || `Colección ${collection.name} — Dahila Crochet.`,
+    description: collection.description || `Colección ${collection.name}, de Dahila Crochet.`,
     url: `${SITE_URL}/colecciones/${collection.slug}`,
     // Vía botImageUrl (lib/media.ts) — mismo motivo que el ItemList de abajo:
     // sin esto, Googlebot bajaba la portada original directo de Supabase
@@ -96,7 +96,9 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
       '@type': 'ItemList',
       numberOfItems: products.length,
       itemListElement: products.map((p, i) => {
-        const price = getFinalPrice(p, undefined, discounts)
+        // Mismo precio y disponibilidad que la ficha y la tarjeta (auditoría
+        // 12/09/2026): precio "desde" y "en stock" solo si está ya tejida.
+        const price = getListingPrice(p, discounts)
         const img = (p.media ?? [])[0]?.url ?? ''
         return {
           '@type': 'ListItem',
@@ -113,7 +115,9 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
               '@type': 'Offer',
               priceCurrency: 'UYU',
               price: price,
-              availability: p.status === 'active' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+              availability: p.status !== 'active'
+                ? 'https://schema.org/OutOfStock'
+                : isReadyToShip(p) ? 'https://schema.org/InStock' : 'https://schema.org/BackOrder',
             },
           },
         }

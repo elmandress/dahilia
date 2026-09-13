@@ -15,7 +15,10 @@ import { ShareButton } from '@/components/ShareButton'
 import { PinterestButton } from '@/components/PinterestButton'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import type { Product, Discount } from '@/lib/types'
-import { getEffectivePrice, getFinalPrice, getPrimaryPhoto, getScarcity, readyDateEstimate, formatPrice, BLUR_DATA_URL } from '@/lib/types'
+import {
+  getEffectivePrice, getFinalPrice, getPrimaryPhoto, getScarcity, formatPrice, BLUR_DATA_URL, productPhotoAlt,
+  isReadyToShip, sortSizes, getListingPrice, formatListingPrice, leadTimeMessage,
+} from '@/lib/types'
 import { useSizeSelection, getRestockWhatsAppUrl } from '@/lib/product-selection'
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import { dahila, Button, Eyebrow, Icon, Breadcrumb } from '@/components/ui/Primitives'
@@ -76,7 +79,7 @@ export function ProductDetailsClient({
     ? [...product.media]
         .filter((m) => m.type === 'image')
         .sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.position - b.position)
-        .map((m) => ({ url: m.url, alt: m.alt || product.name }))
+        .map((m, i) => ({ url: m.url, alt: m.alt?.trim() || productPhotoAlt(product.name, i) }))
     : [])
 
   const listPrice = getEffectivePrice(product, talle)
@@ -90,6 +93,19 @@ export function ProductDetailsClient({
   const isSoldOut = product.status === 'soldout'
   const canBuy = !isSoldOut && !product.is_custom_only
   const scarcity = getScarcity(product)
+  const sizes = sortSizes(product.sizes)
+  const readyNow = isReadyToShip(product)
+
+  // Cuánto tarda, dicho una vez y arriba, junto al precio: antes vivía al final
+  // de la lista de detalles, a tres pantallas del precio en el celular
+  // (auditoría 12/09/2026). Una pieza ya tejida lo dice y NO muestra el aviso
+  // de cola, que es de los encargos: antes la ficha de una pieza en stock
+  // decía "los pedidos estarán listos a finales de septiembre".
+  const plazo = leadTimeMessage(product, queueNote)?.text ?? null
+
+  // El encargo arranca con esta prenda como referencia y el talle marcado
+  // (EncargoForm lee ?desde y ?talle), no con un formulario en blanco.
+  const encargoHref = `/encargo?desde=${encodeURIComponent(product.slug)}${sizes.length > 0 ? `&talle=${encodeURIComponent(talle)}` : ''}`
 
   // Sold-out demand capture: a pre-filled WhatsApp message asking for a heads-up
   // when the piece is back. No backend/email — just opens the chat.
@@ -171,6 +187,20 @@ export function ProductDetailsClient({
                 {scarcity.label}
               </span>
             )}
+
+            {!isSoldOut && plazo && (
+              <p style={{
+                display: 'flex', alignItems: 'flex-start', gap: 7, margin: '10px 0 0',
+                fontFamily: dahila.fontSans, fontSize: 13, lineHeight: 1.45,
+                color: readyNow ? dahila.wine600 : dahila.ink700,
+                fontWeight: readyNow ? 500 : 400,
+              }}>
+                <span style={{ flexShrink: 0, marginTop: 1 }}>
+                  <Icon name={readyNow ? 'check' : 'arrow-clockwise'} size={15} color={readyNow ? dahila.wine600 : dahila.ink500} />
+                </span>
+                <span>{plazo}</span>
+              </p>
+            )}
           </div>
 
           {/* Colour palette — these are the tones Anush can work this piece in.
@@ -199,7 +229,7 @@ export function ProductDetailsClient({
             </div>
           )}
 
-          {!isSoldOut && !product.is_custom_only && (
+          {!isSoldOut && !product.is_custom_only && sizes.length > 0 && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={{
@@ -208,8 +238,9 @@ export function ProductDetailsClient({
                 }}>Talle</span>
                 <SizeGuide note={sizeGuideNote} />
               </div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {product.sizes && product.sizes.length > 0 ? product.sizes.map((s) => (
+              {/* pdp-sizes: WhatsAppFloat lee de acá el talle elegido. */}
+              <div className="pdp-sizes" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {sizes.map((s) => (
                   <button key={s.id} onClick={() => setTalle(s.size)} disabled={!s.available} aria-pressed={talle === s.size} style={{
                     minWidth: 44, height: 44, padding: '0 12px', borderRadius: 8,
                     fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
@@ -220,18 +251,9 @@ export function ProductDetailsClient({
                     opacity: s.available ? 1 : 0.5,
                     textDecoration: s.available ? 'none' : 'line-through',
                   }}>{s.size}</button>
-                )) : ['XS', 'S', 'M', 'L', 'XL'].map((t) => (
-                  <button key={t} onClick={() => setTalle(t)} aria-pressed={talle === t} style={{
-                    minWidth: 44, height: 44, borderRadius: 8,
-                    fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
-                    border: `1px solid ${talle === t ? dahila.ink900 : dahila.borderStrong}`,
-                    background: talle === t ? dahila.ink900 : '#fff',
-                    color: talle === t ? '#fff' : dahila.ink900,
-                    cursor: 'pointer', transition: `all 140ms ${dahila.ease}`,
-                  }}>{t}</button>
                 ))}
 
-                <button onClick={() => { track('encargo_click', { source: 'pdp_talles', product: product.slug }); router.push('/encargo') }} style={{
+                <button onClick={() => { track('encargo_click', { source: 'pdp_talles', product: product.slug }); router.push(encargoHref) }} style={{
                   padding: '0 14px', height: 44, borderRadius: 8,
                   fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink900,
                   background: 'transparent', border: `1px dashed ${dahila.borderStrong}`, cursor: 'pointer',
@@ -243,6 +265,15 @@ export function ProductDetailsClient({
             </div>
           )}
 
+          {/* Sin filas de talle = pieza de talle único (bolsos, bufandas,
+              poncho). Antes se inventaban cinco botones XS–XL y el talle
+              "elegido" llegaba al carrito y al WhatsApp como si fuera real. */}
+          {!isSoldOut && !product.is_custom_only && sizes.length === 0 && (
+            <p style={{ margin: 0, fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700 }}>
+              Talle único
+            </p>
+          )}
+
           {/* Cupos de encargo reales (CMS: encargos_cupos_*) — la agenda de
               producción es la urgencia honesta de un taller a pedido. No
               renderiza nada si Anush no la tiene activada. */}
@@ -251,7 +282,7 @@ export function ProductDetailsClient({
           {product.is_custom_only && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {processEnabled && <ProcessStepper steps={processSteps} />}
-              <Button variant="primary" full onClick={() => { track('encargo_click', { source: 'pdp_custom_only', product: product.slug }); router.push('/encargo') }}>Solicitar presupuesto</Button>
+              <Button variant="primary" full onClick={() => { track('encargo_click', { source: 'pdp_custom_only', product: product.slug }); router.push(encargoHref) }}>Solicitar presupuesto</Button>
             </div>
           )}
 
@@ -263,7 +294,7 @@ export function ProductDetailsClient({
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <Button variant="secondary" size="lg" full disabled>Sin stock en el talle {talle}</Button>
-                <button onClick={() => { track('encargo_click', { source: 'pdp_sin_talle', product: product.slug }); router.push('/encargo') }} style={{
+                <button onClick={() => { track('encargo_click', { source: 'pdp_sin_talle', product: product.slug }); router.push(encargoHref) }} style={{
                   background: 'transparent', border: 'none', cursor: 'pointer',
                   fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600,
                   textDecoration: 'underline', padding: 0,
@@ -292,7 +323,7 @@ export function ProductDetailsClient({
               >
                 <Icon name="whatsapp-logo" size={18} /> Avisame cuando vuelva
               </a>
-              <button onClick={() => { track('encargo_click', { source: 'pdp_agotado', product: product.slug }); router.push('/encargo') }} style={{
+              <button onClick={() => { track('encargo_click', { source: 'pdp_agotado', product: product.slug }); router.push(encargoHref) }} style={{
                 background: 'transparent', border: 'none', cursor: 'pointer',
                 fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600,
                 textDecoration: 'underline', padding: 0, alignSelf: 'center',
@@ -344,7 +375,7 @@ export function ProductDetailsClient({
               </span>
               {lookComplements.map((p) => {
                 const cPhoto = getPrimaryPhoto(p)
-                const cFinal = getFinalPrice(p, undefined, discounts)
+                const cFinal = getListingPrice(p, discounts)
                 const cAvail = (p.sizes ?? []).filter((s) => s.available)
                 const oneTap = !p.is_custom_only && p.status === 'active' && cAvail.length <= 1
                 const justAdded = addedLookId === p.id
@@ -365,9 +396,14 @@ export function ProductDetailsClient({
                       <Link
                         href={`/tienda/${p.slug}`}
                         onClick={() => track('look_click', { from: product.slug, to: p.slug })}
+                        // padding: nombre y "+ Agregar" quedaban de ~17 px de alto,
+                        // uno pegado al otro (Lighthouse target-size, WCAG 2.5.8
+                        // pide 24 px). Con el padding entran en los 56 px de la
+                        // miniatura y la fila no crece.
                         style={{
                           fontFamily: dahila.fontDisplay, fontSize: 14, color: dahila.ink900, lineHeight: 1.25,
                           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: 'none',
+                          padding: '4px 0',
                         }}
                       >{p.name}</Link>
                       {oneTap ? (
@@ -376,14 +412,14 @@ export function ProductDetailsClient({
                           disabled={justAdded}
                           aria-label={`Agregar ${p.name} al carrito por ${formatPrice(cFinal)}`}
                           style={{
-                            background: 'transparent', border: 'none', padding: '2px 0',
+                            background: 'transparent', border: 'none', padding: '5px 0',
                             cursor: justAdded ? 'default' : 'pointer', alignSelf: 'flex-start',
                             fontFamily: dahila.fontSans, fontSize: 12,
                             color: justAdded ? '#1E8449' : dahila.wine600,
                             textDecoration: justAdded ? 'none' : 'underline', textUnderlineOffset: 3,
                           }}
                         >
-                          {justAdded ? '✓ Sumado al carrito' : `+ Agregar · ${formatPrice(cFinal)}`}
+                          {justAdded ? '✓ Sumado al carrito' : `+ Agregar · ${formatListingPrice(p, discounts)}`}
                         </button>
                       ) : (
                         <Link
@@ -391,10 +427,10 @@ export function ProductDetailsClient({
                           onClick={() => track('look_click', { from: product.slug, to: p.slug })}
                           style={{
                             fontFamily: dahila.fontSans, fontSize: 12, color: dahila.wine600,
-                            textDecoration: 'underline', textUnderlineOffset: 3, alignSelf: 'flex-start', padding: '2px 0',
+                            textDecoration: 'underline', textUnderlineOffset: 3, alignSelf: 'flex-start', padding: '5px 0',
                           }}
                         >
-                          {`Elegir talle · ${formatPrice(cFinal)}`}
+                          {`Elegir talle · ${formatListingPrice(p, discounts)}`}
                         </Link>
                       )}
                     </span>
@@ -443,7 +479,7 @@ export function ProductDetailsClient({
           }}>
             {product.material && (
               <li style={liStyle}>
-                <Icon name="ruler" size={16} color={dahila.ink500}/> {product.material}
+                <Icon name="leaf" size={16} color={dahila.ink500}/> {product.material}
               </li>
             )}
             <li style={liStyle}>
@@ -453,29 +489,15 @@ export function ProductDetailsClient({
               <Icon name="package" size={16} color={dahila.ink500}/>
               {shippingEstimate && shippingEstimate.trim() ? shippingEstimate : 'Envío a todo Uruguay'}
             </li>
-            {queueNote ? (
-              // Lista de espera activa: manda sobre la fecha estimada del
-              // producto — prometer "lista en 3 semanas" con cola sería mentir.
+            {/* El plazo (o la cola, o "en stock") ya se dice arriba, junto al
+                precio. "A tu medida" no aplica a una pieza ya tejida ni a una
+                de talle único (un bolso no se ajusta al cuerpo). */}
+            {!readyNow && sizes.length > 0 && (
               <li style={liStyle}>
-                <Icon name="arrow-clockwise" size={16} color={dahila.ink500}/> {queueNote}
-              </li>
-            ) : (product.lead_time_weeks_min || product.lead_time_weeks_max) && (
-              <li style={liStyle}>
-                <Icon name="arrow-clockwise" size={16} color={dahila.ink500}/>
-                {(() => {
-                  // Urgencia honesta: fecha estimada concreta en vez de "N semanas"
-                  // abstractas — cada pieza se teje al encargarla, y eso es un plus.
-                  const estimate = readyDateEstimate(product.lead_time_weeks_min, product.lead_time_weeks_max)
-                  return estimate
-                    ? <>Se teje al encargar — si la pedís hoy, lista {estimate}</>
-                    : 'Plazo a coordinar'
-                })()}
+                <Icon name="check" size={16} color={dahila.ink500}/>
+                Hecho a tu medida: te acompaño en todo el proceso para que quede perfecta.
               </li>
             )}
-            <li style={liStyle}>
-              <Icon name="check" size={16} color={dahila.ink500}/>
-              Hecho a tu medida — te acompaño en todo el proceso para que quede perfecta.
-            </li>
             <li style={liStyle}>
               <Icon name="tag" size={16} color={dahila.ink500}/>
               Pagás por transferencia o Mercado Pago, coordinado por WhatsApp — nada se cobra hasta que confirmemos todo.

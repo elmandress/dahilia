@@ -4,7 +4,10 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Product, Discount } from '@/lib/types'
-import { getEffectivePrice, getFinalPrice, resolveDiscountPercent, getPrimaryPhoto, getScarcity, BLUR_DATA_URL } from '@/lib/types'
+import {
+  getEffectivePrice, getFinalPrice, resolveDiscountPercent, getPrimaryPhoto, getScarcity, BLUR_DATA_URL,
+  getPrimaryPhotoAlt, getListingSize, hasPriceRange, isReadyToShip,
+} from '@/lib/types'
 import { useCart } from './CartProvider'
 import { FavoriteButton } from './FavoriteButton'
 import { dahila, Badge } from './ui/Primitives'
@@ -30,29 +33,46 @@ export function ProductCard({
   const [isAdding, setIsAdding] = useState(false)
 
   const photo = getPrimaryPhoto(product)
-  const defaultSize =
-    product.sizes?.find((s) => s.available !== false)?.size ||
-    product.sizes?.[0]?.size ||
-    'Único'
-  const listPrice = getEffectivePrice(product, defaultSize)
+  // Precio "desde": el del talle disponible más barato. Es el mismo número que
+  // muestran /ig, el buscador y el JSON-LD (getListingSize en lib/types);
+  // antes cada superficie usaba uno distinto (auditoría 12/09/2026).
+  const listingSize = getListingSize(product)
+  const listPrice = getEffectivePrice(product, listingSize)
   const discountPct = resolveDiscountPercent(product, discounts)
-  const finalPrice = getFinalPrice(product, defaultSize, discounts)
+  const finalPrice = getFinalPrice(product, listingSize, discounts)
+  const priceFrom = hasPriceRange(product)
   const hasDiscount = discountPct > 0 && listPrice > 0
   const purchasable = product.status !== 'soldout' && !product.is_custom_only
   const scarcity = getScarcity(product)
+  const readyNow = isReadyToShip(product)
+  const availableSizeCount = (product.sizes ?? []).filter((s) => s.available !== false).length
+  // Con más de un talle disponible hay que elegir. Sin vista rápida (home,
+  // relacionados) la acción lleva a la ficha en vez de sumar un talle que la
+  // clienta no eligió: los talles preseleccionados pasan inadvertidos.
+  const needsSize = availableSizeCount > 1
+  // Tiene talles pero ninguno disponible: no hay nada que sumar de un toque.
+  const allSizesOut = (product.sizes?.length ?? 0) > 0 && availableSizeCount === 0
   // A subtle set of colour swatches gives variety at a glance (like ASOS/Zara
   // cards) without opening the product. Cap at five so the row never wraps.
   const swatches = (product.colors ?? []).slice(0, 5)
 
   const handleAction = async (e: React.MouseEvent) => {
+    // If a quick-view handler is provided (store grid), open it so the shopper
+    // can choose a size.
+    if (onQuickView) {
+      e.stopPropagation()
+      e.preventDefault()
+      onQuickView()
+      return
+    }
+    // Sin vista rápida y con talles para elegir: el click sigue hasta el <Link>
+    // de la tarjeta y abre la ficha.
+    if (needsSize) return
     e.stopPropagation()
     e.preventDefault()
-    // If a quick-view handler is provided (store grid), open it so the shopper
-    // can choose a size. Otherwise (home grid) fall back to quick-add.
-    if (onQuickView) { onQuickView(); return }
-    if (!purchasable) return
+    if (!purchasable || allSizesOut) return
     setIsAdding(true)
-    await addToCart(product, defaultSize, 1)
+    await addToCart(product, listingSize ?? 'Único', 1)
     setTimeout(() => setIsAdding(false), 500)
   }
 
@@ -82,7 +102,7 @@ export function ProductCard({
       }}>
         <Image
           src={photo}
-          alt={product.name}
+          alt={getPrimaryPhotoAlt(product)}
           fill
           quality={82}
           {...(priority ? { fetchPriority: 'high' as const, loading: 'eager' as const } : {})}
@@ -158,7 +178,7 @@ export function ProductCard({
               transition: `all 220ms ${dahila.ease}`,
               pointerEvents: hover ? 'auto' : 'none',
             }}>
-            {isAdding ? '✓ Agregado' : (onQuickView ? 'Vista rápida' : 'Agregar al carrito')}
+            {isAdding ? '✓ Agregado' : onQuickView ? 'Vista rápida' : needsSize ? 'Elegir talle' : 'Agregar al carrito'}
           </div>
         )}
       </div>
@@ -173,7 +193,7 @@ export function ProductCard({
           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
           overflow: 'hidden', minWidth: 0, flex: '1 1 140px',
         }}>{product.name}</span>
-        <PriceBlock list={listPrice} final={finalPrice} size="sm" align="end" />
+        <PriceBlock list={listPrice} final={finalPrice} size="sm" align="end" from={priceFrom} />
       </div>
 
       {/* Colour swatches + lead time in one row */}
@@ -203,7 +223,17 @@ export function ProductCard({
             manda), así que la etiqueta se oculta: mismo criterio que el PDP
             (ProductDetailsClient) y el carrito. Sin este guard la grilla
             prometía "1–2 sem." al lado del cartel que dice otra cosa. */}
-        {!queueNote.trim() && product.lead_time_weeks_min > 0 && product.status !== 'soldout' && (
+        {/* Pieza ya tejida: se dice en la tarjeta. Antes solo se enteraba quien
+            entraba por el filtro "En stock" del menú; en la grilla se veía
+            igual que una que tarda semanas. */}
+        {readyNow ? (
+          <span style={{
+            fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 500, color: dahila.wine600,
+            letterSpacing: '0.02em', whiteSpace: 'nowrap', marginLeft: 'auto',
+          }}>
+            En stock
+          </span>
+        ) : !queueNote.trim() && product.lead_time_weeks_min > 0 && product.status !== 'soldout' && (
           <span style={{
             fontFamily: dahila.fontSans, fontSize: 10, color: dahila.ink500,
             letterSpacing: '0.02em', whiteSpace: 'nowrap', marginLeft: 'auto',

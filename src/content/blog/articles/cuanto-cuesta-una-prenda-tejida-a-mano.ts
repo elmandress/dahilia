@@ -13,8 +13,9 @@ export const article: Article = {
   funnel: 'MOFU',
   publishedAt: '2026-08-31',
   hero: {
-    src: '/photos/atelier-tejiendo.jpg',
-    alt: 'Manos tejiendo a crochet en el taller',
+    src: '/photos/blog/cardigan-granny-detalle.jpg',
+    alt: 'Cuadrados granny de un cardigan tejido a crochet a mano, de cerca',
+    position: '50% 45%',
   },
   relatedCategorySlug: 'cardigans',
   relatedProductSlugs: ['cardigan-3-4', 'top-halter', 'mini-bufandas'],
@@ -46,7 +47,7 @@ export const article: Article = {
         '**Horas de tejido.** Es la parte más grande, lejos.',
         '**Materiales.** Lana o algodón natural de buena calidad cuesta bastante más que un hilado sintético.',
         '**Prueba y ajuste.** Una pieza a medida implica revisar medidas, a veces destejer y rehacer una parte.',
-        '**Terminaciones.** Costuras, remates y bloqueo final, que es lo que hace que una prenda se vea prolija y no artesanal en el mal sentido.',
+        '**Terminaciones.** Costuras, remates y bloqueo final, que es lo que hace que una prenda se vea prolija y no casera en el mal sentido.',
       ],
     },
     {

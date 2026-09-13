@@ -53,11 +53,28 @@ export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: str
 
   return (
     <a
+      // La clase existe para la regla de globals.css que la sube por encima de
+      // la barra fija de la ficha en mobile (con z-index 40 < 45 quedaba
+      // tapada del todo justo en la página de más intención de compra).
+      className="whatsapp-float"
       href={href}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Consultar por WhatsApp"
-      onClick={() => track('whatsapp_click', { source: 'float' })}
+      onClick={(e) => {
+        // En la ficha, el mensaje ya dice qué prenda está mirando (y en qué
+        // talle, si eligió uno): quien escribe no tiene que explicar "cuál" y
+        // Anush no tiene que preguntarlo. Se arma al tocar, antes de que el
+        // navegador siga el link.
+        const product = document.querySelector('.producto-detail h1')?.textContent?.trim()
+        if (product) {
+          // Solo el grupo de talles: el corazón de favoritos también usa aria-pressed.
+          const size = document.querySelector('.pdp-sizes button[aria-pressed="true"]')?.textContent?.trim()
+          const text = `Hola! Estoy mirando ${product}${size ? ` (talle ${size})` : ''} en la web: ${window.location.origin}${window.location.pathname}\nTengo una consulta 🧶`
+          e.currentTarget.href = `${waUrl.replace(/\/$/, '')}?text=${encodeURIComponent(text)}`
+        }
+        track('whatsapp_click', { source: product ? 'float_ficha' : 'float' })
+      }}
       style={{
         position: 'fixed',
         bottom: 28,

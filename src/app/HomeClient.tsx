@@ -9,6 +9,7 @@ import type { Product, Discount } from '@/lib/types'
 import type { Testimonial } from '@/components/TestimonialsStrip'
 import { BLUR_DATA_URL, isReadyToShip } from '@/lib/types'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
+import { useCart } from '@/components/CartProvider'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -100,8 +101,12 @@ function val<K extends keyof HomeSettings>(s: HomeSettings, key: K, fallback: st
   return v && v.trim() !== '' ? v : fallback
 }
 
-export function HomeClient({ products, newest = [], settings, discounts = [], testimonials = [], dropCollectionHref = null }: { products: Product[]; newest?: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[]; dropCollectionHref?: string | null }) {
+/** Nota del blog para la franja de la home (solo lo que la tarjeta muestra). */
+export type HomeNote = { slug: string; title: string; excerpt: string; hero?: { src: string; alt: string; position?: string } }
+
+export function HomeClient({ products, newest = [], settings, discounts = [], testimonials = [], dropCollectionHref = null, notes = [] }: { products: Product[]; newest?: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[]; dropCollectionHref?: string | null; notes?: HomeNote[] }) {
   const router = useRouter()
+  const { queueNote } = useCart()
   // "Nuevo" = últimos publicados por fecha real de alta (con fallback al orden
   // manual si la consulta dedicada no trajo nada).
   const featured = newest.length > 0 ? newest : products.slice(0, 4)
@@ -174,7 +179,9 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
             // Hero is the home LCP element (Next 16: fetchPriority replaces priority).
             fetchPriority="high"
             loading="eager"
-            quality={95}
+            // 82 y no 95 (13/09/2026): en el celular es la descarga que decide
+            // el LCP, y a este tamaño la diferencia no se ve; pesa bastante menos.
+            quality={82}
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}
             sizes="100vw"
@@ -228,7 +235,10 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
           {[
             ['hand-heart', 'Hecho a mano', 'Tejido pieza por pieza'],
             ['ruler', 'A tu medida', 'Ajustado a vos'],
-            ['leaf', 'Lana natural', 'Materiales nobles'],
+            // Antes decía "Lana natural · Materiales nobles", pero el catálogo
+            // es mayormente algodón y hay acrílico, lurex, chenille y trapillo
+            // (verificado en la base el 12/09/2026). Esto es cierto para todo.
+            ['leaf', 'Algodón, lana y más', 'La fibra de cada pieza, en su ficha'],
             ['truck', 'Envío a todo el país', 'Coordinás por WhatsApp'],
           ].map(([icon, title, sub]) => (
             <div key={title} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -259,6 +269,21 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
             letterSpacing: '0.06em', color: dahila.ink700, textDecoration: 'none',
           }}>Ver toda la colección →</Link>
         </div>
+
+        {/* Cuánto tarda, antes de elegir (auditoría 12/09/2026): con cola
+            activa las tarjetas ocultan su plazo, y el aviso solo aparecía en
+            la ficha y en el carrito. */}
+        {queueNote && (
+          <p style={{
+            display: 'flex', alignItems: 'flex-start', gap: 7, margin: '-16px 0 24px',
+            fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700, lineHeight: 1.5,
+          }}>
+            <span style={{ flexShrink: 0, marginTop: 1 }}>
+              <Icon name="arrow-clockwise" size={15} color={dahila.ink500} />
+            </span>
+            <span>{queueNote}</span>
+          </p>
+        )}
 
         <div className="product-grid" style={{
           display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22,
@@ -408,7 +433,9 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
           <div style={{ position: 'relative', width: '100%', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden' }}>
             <Image
               src={aboutImage}
-              alt="Anush tejiendo"
+              // La foto de "Sobre Anush" es un retrato (no la muestra tejiendo,
+              // como decía el alt): se describe lo que se ve.
+              alt="Anush, la tejedora detrás de Dahila"
               fill
               sizes="(max-width: 720px) 100vw, 640px"
               style={{ objectFit: 'cover' }}
@@ -474,6 +501,57 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
                 </Button>
               </div>
             )}
+          </div>
+        </section>
+      )}
+
+      {/* NOTAS DEL TALLER — la home es la página que Google rastrea más
+          seguido: enlazar acá las notas nuevas es lo que más rápido las hace
+          descubrir (Search Console, 13/09/2026: la home no enlazaba ninguna y
+          11 páginas seguían sin indexar). A quien duda, además, le contesta
+          antes de que tenga que preguntar. */}
+      {notes.length > 0 && (
+        <section className="home-section" style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap',
+            margin: '0 0 28px', paddingBottom: 12, borderBottom: `1px solid ${dahila.border}`,
+          }}>
+            <h2 style={{
+              fontFamily: dahila.fontDisplay, fontWeight: 300,
+              fontSize: 22, letterSpacing: '0.08em', textTransform: 'uppercase',
+              color: dahila.ink900, margin: 0,
+            }}>Notas del taller</h2>
+            <Link href="/blog" style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700, textDecoration: 'none' }}>
+              Ver todas las notas →
+            </Link>
+          </div>
+          <div className="blog-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 28 }}>
+            {notes.map((n) => (
+              <Link key={n.slug} href={`/blog/${n.slug}`} style={{
+                display: 'flex', flexDirection: 'column', gap: 10, textDecoration: 'none', color: 'inherit', minWidth: 0,
+              }}>
+                {n.hero && (
+                  <div style={{ position: 'relative', aspectRatio: '4 / 3', borderRadius: 14, overflow: 'hidden', background: dahila.cream50 }}>
+                    <Image
+                      src={n.hero.src}
+                      alt={n.hero.alt}
+                      fill
+                      quality={82}
+                      sizes="(max-width: 640px) 100vw, (max-width: 900px) 50vw, 400px"
+                      placeholder="blur"
+                      blurDataURL={BLUR_DATA_URL}
+                      style={{ objectFit: 'cover', objectPosition: n.hero.position }}
+                    />
+                  </div>
+                )}
+                <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 20, lineHeight: 1.25, color: dahila.ink900 }}>
+                  {n.title}
+                </span>
+                <span style={{ fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, lineHeight: 1.6, color: dahila.ink700 }}>
+                  {n.excerpt}
+                </span>
+              </Link>
+            ))}
           </div>
         </section>
       )}

@@ -12,7 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'TOFU',
   publishedAt: '2026-09-04',
-  hero: { src: '/photos/atelier-tejiendo.jpg', alt: 'Manos trabajando sobre una prenda tejida a crochet' },
+  hero: { src: '/photos/blog/top-lagom-punto.jpg', alt: 'Top LAGOM tejido a crochet en crudo, visto de espalda, con el punto de cerca', position: '50% 50%' },
   relatedCategorySlug: 'cardigans',
   relatedProductSlugs: ['cardigan-3-4', 'sweater-senda', 'bufanda-sophie'],
   relatedArticleSlugs: [
@@ -23,7 +23,7 @@ export const article: Article = {
   body: [
     {
       type: 'p',
-      text: 'Una prenda tejida a mano tiene una ventaja enorme sobre la ropa industrial: se puede arreglar punto por punto. Pero también tiene una trampa: los gestos que uno hace por instinto —tirar del hilo suelto, pasar una cuchilla, colgarla para que "estire"— suelen ser justo los que la terminan de arruinar.',
+      text: 'Una prenda tejida a mano tiene una ventaja enorme sobre la ropa industrial: se puede arreglar punto por punto. Pero también tiene una trampa: los gestos que uno hace por instinto (tirar del hilo suelto, pasar una cuchilla, colgarla para que "estire") suelen ser justo los que la terminan de arruinar.',
     },
     {
       type: 'callout',
@@ -61,7 +61,7 @@ export const article: Article = {
     {
       type: 'callout',
       title: 'Lo que no tiene vuelta',
-      text: 'La lana afieltrada. Cuando la lana se lava con calor y fricción, las escamas de la fibra se traban entre sí y el tejido se vuelve compacto y duro. Ese cambio es irreversible — por eso la regla del agua fría es tan estricta con la lana.',
+      text: 'La lana afieltrada. Cuando la lana se lava con calor y fricción, las escamas de la fibra se traban entre sí y el tejido se vuelve compacto y duro. Ese cambio es irreversible: por eso la regla del agua fría es tan estricta con la lana.',
     },
 
     { type: 'h2', text: 'Se estiró o se deformó' },
@@ -98,7 +98,7 @@ export const article: Article = {
     { type: 'h2', text: 'Le salieron bolitas' },
     {
       type: 'p',
-      text: 'Las bolitas (el *pilling*) no son un defecto de fabricación: son fibras cortas que el roce saca a la superficie y enrolla. Aparecen donde hay fricción —axilas, costados, donde apoya la correa del bolso— y se aceleran con lavados frecuentes o agresivos.',
+      text: 'Las bolitas (el *pilling*) no son un defecto de fabricación: son fibras cortas que el roce saca a la superficie y enrolla. Aparecen donde hay fricción (axilas, costados, donde apoya la correa del bolso) y se aceleran con lavados frecuentes o agresivos.',
     },
     {
       type: 'p',
@@ -122,7 +122,7 @@ export const article: Article = {
     { type: 'h2', text: 'Se hizo un agujero' },
     {
       type: 'p',
-      text: 'Un agujero chico se zurce con hilo del mismo color, cerrando los puntos sueltos antes de que se agrande. Si es más grande, se puede tapar con un parche tejido: en una prenda hecha a mano, eso se lee como reparación y no como remiendo. Lo importante es actuar rápido — un agujero chico en un tejido crece con el uso.',
+      text: 'Un agujero chico se zurce con hilo del mismo color, cerrando los puntos sueltos antes de que se agrande. Si es más grande, se puede tapar con un parche tejido: en una prenda hecha a mano, eso se lee como reparación y no como remiendo. Lo importante es actuar rápido: un agujero chico en un tejido crece con el uso.',
     },
     {
       type: 'note',
@@ -171,7 +171,7 @@ export const article: Article = {
     {
       type: 'shopCta',
       title: 'Tejido pensado para durar',
-      text: 'Cada prenda sale con sus instrucciones de cuidado — y con esta guía, sabés qué hacer si algo pasa.',
+      text: 'Cada prenda sale con sus instrucciones de cuidado, y con esta guía sabés qué hacer si algo pasa.',
       href: '/tienda',
       label: 'Ver la tienda',
     },
