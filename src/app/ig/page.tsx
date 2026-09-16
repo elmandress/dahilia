@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/public'
 import type { Product, Discount } from '@/lib/types'
-import { getPrimaryPhoto, formatListingPrice, BLUR_DATA_URL } from '@/lib/types'
+import { getPrimaryPhoto, formatListingPrice, BLUR_DATA_URL, getPrimaryPhotoAlt } from '@/lib/types'
 import { dahila, Icon } from '@/components/ui/Primitives'
 
 export const revalidate = 300
@@ -133,7 +133,7 @@ export default async function IgLandingPage() {
                   <span style={{ position: 'relative', aspectRatio: '3/4', borderRadius: 12, overflow: 'hidden', background: dahila.cream50, display: 'block' }}>
                     <Image
                       src={photo}
-                      alt={p.name}
+                      alt={getPrimaryPhotoAlt(p)}
                       fill
                       quality={82}
                       sizes="(max-width: 480px) 50vw, 220px"

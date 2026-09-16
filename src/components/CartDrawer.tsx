@@ -12,7 +12,7 @@ import { PriceBlock } from './ui/PriceBlock'
 import type { Product } from '@/lib/types'
 import {
   getPrimaryPhoto, getEffectivePrice, getFinalPrice, formatPrice, BLUR_DATA_URL,
-  getListingPrice, getListingSize,
+  getListingPrice, getListingSize, getPrimaryPhotoAlt,
 } from '@/lib/types'
 import { pickAddonSuggestions } from '@/lib/addons'
 import { track } from '@/lib/analytics'
@@ -243,7 +243,7 @@ export function CartDrawer({ products }: { products: Product[] }) {
                             borderRadius: 8, overflow: 'hidden', background: dahila.cream50, display: 'block',
                           }}
                         >
-                          <Image src={photo} alt={p.name} fill sizes="44px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+                          <Image src={photo} alt={getPrimaryPhotoAlt(p)} fill sizes="44px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
                         </Link>
                         <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
                           <Link

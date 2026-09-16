@@ -385,13 +385,27 @@ export function getPrimaryPhoto(product: Product): string {
 // dice a Google Imágenes ni a un lector de pantalla qué es. "Pieza" sirve
 // para cualquier categoría (prenda, bolso, accesorio) sin errores de género.
 // Si Anush escribe una descripción en el admin, esa manda siempre.
-export function productPhotoAlt(name: string, index = 0): string {
-  const base = `${name} — pieza de crochet tejida a mano por Dahila`;
+/** "Tops" → "top", "Accesorios" → "accesorio": el tipo de prenda, en singular. */
+export function productKindLabel(product: Product): string | undefined {
+  const name = product.category?.name?.trim().toLowerCase();
+  if (!name) return undefined;
+  return name.endsWith('s') ? name.slice(0, -1) : name;
+}
+
+// Texto alternativo de las fotos que no tienen uno propio cargado (al
+// 16/09/2026, 101 de las fotos del catálogo). Es la única señal que controla
+// el sitio para Google Imágenes, que ya trae más de 200 impresiones pero en
+// posiciones 20 a 50: por eso nombra el tipo de prenda ("top de crochet"),
+// que es como se busca, y no solo "pieza". Corto a propósito: también lo lee
+// en voz alta un lector de pantalla.
+export function productPhotoAlt(name: string, index = 0, kind?: string): string {
+  const que = kind ? `${kind} de crochet tejido a mano en Uruguay` : 'pieza de crochet tejida a mano en Uruguay';
+  const base = `${name}: ${que}`;
   return index > 0 ? `${base} (foto ${index + 1})` : base;
 }
 
 export function getPrimaryPhotoAlt(product: Product): string {
-  return getPrimaryMedia(product)?.alt?.trim() || productPhotoAlt(product.name);
+  return getPrimaryMedia(product)?.alt?.trim() || productPhotoAlt(product.name, 0, productKindLabel(product));
 }
 
 // "Disponible ahora": la pieza ya está tejida y lista, sin la espera habitual

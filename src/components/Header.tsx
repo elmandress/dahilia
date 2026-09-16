@@ -83,6 +83,8 @@ export function Header({
   const [showSearch, setShowSearch] = useState(false)
   const [searchVal, setSearchVal] = useState('')
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  // Términos sin resultados ya medidos en esta sesión (uno por término).
+  const noResultsSent = useRef<Set<string>>(new Set())
   const [searching, setSearching] = useState(false)
   const [megaOpen, setMegaOpen] = useState(false)
   // Small close delay so moving the mouse from the "Tienda" trigger down into
@@ -120,7 +122,19 @@ export function Header({
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`)
         const data = await res.json()
-        if (!cancelled) setSuggestions(data.results || [])
+        if (!cancelled) {
+          const results = data.results || []
+          setSuggestions(results)
+          // Lo que se busca y no está en la tienda: demanda que hasta ahora no
+          // se veía en ningún lado. Desde 4 letras (antes son pedazos de
+          // palabra) y una vez por término. En Umami se lee sin configurar
+          // nada; en GA4 llega como "search" con search_term.
+          const term = q.toLowerCase()
+          if (results.length === 0 && q.length >= 4 && !noResultsSent.current.has(term)) {
+            noResultsSent.current.add(term)
+            track('search_no_results', { q }, { name: 'search', params: { search_term: q, search_results: 0 } })
+          }
+        }
       } catch {
         if (!cancelled) setSuggestions([])
       } finally {
@@ -161,7 +175,9 @@ export function Header({
   const submitSearch = (e?: React.SyntheticEvent) => {
     e?.preventDefault()
     if (searchVal.trim()) {
-      router.push(`/tienda?q=${encodeURIComponent(searchVal.trim())}`)
+      const q = searchVal.trim()
+      track('search', { q }, { params: { search_term: q } })
+      router.push(`/tienda?q=${encodeURIComponent(q)}`)
       setShowSearch(false)
       setSearchVal('')
     }

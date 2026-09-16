@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { notifyIndexNow } from '@/lib/indexnow'
 import { createClient } from '@/lib/supabase/server'
+import { getAdminUser } from '@/lib/supabase/require-admin'
 import { CATALOG_TAG } from '@/lib/catalog'
 
 // Lo llama el admin (client-side) después de guardar algo que un visitante
@@ -31,16 +32,13 @@ import { CATALOG_TAG } from '@/lib/catalog'
 // auth — cualquiera en internet podía invalidar el caché ISR de todo el sitio
 // (revalidatePath('/', 'layout')) a repetición, forzando re-renders/consultas
 // a Supabase en cada visita siguiente (vector de costo/DoS, no de datos), y
-// hacer que se le avisen a Bing/Yandex URLs arbitrarias vía IndexNow. Se exige
-// sesión (igual criterio que el resto del admin: cualquier usuario logueado,
-// no todavía is_admin() — ver database/schema-security-hardening.sql para el
-// endurecimiento pendiente de eso).
+// hacer que se le avisen a Bing/Yandex URLs arbitrarias vía IndexNow. Desde
+// el 14/09/2026 se exige sesión de admin (is_admin()), no cualquier sesión:
+// el registro de cuentas de Supabase estaba abierto. Ver
+// lib/supabase/require-admin.ts y database/seguridad-2026-09.sql.
 export async function POST(request: Request) {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) {
+  if (!(await getAdminUser(supabase))) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 })
   }
 

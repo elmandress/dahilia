@@ -16,13 +16,13 @@ import { PinterestButton } from '@/components/PinterestButton'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import type { Product, Discount } from '@/lib/types'
 import {
-  getEffectivePrice, getFinalPrice, getPrimaryPhoto, getScarcity, formatPrice, BLUR_DATA_URL, productPhotoAlt,
+  getEffectivePrice, getFinalPrice, getPrimaryPhoto, getScarcity, formatPrice, BLUR_DATA_URL, productPhotoAlt, productKindLabel, getPrimaryPhotoAlt,
   isReadyToShip, sortSizes, getListingPrice, formatListingPrice, leadTimeMessage,
 } from '@/lib/types'
 import { useSizeSelection, getRestockWhatsAppUrl } from '@/lib/product-selection'
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import { dahila, Button, Eyebrow, Icon, Breadcrumb } from '@/components/ui/Primitives'
-import { track } from '@/lib/analytics'
+import { track, gaCommerce } from '@/lib/analytics'
 
 export function ProductDetailsClient({
   product,
@@ -73,13 +73,22 @@ export function ProductDetailsClient({
   const { talle, setTalle, sizeAvailable } = useSizeSelection(product)
   const [added, setAdded] = useState(false)
 
-  useEffect(() => { track('product_view', { product: product.slug }) }, [product.slug])
+  useEffect(() => {
+    // GA4: view_item con precio y producto (informes de e-commerce).
+    track('product_view', { product: product.slug }, {
+      name: 'view_item',
+      params: gaCommerce([{
+        item_id: product.slug, item_name: product.name, price: getListingPrice(product),
+        item_category: product.category?.slug,
+      }]),
+    })
+  }, [product])
 
   const galleryImages = (product.media && product.media.length > 0
     ? [...product.media]
         .filter((m) => m.type === 'image')
         .sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.position - b.position)
-        .map((m, i) => ({ url: m.url, alt: m.alt?.trim() || productPhotoAlt(product.name, i) }))
+        .map((m, i) => ({ url: m.url, alt: m.alt?.trim() || productPhotoAlt(product.name, i, productKindLabel(product)) }))
     : [])
 
   const listPrice = getEffectivePrice(product, talle)
@@ -390,7 +399,7 @@ export function ProductDetailsClient({
                         borderRadius: 8, overflow: 'hidden', background: dahila.cream50, display: 'block',
                       }}
                     >
-                      <Image src={cPhoto} alt={p.name} fill sizes="46px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+                      <Image src={cPhoto} alt={getPrimaryPhotoAlt(p)} fill sizes="46px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
                     </Link>
                     <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
                       <Link
@@ -442,7 +451,7 @@ export function ProductDetailsClient({
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
             <FavoriteButton productId={product.id} variant="inline" />
-            <ShareButton title={`${product.name} — Dahila Crochet`} text={`Mirá esta prenda de Dahila: ${product.name}`} />
+            <ShareButton title={`${product.name} — Dahila Crochet`} text={`Mirá esta prenda de Dahila: ${product.name}`} itemId={product.slug} />
             <PinterestButton
               imageUrl={getPrimaryPhoto(product)}
               description={`${product.name} — tejido a mano, a tu medida | Dahila Crochet`}

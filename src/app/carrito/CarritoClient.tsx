@@ -7,7 +7,7 @@ import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Button, Icon } from '@/components/ui/Primitives'
 import {
   getPrimaryPhoto, formatPrice, getEffectivePrice, getFinalPrice, readyDateEstimate, BLUR_DATA_URL,
-  getListingPrice, getListingSize, hasPriceRange, formatListingPrice, isReadyToShip,
+  getListingPrice, getListingSize, hasPriceRange, formatListingPrice, isReadyToShip, getPrimaryPhotoAlt,
 } from '@/lib/types'
 import type { Product, Discount } from '@/lib/types'
 import { computeCouponEffect, type PublicCoupon } from '@/lib/coupons'
@@ -15,7 +15,7 @@ import { pickAddonSuggestions } from '@/lib/addons'
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import Image from 'next/image'
 import { SITE_URL } from '@/lib/env'
-import { track } from '@/lib/analytics'
+import { track, gaCommerce } from '@/lib/analytics'
 import { getAttribution } from '@/lib/attribution'
 
 // Recuerda el código ingresado entre recargas (se re-valida siempre contra el
@@ -293,7 +293,13 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
     const url = `${base}?text=${encodeURIComponent(message)}`
     setSentOrder({ url, message })
     setCopied(false)
-    track('order_sent', { items: items.length, total })
+    // GA4: begin_checkout con productos y total. Es el "pedido" del sitio: el
+    // pago se arregla después por WhatsApp.
+    const gaItems = items.filter((i) => !!i.product).map((i) => ({
+      item_id: i.product.slug, item_name: i.product.name, item_variant: i.size,
+      quantity: i.qty, price: getFinalPrice(i.product, i.size, discounts),
+    }))
+    track('order_sent', { items: items.length, total }, { name: 'begin_checkout', params: gaCommerce(gaItems, total) })
     // Registro del pedido — sin esperar la respuesta: no debe demorar ni
     // bloquear la apertura de WhatsApp (ver comentario de iOS Safari abajo).
     // Si falla (red, migración no corrida), la venta sigue su curso igual.
@@ -335,6 +341,9 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
     } else {
       const win = window.open(url, '_blank')
       if (win) win.opener = null
+      // `url` es el link de wa.me (externo), no una página del sitio: la regla
+      // de Next no lo puede saber y lo marca igual.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       else window.location.assign(url)
     }
     setCheckingOut(false)
@@ -415,7 +424,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                     }}>
                       <Image
                         src={photo}
-                        alt={p.name}
+                        alt={getPrimaryPhotoAlt(p)}
                         fill
                         quality={82}
                         sizes="(max-width: 600px) 50vw, 220px"
@@ -576,7 +585,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                     position: 'relative', width: 44, height: 54, flexShrink: 0,
                     borderRadius: 6, overflow: 'hidden', background: dahila.cream50, display: 'block',
                   }}>
-                    <Image src={photo} alt={p.name} fill sizes="44px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+                    <Image src={photo} alt={getPrimaryPhotoAlt(p)} fill sizes="44px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
                   </Link>
                   <div style={{ minWidth: 0 }}>
                     <Link href={`/tienda/${p.slug}`} style={{

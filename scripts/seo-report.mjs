@@ -21,6 +21,8 @@
 //                                              # páginas, 200 búsquedas, búsquedas por página,
 //                                              # dispositivos, evolución diaria, oportunidades
 //                                              # y la indexación URL por URL
+//   npm run seo-report -- --velocidad          # además: mide la home y /tienda en celular
+//                                              # con PageSpeed Insights (gratis, sin clave)
 //   npm run seo-report -- --key=C:/claves/sa.json
 //
 // El informe de IA generativa de Search Console y el de Bing no los lee este
@@ -56,6 +58,37 @@ function change(now, before) {
   return (d >= 0 ? '+' : '') + d + '%'
 }
 const cell = (s) => String(s).replace(/\|/g, '\\|')
+
+// ─── Velocidad (PageSpeed Insights) ──────────────────────────────────────────
+// La API pública corre Lighthouse en los servidores de Google y devuelve el
+// mismo puntaje que pagespeed.web.dev, sin abrir el navegador: así "medir la
+// velocidad" deja de ser una tarea a mano. Es gratis y sin clave para este
+// volumen; si alguna vez responde 429, se le pasa una clave gratuita en
+// PAGESPEED_API_KEY. Nunca corta el informe: si falla, lo dice y sigue.
+async function pagespeed(url, strategy = 'mobile') {
+  const params = new URLSearchParams({ url, strategy, category: 'performance' })
+  if (process.env.PAGESPEED_API_KEY) params.set('key', process.env.PAGESPEED_API_KEY)
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), 90_000)
+  try {
+    const res = await fetch(`https://www.googleapis.com/pagespeedonline/v5/runPagespeed?${params}`, { signal: ctrl.signal })
+    const json = await res.json().catch(() => null)
+    if (!res.ok || !json?.lighthouseResult) return { url, error: json?.error?.message ?? `HTTP ${res.status}` }
+    const lr = json.lighthouseResult
+    const audit = (id) => lr.audits?.[id]?.displayValue ?? '—'
+    return {
+      url,
+      score: Math.round((lr.categories?.performance?.score ?? 0) * 100),
+      lcp: audit('largest-contentful-paint'),
+      tbt: audit('total-blocking-time'),
+      cls: audit('cumulative-layout-shift'),
+    }
+  } catch (err) {
+    return { url, error: err.name === 'AbortError' ? 'tardó más de 90 s' : err.message }
+  } finally {
+    clearTimeout(timer)
+  }
+}
 
 function parseArgs(argv) {
   const args = {}
@@ -272,6 +305,25 @@ async function main() {
     } else {
       L.push('Todas indexadas.')
     }
+  }
+  if (args.velocidad) {
+    console.log('⚡  Midiendo la velocidad en celular (PageSpeed Insights)…')
+    const medidas = []
+    for (const u of [SITE_URL, `${SITE_URL}/tienda`]) medidas.push(await pagespeed(u))
+    L.push('', '## Velocidad en celular (PageSpeed Insights)', '')
+    L.push('| Página | Puntaje | Foto principal (LCP) | Bloqueo (TBT) | Saltos (CLS) |', '|---|---|---|---|---|')
+    for (const m of medidas) {
+      const pagina = cell(m.url.replace(SITE_URL, '') || '/')
+      // Sin clave, PageSpeed comparte un cupo global que algunos días se agota:
+      // se traduce a qué hacer, en vez de pegar el error crudo de Google.
+      const motivo = /quota exceeded/i.test(m.error ?? '')
+        ? 'sin cupo gratuito hoy: pedí una clave gratis de PageSpeed y ponela en PAGESPEED_API_KEY'
+        : (m.error ?? '').slice(0, 90)
+      L.push(m.error
+        ? `| ${pagina} | no se pudo medir (${cell(motivo)}) | — | — | — |`
+        : `| ${pagina} | ${m.score} | ${cell(m.lcp)} | ${cell(m.tbt)} | ${cell(m.cls)} |`)
+    }
+    L.push('', '_Puntaje de 0 a 100 en celular. Lo que más pesa es la foto principal (LCP) y el tiempo con la página trabada (TBT)._')
   }
   L.push('', '_Generado con `npm run seo-report`. El informe de IA generativa de Search Console y el de Bing se miran en cada panel._', '')
 

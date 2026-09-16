@@ -1,0 +1,9 @@
+{
+  "$comment": "Conectores del proyecto. chrome-devtools es el oficial de Google: deja auditar velocidad, ver la consola y el detalle de red del sitio real. Se conecta solo al abrir Claude Code (la primera vez pide permiso). Para el de Netlify (estado de deploys, variables de entorno, logs) hace falta tu token personal, así que va aparte: claude mcp add --transport http netlify https://netlify-mcp.netlify.app/mcp",
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
+    }
+  }
+}

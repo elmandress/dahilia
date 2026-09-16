@@ -7,7 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Product, Category, Color, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
-import { getListingPrice, resolveDiscountPercent, BLUR_DATA_URL, isReadyToShip, normalizeText } from '@/lib/types'
+import { getListingPrice, resolveDiscountPercent, BLUR_DATA_URL, isReadyToShip, normalizeText, productPhotoAlt } from '@/lib/types'
 import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Chip, Icon, Breadcrumb, Button } from '@/components/ui/Primitives'
 import { track } from '@/lib/analytics'
@@ -52,7 +52,7 @@ function RecentlyViewedStrip() {
               position: 'relative', width: 100, height: 124,
               borderRadius: 8, overflow: 'hidden', background: dahila.cream50, marginBottom: 6,
             }}>
-              <Image src={p.photo} alt={p.name} fill quality={82} sizes="100px"
+              <Image src={p.photo} alt={productPhotoAlt(p.name)} fill quality={82} sizes="100px"
                 placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
             </div>
             <div style={{ fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink900, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

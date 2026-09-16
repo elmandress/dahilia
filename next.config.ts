@@ -25,6 +25,10 @@ const umamiOrigin = (() => {
 })()
 const clarityEnabled = Boolean(process.env.NEXT_PUBLIC_CLARITY_ID)
 const gaEnabled = Boolean(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID)
+// Fotos de perfil de quienes dejaron la reseña en Google (lh3.googleusercontent.com).
+// Mostrarlas es obligatorio para atribuir la reseña a su autor, y solo entran a
+// la CSP cuando la sección está configurada (ver src/lib/google-reviews.ts).
+const googleReviewsEnabled = Boolean(process.env.GOOGLE_PLACES_API_KEY)
 // Clarity: el loader de www.clarity.ms baja el script real desde
 // scripts.clarity.ms y manda su beacon como imagen a c.clarity.ms / c.bing.com.
 // Con solo 'https://www.clarity.ms' en script-src (y nada en img-src) la CSP
@@ -46,7 +50,7 @@ const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}${analyticsScriptSrc ? ' ' + analyticsScriptSrc : ''};
   style-src 'self' 'unsafe-inline';
-  img-src 'self' blob: data: https://*.supabase.co${analyticsImgSrc ? ' ' + analyticsImgSrc : ''};
+  img-src 'self' blob: data: https://*.supabase.co${googleReviewsEnabled ? ' https://*.googleusercontent.com' : ''}${analyticsImgSrc ? ' ' + analyticsImgSrc : ''};
   font-src 'self' data:;
   connect-src 'self' https://*.supabase.co wss://*.supabase.co${analyticsConnectSrc ? ' ' + analyticsConnectSrc : ''};
   object-src 'none';

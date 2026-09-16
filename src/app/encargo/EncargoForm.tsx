@@ -196,7 +196,10 @@ export default function EncargoForm({
       if (res.ok) {
         // El encargo a medida es la otra "venta" del sitio — sin este evento,
         // el embudo de Umami solo veía el camino carrito→WhatsApp.
-        track('encargo_sent', referencia ? { tipo, desde: referencia.slug } : { tipo })
+        // GA4: generate_lead (un encargo es un pedido de presupuesto).
+        track('encargo_sent', referencia ? { tipo, desde: referencia.slug } : { tipo }, {
+          name: 'generate_lead', params: { lead_source: 'encargo' },
+        })
         // Alta en la lista VIP si la pidió — nunca bloquea el encargo.
         if (vipOptIn && email.trim()) {
           subscribeToVipList(email.trim(), 'encargo').catch(() => { /* best-effort */ })

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { ProductCard } from '@/components/ProductCard'
 import { DropTeaser } from '@/components/DropTeaser'
 import { TestimonialsStrip } from '@/components/TestimonialsStrip'
+import { GoogleReviews } from '@/components/GoogleReviews'
 import type { Product, Discount } from '@/lib/types'
 import type { Testimonial } from '@/components/TestimonialsStrip'
 import { BLUR_DATA_URL, isReadyToShip } from '@/lib/types'
@@ -468,6 +469,11 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
           </div>
         </div>
       </section>
+
+      {/* RESEÑAS DE GOOGLE — reales, traídas del Perfil cuando la sección
+          entra en pantalla. Si no está configurada la clave, no dibuja nada
+          (ver src/components/GoogleReviews.tsx). */}
+      <GoogleReviews />
 
       {/* TESTIMONIALS — social proof strip; only rendered when there are items */}
       {testimonials.length > 0 && <TestimonialsStrip items={testimonials} />}

@@ -1,0 +1,15 @@
+{
+  "$comment": "Complementos del proyecto (16/09/2026). Al abrir Claude Code en esta carpeta, aparecen para instalar con /plugin. Si alguno figura como no instalado, corré: claude plugin install <nombre>@claude-plugins-official. security-guidance revisa cada cambio buscando agujeros de seguridad; typescript-lsp avisa errores de tipo al instante (necesita: npm i -g typescript-language-server).",
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    }
+  },
+  "enabledPlugins": [
+    "security-guidance@claude-plugins-official",
+    "typescript-lsp@claude-plugins-official"
+  ]
+}

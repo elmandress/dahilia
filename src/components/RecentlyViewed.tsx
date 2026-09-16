@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { dahila } from './ui/Primitives'
-import { BLUR_DATA_URL } from '@/lib/types'
+import { BLUR_DATA_URL, productPhotoAlt } from '@/lib/types'
 import { recordRecentlyViewed, type RecentItem } from '@/lib/recentlyViewed'
 
 export type { RecentItem }
@@ -55,7 +55,7 @@ export function RecentlyViewed({ current }: { current: RecentItem }) {
               position: 'relative', width: '100%', aspectRatio: '3 / 4',
               borderRadius: 10, overflow: 'hidden', background: dahila.cream50, marginBottom: 8,
             }}>
-              <Image src={p.photo} alt={p.name} fill quality={82} sizes="160px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+              <Image src={p.photo} alt={productPhotoAlt(p.name)} fill quality={82} sizes="160px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
             </div>
             <div style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 14, color: dahila.ink900, lineHeight: 1.2 }}>{p.name}</div>
             {p.price > 0 && (

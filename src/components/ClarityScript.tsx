@@ -1,6 +1,7 @@
 'use client'
 
 import Script from 'next/script'
+import { useAnalyticsAllowed } from '@/lib/use-analytics-allowed'
 
 // Microsoft Clarity — heatmaps y grabaciones de sesión, gratis y sin límite.
 // Complementa a Umami (AnalyticsScript): Umami cuenta el embudo (qué pasa),
@@ -14,8 +15,10 @@ const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID
 // en el celular (Lighthouse: la foto de la home tardaba 1,4 s en pintarse ya
 // descargada). Ahora arranca cuando la página terminó de cargar: se pierde el
 // primer par de segundos de cada grabación, no la sesión.
+// No graba /admin ni el tráfico interno (use-analytics-allowed.ts).
 export function ClarityScript() {
-  if (!CLARITY_ID) return null
+  const allowed = useAnalyticsAllowed()
+  if (!CLARITY_ID || !allowed) return null
   return (
     <Script id="ms-clarity" strategy="lazyOnload">
       {`(function(c,l,a,r,i,t,y){

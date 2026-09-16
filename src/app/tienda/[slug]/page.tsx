@@ -76,7 +76,14 @@ async function resolveSlug(slug: string): Promise<ResolvedSlug> {
     if (cat) return { type: 'category', category: cat }
     if (snap.products.some((p) => p.slug === slug)) return { type: 'product' }
     if (snap.products.length === 0) return 'down'
-    return null
+    // La base falló y el snapshot no conoce este slug: eso NO es "no existe"
+    // (puede ser un producto posterior al snapshot). Antes devolvía null → 404,
+    // el 404 quedaba guardado en la caché y Google lo veía: sweater-cherry,
+    // creado el 03/09 y ausente del snapshot del 22/08, dio 404 al rastreo
+    // del 14/09/2026. Lanzar es un error transitorio: ISR sigue sirviendo la
+    // versión anterior y Google reintenta sin desindexar (mismo criterio que
+    // ProductPage).
+    throw new Error(`Supabase caído y sin snapshot para /tienda/${slug}`)
   }
 }
 
@@ -185,6 +192,9 @@ export async function generateMetadata({
   } catch (e) {
     unstable_rethrow(e)
     product = getSnapshotData().products.find((p) => p.slug === slug) ?? null
+    // Sin base y sin snapshot para este slug: no emitir "no encontrado" con
+    // noindex para una ficha que puede existir (ver resolveSlug).
+    if (!product) throw e
   }
   if (!product) return { title: 'Producto no encontrado', robots: { index: false, follow: false } }
 

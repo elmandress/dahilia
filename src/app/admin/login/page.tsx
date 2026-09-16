@@ -1,17 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 import '../admin.css'
 
 import { createClient } from '@/lib/supabase/client'
 
+const DENIED_MSG = 'Esa cuenta no tiene permiso para entrar al panel.'
+const noSubscribe = () => () => {}
+// ?e=sin-permiso lo pone el proxy cuando rebota una cuenta que no es admin
+// (lib/supabase/middleware.ts). Se lee de la URL sin useSearchParams para no
+// obligar a un límite de Suspense en esta página estática.
+const readDenied = () => new URLSearchParams(window.location.search).get('e') === 'sin-permiso'
+
 export default function AdminLoginPage() {
   const router = useRouter()
+  const denied = useSyncExternalStore(noSubscribe, readDenied, () => false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Cierra la sesión rebotada: si queda abierta, cada intento vuelve a caer acá.
+  useEffect(() => {
+    if (denied) createClient().auth.signOut()
+  }, [denied])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,6 +50,14 @@ export default function AdminLoginPage() {
 
       if (authError) {
         throw authError
+      }
+
+      // Entrar no alcanza: la cuenta tiene que estar anotada como admin. Si no
+      // lo está, se cierra la sesión acá en vez de rebotar contra el proxy.
+      const { data: isAdmin, error: rpcError } = await supabase.rpc('is_admin')
+      if (!rpcError && isAdmin !== true) {
+        await supabase.auth.signOut()
+        throw new Error(DENIED_MSG)
       }
 
       // replace() prevents back-button returning to login. refresh() forces
@@ -66,7 +87,7 @@ export default function AdminLoginPage() {
           <p style={{ color: 'var(--ink-500)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Panel de administración</p>
         </div>
 
-        {error && <div className="login-error" style={{ color: 'var(--danger)', fontSize: 13, marginBottom: 16, textAlign: 'center' }}>{error}</div>}
+        {(error || denied) && <div role="alert" className="login-error" style={{ color: 'var(--danger)', fontSize: 13, marginBottom: 16, textAlign: 'center' }}>{error || DENIED_MSG}</div>}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div className="admin-field" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

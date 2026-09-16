@@ -3,8 +3,11 @@
 -- Run in the Supabase SQL Editor. Idempotent: safe to re-run.
 -- ============================================================
 -- Provee una función que devuelve SOLO agregados (conteos, top de productos por
--- carrito) — nunca PII. Por eso puede otorgarse a `anon`, y el cron
--- (/api/cron/daily-summary) la llama sin necesitar la service_role key.
+-- carrito), nunca PII. El cron (/api/cron/daily-summary) la llama con la
+-- clave de servicio del servidor.
+--
+-- 14/09/2026: antes se otorgaba a `anon`, y cualquiera con la clave pública
+-- podía ver los números del negocio. Ver database/seguridad-2026-09.sql.
 --
 -- Si NO corrés esta migración, el endpoint del resumen degrada a estadísticas de
 -- carritos (que sí son legibles por anon) y omite los conteos de encargos.
@@ -35,6 +38,6 @@ AS $$
   );
 $$;
 
--- Solo agregados → seguro exponerlo a los roles públicos para que el cron lo use.
-REVOKE ALL ON FUNCTION public.get_daily_summary() FROM public;
-GRANT EXECUTE ON FUNCTION public.get_daily_summary() TO anon, authenticated;
+-- Solo el servidor (clave de servicio) la puede llamar.
+REVOKE ALL ON FUNCTION public.get_daily_summary() FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_daily_summary() TO service_role;

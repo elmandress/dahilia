@@ -20,7 +20,11 @@ export const metadata: Metadata = {
   title: 'Notas sobre crochet, cuidado de prendas y tejido a mano',
   description:
     'Guías sobre cuidado de prendas tejidas, cómo comprar crochet en Uruguay, regalos tejidos a mano y encargos a medida. Escritas por quien teje.',
-  alternates: { canonical: '/blog' },
+  // El RSS (feed.xml/route.ts), para lectores de feeds y para que Google lo encuentre.
+  alternates: {
+    canonical: '/blog',
+    types: { 'application/rss+xml': [{ url: '/blog/feed.xml', title: 'Notas de Dahila Crochet' }] },
+  },
   openGraph: {
     ...OG_BASE,
     title: 'Notas — Dahila Crochet',

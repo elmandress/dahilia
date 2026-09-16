@@ -57,7 +57,7 @@ function VipSignup() {
     startTransition(async () => {
       const res = await subscribeToVipList(email, 'footer')
       if (res.ok) {
-        if (!res.already) track('vip_subscribe', { source: 'footer' })
+        if (!res.already) track('vip_subscribe', { source: 'footer' }, { name: 'sign_up', params: { method: 'lista_vip' } })
         setDone(res.already ? 'Ya estabas en la lista — te avisamos primero.' : '¡Lista! Vas a ver cada colección antes que nadie.')
       } else {
         setError(res.error || 'No pudimos anotarte. Probá de nuevo.')
@@ -66,7 +66,12 @@ function VipSignup() {
   }
 
   return (
-    <div style={{
+    // data-nosnippet: este bloque se repite en todas las páginas y Google lo
+    // estaba usando como texto de los sublinks de la marca ("Anotate y comprá
+    // 24 horas antes…" bajo Sets, Accesorios y Colección; búsqueda del
+    // 15/09/2026). Así toma la descripción de cada página. Solo afecta el
+    // fragmento del buscador, no la indexación.
+    <div data-nosnippet="" style={{
       marginTop: 52, paddingTop: 32, borderTop: `1px solid ${dahila.border}`,
       display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'flex-end', justifyContent: 'space-between',
     }}>

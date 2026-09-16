@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'node:crypto'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { sendDailySummary, reportSystemError, type DailySummaryData } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
@@ -32,7 +33,11 @@ function authorized(req: NextRequest): boolean {
 }
 
 async function buildStats(): Promise<DailySummaryData> {
-  const supabase = await createClient()
+  // Clave de servicio (solo servidor): desde database/seguridad-2026-09.sql,
+  // get_daily_summary() ya no la puede llamar cualquiera con la clave
+  // pública. Sin la variable cae al cliente anónimo: el RPC falla y se usa
+  // el fallback de abajo.
+  const supabase = createAdminClient() ?? (await createClient())
 
   // Preferred path: aggregate RPC (needs schema-daily-summary.sql). No PII.
   const { data, error } = await supabase.rpc('get_daily_summary')
@@ -40,11 +45,11 @@ async function buildStats(): Promise<DailySummaryData> {
     return data as unknown as DailySummaryData
   }
 
-  // Fallback si el RPC falla. Ojo: desde cerrar-carritos-favoritos.sql,
-  // cart_items ya no es legible con este cliente (anon, sin sesión), así que
-  // esta consulta vuelve vacía y el resumen saldría en cero aunque haya habido
-  // carritos. El error queda en el log de la función para que un "0" del
-  // fallback no se lea como "no pasó nada".
+  // Fallback si el RPC falla. Ojo: con el cliente anónimo (sin la clave de
+  // servicio), cart_items no es legible desde cerrar-carritos-favoritos.sql,
+  // así que esta consulta vuelve vacía y el resumen saldría en cero aunque
+  // haya habido carritos. El error queda en el log de la función para que un
+  // "0" del fallback no se lea como "no pasó nada".
   console.error('daily-summary: get_daily_summary falló; el fallback no ve cart_items', error?.message ?? 'sin datos')
   const { data: rows } = await supabase
     .from('cart_items')

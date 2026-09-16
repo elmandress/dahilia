@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { unstable_rethrow } from 'next/navigation'
 import { getCatalog } from '@/lib/catalog'
 import { getPrimaryPhoto, getListingPrice, isReadyToShip } from '@/lib/types'
 import { botImageUrl } from '@/lib/media'
@@ -10,16 +11,37 @@ import { OG_BASE_NO_IMAGE } from '@/lib/og'
 
 export const revalidate = 3600
 
-export const metadata: Metadata = {
-  title: 'Ropa de crochet hecha a mano en Uruguay',
-  description: 'Tops, cardigans, bolsos y sets tejidos a mano en Montevideo, con precios claros. Cada pieza se puede pedir en tu talle y tus colores. Envío a todo Uruguay.',
-  alternates: { canonical: '/tienda' },
-  openGraph: {
-    ...OG_BASE_NO_IMAGE,
-    title: 'Ropa de crochet hecha a mano en Uruguay',
-    description: 'Tops, cardigans, bolsos y sets tejidos a mano en Montevideo, con precios claros. Envío a todo Uruguay.',
-    url: '/tienda',
-  },
+const TITULO = 'Ropa de crochet hecha a mano en Uruguay'
+
+// El precio de entrada va al principio de la descripción, igual que en las
+// fichas y en las categorías desde el 13/09: en Google, un número concreto le
+// dice a quien busca si está en su rango antes de entrar. /tienda es la
+// segunda página con más impresiones (195 en 28 días al 16/09, posición 4,5)
+// y su descripción no tenía ninguno. Si el catálogo no responde, va sin precio.
+export async function generateMetadata(): Promise<Metadata> {
+  let desde = ''
+  try {
+    const { products } = await getCatalog()
+    const precios = products
+      .filter((p) => p.status === 'active' && !p.is_custom_only)
+      .map((p) => getListingPrice(p))
+      .filter((n) => n > 0)
+    if (precios.length) desde = `Desde UYU ${Math.min(...precios).toLocaleString('es-UY')}. `
+  } catch (e) {
+    unstable_rethrow(e)
+  }
+  const description = `${desde}Tops, cardigans, bolsos y sets tejidos a mano en Montevideo. Cada pieza se puede pedir en tu talle y tus colores. Envío a todo Uruguay.`
+  return {
+    title: TITULO,
+    description,
+    alternates: { canonical: '/tienda' },
+    openGraph: {
+      ...OG_BASE_NO_IMAGE,
+      title: TITULO,
+      description,
+      url: '/tienda',
+    },
+  }
 }
 
 export default async function TiendaPage({

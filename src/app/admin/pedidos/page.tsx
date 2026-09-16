@@ -126,6 +126,19 @@ export default function PedidosAdminPage() {
   const lost = recent.filter((o) => o.status === 'no_concreto')
   const unmarked = recent.length - sold.length - lost.length
   const closeRate = sold.length + lost.length > 0 ? Math.round((sold.length / (sold.length + lost.length)) * 100) : null
+  // Qué canal trae pedidos y cuál vende (datos de la base, no de analytics:
+  // no los pierden los ad-blockers). Ordenado por lo vendido.
+  const byChannel = [...recent.reduce((m, o) => {
+    const ch = channelLabel({ utm_source: o.utm_source, referrer_host: o.referrer_host })
+    const row = m.get(ch) ?? { pedidos: 0, vendidos: 0, monto: 0 }
+    row.pedidos += 1
+    if (o.status === 'vendido') {
+      row.vendidos += 1
+      row.monto += Number(o.total_uyu) || 0
+    }
+    return m.set(ch, row)
+  }, new Map<string, { pedidos: number; vendidos: number; monto: number }>())]
+    .sort((a, b) => b[1].vendidos - a[1].vendidos || b[1].pedidos - a[1].pedidos)
 
   return (
     <div>
@@ -196,6 +209,39 @@ export default function PedidosAdminPage() {
             <div className="admin-card" style={{ marginBottom: 14, fontSize: 13, color: '#4A4143' }}>
               Para marcar qué pedidos se vendieron (y ver el porcentaje de cierre), corré
               {' '}<code>database/embudo-pedidos-2026-09.sql</code> en el SQL Editor de Supabase.
+            </div>
+          )}
+          {byChannel.length > 0 && (
+            <div className="admin-card" style={{ marginBottom: 14 }}>
+              <h3 style={{ margin: '0 0 4px', fontSize: '1rem', fontWeight: 500 }}>De dónde vienen · 30 días</h3>
+              <p style={{ margin: '0 0 12px', fontSize: 12.5, color: '#8C8285' }}>
+                El canal es la última vez que la persona llegó desde afuera (Instagram, TikTok, Google o un link con UTM)
+                en el mes antes del pedido. &quot;Directo&quot; es quien entró escribiendo la dirección o desde una app que
+                no avisa de dónde viene. Los pedidos de antes de septiembre 2026 solo guardaban la visita del pedido,
+                así que tienen más &quot;Directo&quot; del real.
+              </p>
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Canal</th>
+                      <th>Pedidos</th>
+                      {hasStatus && <th>Vendidos</th>}
+                      {hasStatus && <th>Monto vendido</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {byChannel.map(([channel, r]) => (
+                      <tr key={channel}>
+                        <td>{channel}</td>
+                        <td>{r.pedidos}</td>
+                        {hasStatus && <td>{r.vendidos}</td>}
+                        {hasStatus && <td>{formatPrice(r.monto)}</td>}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>

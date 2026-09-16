@@ -1,3 +1,6 @@
+-- ⚠️ 14/09/2026: SUPERADO. Correr database/seguridad-2026-09.sql, que hace
+--    los PASOS 1 a 3 de este archivo de una vez, sin nada que descomentar y
+--    sin riesgo de quedarte afuera del panel. Este archivo queda como historia.
 -- ============================================================
 -- Dahila Crochet — Endurecimiento de seguridad (schema-security-hardening.sql)
 -- LEER TODO ANTES DE CORRER. Este archivo tiene pasos que requieren una

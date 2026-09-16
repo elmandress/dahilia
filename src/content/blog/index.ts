@@ -82,10 +82,13 @@ export function getArticle(slug: string): Article | undefined {
  * criterio editorial y de temporada; si alguna deja de existir, se completa
  * con las más nuevas.
  */
+// 14/09/2026: "regalos tejidos a mano" entra primera. Search Console avisó que
+// sus impresiones subieron 232% (125 en 28 días, posición 6,8): el enlace
+// desde la home le da más fuerza justo a la página que Google está probando.
 const HOME_ARTICLE_SLUGS = [
+  'regalos-tejidos-a-mano',
   'regalos-de-navidad-tejidos-a-mano',
   'accesorios-tejidos-para-la-playa',
-  'pelotitas-en-prendas-tejidas',
 ]
 
 export function getHomeArticles(limit = 3): Article[] {

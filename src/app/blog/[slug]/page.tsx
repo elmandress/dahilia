@@ -63,7 +63,10 @@ export async function generateMetadata({
     // sitio ya aparece aparte en el resultado (WebSite en el layout).
     title: { absolute: article.metaTitle ?? article.title },
     description: article.description,
-    alternates: { canonical: `/blog/${article.slug}` },
+    alternates: {
+      canonical: `/blog/${article.slug}`,
+      types: { 'application/rss+xml': [{ url: '/blog/feed.xml', title: 'Notas de Dahila Crochet' }] },
+    },
     openGraph: {
       ...OG_BASE,
       type: 'article',

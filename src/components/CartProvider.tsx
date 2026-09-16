@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import type { CartItem, Product, Discount } from '@/lib/types'
 import { getFinalPrice } from '@/lib/types'
-import { track } from '@/lib/analytics'
+import { track, gaCommerce } from '@/lib/analytics'
 
 type CartItemWithProduct = CartItem & { product: Product }
 
@@ -197,7 +197,13 @@ export function CartProvider({
       // En /carrito el ítem aparece en la lista ahí mismo — abrir el drawer
       // encima sería redundante; el caller lo apaga con { openDrawer: false }.
       if (opts?.openDrawer !== false) setDrawerOpen(true)
-      track('add_to_cart', { product: product.slug, size, qty })
+      // GA4: add_to_cart con precio y producto (informes de e-commerce).
+      track('add_to_cart', { product: product.slug, size, qty }, {
+        params: gaCommerce([{
+          item_id: product.slug, item_name: product.name, price: getFinalPrice(product, size),
+          quantity: qty, item_variant: size, item_category: product.category?.slug,
+        }]),
+      })
     } catch (e) {
       console.error('addToCart failed', e)
       // Surface the error so the user knows the add failed.

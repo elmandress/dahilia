@@ -520,6 +520,172 @@ En local la analítica va bloqueada, así que el efecto de diferir GA y Clarity 
 
 ---
 
+## 12. Quinta vuelta (14/09): medición en GA4 e indexación del blog
+
+Pedido de Mati: revisar qué muestran Search Console y GA4, qué eventos faltan, y seguir mejorando.
+
+| Cambio | Problema y evidencia | Trade-off |
+|---|---|---|
+| **GA4 recibe eventos recomendados.** `view_item`, `add_to_cart`, `begin_checkout` (pedido por WhatsApp) y `generate_lead` (encargo), con precio y producto, más `sign_up` (lista VIP) y `search`. Umami sigue igual | GA4 mostraba "Eventos clave: 0" y recomendaba medir leads: los nombres propios no llenan los informes de e-commerce | En GA4 los eventos del embudo cambian de nombre; en Umami no |
+| **Colas para gtag y Umami** | Con los scripts diferidos, la vista de la ficha se medía antes de que existieran y se perdía | — |
+| **Tráfico interno excluido.** Nada se mide en `/admin`, ni en un navegador que entró al admin | "Admin \| Dahila Crochet" tenía 66 vistas en GA4 | Las visitas de Anush a la tienda, desde un dispositivo donde abrió el admin, no cuentan (a propósito) |
+| **Búsquedas sin resultados** (`search_no_results` en Umami, `search` en GA4) | No había forma de ver qué busca la gente y no encuentra | Desde 4 letras y una vez por término, para no llenar de pedazos de palabra |
+| **"Regalos tejidos a mano" entra en la franja de la home** | Search Console: sus impresiones subieron 232% | Sale la de pelotitas, que se pide a mano |
+| **RSS `/blog/feed.xml` y `npm run sitemaps`** | La API de indexación no sirve y no hay API para "Solicitar indexación"; reenviar el sitemap sí se puede automatizar | — |
+
+Estado al 14/09:
+- 69 de 78 URLs indexadas.
+- 5 de las 6 notas nuevas entraron en menos de 24 h.
+- Search Console tiene 3 días de atraso: el efecto del deploy del 13/09 se ve desde el 16 o 17/09.
+
+Verificación:
+- typecheck y lint: OK;
+- build con IDs falsos: OK;
+- `analytics.mjs`: 9 de 9;
+- `micro.mjs`: 17 de 17.
+
+Pendiente de Mati después del deploy (tareas `medicion-on` y `tiktok-utm`):
+- marcar `begin_checkout` y `generate_lead` como eventos clave;
+- vincular Search Console con GA4;
+- poner UTM en el link de TikTok.
+
+---
+
+## 13. Sexta vuelta (14/09): seguridad y de dónde vienen las ventas
+
+Pedido de Mati: seguir mejorando las ventas y el análisis, y revisar la seguridad ("el script de SQL del admin").
+
+**Estado verificado en vivo** (con la clave pública, solo lectura):
+- El registro de cuentas de Supabase sigue abierto (`disable_signup: false`).
+- Sin cuenta no se ve ninguna fila de carritos, favoritos, pedidos, encargos, suscriptoras, tejedoras, cupones ni costos. Eso está bien desde agosto.
+- Lo que sigue abierto es "cualquier cuenta es admin":
+  - el PASO 3 de `schema-security-hardening.sql` nunca se corrió;
+  - el proxy del admin solo pedía tener sesión.
+- `get_daily_summary()` la podía llamar cualquiera sin cuenta (carritos y encargos agregados).
+- Next 16.2.6 tenía un aviso crítico. Entre otros problemas: saltarse el proxy con Turbopack y ejecución remota en el optimizador de imágenes con AVIF.
+- Las cabeceras de seguridad en producción están bien (CSP, HSTS, X-Frame-Options, nosniff).
+- Los datos de `/admin/estrategia` no aparecen en ningún JS público (0 de 19 archivos de las páginas públicas).
+
+| Cambio | Problema y evidencia | Trade-off |
+|---|---|---|
+| **`database/seguridad-2026-09.sql`.** Un solo script: admin por mail, cierre de permisos por contenido, fotos solo para admin, `get_daily_summary` solo para el servidor, y una tabla de resultado al final | El PASO 3 viejo había que descomentarlo a mano, podía dejarte afuera del panel y dependía de los nombres de las policies (ya falló una vez por un nombre con espacio) | Hay que escribir el mail una vez, y lo tiene que correr Mati |
+| **El proxy exige `is_admin()` en `/admin`.** El login cierra la sesión de las cuentas sin permiso | Con el registro abierto, cualquiera con cuenta entraba al panel | Una consulta más por cada navegación dentro del admin; el sitio público no la paga |
+| **`getAdminUser()` en `updateEncargoStatus` y `/api/seo/reindex`** | Se pueden llamar directo, sin pasar por la página del admin | — |
+| **El resumen diario usa la clave de servicio** | Hacía falta para poder cerrar `get_daily_summary` a la clave pública | Sin esa variable en Netlify el resumen sale en cero. Ya está cargada, porque el carrito la usa |
+| **Next 16.3.5 y `npm audit` en 0** | Había avisos críticos y altos | Es una versión menor nueva: se probó con toda la batería |
+| **Atribución "último clic no directo", 30 días** | El canal se guardaba solo en la pestaña, y quien volvía otro día quedaba como "Directo". GA4 registró 172 sesiones directas en 7 días | Una visita directa que llega después de una de Instagram se le acredita a Instagram (el mismo criterio que usa GA4) |
+| **Los links de "Compartir" llevan `utm_source=compartido`**, y se manda el evento `share` | El boca a boca llegaba sin referrer y se contaba como "Directo" | El link compartido queda más largo |
+| **Canal en el admin.** `/admin/pedidos` suma "De dónde vienen · 30 días" (pedidos, vendidos y monto por canal); `/admin/encargos`, una línea por canal | Se podía ver qué canal trae visitas, pero no cuál vende | — |
+
+Orden para Mati:
+1. Apagar el registro en Authentication.
+2. Correr el SQL con su mail.
+3. Hacer el deploy.
+
+Si el deploy va antes y su cuenta no estaba en `admins`, el panel la rebota hasta que corra el SQL.
+
+Verificación, sobre un build local de Next 16.3.5 con IDs de analítica falsos:
+- typecheck y lint: 0 errores y 0 avisos;
+- `security.mjs`: 13 de 13;
+- `share.mjs`: 5 de 5;
+- `analytics.mjs`: 9 de 9;
+- `micro.mjs`: 17 de 17;
+- `smoke.mjs`: 62 de 62. Se corrigieron 2 chequeos que daban falso positivo: el aviso de cola en los datos del carrito, y un texto de Configuración.
+
+Lo que no se pudo probar desde acá: el panel con una cuenta admin real (no hay credenciales en este entorno) y el SQL en la base real.
+
+Hallazgo en producción: `/tienda/sweater-cherry` dio 404 una vez. Era una copia vieja en la caché de Netlify, que se refrescó sola. Las 78 URLs del sitemap dan 200 desde entonces. Si Google la pidió en ese momento, eso explicaría por qué no está indexada: hay que pedir la indexación a mano (está en la lista).
+
+---
+
+## 14. 15/09: estadísticas, indexación y el 404 de sweater-cherry
+
+**Seguridad:**
+- El SQL se corrió: `get_daily_summary` da "permission denied" con la clave pública.
+- El registro de cuentas sigue abierto (`disable_signup: false`): falta apagarlo en Authentication.
+
+**Search Console** (16/08 a 12/09):
+- 129 clics (+514%) y 891 impresiones (+532%), posición media 9,2.
+- El 12/09 fue el día con más impresiones (82).
+- Solo queda `sitemap.xml`: leído el 15/09, con 78 páginas y 64 imágenes, 0 errores. `sitemap.xlm` se quitó.
+
+**Indexación:**
+- De las 9 URLs que faltaban, 7 ya están: las 6 notas nuevas y /tienda/sweaters, rastreadas el 14/09.
+- Faltan dos:
+  - `/tienda/sweater-cherry`: Google la vio con 404 el 14/09 a las 13:05 UTC;
+  - `/tienda/top-race`: Google todavía no la conoce.
+
+**Qué búsquedas llevan a cada página:**
+- /info, /contacto y /ofertas solo aparecen por "dahila" y "dahila uy": son los sublinks de la marca, así que su CTR bajo es normal.
+- /tienda/tops sale por búsquedas de producto sin clics, en posiciones de 1,5 a 8: "top de hilo", "tops de lana", "tops tejidos", "top poncho". El título nuevo es del 13/09: medir desde el 21/09.
+
+| Cambio | Problema y evidencia | Trade-off |
+|---|---|---|
+| **`resolveSlug` y `generateMetadata` lanzan un error** cuando la base falla y la copia de respaldo no conoce el slug | Google vio 404 en sweater-cherry. Se creó el 03/09 y la copia de respaldo era del 22/08: con una falla pasajera de la base, la ficha respondía "no existe", y ese 404 quedaba en la caché | Durante una caída, un producto nuevo muestra un error en vez de un 404. Es lo correcto, porque no se sabe si existe |
+| **Copia de respaldo regenerada** el 15/09: 37 productos, con la clave pública | Tenía 3 semanas: le faltaban 2 productos y los precios estaban viejos | — |
+| **`data-nosnippet` en el bloque de lista VIP del footer** | Google usaba "Anotate y comprá 24 horas antes…" como texto de los sublinks de Sets, Accesorios y Colección | Ese texto deja de aparecer en Google, pero se repite en todas las páginas, así que no aporta |
+
+**Reseñas:** hay 9 de 5 estrellas en el Perfil, pedidas a cambio de un 10%. La política de Google lo prohíbe (support.google.com/contributionpolicy/answer/7400114): de acá en más hay que pedirlas sin incentivo.
+
+**En Configuración falta** cargar el Perfil de Google, el link para reseñas y TikTok: el JSON-LD solo declara Instagram.
+
+**Verificación:**
+- typecheck, lint y build: OK;
+- security: 13 de 13;
+- share: 5 de 5;
+- analytics: 9 de 9;
+- micro: 17 de 17;
+- smoke: 62 de 62. Incluye que un slug inexistente sigue dando 404 con noindex.
+
+**No verificado:** el caso "base caída + slug fuera de la copia de respaldo", porque la base caída no se puede simular en el build local. Se revisó leyendo el código, que repite el criterio que ya usa `ProductPage`.
+
+---
+
+## 15. 16/09: reseñas reales de Google, fotos y CTR
+
+**Search Console** (17/08 al 13/09): 130 clics (+519%) y 1.048 impresiones (+608%), posición media 8,8. El 13/09 marcó 166 impresiones en un día, contra 82 el 12/09 y unas 50 antes. El CTR bajó de 14,5% a 12,4%, que es lo esperable cuando entran muchas impresiones nuevas en posiciones más bajas.
+
+**Indexación:** entraron 7 de las 9 que faltaban. Siguen afuera `/tienda/sweater-cherry` (Google no volvió a pasar desde el 404 del 14/09) y `/tienda/top-race`, que pasó de "no la reconoce" a "descubierta, sin indexar".
+
+**Qué se descartó con datos:** /info, /contacto y /ofertas tienen 78 a 88 impresiones con casi ningún clic, pero las únicas búsquedas visibles que las traen son "dahila" y "dahila uy": son los sublinks de la marca y no se optimizan. El margen real está en las páginas en posición 6 o 7 con intención propia (cuidados 118, Accesorios 82, Tops 70, Tejedoras 64), y esas ya tienen título nuevo del 13/09: se miden el 21/09.
+
+| Cambio | Problema y evidencia | Trade-off |
+|---|---|---|
+| **Sección de reseñas reales de Google en la home** (`GoogleReviews` + `/api/resenas` + `src/lib/google-reviews.ts`) | El Perfil tiene 9 reseñas de 5 estrellas y no aparecían en el sitio. Copiarlas a mano las deja viejas y sin atribución | Se piden al entrar en pantalla y no se guardan: la política de Places solo exime al identificador del lugar. Necesita `GOOGLE_PLACES_API_KEY`; sin clave, la sección no se dibuja |
+| **Texto alternativo con el tipo de prenda** ("Spring cardigan: cardigan de crochet tejido a mano en Uruguay") | Google Imágenes da más de 200 impresiones en posiciones 20 a 50 y 1 clic, y 101 fotos no tienen alt propio | El alt es más largo, y también lo lee un lector de pantalla: por eso queda corto y sin relleno |
+| **`/tienda` con precio de entrada en la descripción** ("Desde UYU 360.") | Es la segunda página con más impresiones (195, posición 4,5) y era la única sin número en el snippet | La descripción se arma con el catálogo: si no responde, va sin precio |
+| **`database/perfiles-2026-09.sql`** (TikTok y Perfil de Google) | Sin esos links, el JSON-LD solo declara Instagram, y Google sigue sugiriendo "Dahlia Crochet" | Falta el link para dejar reseña, que solo está en el panel de Google |
+
+**Reglas de Google verificadas el 16/09:**
+- "You must not pre-fetch, cache, or store Places API content beyond the allowed exceptions"; el place ID es la excepción y "You can therefore store place ID values indefinitely". El permiso de 30 días de los términos es para coordenadas.
+- Costo: SKU "Place Details Enterprise + Atmosphere", USD 25 cada 1.000 llamadas, con 1.000 gratis por mes.
+
+**Verificación:** typecheck, lint y build OK. Reseñas 13 de 13 (incluye que sin clave no dibuja nada, que la respuesta va con `no-store`, y el render con datos simulados: nombre, foto, texto completo y link por reseña). Seguridad 13 de 13, Compartir 5 de 5, analítica 9 de 9, micro 17 de 17, smoke 62 de 62. Contra producción: las 78 URLs del sitemap dan 200.
+
+**No verificado:** la llamada real a Google (la clave todavía no existe) y el panel con una cuenta admin real.
+
+### Segunda parte del 16/09 (pedido de Mati: "optimizá y aplicá todo lo seguro")
+
+| Cambio | Problema y evidencia | Trade-off |
+|---|---|---|
+| **Las reseñas van pasando solas** (una por vez, con flechas, puntos y pausa al pasar el cursor o con el teclado; 9 segundos) | Pedido de Mati. Tres tarjetas fijas ocupaban mucho y mostraban solo 3 de las 5 que trae Google | Cambia el texto mientras alguien lee: por eso 9 segundos y no 5, y respeta a quien pidió menos movimiento en su sistema |
+| **Texto alternativo en TODAS las fotos de producto**: tienda, carrito, cajón del carrito, relacionados, "viste hace poco" y la página de Instagram | Google Imágenes da más de 200 impresiones con 1 clic. Antes esas fotos decían solo el nombre de la prenda | — |
+| **`npm run indexnow`** (`scripts/indexnow-submit.mjs`) | El sitio solo avisaba a Bing cuando Anush guardaba algo en el admin: una nota nueva del blog llega por deploy y nunca se avisaba. La llave ya estaba publicada y responde 200 | Google no usa IndexNow; esto es para Bing, y ChatGPT busca con Bing |
+| **`npm run seo-report -- --velocidad`** | "Medir la velocidad" era una tarea a mano cada vez. PageSpeed Insights lo hace por API, gratis | Sin clave comparte un cupo global que algunos días se agota: el informe lo dice y sigue. La clave gratuita (sin tarjeta) va en `PAGESPEED_API_KEY` |
+| **`pinterest_url` en el SQL de perfiles** | Faltaba declarar la cuenta de Pinterest como oficial | — |
+
+**`npm run ga` (nuevo):** informe de Google Analytics con la MISMA cuenta de servicio que Search Console, solo lectura. Saca usuarios, sesiones, eventos clave, canales, páginas, eventos y ciudades a `research/mediciones/ga-FECHA.md`. Con esto se termina la dependencia de capturas de pantalla para ver las analíticas. Falta que Mati habilite "Google Analytics Data API" y "Google Analytics Admin API" y agregue la cuenta de servicio como Lector en GA4. Probado: el script consigue el token y devuelve el error exacto con el link para habilitarla. La API de Analytics no cobra; limita consultas por hora.
+
+**Tramo gratuito de Google Maps Platform (verificado el 16/09):** no es parejo. Las SKU Essentials traen 10.000 eventos gratis por mes, las Pro 5.000, y las Enterprise y "Enterprise + Atmosphere" (la de las reseñas) **1.000**. Lo que pasa del tope se cobra automáticamente. Por eso la tarea `places-tope`: ponerle un límite diario de solicitudes en Cloud, para que si algún día se pasa deje de responder en vez de facturar.
+
+**Verificación de esta segunda parte:** typecheck, lint y build OK. Reseñas 17 de 17 (incluye que van pasando, que la segunda se abre en Google, los puntos y que sin foto muestra la inicial), seguridad 13 de 13, Compartir 5 de 5, analítica 9 de 9, micro 17 de 17, smoke 62 de 62. La etiqueta de Pinterest aparece una sola vez. `npm run indexnow -- --listar` lista las 78 URLs sin mandar nada.
+
+**Dos cosas que se revisaron y NO había que tocar:**
+- **Fichas de producto en Google.** Los datos estructurados ya están completos en todas: precio (o rango con `AggregateOffer`), moneda, disponibilidad, estado, `priceValidUntil`, envío, `sku`, marca, imagen y material. La diferencia entre una ficha que muestra la caja con precio y otra que no es la disponibilidad: las piezas a pedido salen como `BackOrder` y Google las muestra menos que las `InStock`. Se cambia marcando piezas como "Disponible ahora" en el admin, no en el código.
+- **Pinterest** ya tiene el dominio verificado con una etiqueta cargada a mano en `layout.tsx` desde antes. Se probó agregar una segunda por variable de entorno y se revirtió: duplicaba la etiqueta.
+
+---
+
 ## 8. Qué no se tocó
 
 - El WIP de la tarjeta QR: `src/app/gracias/`, `database/tarjeta-qr-agradecimiento-2026-08.sql`, `entrega/tarjeta-agradecimiento-qr.md` y la sección `qr_thanks` de `src/app/admin/configuracion/page.tsx`. Este archivo no se editó en esta auditoría.

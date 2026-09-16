@@ -223,6 +223,12 @@ export default function EncargosPage() {
     archived: archivedOrders.length,
   }
 
+  // Qué canal trae encargos (misma etiqueta que en Pedidos), de mayor a menor.
+  const encargosByChannel = [...notArchived.reduce((m, o) => {
+    const ch = channelLabel({ utm_source: o.utm_source ?? null, referrer_host: o.referrer_host ?? null })
+    return m.set(ch, (m.get(ch) ?? 0) + 1)
+  }, new Map<string, number>())].sort((a, b) => b[1] - a[1])
+
   if (loading) return <div className="admin-loading"><div className="admin-spinner" /></div>
 
   return (
@@ -256,6 +262,14 @@ export default function EncargosPage() {
           )}
         </div>
       </div>
+
+      {encargosByChannel.length > 0 && (
+        <p style={{ margin: '0 0 14px', fontSize: 12.5, color: '#5B5356' }}>
+          <strong style={{ fontWeight: 500 }}>De dónde vienen:</strong>{' '}
+          {encargosByChannel.map(([channel, n]) => `${channel} ${n}`).join(' · ')}
+          <span style={{ color: '#8C8285' }}> (encargos sin archivar)</span>
+        </p>
+      )}
 
       {error && (
         <div role="alert" style={{

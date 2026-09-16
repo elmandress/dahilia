@@ -92,7 +92,7 @@ export function VipCallout() {
     startTransition(async () => {
       const res = await subscribeToVipList(value, 'drop')
       if (res.ok) {
-        if (!res.already) track('vip_subscribe', { source: 'callout' })
+        if (!res.already) track('vip_subscribe', { source: 'callout' }, { name: 'sign_up', params: { method: 'lista_vip' } })
         setDone(res.already ? 'Ya estabas anotada — te avisamos igual.' : '¡Listo! Te escribimos antes del próximo drop.')
         snooze()
         setTimeout(() => setShow(false), 3200)

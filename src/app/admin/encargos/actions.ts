@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminUser } from '@/lib/supabase/require-admin'
 import { notifyEncargoStatusChange } from '@/lib/email'
 import type { CustomOrder } from '@/lib/types'
 
@@ -23,10 +24,9 @@ export async function updateEncargoStatus(
 
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { ok: false, error: 'No autorizado.' }
+  // Admin de verdad (is_admin() en la base), no "cualquier sesión": ver
+  // lib/supabase/require-admin.ts.
+  if (!(await getAdminUser(supabase))) return { ok: false, error: 'No autorizado.' }
 
   const { data, error } = await supabase
     .from('custom_orders')
