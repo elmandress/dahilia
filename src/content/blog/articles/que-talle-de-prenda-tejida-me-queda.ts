@@ -12,6 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'BOFU',
   publishedAt: '2026-09-04',
+  updatedAt: '2026-09-13',
   hero: { src: '/photos/blog/sweater-crochet-rojo-cereza.jpg', alt: 'Sweater cherry tejido a crochet en rojo, puesto', position: '50% 40%' },
   relatedCategorySlug: 'tops',
   relatedProductSlugs: ['top-summer', 'cardigan-3-4', 'set-brisa'],

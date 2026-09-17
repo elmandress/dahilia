@@ -138,6 +138,10 @@ interface PlaceDetails {
 /** Puntuación, cantidad y hasta 5 reseñas. null si no está configurado o falla. */
 export async function fetchGoogleReviews(): Promise<GoogleReviewsData | null> {
   if (!KEY) return null
+  // El tope va ANTES de cualquier llamada que cuente para la factura (la
+  // búsqueda del lugar incluida). Hasta el 17/09 la función existía pero no se
+  // llamaba desde ningún lado: el lint lo marcaba y el aviso pasaba de largo.
+  if (!dentroDelTope()) return null
   const placeId = await resolverPlaceId()
   if (!placeId) return null
 

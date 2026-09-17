@@ -25,6 +25,21 @@ function xmlEscape(value: string): string {
     .replace(/'/g, '&apos;')
 }
 
+// Todas las fotos de cada página, no solo la principal (17/09/2026). Google
+// Imágenes ya muestra las fotos del blog, pero el sitemap declaraba una sola
+// por página: 37 de las 101 fotos del catálogo y ninguna de las que van dentro
+// de las notas. La principal va primera. Tope de 10 por página, muy por
+// debajo del límite de Google (1.000).
+const MAX_IMAGES_PER_URL = 10
+
+function productImages(media: { url: string; is_primary: boolean; type: string }[] = []): string[] {
+  const photos = media.filter((m) => m.type === 'image')
+  const ordered = [...photos.filter((m) => m.is_primary), ...photos.filter((m) => !m.is_primary)]
+  return [...new Set(ordered.map((m) => m.url))]
+    .slice(0, MAX_IMAGES_PER_URL)
+    .map((url) => xmlEscape(botImageUrl(SITE_URL, url)))
+}
+
 /**
  * Dynamic sitemap — auto-updates whenever products, categories, or collections
  * are added or modified. No manual maintenance needed.
@@ -87,7 +102,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // quedaban fuera de Google Imágenes, que para contenido de moda/tejido es
     // una vía de descubrimiento real. Vía /_next/image por el mismo motivo que
     // los productos (que el crawler no baje el original pesado).
-    ...(a.hero ? { images: [xmlEscape(botImageUrl(SITE_URL, a.hero.src))] } : {}),
+    // Más las fotos que van dentro de la nota (bloques `image`).
+    ...(() => {
+      const srcs = [a.hero?.src, ...a.body.flatMap((b) => (b.type === 'image' ? [b.src] : []))]
+        .filter((s): s is string => Boolean(s))
+      const images = [...new Set(srcs)].slice(0, MAX_IMAGES_PER_URL).map((s) => xmlEscape(botImageUrl(SITE_URL, s)))
+      return images.length ? { images } : {}
+    })(),
   }))
 
   try {
@@ -139,11 +160,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Product pages — include primary image for Google image search.
     const productRoutes: MetadataRoute.Sitemap = productsData.map((p) => {
-      const media = p.media ?? []
-      const primary =
-        media.find((m) => m.is_primary && m.type === 'image') ||
-        media.find((m) => m.type === 'image')
-      const photo = primary?.url
+      const images = productImages(p.media)
 
       return {
         url: xmlEscape(`${SITE_URL}/tienda/${p.slug}`),
@@ -153,7 +170,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         // Vía /_next/image: el image-sitemap mandaba a Googlebot-Image al
         // original de varios MB en supabase.co (egress). Ahora baja ~100 KB
         // desde dahila.uy, cacheado por Netlify.
-        ...(photo ? { images: [xmlEscape(botImageUrl(SITE_URL, photo))] } : {}),
+        ...(images.length ? { images } : {}),
       }
     })
 
@@ -208,15 +225,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.85,
     }))
     const productRoutes: MetadataRoute.Sitemap = snap.products.map((p) => {
-      const media = p.media ?? []
-      const primary = media.find((m) => m.is_primary && m.type === 'image') || media.find((m) => m.type === 'image')
-      const photo = primary?.url
+      const images = productImages(p.media ?? [])
       return {
         url: xmlEscape(`${SITE_URL}/tienda/${p.slug}`),
         ...(p.updated_at ? { lastModified: new Date(p.updated_at) } : {}),
         changeFrequency: 'weekly' as const,
         priority: p.status === 'active' ? 0.8 : 0.7,
-        ...(photo ? { images: [xmlEscape(botImageUrl(SITE_URL, photo))] } : {}),
+        ...(images.length ? { images } : {}),
       }
     })
     return [...staticRoutes, ...blogRoutes, ...categoryRoutes, ...productRoutes]

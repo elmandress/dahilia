@@ -12,6 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'BOFU',
   publishedAt: '2026-09-04',
+  updatedAt: '2026-09-13',
   hero: { src: '/photos/blog/sweater-senda-rayas.jpg', alt: 'Sweater Senda tejido a crochet a rayas rojas, bordó y negras, con caída holgada', position: '50% 40%' },
   relatedCategorySlug: 'cardigans',
   relatedProductSlugs: ['cardigan-3-4', 'sweater-senda', 'top-summer'],

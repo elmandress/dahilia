@@ -15,6 +15,7 @@ export const article: Article = {
   role: 'pillar',
   funnel: 'TOFU',
   publishedAt: '2026-08-31',
+  updatedAt: '2026-09-13',
   hero: {
     src: '/photos/blog/bufanda-y-guantes-crochet-crudo.jpg',
     alt: 'Bufanda y guantes tejidos a crochet en crudo, con la etiqueta de Dahila',

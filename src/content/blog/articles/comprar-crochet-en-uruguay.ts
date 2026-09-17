@@ -15,6 +15,7 @@ export const article: Article = {
   role: 'pillar',
   funnel: 'BOFU',
   publishedAt: '2026-08-31',
+  updatedAt: '2026-09-13',
   hero: {
     src: '/photos/blog/cardigan-granny-crochet.jpg',
     alt: 'Granny’s cardigan tejido a crochet con cuadrados en rosa, bordó y crudo',

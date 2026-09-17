@@ -12,6 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'TOFU',
   publishedAt: '2026-09-04',
+  updatedAt: '2026-09-13',
   hero: { src: '/photos/blog/top-lagom-punto.jpg', alt: 'Top LAGOM tejido a crochet en crudo, visto de espalda, con el punto de cerca', position: '50% 50%' },
   relatedCategorySlug: 'cardigans',
   relatedProductSlugs: ['cardigan-3-4', 'sweater-senda', 'bufanda-sophie'],

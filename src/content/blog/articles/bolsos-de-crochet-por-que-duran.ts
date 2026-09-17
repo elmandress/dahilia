@@ -12,6 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'MOFU',
   publishedAt: '2026-09-04',
+  updatedAt: '2026-09-13',
   hero: { src: '/photos/blog/bolso-lola-trapillo.jpg', alt: 'Bolso LOLA tejido a crochet en trapillo rosa y amarillo', position: '50% 50%' },
   relatedCategorySlug: 'accesorios',
   relatedProductSlugs: ['bolso-lola', 'tote-bag-de-playa', 'mini-tote-bag'],

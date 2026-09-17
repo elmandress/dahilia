@@ -666,6 +666,8 @@ Hallazgo en producción: `/tienda/sweater-cherry` dio 404 una vez. Era una copia
 
 ### Segunda parte del 16/09 (pedido de Mati: "optimizá y aplicá todo lo seguro")
 
+Todo lo del 14, 15 y 16/09 se pusheó junto el 16/09 en `362f284`, sin la tarjeta QR. Mati corrió el SQL de seguridad el 15/09.
+
 | Cambio | Problema y evidencia | Trade-off |
 |---|---|---|
 | **Las reseñas van pasando solas** (una por vez, con flechas, puntos y pausa al pasar el cursor o con el teclado; 9 segundos) | Pedido de Mati. Tres tarjetas fijas ocupaban mucho y mostraban solo 3 de las 5 que trae Google | Cambia el texto mientras alguien lee: por eso 9 segundos y no 5, y respeta a quien pidió menos movimiento en su sistema |
@@ -683,6 +685,52 @@ Hallazgo en producción: `/tienda/sweater-cherry` dio 404 una vez. Era una copia
 **Dos cosas que se revisaron y NO había que tocar:**
 - **Fichas de producto en Google.** Los datos estructurados ya están completos en todas: precio (o rango con `AggregateOffer`), moneda, disponibilidad, estado, `priceValidUntil`, envío, `sku`, marca, imagen y material. La diferencia entre una ficha que muestra la caja con precio y otra que no es la disponibilidad: las piezas a pedido salen como `BackOrder` y Google las muestra menos que las `InStock`. Se cambia marcando piezas como "Disponible ahora" en el admin, no en el código.
 - **Pinterest** ya tiene el dominio verificado con una etiqueta cargada a mano en `layout.tsx` desde antes. Se probó agregar una segunda por variable de entorno y se revirtió: duplicaba la etiqueta.
+
+---
+
+## 16. 17/09: estadísticas, fichas de comerciantes y el tope que no andaba
+
+**Search Console** (18/08 a 14/09):
+- 123 clics y 1.173 impresiones (+594%), posición media 8,8.
+- Los clics "bajaron" de 130 a 123 solo porque la ventana de 28 días dejó afuera el 17/08, que tuvo 11. El 14/09 sumó 4.
+- Las impresiones diarias se triplicaron: 166 el 13/09 y 149 el 14/09, contra unas 50 a principios de mes.
+
+**Por qué baja el CTR:**
+- Crecen las impresiones de búsquedas informativas en posición 6: cuidados (132), la lana que pica (62), cómo lavar (40). En esas Google suele contestar en su propia página: "¿la lana pica?" está en posición 1 con 0 clics.
+- Accesorios recibe búsquedas de insumos ("insumos de crochet"), que no compran prendas.
+- Cada búsqueda visible tiene entre 1 y 8 impresiones: no alcanza para cambiar títulos. Se mide el 21/09.
+
+**Indexación:**
+- Las 5 notas nuevas del 13/09 ya están indexadas.
+- `/tienda/sweater-cherry` sigue con el 404 del 14/09: Google no volvió a pasar.
+- `/tienda/top-race` está "descubierta, sin indexar".
+
+| Cambio | Problema y evidencia | Trade-off |
+|---|---|---|
+| **El sitemap declara todas las fotos**: 143, antes 64 | Se declaraba una foto por página: 37 de las 101 del catálogo y ninguna de las que van dentro de las notas. Google Imágenes ya muestra las del blog | El sitemap pesa más; siguen siendo las mismas 78 URLs |
+| **"Actualizada el 13/09" en las 14 notas editadas a fondo ese día** | Cuidados decía 31/08 aunque se reescribió el 13/09 | Las 7 notas con cambios mínimos (título o portada) conservan su fecha, porque Google ignora las fechas de todo el sitio si detecta que están infladas |
+| **`ProductGroup` con un `Offer` por talle, y `?talle=` que preselecciona el talle** | La inspección de URLs mostró que Spring (`AggregateOffer`) no entra en "Fichas de comerciantes" y Mini bufandas (`Offer`) sí. La documentación de Google: "merchant listings require an Offer" | La ficha acepta `?talle=` en la URL. La canónica no cambia |
+| **El tope de gasto de Places ahora sí se usa** | En `362f284` la función existía pero no se llamaba. El lint lo marcaba como aviso y el aviso pasó de largo | — |
+
+**Verificación:**
+- typecheck y lint: sin ningún aviso; build OK;
+- tope con límite 1 y 3 pedidos: una sola consulta llegó a Google y un solo aviso en el log;
+- variantes: 12 de 12;
+- reseñas: 17 de 17;
+- seguridad: 13 de 13;
+- Compartir: 5 de 5;
+- analítica: 9 de 9;
+- micro: 17 de 17;
+- smoke: 63 de 63.
+
+**Velocidad en producción** (`362f284`, celular, mediana de 3 con la máquina libre y la analítica bloqueada, igual que las mediciones anteriores). La primera del día corrió junto a un build y se descartó.
+
+| Página | Puntaje | LCP | TBT | CLS |
+|---|---|---|---|---|
+| Home | **71** (el 12/09 era 46) | 3,4 s (era 5,5) | 828 ms (era 4,0 s) | 0 |
+| Ficha de Spring cardigan | 48 | 6,0 s (corridas: 4,2 / 6,0 / 6,9) | 2.487 ms | 0 |
+
+La ficha es la próxima palanca de velocidad. Su foto principal tarda 1,4 s en dibujarse después de descargada (el desglose del LCP marca `elementRenderDelay`) y hay 2,5 s de hilo principal trabado, por el JavaScript de `ProductDetailsClient`. La respuesta del servidor ya está bien: 265 ms.
 
 ---
 

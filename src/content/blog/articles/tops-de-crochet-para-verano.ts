@@ -12,6 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'MOFU',
   publishedAt: '2026-09-04',
+  updatedAt: '2026-09-13',
   hero: { src: '/photos/blog/top-summer-rosa.jpg', alt: 'Top SUMMER tejido a crochet en rosa, puesto junto a una ventana', position: '50% 35%' },
   relatedCategorySlug: 'tops',
   relatedProductSlugs: ['top-summer', 'top-cherry', 'beach-set'],

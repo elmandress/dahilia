@@ -15,6 +15,7 @@ export const article: Article = {
   role: 'pillar',
   funnel: 'BOFU',
   publishedAt: '2026-08-31',
+  updatedAt: '2026-09-13',
   hero: {
     src: '/photos/blog/box-de-regalo-tejido.jpg',
     alt: 'Box de regalo con piezas tejidas a crochet en trapillo rosa y una taza',

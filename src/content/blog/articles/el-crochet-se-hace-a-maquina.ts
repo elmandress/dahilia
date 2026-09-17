@@ -12,6 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'MOFU',
   publishedAt: '2026-09-04',
+  updatedAt: '2026-09-13',
   hero: { src: '/photos/blog/chaleco-crochet-etiqueta.jpg', alt: 'Borde de un chaleco tejido a crochet a mano, con la etiqueta de Dahila', position: '50% 60%' },
   relatedCategorySlug: 'tops',
   relatedProductSlugs: ['cardigan-amour', 'top-summer', 'bolso-lola'],

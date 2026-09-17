@@ -12,6 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'MOFU',
   publishedAt: '2026-09-04',
+  updatedAt: '2026-09-13',
   hero: { src: '/photos/blog/cardigan-cruzado-camel.jpg', alt: 'Cardigan cruzado tejido a crochet en color camel, puesto', position: '50% 35%' },
   relatedCategorySlug: 'cardigans',
   relatedProductSlugs: ['cardigan-3-4', 'poncho', 'chaleco'],

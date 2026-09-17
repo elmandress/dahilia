@@ -12,6 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'MOFU',
   publishedAt: '2026-09-04',
+  updatedAt: '2026-09-13',
   hero: { src: '/photos/blog/spring-cardigan-flores.jpg', alt: 'Spring cardigan tejido a crochet en crudo, con flores tejidas de colores', position: '50% 40%' },
   relatedCategorySlug: 'cardigans',
   relatedProductSlugs: ['cardigan-3-4', 'cardigan-cruzado', 'spring-cardigan'],

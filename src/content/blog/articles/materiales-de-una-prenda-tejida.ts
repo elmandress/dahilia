@@ -12,6 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'MOFU',
   publishedAt: '2026-09-04',
+  updatedAt: '2026-09-13',
   hero: { src: '/photos/blog/calentadores-chenille-rojos.jpg', alt: 'Calentadores tejidos a crochet en chenille rojo', position: '50% 50%' },
   relatedCategorySlug: 'tops',
   relatedProductSlugs: ['top-summer', 'bolso-lola', 'cardigan-3-4'],

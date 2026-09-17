@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import type { Product, Category, Discount } from '@/lib/types'
 import {
   getPrimaryPhoto, getFinalPrice, resolveDiscountPercent, getListingPrice, isReadyToShip,
-  hasPriceRange as productHasPriceRange,
+  hasPriceRange as productHasPriceRange, sortSizes,
 } from '@/lib/types'
 import { getCatalog, getProductBySlug, getSnapshotData } from '@/lib/catalog'
 import { ProductDetailsClient } from './ProductDetailsClient'
@@ -449,84 +449,125 @@ async function ProductPage({ slug }: { slug: string }) {
     .toISOString()
     .slice(0, 10)
 
-  const productJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
+  const productUrl = `${SITE_URL}/tienda/${product.slug}`
+
+  // Honestidad con Google (y con la clienta): "InStock" solo si la pieza
+  // realmente está tejida y sale ya. Lo que se teje a pedido es BackOrder —
+  // declararlo InStock y después entregar en semanas es la clase de
+  // discrepancia que Merchant Center marca como problema. Un talle agotado es
+  // OutOfStock aunque la prenda siga activa.
+  const availabilityFor = (sizeAvailable = true) =>
+    product.status === 'soldout' || !sizeAvailable
+      ? 'https://schema.org/OutOfStock'
+      : product.status !== 'active'
+        ? 'https://schema.org/PreOrder'
+        : isReadyToShip(product)
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/BackOrder'
+
+  // Lo que comparten todas las ofertas de la ficha.
+  const offerCommon = {
+    seller: { '@type': 'Organization', name: 'Dahila Crochet', url: SITE_URL },
+    priceCurrency: 'UYU',
+    itemCondition: 'https://schema.org/NewCondition',
+    priceValidUntil,
+    // Sin hasMerchantReturnPolicy (04/09/2026): se sacó del sitio todo lo
+    // referido a cambios y devoluciones. Es un campo opcional para Google.
+    // Merchant listings: destino + tiempos. El "handling" es el tejido de la
+    // pieza (semanas del producto → días); el tránsito es el courier en UY.
+    shippingDetails: {
+      '@type': 'OfferShippingDetails',
+      shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'UY' },
+      // Ojo con el 0: una pieza "Disponible ahora" (lead_time_weeks_min = 0,
+      // ver isReadyToShip en lib/types) tiene handling 0 días, que es un dato
+      // REAL y bueno para Google — no la ausencia de dato. Por eso el guard
+      // mira que los valores sean números válidos, no que sean > 0: con `> 0`
+      // el bloque entero desaparecía justo en las piezas listas para enviar.
+      ...(Number.isFinite(product.lead_time_weeks_min) && Number.isFinite(product.lead_time_weeks_max)
+        ? {
+            deliveryTime: {
+              '@type': 'ShippingDeliveryTime',
+              handlingTime: {
+                '@type': 'QuantitativeValue',
+                minValue: Math.min(product.lead_time_weeks_min, product.lead_time_weeks_max) * 7,
+                maxValue: Math.max(product.lead_time_weeks_min, product.lead_time_weeks_max) * 7,
+                unitCode: 'DAY',
+              },
+              transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' },
+            },
+          }
+        : {}),
+    },
+  }
+
+  const brand = { '@type': 'Brand', name: 'Dahila Crochet' }
+  const productCommon = {
     name: product.name,
     ...(product.description ? { description: product.description } : {}),
     image: schemaImages,
-    // Sin `mpn` ni `gtin`: son piezas hechas a mano, una por una — no existe un
-    // número de parte de fabricante real, y reusar el UUID interno ahí es dato
-    // de relleno que Google no puede aprovechar. `sku` (el id interno) alcanza.
-    sku: product.id,
-    // NO va `identifier_exists` acá: es un atributo del FEED de Merchant
-    // Center, no una propiedad de schema.org, así que en el JSON-LD Google
-    // simplemente lo ignora (verificado contra la documentación 23/08). La
-    // declaración de "estas piezas no tienen código de barras" — que es lo
-    // que evita que queden marcadas como "Limited" por identificador
-    // faltante — vive en /merchant-feed.xml, que sí lo admite.
-    brand: { '@type': 'Brand', name: 'Dahila Crochet' },
+    brand,
     ...(product.category ? { category: product.category.name } : {}),
     ...(product.material ? { material: product.material } : {}),
-    offers: {
-      // AggregateOffer cuando el precio cambia según el talle (ver lowPrice /
-      // highPrice arriba); Offer simple cuando hay un único precio real.
-      '@type': hasPriceRange ? 'AggregateOffer' : 'Offer',
-      url: `${SITE_URL}/tienda/${product.slug}`,
-      seller: { '@type': 'Organization', name: 'Dahila Crochet', url: SITE_URL },
-      ...(hasPriceRange
-        ? {
-            lowPrice: lowPrice.toFixed(2),
-            highPrice: highPrice.toFixed(2),
-            offerCount: allPrices.length,
-          }
-        // lowPrice (no el base): con un solo talle disponible, el precio real
-        // es el de ese talle.
-        : { price: lowPrice.toFixed(2) }),
-      priceCurrency: 'UYU',
-      availability:
-        // Honestidad con Google (y con la clienta): "InStock" solo si la pieza
-        // realmente está tejida y sale ya. Lo que se teje a pedido es
-        // BackOrder — declararlo InStock y después entregar en semanas es la
-        // clase de discrepancia que Merchant Center marca como problema.
-        product.status === 'soldout'
-          ? 'https://schema.org/OutOfStock'
-          : product.status !== 'active'
-            ? 'https://schema.org/PreOrder'
-            : isReadyToShip(product)
-              ? 'https://schema.org/InStock'
-              : 'https://schema.org/BackOrder',
-      itemCondition: 'https://schema.org/NewCondition',
-      priceValidUntil,
-      // Sin hasMerchantReturnPolicy (04/09/2026): se sacó del sitio todo lo
-      // referido a cambios y devoluciones. Es un campo opcional para Google.
-      // Merchant listings: destino + tiempos. El "handling" es el tejido de la
-      // pieza (semanas del producto → días); el tránsito es el courier en UY.
-      shippingDetails: {
-        '@type': 'OfferShippingDetails',
-        shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'UY' },
-        // Ojo con el 0: una pieza "Disponible ahora" (lead_time_weeks_min = 0,
-        // ver isReadyToShip en lib/types) tiene handling 0 días, que es un dato
-        // REAL y bueno para Google — no la ausencia de dato. Por eso el guard
-        // mira que los valores sean números válidos, no que sean > 0: con `> 0`
-        // el bloque entero desaparecía justo en las piezas listas para enviar.
-        ...(Number.isFinite(product.lead_time_weeks_min) && Number.isFinite(product.lead_time_weeks_max)
-          ? {
-              deliveryTime: {
-                '@type': 'ShippingDeliveryTime',
-                handlingTime: {
-                  '@type': 'QuantitativeValue',
-                  minValue: Math.min(product.lead_time_weeks_min, product.lead_time_weeks_max) * 7,
-                  maxValue: Math.max(product.lead_time_weeks_min, product.lead_time_weeks_max) * 7,
-                  unitCode: 'DAY',
-                },
-                transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' },
-              },
-            }
-          : {}),
-      },
-    },
   }
+
+  // Precio distinto según el talle → ProductGroup, un Product por talle
+  // (17/09/2026). Antes era un AggregateOffer (low/high): los fragmentos de
+  // producto lo aceptan, pero las fichas de comerciantes NO ("merchant listings
+  // require an Offer", documentación de Google). Spring, Amour y Granny's, las
+  // fichas más vistas, quedaban afuera de la caja con precio y disponibilidad
+  // (confirmado con la inspección de URLs de Search Console el 17/09).
+  // Para sitios de una sola página, Google pide que cada variante se pueda
+  // abrir ya elegida desde su propia URL: eso es el ?talle= que lee
+  // lib/product-selection.ts. La canónica sigue siendo la ficha sin talle.
+  const variantes = sortSizes(product.sizes ?? [])
+    .map((s) => ({ size: s.size, available: s.available !== false, price: getFinalPrice(product, s.size, discounts) }))
+    .filter((v) => v.price > 0)
+
+  const productJsonLd = hasPriceRange && variantes.length > 1
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'ProductGroup',
+        ...productCommon,
+        url: productUrl,
+        productGroupID: product.id,
+        variesBy: ['https://schema.org/size'],
+        hasVariant: variantes.map((v) => ({
+          '@type': 'Product',
+          name: `${product.name}, talle ${v.size}`,
+          sku: `${product.id}-${v.size}`,
+          image: schemaImages[0],
+          size: v.size,
+          brand,
+          offers: {
+            '@type': 'Offer',
+            url: `${productUrl}?talle=${encodeURIComponent(v.size)}`,
+            price: v.price.toFixed(2),
+            availability: availabilityFor(v.available),
+            ...offerCommon,
+          },
+        })),
+      }
+    : {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        ...productCommon,
+        // Sin `mpn` ni `gtin`: son piezas hechas a mano, una por una — no existe un
+        // número de parte de fabricante real, y reusar el UUID interno ahí es dato
+        // de relleno que Google no puede aprovechar. `sku` (el id interno) alcanza.
+        // NO va `identifier_exists` acá: es un atributo del FEED de Merchant
+        // Center, no una propiedad de schema.org (verificado 23/08); vive en
+        // /merchant-feed.xml.
+        sku: product.id,
+        offers: {
+          '@type': 'Offer',
+          url: productUrl,
+          // lowPrice (no el base): con un solo talle disponible, el precio real
+          // es el de ese talle.
+          price: lowPrice.toFixed(2),
+          availability: availabilityFor(),
+          ...offerCommon,
+        },
+      }
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
