@@ -1,3 +1,4 @@
+import { jsonLdScript } from '@/lib/json-ld'
 import { createClient } from '@/lib/supabase/public'
 import { notFound, permanentRedirect, unstable_rethrow } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -319,7 +320,7 @@ async function CategoryPage({ slug, category }: { slug: string; category: Catego
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(collectionPageJsonLd) }}
       />
       {source === 'snapshot' && <CatalogReadOnlyBanner />}
       <TiendaClient
@@ -589,8 +590,8 @@ async function ProductPage({ slug }: { slug: string }) {
 
   return (
     <div style={{ paddingBottom: '4rem' }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(productJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbJsonLd) }} />
       {isSnapshot && <CatalogReadOnlyBanner waUrl={whatsappUrl} />}
 
       <ProductDetailsClient

@@ -2,8 +2,9 @@
 
 import { useState, useTransition, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { dahila, Eyebrow, Button, Icon, Field, TextInput } from '@/components/ui/Primitives'
+import { dahila, Button, Icon, Field, TextInput } from '@/components/ui/Primitives'
 import { lookupEncargo, type EncargoStatusResult, type EncargoStatus } from '../actions'
+import { safeAction } from '@/lib/safe-action'
 
 // Each status mapped to a friendly label, blurb and how far along it is (1-4).
 const STEPS: { key: EncargoStatus; label: string; blurb: string; step: number }[] = [
@@ -116,8 +117,9 @@ export function EstadoClient({ whatsappUrl }: { whatsappUrl: string }) {
     setError(null)
     setResult(null)
     startTransition(async () => {
-      const res = await lookupEncargo(value)
-      if (res.error) setError(res.error)
+      const res = await safeAction(() => lookupEncargo(value))
+      if (!res) setError('No pudimos buscar tu encargo: revisá tu conexión y probá de nuevo.')
+      else if (res.error) setError(res.error)
       else setResult(res)
     })
   }
@@ -133,21 +135,15 @@ export function EstadoClient({ whatsappUrl }: { whatsappUrl: string }) {
     // run is stable (refs startTransition which is stable); omitting to avoid loop.
   }, [params])
 
+  // El título y la explicación los dibuja page.tsx en el servidor (19/09/2026):
+  // este componente lee la URL con useSearchParams, así que va en un Suspense y
+  // antes la página llegaba en blanco hasta que cargaba el JavaScript.
   return (
-    <div style={{ maxWidth: 520, margin: '0 auto', padding: '48px 24px 80px' }}>
-      <Eyebrow>Seguimiento</Eyebrow>
-      <h1 style={{
-        fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(28px, 5vw, 40px)',
-        lineHeight: 1.05, letterSpacing: '-0.02em', color: dahila.ink900, margin: '10px 0 8px',
-      }}>Estado de tu encargo</h1>
-      <p style={{ fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, color: dahila.ink700, margin: '0 0 28px' }}>
-        Ingresá el código que te dimos al hacer el encargo (ej. DAH-AB2CDE).
-      </p>
-
+    <>
       <form onSubmit={(e) => { e.preventDefault(); run(code) }} style={{ display: 'flex', gap: 10, alignItems: 'flex-end', marginBottom: 28 }}>
         <div style={{ flex: 1 }}>
           <Field label="Código">
-            <TextInput value={code} onChange={setCode} placeholder="DAH-AB2CDE" />
+            <TextInput value={code} onChange={setCode} placeholder="DAH-AB2CDE" name="codigo" autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={16} />
           </Field>
         </div>
         <Button variant="primary" type="submit" disabled={isPending}>
@@ -170,6 +166,6 @@ export function EstadoClient({ whatsappUrl }: { whatsappUrl: string }) {
       {result && result.found && (
         <StatusView result={result} code={code.trim().toUpperCase()} whatsappUrl={whatsappUrl} />
       )}
-    </div>
+    </>
   )
 }

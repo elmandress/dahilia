@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { isUuid } from '@/lib/uuid'
 
 /**
  * Mismo caso que /api/cart: el dueño de una lista de favoritos es una cookie,
@@ -97,6 +98,9 @@ export async function POST(req: NextRequest) {
     if (!productId) {
       return NextResponse.json({ error: 'Falta productId.' }, { status: 400 })
     }
+    if (!isUuid(productId)) {
+      return NextResponse.json({ error: 'Solicitud inválida.' }, { status: 400 })
+    }
 
     const { favId, setCookie } = await getOrCreateFavId()
     const supabase = await getDb()
@@ -128,10 +132,19 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    // Mismo balde que el POST (auditoría de seguridad 19/09/2026): borrar
+    // también escribe en la base y relee la lista con sus joins.
+    const ip = getClientIp(await headers())
+    if (!checkRateLimit(`favorites:${ip}`, { windowMs: 60_000, max: 40 })) {
+      return NextResponse.json({ error: 'Demasiados intentos. Esperá un minuto y volvé a intentar.' }, { status: 429 })
+    }
     const url = new URL(req.url)
     const productId = url.searchParams.get('productId')
     if (!productId) {
       return NextResponse.json({ error: 'Falta productId.' }, { status: 400 })
+    }
+    if (!isUuid(productId)) {
+      return NextResponse.json({ error: 'Solicitud inválida.' }, { status: 400 })
     }
     const { favId, setCookie } = await getOrCreateFavId()
     const supabase = await getDb()

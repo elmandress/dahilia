@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Button, Icon } from '@/components/ui/Primitives'
 import {
@@ -121,7 +120,6 @@ function buildWhatsAppMessage(
 
 export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProducts = [], discounts: serverDiscounts = [] }: Props) {
   const { items, removeFromCart, updateQty, addToCart, isLoading, discounts, shippingEstimate, freeShippingThreshold, queueNote } = useCart()
-  const router = useRouter()
   const [giftNote, setGiftNote] = useState('')
   const [showGiftNote, setShowGiftNote] = useState(false)
   const [showCoupon, setShowCoupon] = useState(false)
@@ -362,7 +360,10 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
       // que "se movió" (CLS 0,200 aun con el minHeight). Con key se montan
       // nodos nuevos, y el contenido insertado no es un desplazamiento.
       <div key="cargando" role="status" aria-live="polite" style={{ maxWidth: 880, margin: '0 auto', padding: '40px 24px 80px', minHeight: '85vh' }}>
-        <span className="sr-only">Cargando tu carrito…</span>
+        {/* Título real mientras carga (19/09/2026): el esqueleto no tenía ningún
+            encabezado y quien usa lector de pantalla llegaba a una página sin título. */}
+        <h1 className="sr-only">Tu carrito</h1>
+        <span className="sr-only">Cargando…</span>
         <div className="sk-shimmer" style={{ width: 60, height: 11, borderRadius: 4 }} />
         <div className="sk-shimmer" style={{ width: 200, height: 44, borderRadius: 6, marginTop: 12, marginBottom: 40 }} />
         {[1, 2].map((i) => (
@@ -395,7 +396,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           <p style={{ fontFamily: dahila.fontSans, fontWeight: 300, fontSize: 15, color: dahila.ink700, marginBottom: 28 }}>
             Todavía no agregaste nada. Mirá lo que hay disponible.
           </p>
-          <Button variant="primary" onClick={() => router.push('/tienda')}>Ir a la tienda</Button>
+          <Button variant="primary" href="/tienda">Ir a la tienda</Button>
         </div>
 
         {featuredProducts.length > 0 && (
@@ -590,7 +591,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                   <div style={{ minWidth: 0 }}>
                     <Link href={`/tienda/${p.slug}`} style={{
                       fontFamily: dahila.fontDisplay, fontSize: 14, color: dahila.ink900,
-                      textDecoration: 'none', display: 'block', lineHeight: 1.2,
+                      textDecoration: 'none', display: 'block', lineHeight: 1.2, padding: '4px 0',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150,
                     }}>
                       {p.name}
@@ -601,7 +602,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                         disabled={justAdded}
                         aria-label={`Agregar ${p.name} al carrito por ${formatPrice(price)}`}
                         style={{
-                          background: 'transparent', border: 'none', padding: '2px 0', cursor: justAdded ? 'default' : 'pointer',
+                          background: 'transparent', border: 'none', padding: '5px 0', cursor: justAdded ? 'default' : 'pointer',
                           fontFamily: dahila.fontSans, fontSize: 12,
                           color: justAdded ? '#1E8449' : dahila.wine600,
                           textDecoration: justAdded ? 'none' : 'underline', textUnderlineOffset: 3,
@@ -612,7 +613,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                     ) : (
                       <Link href={`/tienda/${p.slug}`} style={{
                         fontFamily: dahila.fontSans, fontSize: 12, color: dahila.wine600,
-                        textDecoration: 'underline', textUnderlineOffset: 3, display: 'inline-block', padding: '2px 0',
+                        textDecoration: 'underline', textUnderlineOffset: 3, display: 'inline-block', padding: '5px 0',
                       }}>
                         {`Elegir talle · ${hasPriceRange(p) ? 'desde ' : ''}${formatPrice(price)}`}
                       </Link>
@@ -844,7 +845,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           aria-label={`Coordinar pedido por WhatsApp con ${whatsappLabel}`}
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            background: '#25D366',
+            background: dahila.whatsapp,
             color: '#fff',
             border: 'none',
             borderRadius: 12,
@@ -857,16 +858,16 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
             cursor: checkingOut ? 'default' : 'pointer',
             opacity: checkingOut ? 0.7 : 1,
             width: '100%',
-            boxShadow: '0 8px 22px -10px rgba(37,211,102,0.6)',
+            boxShadow: '0 8px 22px -10px rgba(30,132,73,0.6)',
             transition: 'transform 160ms cubic-bezier(0.22,0.61,0.36,1), box-shadow 160ms',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-1px)'
-            e.currentTarget.style.boxShadow = '0 12px 28px -10px rgba(37,211,102,0.7)'
+            e.currentTarget.style.boxShadow = '0 12px 28px -10px rgba(30,132,73,0.7)'
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)'
-            e.currentTarget.style.boxShadow = '0 8px 22px -10px rgba(37,211,102,0.6)'
+            e.currentTarget.style.boxShadow = '0 8px 22px -10px rgba(30,132,73,0.6)'
           }}
         >
           <Icon name="whatsapp-logo" weight="fill" size={20} color="#fff" />
@@ -917,7 +918,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => track('order_reopen', { items: items.length })}
-                style={{ ...fallbackBtn, background: '#25D366', color: '#fff', border: 'none' }}
+                style={{ ...fallbackBtn, background: dahila.whatsapp, color: '#fff', border: 'none' }}
               >
                 Abrir de nuevo
               </a>
@@ -988,7 +989,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           style={{
             flex: 1, marginLeft: 16,
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            background: '#25D366', color: '#fff', border: 'none',
+            background: dahila.whatsapp, color: '#fff', border: 'none',
             borderRadius: 10, padding: '14px 18px', cursor: checkingOut ? 'default' : 'pointer',
             opacity: checkingOut ? 0.7 : 1,
             fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,

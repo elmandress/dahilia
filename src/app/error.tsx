@@ -14,12 +14,19 @@ import Link from 'next/link'
 const WHATSAPP_HREF =
   'https://wa.me/59899850073?text=' + encodeURIComponent('Hola! Una página del sitio no me cargó. Estaba buscando: ')
 
+// La prop es `retry` (vuelve a pedir el contenido y re-renderiza). Hasta el
+// 19/09/2026 se leía `unstable_retry`, un nombre que Next 16.3.5 ya no pasa
+// (node_modules/next/dist/client/components/error-boundary.js pasa error,
+// reset y retry): el botón "Probar de nuevo" llamaba a undefined y tiraba otro
+// error en vez de reintentar. `reset` queda de respaldo por si cambia de nuevo.
 export default function ErrorPage({
   error,
-  unstable_retry,
+  retry,
+  reset,
 }: {
   error: Error & { digest?: string }
-  unstable_retry: () => void
+  retry?: () => void
+  reset?: () => void
 }) {
   useEffect(() => {
     console.error(error)
@@ -51,7 +58,7 @@ export default function ErrorPage({
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
         <button
           type="button"
-          onClick={() => unstable_retry()}
+          onClick={() => (retry ?? reset ?? (() => window.location.reload()))()}
           style={{ ...button, background: 'var(--ink-900)', color: '#fff', border: 'none' }}
         >
           Probar de nuevo
@@ -66,7 +73,7 @@ export default function ErrorPage({
           href={WHATSAPP_HREF}
           target="_blank"
           rel="noopener noreferrer"
-          style={{ ...button, background: '#25D366', color: '#fff', border: 'none' }}
+          style={{ ...button, background: '#1E8449', color: '#fff', border: 'none' }}
         >
           Escribir por WhatsApp
         </a>

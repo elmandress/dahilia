@@ -15,7 +15,7 @@ export const article: Article = {
   updatedAt: '2026-09-13',
   hero: { src: '/photos/blog/top-summer-rosa.jpg', alt: 'Top SUMMER tejido a crochet en rosa, puesto junto a una ventana', position: '50% 35%' },
   relatedCategorySlug: 'tops',
-  relatedProductSlugs: ['top-summer', 'top-cherry', 'beach-set'],
+  relatedProductSlugs: ['top-summer', 'top-maresia', 'top-cherry', 'beach-set'],
   relatedArticleSlugs: [
     'que-talle-de-prenda-tejida-me-queda',
     'la-lana-pica-fibras-piel-sensible',

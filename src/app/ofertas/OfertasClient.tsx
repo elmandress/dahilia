@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import type { Product, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
@@ -23,7 +22,6 @@ export function OfertasClient({
   /** Sin ofertas vigentes: piezas en stock y lo más nuevo, para no dejar un callejón sin salida. */
   fallbackProducts?: Product[]
 }) {
-  const router = useRouter()
   const [quickView, setQuickView] = useState<Product | null>(null)
 
   // Compute aggregate savings to show in the strip
@@ -111,7 +109,7 @@ export function OfertasClient({
               Mientras tanto, mirá lo que sale sin espera y lo más nuevo.
             </p>
             <div style={{ marginTop: 4 }}>
-              <Button variant="primary" onClick={() => router.push('/tienda')}>Ver toda la tienda</Button>
+              <Button variant="primary" href="/tienda">Ver toda la tienda</Button>
             </div>
           </div>
           {fallbackProducts.length > 0 && (

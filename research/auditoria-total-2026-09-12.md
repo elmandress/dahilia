@@ -690,6 +690,13 @@ Todo lo del 14, 15 y 16/09 se pusheó junto el 16/09 en `362f284`, sin la tarjet
 
 ## 16. 17/09: estadísticas, fichas de comerciantes y el tope que no andaba
 
+Pusheado el 17/09 en `41f4001`, sin la tarjeta QR.
+
+**Revisado antes del push, sin cambios de código:**
+- **Discover.** `max-image-preview: large` ya estaba puesto. Pero 26 de las 42 fotos del blog miden menos de 1.200 px de ancho, el mínimo para la foto grande. Se arregla subiendo originales en mayor resolución, no agrandándolas.
+- **Velocidad de la ficha.** El JavaScript pesado es React (222 KB) y el código compartido del sitio: menú, buscador, carrito y favoritos, que viajan a todas las páginas. Achicarlo es un proyecto aparte: pasar partes del menú a render de servidor.
+- **Las FAQ con resultado enriquecido** Google las limita a sitios de gobierno y salud desde 2023, así que no suman clics.
+
 **Search Console** (18/08 a 14/09):
 - 123 clics y 1.173 impresiones (+594%), posición media 8,8.
 - Los clics "bajaron" de 130 a 123 solo porque la ventana de 28 días dejó afuera el 17/08, que tuvo 11. El 14/09 sumó 4.
@@ -731,6 +738,267 @@ Todo lo del 14, 15 y 16/09 se pusheó junto el 16/09 en `362f284`, sin la tarjet
 | Ficha de Spring cardigan | 48 | 6,0 s (corridas: 4,2 / 6,0 / 6,9) | 2.487 ms | 0 |
 
 La ficha es la próxima palanca de velocidad. Su foto principal tarda 1,4 s en dibujarse después de descargada (el desglose del LCP marca `elementRenderDelay`) y hay 2,5 s de hilo principal trabado, por el JavaScript de `ProductDetailsClient`. La respuesta del servidor ya está bien: 265 ms.
+
+(Corregido en §17: el bloqueo no es de `ProductDetailsClient`, es la compilación del framework.)
+
+---
+
+## 17. 19/09: mercado uruguayo 2026, seguridad a fondo y links internos
+
+Ronda larga, pedida como "pensá a ultra extremo". Prompt de trabajo: `research/prompt-mega-2026-09-19.md`.
+
+### El mercado, con fuentes
+
+| Dato | Fuente | Qué cambia para Dahila |
+|---|---|---|
+| El comercio online uruguayo cerró 2025 en $104.830 millones (+34%). 7 de cada 10 adultos compraron online | [CEDU + Exante](https://www.cedu.org.uy/las-ventas-por-ecommerce-en-2025-aumentaron-un-34-con-respecto-al-ano-anterior/) | Confirma el canal |
+| "El 91% intentó completar una compra desde el teléfono y el 88% lo logró". Ticket promedio "en el entorno de los $1.200" | [CEDU, a junio 2026](https://www.cedu.org.uy/cedu-difunde-el-valor-del-comercio-electronico-en-uruguay-se-acerca-a-los-us-3-000-millones-y-el-efecto-temu-es-apenas-una-fraccion/) | La mediana de los tops activos es $1.200 (de $990 a $2.050): están justo en el ticket típico |
+| Entre los pagos online con tarjeta o dinero electrónico, el crédito se lleva el 69% del monto (4.º trimestre de 2025). **Corregido el 19/09 a la mañana:** el 69% y el 31% de débito y dinero electrónico suman 100%, así que las transferencias no están en lo medido | [CEDU](https://www.cedu.org.uy/las-ventas-por-ecommerce-en-2025-aumentaron-un-34-con-respecto-al-ano-anterior/) (la primera versión citaba otra nota, que no trae el dato) | El sitio dice "transferencia o Mercado Pago" y nunca "tarjeta". El dato no dice cuánta gente prefiere transferir; sí que el crédito es el medio electrónico más usado. Queda como tarea para Anush: si acepta tarjeta, se dice |
+| Desde el 1/5/2026, Temu, Shein y AliExpress pagan IVA del 22% al llegar; tope anual de US$ 800 | [Montevideo Portal](https://www.montevideo.com.uy/Noticias/Compras-en-el-exterior-cambio-en-tope-de-franquicias-y-que-pasara-con-el-impuesto-Temu-uc948309) | La ropa de crochet de fábrica importada se encareció. Igual, lo que entra por franquicia es solo el 8% del e-commerce: la competencia real es local |
+| Instagram: 2,50 millones de usuarios en Uruguay, 54,2% mujeres. TikTok: 2,36 millones de adultos, 55% hombres | [DataReportal, Digital 2026 Uruguay](https://datareportal.com/reports/digital-2026-uruguay) | Instagram sigue primero. En TikTok parte del alcance cae fuera de la clienta: medir por visitas, no por likes |
+| CyberLunes: dos ediciones por año, junio y noviembre (en 2025, del 3 al 5/11). Black Friday 2026: viernes 27/11 | [CEDU](https://www.cedu.org.uy/novedades-ciberlunes/), [Cuti](https://cuti.org.uy/en/destacados/noviembre-comienza-con-una-nueva-edicion-de-ciberlunes-con-hasta-70-off/) | Cae el mismo mes que el segundo paso de precios: no rebajar el catálogo; solo lo ya tejido, tope 15%, con un porqué |
+| Verano 2026 del hemisferio norte: crochet en todos lados. Granny chic, calados livianos, bolsos blancos | [Who What Wear](https://www.whowhatwear.com/fashion/trends/ways-to-wear-crochet-summer-2026), [Vogue Adria](https://vogueadria.com/crochet-bags/) | Lo que viene para el verano de acá. Coincide con el drop de noviembre |
+| Punta del Este tuvo su mejor temporada en una década; 70% de los turistas, argentinos | [Forbes Argentina](https://www.forbesargentina.com/lifestyle/punta-2026-cierre-una-temporada-mas-gasto-regreso-argentinos-n86601) | Contexto. No cambia nada hoy: el envío es solo dentro de Uruguay |
+
+No se pudo relevar: precios de Mercado Libre Uruguay (devuelve 403 al lector) ni la tarifa de DAC (su página muestra plantillas sin números).
+
+Todo esto quedó en `/admin/estrategia`:
+- la revisión pasa a "septiembre 2026";
+- nuevo referente: Shein, Temu y AliExpress;
+- CyberLunes y Black Friday en el calendario, después del drop para que "PRÓXIMO" siga marcando el drop;
+- datos de audiencia en Instagram y TikTok;
+- el párrafo de Uruguay, con las cifras 2025-2026;
+- 5 tareas nuevas: tarjeta de crédito, las 2 piezas sin categoría, las 2 piezas con una sola foto, las 10 fichas cortas y Tops y Sets primero a mediados de octubre.
+
+### Google: qué se puede ganar y qué no
+
+Posiciones medias del 20/08 al 16/09:
+- **Genéricas de ropa, muy lejos hoy:** "cardigans de mujer" 58,8; "cardigan" 63; "chaleco" 52; "poncho mujer" 55. Ahí compiten las tiendas grandes. **Corregido el 19/09 a la mañana:** decir que las genéricas son "imposibles" era demasiado. Con los datos frescos, "bandana" a secas, una genérica, trae a la ficha de Bandana 74 impresiones en posición 10,9 solo el 17 y el 18/09. Donde la categoría no la dominan las tiendas grandes, una ficha sí puede pelear.
+- **Locales o de oficio, ganables:** "crochet uruguay" 3,8; "ropa hecha a mano" 3,3; "tienda de crochet" 3; "bolsa dona" 2,7; "tops tejidos" 4,3; "top de hilo" 7.
+- Las notas del blog están en los puestos 3 a 7 y las fichas en el 20 a 40. Hay 10 fichas con menos de 250 caracteres y completarlas depende de Anush. **Matiz del 19/09 a la mañana:** no está probado que el puesto 20 a 40 sea por el texto. Se explica sobre todo porque las fichas aparecen para búsquedas genéricas. Con su propio nombre rankean bien: "bolsa dona" 2,7, "amelie crochet" 3, "bufanda sofia" 4.
+
+### Cambios
+
+| Cambio | Problema y evidencia | Trade-off |
+|---|---|---|
+| **JSON-LD escapado** (`src/lib/json-ld.ts`, en los 14 bloques) | `JSON.stringify` no escapa `</script>`: un nombre o descripción cargado en el admin con eso cortaba el script e inyectaba HTML en todas las páginas del producto | Ninguno: `JSON.parse` devuelve lo mismo (probado) |
+| **La IP sale de `x-nf-client-connection-ip`** (`getClientIp`) | Se usaba el primer valor de `x-forwarded-for`, que escribe el propio cliente. Con uno distinto por pedido, ningún límite del sitio frenaba nada. El de Netlify lo escribe su borde | En local ese header no existe y se sigue como antes |
+| **Segundo tope, solo por IP, en encargo (6 en 10 min) y tejedoras (4 en 10 min)** | El tope era por IP más mail. Como cada encargo manda una confirmación al mail escrito, cambiando el mail se podía hacer que Dahila mandara mails a direcciones ajenas sin tope: quema la cuota de Resend y la reputación del dominio | Una clienta que manda más de 6 encargos en 10 minutos ve "esperá unos minutos o escribinos por WhatsApp" |
+| **Límite en modificar y borrar del carrito, y en borrar favoritos** | Eran los únicos que escribían en la base sin tope | Mismo balde que agregar: 40 por minuto |
+| **Ids validados como UUID** en carrito y favoritos | Un id inválido llegaba a Postgres, fallaba (22P02) y devolvía 500 | Ahora da 400 sin ir a la base |
+| **Búsqueda con tope de 64 caracteres** | Recorre el catálogo en memoria con el texto entero | — |
+| **La limpieza de baldes usa la ventana más larga** | Una llamada de 1 minuto podía borrar el balde de 10 minutos de los formularios | — |
+| **Links del blog a los 7 productos que no recibían ninguno** | Sweater Cherry y Top Race, las dos fichas que Google no indexó, no tenían ni un link interno. Cardigan 3/4 tenía 12. Cada pieza entró en una nota con la que tiene relación real: por ejemplo, Sweater Cherry (mitad lana, mitad acrílico) en la de materiales, que explica justo esa mezcla | Cardigan 3/4 sale de la nota de materiales (sigue en 11). No cambió el `updatedAt` de las notas: su texto no cambió |
+
+`npm audit`: 0 vulnerabilidades, incluidas las de desarrollo. Los mails escapan todo lo que escribe el visitante (`escapeHtml` en `render.ts`). Los botones solo llevan URLs del sitio o `wa.me/<dígitos>`, así que las comillas que ese escape no cubre no se pueden colar.
+
+### Investigado y descartado (con números)
+
+- **Velocidad de la ficha.** La home y la ficha bajan casi el mismo JavaScript: 216 y 225 KB comprimidos. De eso, 39 KB son polyfills `noModule` que los celulares actuales ni bajan.
+  - Lo que corre son ~450 KB crudos de framework (React DOM 223 KB, enrutador de Next 126 KB, el resto de Next y Turbopack) y ~180 KB del sitio.
+  - El bloqueo es una sola tarea de ~1,6 s compilando todo eso.
+  - Separar el carrito y los avisos del resto ahorraría del orden del 4% de esa tarea, con riesgo de romper "agregar al carrito". **No se hizo.**
+  - La palanca real sigue siendo pasar partes grandes a componentes de servidor. Es un proyecto aparte.
+- **AVIF.** Está configurado, pero Netlify sirve WebP. A calidad 90, el AVIF de la foto de Spring pesa 212 KB y el WebP 162 KB: Netlify elige bien. Bajar la calidad de 90 contradice la regla de diseño (la textura vende).
+- **Títulos de "la lana pica" y "cómo lavar"** (111 y 95 impresiones, 0 clics). La mayoría de sus impresiones no tiene búsqueda visible, y una de las visibles es una consulta generada por una máquina ("context: location: argentina… question: …"). No se cambian, porque la muestra visible es chica. **Corregido el 19/09 a la mañana:** la primera versión decía que esas impresiones eran "tráfico de sistemas", y no está probado. La home y /tienda también tienen el 84-85% de sus impresiones en búsquedas ocultas, y son humanas. Google oculta las búsquedas poco frecuentes por privacidad, y en un sitio chico eso es casi todo. Con pinta de máquina hay solo 2 impresiones.
+- **Link a encargos en /tejedoras.** Esa página tiene impresiones por "tejedoras de crochet", pero 0 clics: nadie llega, así que un link adentro no le sirve a nadie.
+- **Datos de campo de velocidad (CrUX).** Sin clave de PageSpeed no hay cupo. Queda la tarea de la clave.
+
+### Recorrido de compra en el celular
+
+Ficha, talle, carrito, WhatsApp y encargo, a 390 px, con el carrito y `/api/orders` simulados. Anda de punta a punta:
+- la barra fija de "Agregar" muestra talle y precio;
+- el carrito lateral ofrece complementos y dice cómo es el envío;
+- el botón fijo tiene nombre accesible completo: "Coordinar pedido por WhatsApp con +598 99 850 073";
+- el mensaje de WhatsApp lleva la pieza, el talle, la cantidad, el subtotal, el link y las tres preguntas (plazo, envío, pago);
+- `/api/orders` recibe los ítems.
+
+No se cambió nada.
+
+### Verificación
+
+- typecheck y lint sin ningún aviso; build OK;
+- pruebas unitarias nuevas (`unit-19.mjs`): 22 de 22;
+- seguridad contra el servidor (`security-19.mjs`): 20 de 20. Incluye que falsificar `x-forwarded-for` ya no esquiva el límite y que los 29 bloques de JSON-LD de 9 páginas parsean sin ningún `<`;
+- batería anterior: smoke 63/63, variantes 12/12, reseñas 17/17, seguridad 13/13, Compartir 5/5, analítica 9/9, micro 17/17.
+
+Ninguna prueba escribió en la base: los ids inválidos cortan antes y el carrito se simula.
+
+---
+
+## 18. 19/09 a la mañana: revisar lo de ayer tratando de negarlo, y el celular
+
+Pedido de Mati: "en lo que analizaste da 100000 vueltas, preguntate si es verdad, tratá de negarlo". Cuatro afirmaciones de §17 no aguantaron. Están corregidas arriba, marcadas como "Corregido el 19/09 a la mañana":
+
+| Qué había dicho | Qué pasó al revisarlo |
+|---|---|
+| "El 69% de lo que se paga online se paga con tarjeta de crédito" | La cita textual de CEDU reparte 69% crédito y 31% débito más dinero electrónico: suman 100%, así que las transferencias no están en lo medido. Además, la nota citada no traía el dato; es otra |
+| "Las búsquedas genéricas son imposibles" | Con datos frescos, "bandana" a secas trae 74 impresiones en posición 10,9 el 17 y el 18/09 |
+| "La mayoría de las impresiones de las notas de cuidados son de la IA" | La home y /tienda tienen el 84-85% de sus búsquedas ocultas, y son humanas. Con pinta de máquina hay 2 impresiones |
+| "Las fichas están en el puesto 20 a 40 por el poco texto" | No está probado. Aparecen para búsquedas genéricas; con su propio nombre rankean bien |
+
+Lo que sí aguantó:
+- las fechas de CyberLunes 2025, del 3 al 5/11 ([Cuti](https://cuti.org.uy/en/destacados/noviembre-comienza-con-una-nueva-edicion-de-ciberlunes-con-hasta-70-off/));
+- la mediana de $1.200 de los tops;
+- los datos de DataReportal;
+- el IVA a Temu y Shein.
+
+Pendiente de confirmar después del deploy: si Netlify pisa `x-nf-client-connection-ip` cuando lo manda el cliente. No hay documentación oficial que lo diga. Prueba lista en `scratchpad/pw/prod-ip-test.mjs`.
+
+### Estadísticas de hoy (datos frescos de Search Console)
+
+- **17/09:** 271 impresiones, récord; 6 clics.
+- **18/09:** 168 impresiones; 1 clic.
+- **Bandana:** Google la rastreó el 16/09 y desde el 17/09 aparece por "bandana" en Uruguay, en posición 10-11.
+- **Sweater Cherry:** sigue con el 404 del 14/09 en la inspección. Hoy responde 200 y está en el sitemap. Falta pedir la indexación a mano.
+- **Top Race:** sigue "descubierta, sin indexar".
+- **Spring:** último rastreo el 13/09, así que Google todavía no vio las variantes.
+- **Reseñas de Google:** la sección no se muestra en producción, porque `/api/resenas` responde `{"ok":false}`. Falta la clave de Places en Netlify.
+
+### El bug de los puntitos, y otros tres que salieron al buscarlo
+
+| Cambio | Problema y evidencia | Referente | Trade-off |
+|---|---|---|---|
+| **Controles compartidos de carrusel** (`CarouselControls`): flechas y puntitos en una fila debajo de la tarjeta; área táctil de 24 px por puntito; con más de 5 ítems los puntitos solo indican; deslizar con el dedo | Reportado por Mati. Medido en producción: la regla táctil de `globals.css` (todo botón de al menos 44×44) convertía los 10 puntitos de los testimonios en círculos de 44 px. La fila iba de −52 a 442 px en una pantalla de 390. Además, las flechas (37-81 px) tapaban el texto, que arranca en 57 | WCAG 2.5.8: área táctil mínima de 24×24 px | Las flechas ya no quedan a los costados del texto en escritorio: pasan a la fila de abajo, que suma unos 40 px de alto |
+| **Comillas tipográficas y texto recortado** en testimonios y reseñas | La comilla de cierre quedaba sola en otro renglón ("amé su trabajo ❤️ " y abajo la comilla) | — | El trim solo saca espacios de los bordes |
+| **Estrella llena** en `icons.tsx` | La variante rellena no existía: un 5,0 se dibujaba con cinco estrellas vacías, que se lee como "cero" | — | — |
+| **"Sobre mí" respeta los renglones** en la home (`pre-line`, como ya hacía /atelier) | Anush escribió "Soy Anush" y "Tejo hace más de 5 años…" en dos renglones, y la home mostraba "Soy Anush Tejo hace…". Revisados los 103 textos de Configuración en vivo: solo ese y `info_care` tienen saltos, y /info ya los respetaba | — | — |
+| **Header a menos de 360 px** | A 320 px, el carrito iba del píxel 302 al 336: se cortaba | WCAG 1.4.10 (Reflow) | Logo y espacios un poco más chicos, solo en esas pantallas |
+| **Toolbar de la tienda**: el orden ocupa lo que sobra y "Filtrar" no se aprieta | A 320 px, "Filtrar" se cortaba y su contador quedaba afuera | — | A 375-640 px el selector de orden se estira hasta el botón |
+
+Barrido de desbordes (`desbordes.mjs`): 14 páginas × 4 anchos (320, 375, 390 y 412 px), en pantalla táctil. Después de los arreglos, nada se sale. El menú lateral cerrado aparecía fuera de pantalla, pero está bien resuelto: lleva `inert`.
+
+### Conexión a producción desde esta red
+
+Entre el 33 y el 60% de los intentos de conexión a la IP de San Pablo (54.232.119.62) agotaron el tiempo. Por el balanceador global de Netlify (75.2.60.5) anduvieron 15 de 15, y desde Brasil (check-host) y otros 20 países, todos. El DNS lo maneja Netlify y la configuración es la normal. Es la ruta entre esta conexión y ese servidor, no el sitio. Si alguien dice que "no carga", conviene probar con datos móviles.
+
+### Formalidad (pregunta de Mati sobre la tarjeta)
+
+Quedó como riesgo nuevo en `/admin/estrategia`, con fuentes y lo que falta confirmar con un contador:
+- la DGI prepara retenciones sobre los medios de pago digitales para vendedores particulares frecuentes desde el último trimestre de 2026 ([Ámbito, 14/06/2026](https://www.ambito.com/uruguay/la-dgi-prepara-nuevos-controles-mipymes-alquileres-turisticos-y-ventas-online-n6288626));
+- la lista oficial del BPS para el monotributo incluye "Textiles: tejidos" ([BPS](https://www.bps.gub.uy/10442/actividades-incluidas.html)), pero ninguna fuente oficial dice si cubre la venta por internet;
+- una guía privada estima la unipersonal de IVA mínimo en unos $9.200 por mes el primer año ([Castillo](https://castillo.uy/blog/impuestos-emprendedores-uruguay-2026/)).
+
+---
+
+## 19. 19/09: pasada de QA, pentest defensivo, SEO técnico, accesibilidad y rendimiento
+
+Pedido de Mati: actuar como QA senior, pentester defensivo, SEO técnico, CRO y performance, "con mentalidad de usuario que intenta romper el sitio"; medir, romper, corregir y volver a medir.
+
+### Cómo se hizo
+
+- **Referencias:** Lighthouse 13 (en PageSpeed desde octubre de 2025, mismo cálculo de puntaje), Core Web Vitals (LCP < 2,5 s, INP < 200 ms, CLS < 0,1, percentil 75 de campo), WCAG 2.2 AA, la guía de datos de producto de Google y las guías de Next 16 incluidas en el proyecto (`node_modules/next/dist/docs`: error y global-error, JSON-LD, CSP).
+- **Instrumentos** (en `scratchpad/pw`):
+  - `seo-crawl.mjs`: sitemap + links internos;
+  - `axe-scan.mjs` y `contraste.mjs`;
+  - `teclado.mjs`;
+  - `romper.mjs`: HTTP adversarial;
+  - `formularios.mjs`: acciones del servidor interceptadas;
+  - `desbordes.mjs`;
+  - `lh-full.mjs`: Lighthouse, las 4 categorías, mediana de 3.
+- **Suite nueva dentro del repo:** `tests/e2e`, con Playwright + axe, `npm run test:e2e`. Ver "Tests" en el README.
+- **Regla que se mantuvo:** nada escribió en la base de producción. Las acciones del servidor se abortan en el navegador; carrito, pedidos y favoritos se simulan; las pruebas de API solo mandan ids inválidos.
+
+### Línea de base de producción (código publicado 41f4001, antes de esta pasada)
+
+Lighthouse 13, celular simulado, mediana de 3 corridas, por el balanceador global de Netlify (75.2.60.5):
+
+| Página | Perf (corridas) | A11y | BP | SEO | LCP | TBT | CLS |
+|---|---|---|---|---|---|---|---|
+| / | 54 (54/48/66) | 96 | 77 | 100 | 4,1 s | 3.580 ms | 0 |
+| /tienda | 47 (59/43/47) | 96 | 77 | 100 | 5,2 s | 2.409 ms | 0 |
+| /tienda/spring-cardigan | 53 (61/46/53) | 96 | 77 | 100 | 3,9 s | 1.779 ms | 0 |
+| /carrito | 43 (43/49/42) | 96 | 77 | 69 | 5,8 s | 4.545 ms | 0 |
+| /encargo | 53 (63/49/53) | 96 | 77 | 100 | 4,6 s | 3.596 ms | 0,031 |
+| /blog/regalos-tejidos-a-mano | 50 (45/50/52) | 96 | 77 | 100 | 4,8 s | 3.135 ms | 0 |
+
+- **A11y 96:** es el contraste.
+- **BP 77:** las 8 cookies de terceros de Clarity (MUID y la sincronización con c.bing.com).
+- **SEO 69 en /carrito:** es a propósito, porque la página es noindex.
+- **Performance** varía hasta 20 puntos entre corridas. Mandan el framework (~450 KB crudos de React y el enrutador de Next) y los terceros: por corrida, gtag 650-1.130 ms y Clarity 330-450 ms de CPU simulada.
+
+### Problemas encontrados y qué se hizo
+
+**Críticos**
+
+| Problema | Evidencia | Arreglo |
+|---|---|---|
+| Los 6 formularios públicos (encargo, estado, tejedoras y las 3 altas VIP) tiraban la página entera a "Esta página no cargó" si se cortaba la red, el servidor respondía 500 o la respuesta llegaba rota. **Se perdía todo lo escrito.** El del pie caía a la pantalla genérica de Next, porque no había `global-error` | `formularios.mjs`: las 3 fallas × 4 chequeos en rojo. La misma suite corrida contra producción falla en los 8 casos | `src/lib/safe-action.ts`: la llamada a la acción del servidor dentro de try/catch. Cada formulario muestra su aviso y conserva los campos |
+| El botón "Probar de nuevo" de la página de error llamaba a `unstable_retry`, una prop que Next 16.3.5 no pasa (pasa `error`, `reset` y `retry`: `next/dist/client/components/error-boundary.js`). No reintentaba y tiraba otro error | Código de Next | `retry ?? reset ?? recargar` |
+
+**Altos**
+
+| Problema | Evidencia | Arreglo |
+|---|---|---|
+| Contraste del gris secundario (`ink500` #8C8285): 3,71:1 sobre blanco y 3,31:1 sobre crema, en ~195 textos chicos | axe, `color-contrast` en todas las páginas | `ink500` → #756B6E (5,1:1 y 4,6:1). La skill ui-review queda actualizada |
+| 11 botones de WhatsApp con texto blanco sobre #25D366: 1,98:1, incluido el principal del carrito. El ícono del botón flotante tampoco llega al 3:1 | axe + cálculo | Token `dahila.whatsapp` (#1E8449, 4,7:1). Trade-off: el verde es menos fluo; el logo mantiene el reconocimiento |
+| Menú del celular sin manejo de foco: al abrirlo, Tab seguía por la página tapada | `teclado.mjs` | `useFocusTrap` (el mismo del carrito y los modales) |
+| /tienda se compartía **sin imagen**: su `opengraph-image.tsx` en el grupo `(listado)` genera `/tienda/opengraph-image-nfh255` y Next no la enlaza | `seo-crawl.mjs` + tabla de rutas del build | /tienda usa `OG_BASE`, la foto real de la home; se borraron las imágenes de texto que nadie usaba |
+| No había `global-error.tsx`: un fallo del layout raíz mostraba la pantalla genérica de Next, en inglés | Docs de Next 16 | `src/app/global-error.tsx`, con el mismo tono y las mismas salidas que `error.tsx` |
+| Campos sin `autocomplete` (WCAG 1.3.5), WhatsApp con teclado de letras, sin topes de largo (el servidor recortaba en silencio) | `formularios.mjs` | `TextInput` acepta `autoComplete`, `inputMode`, `maxLength` y `name`; aplicados en encargo, tejedoras, estado y lista VIP |
+| En el celular, la barra fija de la ficha y la del carrito tapaban la última línea del pie | `elementFromPoint`: el crédito "SIAR" quedaba debajo de `.pdp-sticky-bar` | El espacio pasó de `main` a `body` |
+| No había ningún test en el repo | — | `tests/e2e`: 168 pruebas en 2 proyectos |
+
+**Medios**
+
+| Problema | Arreglo |
+|---|---|
+| 10 botones que navegaban con `router.push`: no se podían abrir en otra pestaña, no eran links para el lector de pantalla ni para Google | `Button href` o `Link`; el seguimiento de eventos se mantiene en `onClick` |
+| Áreas táctiles de menos de 24 px en "Sumale un detalle" del carrito y el carrito lateral (16,8 y 19 px) | Relleno vertical hasta 24 px (WCAG 2.5.8) |
+| Buscador: Escape no lo cerraba y el foco se perdía al cerrar | Escape cierra y el foco vuelve a "Buscar" (también con la X) |
+| /carrito sin H1 mientras carga | H1 oculto a la vista durante la carga |
+| /encargo/estado llegaba en blanco hasta que cargaba el JS (quien entra por el link del mail) | Título y explicación desde el servidor |
+| Clarity: cookies publicitarias de terceros (BP 77) | `consentv2` con `ad_Storage: denied` y `analytics_Storage: granted`. Grabaciones y mapas de calor iguales. **A verificar en producción:** la documentación no dice explícitamente que desaparezca MUID |
+| El aviso de arriba y el WhatsApp flotante estaban fuera de todo landmark | `<aside>` con nombre |
+| El README decía que cualquier usuario logueado es admin (falso desde el SQL del 15/09) | Corregido; sección "Tests" nueva |
+
+**Bajos, sin cambio (con motivo)**
+
+- Títulos de más de 65 caracteres en /blog y 4 categorías; descripciones de producto de 176-185. Los títulos cambiaron el 13/09 y la medición es el 11/10: cambiarlos ahora arruina esa comparación.
+- "Vista rápida" en las tarjetas es un `div` clickeable, no operable con teclado. Va dentro del link a la ficha, donde se puede hacer todo lo mismo; hacerlo botón dentro de un link sería HTML inválido.
+- `next start` local responde 500 a URLs mal formadas (`/tienda/%E0%A4%A`). En producción, Netlify las corta antes con 400: verificado.
+- `script-src 'unsafe-inline'` en la CSP: sacarlo exige nonces, que en Next obligan a render dinámico en todas las páginas y se pierde la caché estática.
+- Autoría de las notas del blog: queda como organización. Anush no las escribió, así que ponerla como autora sería inventar.
+- Reordenar la home para subir reseñas y testimonios: sin datos de scroll de Clarity sería adivinar.
+
+**Verificado sin problemas:**
+- 80 URLs rastreadas, todas 200: sin links rotos, huérfanas, títulos duplicados ni canonical mal puestos, con JSON-LD válido, sin noindex en el sitemap y sin imágenes sin alt;
+- `romper.mjs`: 98 de 99, y el único fallo es el 500 local de arriba;
+- cabeceras en producción: HSTS preload, nosniff, DENY, CSP con `object-src 'none'`, `base-uri`, `form-action` y `frame-ancestors`;
+- la cookie del carrito es Secure, HttpOnly y SameSite=lax;
+- source maps no expuestos;
+- ningún secreto entre los 103 settings públicos;
+- `npm audit`: 0;
+- sin `console.log`, `any` ni TODOs en `src`.
+
+### Tests
+
+- **Primera corrida de la suite:** 142 bien y 24 mal. Los fallos fueron errores de las propias pruebas (el anunciador de rutas de Next con `role="alert"`, el submit del pie, "Menú" contra "Cerrar menú", la barra final del sitemap, fixtures sin guardián) y bugs reales (el pie tapado, el H1 del carrito, la imagen de /tienda).
+- **El guardián pasó a automático:** un test que se olvidara de pedirlo quedaba sin protección de escritura.
+- **Segunda corrida:** 165 bien, 1 mal y 2 salteadas a propósito. El que falló medía mal: el carrito cerrado está fuera de pantalla con `inert`, y para Playwright eso cuenta como "visible". Reescrito, pasa en los dos proyectos.
+- **Contra producción** (código viejo, todas las escrituras interceptadas): las 8 pruebas de formularios, puntitos y pie fallan. Es decir, la suite detecta los bugs que siguen publicados.
+- **Una prueba inestable, corregida:** la de los carruseles falló 1 vez de 3 corridas completas. Bajaba la página demasiado rápido y, con la máquina cargada, el observador que pide las reseñas no las veía pasar. Ahora baja de a poco hasta que aparecen. No es un bug del sitio: quien las saltea rápido las ve al volver a bajar.
+- **Corrida final:** 166 bien, 0 mal y 2 salteadas a propósito (teclado físico solo en escritorio; menú hamburguesa solo en el celular). typecheck de la app y de los tests, lint sin avisos y build: OK.
+
+### Después (build local con todos los arreglos)
+
+Lighthouse 13, mismas 6 páginas, celular simulado, mediana de 3:
+
+| Página | Perf (corridas) | A11y | BP | SEO | LCP | TBT | CLS |
+|---|---|---|---|---|---|---|---|
+| / | 54 (68/54/54) | **100** | **96** | 100 | 4,3 s | 3.032 ms | 0 |
+| /tienda | 53 (62/53/48) | **100** | **96** | 100 | 5,6 s | 1.039 ms | 0,005 |
+| /tienda/spring-cardigan | 55 (56/55/46) | **100** | **96** | 100 | 4,9 s | 1.428 ms | 0 |
+| /carrito | 45 (45/45/56) | **100** | **96** | 69 | 7,3 s | 2.124 ms | 0 |
+| /encargo | 63 (53/63/72) | **100** | **96** | 100 | 3,5 s | 1.856 ms | 0 |
+| /blog/regalos-tejidos-a-mano | 54 (54/47/67) | **100** | **96** | 100 | 4,5 s | 1.722 ms | 0,032 |
+
+- **Accesibilidad:** de 96 a 100 en las 6 páginas.
+- **Buenas prácticas en local, 96:** lo que queda es el 400 de Umami con el ID falso del build de prueba. En producción Umami responde bien: verificado.
+- **Performance NO es comparable** con producción: en local no hay red ni CDN, y GA y Clarity usan IDs falsos. No se afirma ninguna mejora de performance; esta pasada no atacó el cuello de botella, que es el framework más los terceros (ver §17).
+- **Buenas prácticas en producción** se mide recién después del deploy, para ver si Clarity dejó las cookies publicitarias.
+
+**Consola de producción** (9 páginas, servicios reales): ningún error de JavaScript ni respuestas 4xx/5xx. Solo quedan pedidos cortados al cerrar la pestaña, que son un artefacto de la prueba.
 
 ---
 

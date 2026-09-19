@@ -11,7 +11,10 @@
     "seo-report": "node scripts/seo-report.mjs",
     "sitemaps": "node scripts/sitemaps-submit.mjs",
     "indexnow": "node scripts/indexnow-submit.mjs",
-    "ga": "node scripts/ga-report.mjs"
+    "ga": "node scripts/ga-report.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:setup": "playwright install chromium",
+    "test:types": "tsc -p tests/tsconfig.json"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
@@ -21,7 +24,9 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@netlify/plugin-nextjs": "^5.15.11",
+    "@playwright/test": "1.63.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

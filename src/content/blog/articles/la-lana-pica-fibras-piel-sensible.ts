@@ -14,7 +14,7 @@ export const article: Article = {
   publishedAt: '2026-09-04',
   hero: { src: '/photos/blog/bufanda-lana-cruda-puesta.jpg', alt: 'Bufanda de lana tejida a crochet en crudo, puesta al cuello', position: '50% 40%' },
   relatedCategorySlug: 'tops',
-  relatedProductSlugs: ['top-summer', 'cardigan-3-4', 'bufanda-sophie'],
+  relatedProductSlugs: ['top-summer', 'top-duna', 'cardigan-3-4', 'bufanda-sophie'],
   relatedArticleSlugs: [
     'comprar-crochet-en-uruguay',
     'como-cuidar-prendas-de-crochet',

@@ -20,12 +20,13 @@ Run this mentally (or literally) over any UI you add or touch.
 - Visible keyboard focus: rely on the global `:focus-visible` ring in
   globals.css — never `outline: none` without a replacement.
 - Body text contrast ≥ 4.5:1 (ink700 on white is fine; ink500 only for
-  secondary/meta, never long body copy).
+  secondary/meta, never long body copy). ink500 is #756B6E since 19/09/2026 (the old
+  #8C8285 failed 4.5:1); check new text on cream backgrounds with axe.
 - Honor `prefers-reduced-motion` (global guard exists; don't override it).
 
 ## Visual consistency (use the system, don't improvise)
 - Colors/spacing/radii/shadows come from the `dahila` tokens or CSS vars.
-  No ad-hoc hex except the established sale red `#B6314A` / WhatsApp `#25D366`.
+  No ad-hoc hex except the established sale red `#B6314A` and `dahila.whatsapp` (#1E8449) for WhatsApp buttons. Not the brand green #25D366 with white text: 2:1 contrast, it fails WCAG AA (changed 19/09/2026).
 - Type: Fraunces (display, weight 300) for headings, Inter for UI/body.
   Reuse Primitives (`Button`, `Chip`, `Eyebrow`, `Badge`, `Field`, `Icon`).
 - Consistent corner radii (8/12/16) and consistent gap rhythm.

@@ -51,7 +51,11 @@ export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: str
   const message = encodeURIComponent('Hola! Estoy en el sitio de Dahila Crochet y tengo una consulta 🧶')
   const href = `${waUrl.replace(/\/$/, '')}?text=${message}`
 
+  // Dentro de un <aside> con nombre: queda como región propia y no suelto
+  // fuera de todo landmark (axe "region", 19/09/2026). El link es fijo, así que
+  // el contenedor no ocupa lugar ni cambia nada a la vista.
   return (
+    <aside aria-label="Consulta por WhatsApp">
     <a
       // La clase existe para la regla de globals.css que la sube por encima de
       // la barra fija de la ficha en mobile (con z-index 40 < 45 quedaba
@@ -87,12 +91,12 @@ export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: str
         width: 52,
         height: 52,
         borderRadius: 999,
-        background: '#25D366',
+        background: '#1E8449',
         color: '#fff',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: '0 4px 20px rgba(37,211,102,0.38)',
+        boxShadow: '0 4px 20px rgba(30,132,73,0.38)',
         textDecoration: 'none',
         transform: visible ? 'translateY(0) scale(1)' : 'translateY(80px) scale(0.9)',
         opacity: visible ? 1 : 0,
@@ -105,5 +109,6 @@ export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: str
         <path d="M16 3C9.373 3 4 8.373 4 15c0 2.385.668 4.61 1.818 6.51L4 29l7.697-1.79A11.94 11.94 0 0016 28c6.627 0 12-5.373 12-12S22.627 3 16 3zm5.93 16.71c-.25.7-1.47 1.37-2.01 1.42-.54.05-1.05.24-3.54-.73-2.98-1.15-4.88-4.18-5.03-4.37-.15-.19-1.2-1.6-1.2-3.05 0-1.45.76-2.17 1.03-2.46.27-.29.59-.36.79-.36l.57.01c.18 0 .43-.07.67.51.25.6.85 2.06.92 2.21.07.15.12.33.02.53-.1.2-.15.32-.3.49-.15.17-.31.38-.44.51-.14.14-.29.29-.12.58.17.29.74 1.22 1.59 1.98 1.09.97 2.01 1.27 2.3 1.41.29.14.46.12.63-.07.17-.19.74-.86.94-1.15.2-.29.39-.24.66-.14.27.1 1.7.8 1.99.94.29.14.49.21.56.33.07.12.07.7-.18 1.4z"/>
       </svg>
     </a>
+    </aside>
   )
 }

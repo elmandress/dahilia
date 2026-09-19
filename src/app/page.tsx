@@ -1,3 +1,4 @@
+import { jsonLdScript } from '@/lib/json-ld'
 import { createClient } from '@/lib/supabase/public'
 import { brandProfileUrls, googleBusinessUrl } from '@/lib/profiles'
 import { getCatalog } from '@/lib/catalog'
@@ -113,12 +114,12 @@ export default async function Home() {
       {source === 'snapshot' && <CatalogReadOnlyBanner waUrl={waUrl} />}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(localBusinessJsonLd) }}
       />
       {faqJsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdScript(faqJsonLd) }}
         />
       )}
       <HomeClient

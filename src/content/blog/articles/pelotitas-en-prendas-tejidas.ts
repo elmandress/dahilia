@@ -18,7 +18,7 @@ export const article: Article = {
   publishedAt: '2026-09-13',
   hero: { src: '/photos/blog/cardigan-amour-corazones.jpg', alt: 'Cardigan amour tejido a crochet en crudo con corazones rojos, puesto con jean', position: '50% 40%' },
   relatedCategorySlug: 'cardigans',
-  relatedProductSlugs: ['cardigan-amour', 'spring-cardigan', 'sweater-senda'],
+  relatedProductSlugs: ['cardigan-amour', 'spring-cardigan', 'sweater-senda', 'sweater-cherry'],
   relatedArticleSlugs: ['primeros-auxilios-prenda-tejida', 'como-cuidar-prendas-de-crochet', 'como-lavar-crochet-a-mano'],
   body: [
     {

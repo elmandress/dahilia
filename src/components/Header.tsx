@@ -8,6 +8,7 @@ import { useCart } from './CartProvider'
 import { track } from '@/lib/analytics'
 import { useFavorites } from './FavoritesProvider'
 import { useScrollLock } from '@/lib/scroll-lock'
+import { useFocusTrap } from '@/lib/focus-trap'
 import { dahila, Icon } from './ui/Primitives'
 import { formatPrice } from '@/lib/types'
 
@@ -160,6 +161,20 @@ export function Header({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
+  // El menú del celular es un panel modal como el carrito: al abrirlo el foco
+  // entra, Tab no se escapa a la página de atrás y al cerrarlo vuelve al botón
+  // Menú. Antes el foco se quedaba en el botón y Tab seguía por la página
+  // tapada (prueba de teclado, 19/09/2026).
+  const menuRef = useRef<HTMLElement | null>(null)
+  useFocusTrap(menuRef, open)
+  // La búsqueda se abre en línea en el header. Al cerrarla (Escape o la X), el
+  // foco vuelve al botón Buscar; si no, quedaba perdido en el <body>.
+  const searchBtnRef = useRef<HTMLButtonElement | null>(null)
+  const closeSearch = () => {
+    setShowSearch(false)
+    setSearchVal('')
+    requestAnimationFrame(() => searchBtnRef.current?.focus())
+  }
 
   // Admin uses its own layout/chrome — never render the public header there.
   // /ig es la landing de la bio de Instagram: pensada como un Linktree (una
@@ -195,7 +210,9 @@ export function Header({
     <>
       {/* Announcement / promo bar — text/link/colours editable from the admin. */}
       {promoEnabled && (
-        <div className="announce-bar" role="note" style={{
+        // <aside> y no <div role="note">: queda como región con nombre, que el lector
+        // de pantalla puede listar y saltear (axe "region", 19/09/2026).
+        <aside className="announce-bar" aria-label="Aviso" style={{
           background: promoBg, color: promoFg,
           textAlign: 'center', padding: '8px 16px',
           fontFamily: dahila.fontSans, fontSize: 11.5, fontWeight: 400,
@@ -204,7 +221,7 @@ export function Header({
           {promoLink ? (
             <Link href={promoLink} style={{ color: promoFg, textDecoration: 'none' }}>{promoText}</Link>
           ) : promoText}
-        </div>
+        </aside>
       )}
 
       <header className="site-header" style={{
@@ -315,6 +332,7 @@ export function Header({
                     value={searchVal}
                     onChange={(e) => setSearchVal(e.target.value)}
                     autoFocus
+                    onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); closeSearch() } }}
                     aria-label="Buscar prendas"
                     style={{
                       background: 'transparent', border: 'none',
@@ -324,7 +342,7 @@ export function Header({
                       width: 'clamp(110px, 32vw, 160px)',
                     }}
                   />
-                  <button type="button" onClick={() => { setShowSearch(false); setSearchVal('') }} style={{ ...iconBtn, padding: 2 }} aria-label="Cerrar búsqueda">
+                  <button type="button" onClick={closeSearch} style={{ ...iconBtn, padding: 2 }} aria-label="Cerrar búsqueda">
                     <Icon name="x" size={16}/>
                   </button>
                 </form>
@@ -382,7 +400,7 @@ export function Header({
                 )}
               </div>
             ) : (
-              <button onClick={() => setShowSearch(true)} style={{ ...iconBtn, width: 34, height: 34, minWidth: 34, minHeight: 34 }} aria-label="Buscar">
+              <button ref={searchBtnRef} onClick={() => setShowSearch(true)} style={{ ...iconBtn, width: 34, height: 34, minWidth: 34, minHeight: 34 }} aria-label="Buscar">
                 <Icon name="magnifying-glass" size={20}/>
               </button>
             )}
@@ -549,6 +567,7 @@ export function Header({
       />
       <aside
         id="mobile-menu"
+        ref={menuRef}
         className="mobile-menu-panel"
         inert={!open}
         aria-label="Menú"

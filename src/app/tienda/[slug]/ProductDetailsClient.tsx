@@ -262,14 +262,14 @@ export function ProductDetailsClient({
                   }}>{s.size}</button>
                 ))}
 
-                <button onClick={() => { track('encargo_click', { source: 'pdp_talles', product: product.slug }); router.push(encargoHref) }} style={{
-                  padding: '0 14px', height: 44, borderRadius: 8,
+                <Link href={encargoHref} onClick={() => track('encargo_click', { source: 'pdp_talles', product: product.slug })} style={{
+                  padding: '0 14px', height: 44, borderRadius: 8, textDecoration: 'none',
                   fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink900,
                   background: 'transparent', border: `1px dashed ${dahila.borderStrong}`, cursor: 'pointer',
                   display: 'inline-flex', alignItems: 'center', gap: 6,
                 }}>
                   <Icon name="ruler" size={14}/> A medida
-                </button>
+                </Link>
               </div>
             </div>
           )}
@@ -291,7 +291,7 @@ export function ProductDetailsClient({
           {product.is_custom_only && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {processEnabled && <ProcessStepper steps={processSteps} />}
-              <Button variant="primary" full onClick={() => { track('encargo_click', { source: 'pdp_custom_only', product: product.slug }); router.push(encargoHref) }}>Solicitar presupuesto</Button>
+              <Button variant="primary" full href={encargoHref} onClick={() => track('encargo_click', { source: 'pdp_custom_only', product: product.slug })}>Solicitar presupuesto</Button>
             </div>
           )}
 
@@ -324,7 +324,7 @@ export function ProductDetailsClient({
                 onClick={() => track('restock_click', { product: product.slug })}
                 style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-                  background: '#25D366', color: '#fff', textDecoration: 'none',
+                  background: dahila.whatsapp, color: '#fff', textDecoration: 'none',
                   borderRadius: 10, padding: '15px 22px',
                   fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
                   letterSpacing: '0.06em', textTransform: 'uppercase',

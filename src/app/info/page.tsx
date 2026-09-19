@@ -120,7 +120,7 @@ export default async function InfoPage() {
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
             alignSelf: 'flex-start',
-            background: '#25D366', color: '#fff', textDecoration: 'none',
+            background: dahila.whatsapp, color: '#fff', textDecoration: 'none',
             borderRadius: 10, padding: '14px 22px',
             fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
             letterSpacing: '0.06em', textTransform: 'uppercase',

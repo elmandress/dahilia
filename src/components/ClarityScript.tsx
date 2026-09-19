@@ -19,13 +19,22 @@ const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID
 export function ClarityScript() {
   const allowed = useAnalyticsAllowed()
   if (!CLARITY_ID || !allowed) return null
+  // Grabaciones y mapas de calor sí; publicidad no (19/09/2026). Lighthouse
+  // encontró 8 cookies de terceros en producción, todas de Clarity, entre
+  // ellas el ID publicitario de Microsoft (MUID) sincronizado con
+  // c.bing.com. Dahila no usa Microsoft Ads: ese rastreo no le sirve a
+  // Anush y sí le pone un identificador publicitario a cada clienta. Según
+  // la API ConsentV2 de Clarity, ad_Storage "denied" corta lo publicitario
+  // y analytics_Storage "granted" mantiene todas las funciones de Clarity.
+  // La llamada entra en la cola que arma el snippet, antes de que cargue.
   return (
     <Script id="ms-clarity" strategy="lazyOnload">
       {`(function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
         t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-      })(window, document, "clarity", "script", ${JSON.stringify(CLARITY_ID)});`}
+      })(window, document, "clarity", "script", ${JSON.stringify(CLARITY_ID)});
+      window.clarity("consentv2", { ad_Storage: "denied", analytics_Storage: "granted" });`}
     </Script>
   )
 }

@@ -22,9 +22,16 @@ const dahila = {
   moss500: '#6A8456',
   ink900: '#1F1A1B',
   ink700: '#4A4143',
-  ink500: '#8C8285',
+  // ink500 era #8C8285: 3,7:1 sobre blanco y 3,3:1 sobre crema, por debajo del
+  // 4,5:1 de WCAG 1.4.3 en ~200 textos chicos del sitio (axe, 19/09/2026).
+  // #756B6E da 5,1:1 y 4,6:1 y sigue siendo el gris cálido secundario.
+  ink500: '#756B6E',
   ink300: '#C9C2C4',
   ink100: '#EDE9EA',
+  // Botones de WhatsApp. El verde de marca (#25D366) con texto blanco da 2:1
+  // (WCAG pide 4,5:1 para texto y 3:1 para el ícono); este verde oscuro da
+  // 4,7:1 y, con el logo al lado, sigue leyéndose como WhatsApp (19/09/2026).
+  whatsapp: '#1E8449',
   border: 'rgba(31,26,27,0.08)',
   borderStrong: 'rgba(31,26,27,0.18)',
   shadowSm: '0 4px 14px -8px rgba(31,26,27,0.08)',
@@ -206,11 +213,25 @@ export function Field({ label, helper, children }: { label: string, helper?: str
   )
 }
 
-export function TextInput({ placeholder, value, onChange, type = 'text' }: { placeholder?: string, value?: string, onChange?: (val: string) => void, type?: string }) {
+// autoComplete / inputMode / maxLength (19/09/2026): sin autoComplete, el
+// celular no ofrecía completar nombre, mail ni teléfono (WCAG 1.3.5), el campo
+// de WhatsApp abría el teclado de letras, y el servidor recortaba en silencio
+// lo que pasara de su tope. Cada formulario los pasa según el dato.
+export function TextInput({ placeholder, value, onChange, type = 'text', autoComplete, inputMode, maxLength, name, spellCheck, autoCapitalize }: {
+  placeholder?: string, value?: string, onChange?: (val: string) => void, type?: string,
+  autoComplete?: string, inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'],
+  maxLength?: number, name?: string, spellCheck?: boolean, autoCapitalize?: string,
+}) {
   const [focus, setFocus] = useState(false)
   return (
     <input
       type={type}
+      name={name}
+      autoComplete={autoComplete}
+      inputMode={inputMode}
+      maxLength={maxLength}
+      spellCheck={spellCheck}
+      autoCapitalize={autoCapitalize}
       placeholder={placeholder}
       value={value || ''}
       onChange={(e) => onChange && onChange(e.target.value)}

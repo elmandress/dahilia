@@ -1,3 +1,4 @@
+import { jsonLdScript } from '@/lib/json-ld'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -107,7 +108,7 @@ export default async function ArticlePage({
     <article className="blog-article" style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 24px 96px' }}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd(article)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(articleJsonLd(article)) }}
       />
 
       <Breadcrumb items={[

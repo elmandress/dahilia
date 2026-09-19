@@ -163,7 +163,21 @@ For the database, run these SQL files **in order** in the Supabase SQL Editor (a
 
 One-off data migration: [`database/precios-2026-07.sql`](./database/precios-2026-07.sql) applies the July 2026 approved price update (run once; `/admin/estrategia` shows live whether it has been applied).
 
-To grant admin access, create a user in Supabase Auth (Authentication → Users → Add user). Any authenticated user has admin rights per the current RLS.
+To grant admin access, create the user in Supabase Auth (Authentication → Users → Add user) and add their email to the `admins` table (see [`database/seguridad-2026-09.sql`](./database/seguridad-2026-09.sql)). Since that script (run 15/09/2026) only accounts for which `public.is_admin()` is true can edit the store; any other signed-in account is treated like a visitor. Keep "Allow new users to sign up" off in Supabase.
+
+### Tests
+
+End-to-end tests (Playwright + axe) live in [`tests/e2e`](./tests/e2e) and run against the local production build:
+
+```bash
+npm run test:e2e:setup   # once: downloads the Chromium build Playwright uses
+npm run build
+npm run test:e2e         # starts `next start -p 3100` if nothing is running there
+```
+
+They cover the main user journeys (browse → cart → WhatsApp), forms under network failure, WCAG 2.2 AA with axe, keyboard focus in dialogs, technical SEO per template, mobile overflow at 320–414 px, API hardening, and a JS/CLS budget.
+
+**The local server reads the production database.** Every write is intercepted in [`tests/e2e/support/guard.ts`](./tests/e2e/support/guard.ts): server actions never leave the browser, cart/orders/favorites are simulated in memory, and API security tests only send invalid ids that are rejected before any query. Keep it that way when adding tests.
 
 ### Migración a dahila.uy (dominio ya comprado — runbook v1.0)
 

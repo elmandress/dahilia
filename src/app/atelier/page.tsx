@@ -1,3 +1,4 @@
+import { jsonLdScript } from '@/lib/json-ld'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/public'
@@ -77,7 +78,7 @@ export default async function AtelierPage() {
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 0' }}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(personJsonLd) }}
       />
       <div className="atelier-split" style={{
         display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: 64, alignItems: 'center',

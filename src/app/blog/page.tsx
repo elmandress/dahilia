@@ -1,3 +1,4 @@
+import { jsonLdScript } from '@/lib/json-ld'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -65,7 +66,7 @@ export default async function BlogIndexPage() {
 
   return (
     <div className="blog-page" style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 24px 96px' }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
 
       <header style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 44, maxWidth: 640 }}>
         <Eyebrow>Notas</Eyebrow>

@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import { useRouter } from 'next/navigation'
 import { useFavorites } from '@/components/FavoritesProvider'
 import { ProductCard } from '@/components/ProductCard'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
@@ -19,7 +18,6 @@ const QuickViewModal = dynamic(
 )
 
 export function FavoritosClient({ whatsappUrl, discounts = [] }: { whatsappUrl: string; discounts?: Discount[] }) {
-  const router = useRouter()
   const { items, count, hasMounted } = useFavorites()
   const [quickView, setQuickView] = useState<Product | null>(null)
 
@@ -59,7 +57,7 @@ export function FavoritosClient({ whatsappUrl, discounts = [] }: { whatsappUrl: 
         <p style={{ fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300, fontSize: 18, color: dahila.ink700, margin: '12px 0 28px' }}>
           Tocá el corazón en las piezas que te gusten y las vas a encontrar acá.
         </p>
-        <Button variant="primary" size="lg" onClick={() => router.push('/tienda')}>Explorar la tienda</Button>
+        <Button variant="primary" size="lg" href="/tienda">Explorar la tienda</Button>
       </div>
     )
   }
@@ -83,7 +81,7 @@ export function FavoritosClient({ whatsappUrl, discounts = [] }: { whatsappUrl: 
           rel="noopener noreferrer"
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 9,
-            background: '#25D366', color: '#fff', textDecoration: 'none',
+            background: dahila.whatsapp, color: '#fff', textDecoration: 'none',
             borderRadius: 10, padding: '13px 22px',
             fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 500,
             letterSpacing: '0.06em', textTransform: 'uppercase',

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { dahila, Eyebrow, Icon } from '@/components/ui/Primitives'
+import { CarouselControls, useSwipe } from '@/components/ui/CarouselControls'
 
 // Reseñas REALES del Perfil de Google, sin copiar ni editar nada a mano.
 //
@@ -129,6 +130,7 @@ export function GoogleReviews() {
     setActual(((i % total) + total) % total)
     arrancar()
   }
+  const swipe = useSwipe(() => ir(actual + 1), () => ir(actual - 1))
 
   const r = reviews[Math.min(actual, Math.max(total - 1, 0))]
 
@@ -162,8 +164,8 @@ export function GoogleReviews() {
             onMouseLeave={arrancar}
             onFocusCapture={frenar}
             onBlurCapture={arrancar}
+            {...(total > 1 ? swipe : {})}
             style={{
-              position: 'relative',
               background: dahila.cream50,
               border: `1px solid ${dahila.border}`,
               borderRadius: 20,
@@ -186,12 +188,14 @@ export function GoogleReviews() {
               </header>
 
               {/* Texto completo, sin recortar: la política de Google pide
-                  mostrar la reseña tal como la escribió su autora. */}
+                  mostrar la reseña tal como la escribió su autora. El trim solo
+                  saca espacios de los bordes, para que la comilla de cierre no
+                  quede sola en otra línea. */}
               <p key={`${r.author}-${actual}`} style={{
                 fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300,
                 fontSize: 'clamp(15px, 2.2vw, 18px)', lineHeight: 1.65, color: dahila.ink900, margin: 0,
               }}>
-                &quot;{r.text}&quot;
+                “{r.text.trim()}”
               </p>
 
               {r.uri && (
@@ -203,42 +207,19 @@ export function GoogleReviews() {
               )}
             </article>
 
-            {total > 1 && (
-              <>
-                <button type="button" onClick={() => ir(actual - 1)} aria-label="Reseña anterior"
-                  style={{
-                    position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
-                    background: '#fff', border: `1px solid ${dahila.border}`, borderRadius: 999,
-                    width: 36, height: 36, cursor: 'pointer', color: dahila.ink700,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                  <Icon name="caret-left" size={14} />
-                </button>
-                <button type="button" onClick={() => ir(actual + 1)} aria-label="Reseña siguiente"
-                  style={{
-                    position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-                    background: '#fff', border: `1px solid ${dahila.border}`, borderRadius: 999,
-                    width: 36, height: 36, cursor: 'pointer', color: dahila.ink700,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                  <Icon name="caret-right" size={14} />
-                </button>
-              </>
-            )}
           </div>
 
-          {total > 1 && (
-            <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 18 }}>
-              {reviews.map((_, i) => (
-                <button key={i} type="button" onClick={() => ir(i)} aria-label={`Ver reseña ${i + 1}`}
-                  style={{
-                    width: i === actual ? 18 : 7, height: 7, borderRadius: 999,
-                    background: i === actual ? dahila.ink900 : dahila.ink300,
-                    border: 'none', cursor: 'pointer', padding: 0, transition: 'all 220ms ease',
-                  }} />
-              ))}
-            </div>
-          )}
+          {/* Flechas y puntitos debajo de la tarjeta (ver CarouselControls). */}
+          <div style={{ marginTop: 16 }}>
+            <CarouselControls
+              total={total}
+              actual={actual}
+              onAnterior={() => ir(actual - 1)}
+              onSiguiente={() => ir(actual + 1)}
+              onIr={ir}
+              labels={{ anterior: 'Reseña anterior', siguiente: 'Reseña siguiente', ir: (n) => `Ver reseña ${n}` }}
+            />
+          </div>
 
           {data!.mapsUri && (
             <div style={{ textAlign: 'center', marginTop: 22 }}>

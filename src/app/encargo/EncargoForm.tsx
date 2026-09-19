@@ -1,13 +1,14 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useTransition, useEffect, useRef, useSyncExternalStore } from 'react'
-import { useRouter } from 'next/navigation'
 import { dahila, Eyebrow, Field, TextInput, Button, Icon } from '@/components/ui/Primitives'
 import { EncargosDisponibles, type EncargosCuposState } from '@/components/EncargosDisponibles'
 import { SizeGuide } from '@/components/SizeGuide'
 import { ProcessStepper, type ProcessStep } from '@/components/ProcessStepper'
 import { ENCARGO_FAQ } from './faq'
 import { submitEncargo } from './actions'
+import { safeAction } from '@/lib/safe-action'
 import { subscribeToVipList } from '@/lib/subscribe'
 import { track } from '@/lib/analytics'
 import { getAttribution } from '@/lib/attribution'
@@ -32,7 +33,6 @@ export default function EncargoForm({
   processSteps?: ProcessStep[]
   referencias?: EncargoReferencia[]
 }) {
-  const router = useRouter()
   // Desde la ficha se llega con ?desde=<slug>&talle=<talle>: la prenda que
   // estaba mirando queda como referencia, con el tipo y el talle ya marcados,
   // en vez de un formulario en blanco que le hace contar de nuevo lo que ya
@@ -135,16 +135,15 @@ export default function EncargoForm({
             <p style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700, margin: '8px 0 0', lineHeight: 1.5 }}>
               Guardalo. Con este código podés ver el estado de tu encargo cuando quieras.
             </p>
-            <button
-              type="button"
-              onClick={() => router.push(`/encargo/estado?codigo=${encodeURIComponent(trackingCode)}`)}
+            <Link
+              href={`/encargo/estado?codigo=${encodeURIComponent(trackingCode)}`}
               style={{
-                marginTop: 12, background: 'transparent', border: 'none', cursor: 'pointer',
-                fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600, textDecoration: 'underline', padding: 0,
+                display: 'inline-block', marginTop: 12, padding: '4px 0',
+                fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600, textDecoration: 'underline',
               }}
             >
               Ver el estado de mi encargo →
-            </button>
+            </Link>
           </div>
         )}
 
@@ -155,7 +154,7 @@ export default function EncargoForm({
             rel="noopener noreferrer"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: '#25D366', color: '#fff', textDecoration: 'none',
+              background: dahila.whatsapp, color: '#fff', textDecoration: 'none',
               borderRadius: 10, padding: '13px 22px',
               fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 500,
               letterSpacing: '0.06em', textTransform: 'uppercase',
@@ -163,7 +162,7 @@ export default function EncargoForm({
           >
             Seguir por WhatsApp
           </a>
-          <Button variant="secondary" onClick={() => router.push('/tienda')}>Ver la tienda</Button>
+          <Button variant="secondary" href="/tienda">Ver la tienda</Button>
         </div>
       </div>
     )
@@ -192,7 +191,11 @@ export default function EncargoForm({
       if (attribution.referrer_host) fd.set('referrer_host', attribution.referrer_host)
     }
     startTransition(async () => {
-      const res = await submitEncargo(fd)
+      const res = await safeAction(() => submitEncargo(fd))
+      if (!res) {
+        setError('No se pudo enviar: parece que se cortó la conexión. Lo que escribiste sigue acá; probá de nuevo o escribime por WhatsApp.')
+        return
+      }
       if (res.ok) {
         // El encargo a medida es la otra "venta" del sitio — sin este evento,
         // el embudo de Umami solo veía el camino carrito→WhatsApp.
@@ -223,12 +226,12 @@ export default function EncargoForm({
         <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: 0 }}>
           Te respondo cuanto antes con un boceto, los materiales que tengo y el presupuesto.
         </p>
-        <button type="button" onClick={() => router.push('/encargo/estado')} style={{
-          alignSelf: 'flex-start', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+        <Link href="/encargo/estado" style={{
+          alignSelf: 'flex-start', padding: '4px 0',
           fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600, textDecoration: 'underline',
         }}>
           ¿Ya hiciste un encargo? Seguí su estado con tu código →
-        </button>
+        </Link>
         <EncargosDisponibles state={encargosCupos} />
       </div>
 
@@ -281,15 +284,15 @@ export default function EncargoForm({
         </Field>
 
         <Field label="Tu nombre">
-          <TextInput placeholder="¿Cómo te llamás?" value={name} onChange={setName} />
+          <TextInput placeholder="¿Cómo te llamás?" value={name} onChange={setName} name="name" autoComplete="name" maxLength={80} />
         </Field>
 
         <div className="encargo-grid-2" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 24 }}>
           <Field label="WhatsApp" helper="Te respondo más rápido por acá.">
-            <TextInput placeholder="+598 ..." value={whatsapp} onChange={setWhatsapp} />
+            <TextInput placeholder="+598 ..." value={whatsapp} onChange={setWhatsapp} type="tel" name="tel" autoComplete="tel" inputMode="tel" maxLength={40} />
           </Field>
           <Field label="Mail" helper="Si lo dejás, te avisamos por mail cada cambio de estado de tu encargo.">
-            <TextInput placeholder="vos@correo.uy" type="email" value={email} onChange={setEmail} />
+            <TextInput placeholder="vos@correo.uy" type="email" value={email} onChange={setEmail} name="email" autoComplete="email" inputMode="email" maxLength={120} />
           </Field>
         </div>
         <p style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, margin: '-14px 0 0' }}>

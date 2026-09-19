@@ -230,4 +230,10 @@ export const ICON_PATHS_FILL: Record<string, React.ReactNode> = {
   'pinterest-logo': (
     <path d="M240,128.7c-.38,56.49-46.46,102.73-102.94,103.29a104.16,104.16,0,0,1-25.94-3,4,4,0,0,1-2.91-4.86l8.64-34.55A60.57,60.57,0,0,0,144,196c37,0,66.7-33.45,63.81-73.36A72,72,0,1,0,69.24,155,8,8,0,0,0,80,159.29a8.19,8.19,0,0,0,4-10.49,56,56,0,1,1,107.86-24.93C194,154.4,171.73,180,144,180a44.87,44.87,0,0,1-23.14-6.44l14.9-59.62a8,8,0,0,0-15.52-3.88L93.38,217.51a4,4,0,0,1-5.71,2.59A104,104,0,0,1,32,126.88C32.6,70.52,78.67,24.52,135,24A104,104,0,0,1,240,128.7Z" fill="currentColor" />
   ),
+  // La estrella llena de las reseñas (19/09/2026): sin esta variante, un 5,0
+  // se dibujaba con las cinco estrellas vacías, que a simple vista se lee
+  // como "cero estrellas". Mismo polígono que la de contorno, relleno.
+  'star': (
+    <polygon points="128 24 158.22 90.42 232 100.08 179.11 151.66 192.44 224 128 190.42 63.56 224 76.89 151.66 24 100.08 97.78 90.42 128 24" fill="currentColor" stroke="currentColor" strokeWidth="16" strokeLinejoin="round" />
+  ),
 }

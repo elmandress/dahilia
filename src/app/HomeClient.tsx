@@ -12,7 +12,6 @@ import { BLUR_DATA_URL, isReadyToShip } from '@/lib/types'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 import { useCart } from '@/components/CartProvider'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 function FAQ({ items }: { items: [string, string][] }) {
   const [open, setOpen] = useState<number>(-1)
@@ -49,7 +48,7 @@ function FAQ({ items }: { items: [string, string][] }) {
   )
 }
 
-function EmptyCollectionState({ onCta }: { onCta: () => void }) {
+function EmptyCollectionState() {
   return (
     <div style={{
       gridColumn: '1 / -1',
@@ -72,7 +71,7 @@ function EmptyCollectionState({ onCta }: { onCta: () => void }) {
         Estoy preparando la próxima edición. Mientras tanto podés pedir una prenda a medida.
       </p>
       <div style={{ marginTop: 10 }}>
-        <Button variant="primary" onClick={onCta}>Pedir a medida</Button>
+        <Button variant="primary" href="/encargo">Pedir a medida</Button>
       </div>
     </div>
   )
@@ -106,7 +105,6 @@ function val<K extends keyof HomeSettings>(s: HomeSettings, key: K, fallback: st
 export type HomeNote = { slug: string; title: string; excerpt: string; hero?: { src: string; alt: string; position?: string } }
 
 export function HomeClient({ products, newest = [], settings, discounts = [], testimonials = [], dropCollectionHref = null, notes = [] }: { products: Product[]; newest?: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[]; dropCollectionHref?: string | null; notes?: HomeNote[] }) {
-  const router = useRouter()
   const { queueNote } = useCart()
   // "Nuevo" = últimos publicados por fecha real de alta (con fallback al orden
   // manual si la consulta dedicada no trajo nada).
@@ -291,7 +289,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
         }}>
           {featured.length > 0
             ? featured.map((product) => <ProductCard key={product.id} product={product} discounts={discounts} />)
-            : <EmptyCollectionState onCta={() => router.push('/encargo')} />}
+            : <EmptyCollectionState />}
         </div>
       </section>
 
@@ -458,7 +456,11 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
                 </>
               )}
             </h2>
-            <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: 0, maxWidth: 460 }}>
+            {/* pre-line, como en /atelier (19/09/2026): Anush escribió "Soy
+                Anush" y "Tejo hace más de 5 años…" en dos renglones, y la home
+                los juntaba en "Soy Anush Tejo hace…", que se lee como si Tejo
+                fuera su apellido. Respeta sus saltos de línea tal cual. */}
+            <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: 0, maxWidth: 460, whiteSpace: 'pre-line' }}>
               {val(settings, 'about_body', 'En Dahila tejemos a crochet prendas únicas, sin apuro y con vos.')}
             </p>
             <div style={{ marginTop: 6 }}>

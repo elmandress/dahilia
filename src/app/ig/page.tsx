@@ -171,7 +171,7 @@ export default async function IgLandingPage() {
           </span>
           <Icon name="caret-right" size={15} color={dahila.ink300} />
         </Link>
-        <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ ...bigLink, background: '#25D366', color: '#fff', border: 'none' }}>
+        <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ ...bigLink, background: dahila.whatsapp, color: '#fff', border: 'none' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
             <Icon name="whatsapp-logo" weight="fill" size={18} color="#fff" /> Escribime por WhatsApp
           </span>

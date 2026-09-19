@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { dahila, Eyebrow, Icon } from '@/components/ui/Primitives'
+import { CarouselControls, useSwipe } from '@/components/ui/CarouselControls'
 
 export interface Testimonial {
   id: string
@@ -44,6 +45,8 @@ export function TestimonialsStrip({ items }: { items: Testimonial[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, count])
 
+  const swipe = useSwipe(() => { next(); resetTimer() }, () => { prev(); resetTimer() })
+
   if (count === 0) return null
 
   const item = items[current]
@@ -57,8 +60,8 @@ export function TestimonialsStrip({ items }: { items: Testimonial[] }) {
       <div
         onMouseEnter={pauseTimer}
         onMouseLeave={() => { if (count > 1) resetTimer() }}
+        {...(count > 1 ? swipe : {})}
         style={{
-          position: 'relative',
           background: dahila.cream50,
           borderRadius: 20,
           padding: 'clamp(32px, 5vw, 52px)',
@@ -70,14 +73,16 @@ export function TestimonialsStrip({ items }: { items: Testimonial[] }) {
           <Icon name="quotes" size={28} color={dahila.wine600} />
         </div>
 
-        {/* Text — fade transition via key change */}
+        {/* Text — fade transition via key change. Comillas tipográficas y el
+            texto recortado: con un espacio al final (así viene "amé su trabajo
+            ❤️ "), la comilla de cierre quedaba sola en la línea de abajo. */}
         <blockquote key={item.id} style={{
           fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300,
           fontSize: 'clamp(16px, 2.5vw, 20px)', lineHeight: 1.65,
           color: dahila.ink900, margin: '0 0 24px',
           maxWidth: 640, marginLeft: 'auto', marginRight: 'auto',
         }}>
-          &quot;{item.text}&quot;
+          “{item.text.trim()}”
         </blockquote>
 
         <div style={{
@@ -92,54 +97,18 @@ export function TestimonialsStrip({ items }: { items: Testimonial[] }) {
           )}
         </div>
 
-        {/* Nav arrows — only when multiple testimonials */}
-        {count > 1 && (
-          <>
-            <button
-              onClick={() => { prev(); resetTimer() }}
-              aria-label="Anterior testimonio"
-              style={{
-                position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
-                background: '#fff', border: `1px solid ${dahila.border}`, borderRadius: 999,
-                width: 36, height: 36, cursor: 'pointer', color: dahila.ink700,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              <Icon name="caret-left" size={14} />
-            </button>
-            <button
-              onClick={() => { next(); resetTimer() }}
-              aria-label="Siguiente testimonio"
-              style={{
-                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                background: '#fff', border: `1px solid ${dahila.border}`, borderRadius: 999,
-                width: 36, height: 36, cursor: 'pointer', color: dahila.ink700,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              <Icon name="caret-right" size={14} />
-            </button>
+      </div>
 
-            {/* Dot indicators */}
-            <div style={{
-              display: 'flex', gap: 6, justifyContent: 'center', marginTop: 24,
-            }}>
-              {items.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => { setCurrent(i); resetTimer() }}
-                  aria-label={`Ver testimonio ${i + 1}`}
-                  style={{
-                    width: i === current ? 18 : 7, height: 7, borderRadius: 999,
-                    background: i === current ? dahila.ink900 : dahila.ink300,
-                    border: 'none', cursor: 'pointer', padding: 0,
-                    transition: 'all 220ms ease',
-                  }}
-                />
-              ))}
-            </div>
-          </>
-        )}
+      {/* Flechas y puntitos debajo de la tarjeta (ver CarouselControls). */}
+      <div style={{ marginTop: 16 }}>
+        <CarouselControls
+          total={count}
+          actual={current}
+          onAnterior={() => { prev(); resetTimer() }}
+          onSiguiente={() => { next(); resetTimer() }}
+          onIr={(i) => { setCurrent(i); resetTimer() }}
+          labels={{ anterior: 'Testimonio anterior', siguiente: 'Testimonio siguiente', ir: (n) => `Ver testimonio ${n}` }}
+        />
       </div>
     </section>
   )

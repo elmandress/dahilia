@@ -227,7 +227,7 @@ export function QuickViewModal({
                 onClick={() => track('restock_click', { product: product.slug, source: 'quickview' })}
                 style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-                  background: '#25D366', color: '#fff', textDecoration: 'none',
+                  background: '#1E8449', color: '#fff', textDecoration: 'none',
                   borderRadius: 10, padding: '15px 22px', width: '100%',
                   fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
                   letterSpacing: '0.06em', textTransform: 'uppercase',

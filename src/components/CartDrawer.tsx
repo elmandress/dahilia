@@ -250,7 +250,7 @@ export function CartDrawer({ products }: { products: Product[] }) {
                             href={`/tienda/${p.slug}`}
                             onClick={closeDrawer}
                             style={{
-                              fontFamily: dahila.fontDisplay, fontSize: 13.5, color: dahila.ink900, lineHeight: 1.25,
+                              fontFamily: dahila.fontDisplay, fontSize: 13.5, color: dahila.ink900, lineHeight: 1.25, padding: '4px 0',
                               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: 'none',
                             }}
                           >{p.name}</Link>
@@ -259,7 +259,7 @@ export function CartDrawer({ products }: { products: Product[] }) {
                             disabled={justAdded}
                             aria-label={`Agregar ${p.name} al carrito por ${formatPrice(price)}`}
                             style={{
-                              background: 'transparent', border: 'none', padding: '2px 0',
+                              background: 'transparent', border: 'none', padding: '5px 0',
                               cursor: justAdded ? 'default' : 'pointer', alignSelf: 'flex-start',
                               fontFamily: dahila.fontSans, fontSize: 12,
                               color: justAdded ? '#1E8449' : dahila.wine600,

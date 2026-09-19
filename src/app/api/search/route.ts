@@ -27,7 +27,10 @@ export const revalidate = 0
  * costo por tecla es CPU en memoria y cero transferencia de la base.
  */
 export async function GET(req: NextRequest) {
-  const raw = (req.nextUrl.searchParams.get('q') || '').trim()
+  // Tope de largo (auditoría 19/09/2026): la búsqueda recorre el catálogo en
+  // memoria comparando contra cada descripción, y un texto de miles de
+  // caracteres no busca nada útil. 64 alcanza para cualquier búsqueda real.
+  const raw = (req.nextUrl.searchParams.get('q') || '').trim().slice(0, 64)
   if (raw.length < 2) return NextResponse.json({ results: [] })
   const q = normalize(raw)
 

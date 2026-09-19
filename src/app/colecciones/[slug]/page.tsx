@@ -1,3 +1,4 @@
+import { jsonLdScript } from '@/lib/json-ld'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -129,7 +130,7 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(collectionJsonLd) }}
       />
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px 80px' }}>
       <Breadcrumb items={[

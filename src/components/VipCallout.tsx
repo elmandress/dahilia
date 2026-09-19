@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { dahila, Icon } from './ui/Primitives'
 import { subscribeToVipList } from '@/lib/subscribe'
 import { track } from '@/lib/analytics'
+import { safeAction } from '@/lib/safe-action'
 
 /**
  * Invitación discreta a la lista VIP, hermana de WeaverCallout.
@@ -90,7 +91,11 @@ export function VipCallout() {
     const value = email.trim()
     if (!value) return
     startTransition(async () => {
-      const res = await subscribeToVipList(value, 'drop')
+      const res = await safeAction(() => subscribeToVipList(value, 'drop'))
+      if (!res) {
+        setError('No pudimos anotarte: revisá tu conexión y probá de nuevo.')
+        return
+      }
       if (res.ok) {
         if (!res.already) track('vip_subscribe', { source: 'callout' }, { name: 'sign_up', params: { method: 'lista_vip' } })
         setDone(res.already ? 'Ya estabas anotada — te avisamos igual.' : '¡Listo! Te escribimos antes del próximo drop.')

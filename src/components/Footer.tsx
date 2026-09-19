@@ -8,6 +8,7 @@ import { dahila } from './ui/Primitives'
 import { STUDIO_INSTAGRAM, STUDIO_URL } from '@/lib/env'
 import { subscribeToVipList } from '@/lib/subscribe'
 import { track } from '@/lib/analytics'
+import { safeAction } from '@/lib/safe-action'
 
 interface NavItem { label: string; href: string }
 
@@ -55,7 +56,11 @@ function VipSignup() {
     e.preventDefault()
     setError(null)
     startTransition(async () => {
-      const res = await subscribeToVipList(email, 'footer')
+      const res = await safeAction(() => subscribeToVipList(email, 'footer'))
+      if (!res) {
+        setError('No pudimos anotarte: revisá tu conexión y probá de nuevo.')
+        return
+      }
       if (res.ok) {
         if (!res.already) track('vip_subscribe', { source: 'footer' }, { name: 'sign_up', params: { method: 'lista_vip' } })
         setDone(res.already ? 'Ya estabas en la lista — te avisamos primero.' : '¡Lista! Vas a ver cada colección antes que nadie.')
@@ -97,6 +102,9 @@ function VipSignup() {
               required
               placeholder="tu@correo.uy"
               aria-label="Tu email para la lista VIP"
+              name="email"
+              autoComplete="email"
+              maxLength={120}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={{

@@ -19,9 +19,10 @@ Before saying a change is finished, run these in order and stop at the first fai
 2. `npm run build` — must compile and type-check with no errors. TypeScript is
    strict; never use `any` to get past an error — type it properly
    (`Partial<Product>`, generated row types, etc.).
-3. Smoke-test the affected routes on the dev server (curl for HTTP 200 + grep
+3. `npm run test:e2e` (Playwright + axe, against the production build on port 3100; see README → Tests). All green, or explain each failure. The tests never write to the production DB: every write goes through tests/e2e/support/guard.ts, so any new test that submits something must use it.
+4. Smoke-test the affected routes on the dev server (curl for HTTP 200 + grep
    the dev log for `error`/`⨯`) when the change is user-facing.
-4. For anything touching a money-flow page (PDP, /carrito, /encargo, the
+5. For anything touching a money-flow page (PDP, /carrito, /encargo, the
    WhatsApp checkout button) or any layout/CSS change: an HTTP 200 does not
    prove the page is usable — a green build cannot see a button that's
    covered by another element. Actually look at it, at the mobile width real

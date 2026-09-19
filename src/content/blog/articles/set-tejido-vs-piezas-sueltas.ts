@@ -15,7 +15,7 @@ export const article: Article = {
   updatedAt: '2026-09-13',
   hero: { src: '/photos/blog/set-lueur-lurex.jpg', alt: 'Set LUEUR tejido a crochet en hilado con lurex: ponchito calado y bufanda fina, puestos', position: '50% 40%' },
   relatedCategorySlug: 'sets',
-  relatedProductSlugs: ['set-brisa', 'beach-set', 'set-lueur'],
+  relatedProductSlugs: ['set-brisa', 'beach-set', 'set-lueur', 'set-lurex'],
   relatedArticleSlugs: [
     'que-talle-de-prenda-tejida-me-queda',
     'materiales-de-una-prenda-tejida',

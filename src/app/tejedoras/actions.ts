@@ -69,6 +69,12 @@ export async function submitTejedora(form: FormData): Promise<TejedoraSubmission
 
   const h = await headers()
   const ip = getClientIp(h)
+  // Segundo balde solo por IP (auditoría 19/09/2026): el de IP+contacto se
+  // salteaba cambiando el mail en cada envío, y cada postulación le manda un
+  // mail a Anush. Nadie se postula más de un par de veces seguidas.
+  if (!checkRateLimit(`tejedora-ip:${ip}`, { windowMs: 10 * 60_000, max: 4 })) {
+    return { ok: false, error: 'Demasiados envíos seguidos. Esperá unos minutos o escribinos por WhatsApp.' }
+  }
   if (!checkRateLimit(`tejedora:${ip}|${email || whatsapp || 'anon'}`, { windowMs: RATE_WINDOW_MS, max: RATE_MAX })) {
     return { ok: false, error: 'Demasiados envíos seguidos. Esperá un minuto y volvé a intentar.' }
   }

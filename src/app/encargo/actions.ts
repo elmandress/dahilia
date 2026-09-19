@@ -98,6 +98,16 @@ export async function submitEncargo(form: FormData): Promise<EncargoSubmission> 
 
   const h = await headers()
   const ip = getClientIp(h)
+  // Dos baldes (auditoría de seguridad 19/09/2026). El de IP+contacto frena el
+  // doble envío; pero como incluye el mail, cambiando la dirección en cada envío
+  // se estrenaba un cupo nuevo, y cada encargo le manda una confirmación a la
+  // dirección que se escribió: desde una sola IP se podía hacer que Dahila
+  // mandara mails a direcciones ajenas sin tope, quemando la cuota de Resend y
+  // la reputación del dominio. El segundo balde cuenta solo la IP: 6 encargos
+  // en 10 minutos es más de lo que hace cualquier clienta real.
+  if (!checkRateLimit(`encargo-ip:${ip}`, { windowMs: 10 * 60_000, max: 6 })) {
+    return { ok: false, error: 'Demasiados envíos seguidos. Esperá unos minutos o escribinos por WhatsApp.' }
+  }
   if (!checkRateLimit(`encargo:${ip}|${email || whatsapp || 'anon'}`, { windowMs: RATE_WINDOW_MS, max: RATE_MAX })) {
     return { ok: false, error: 'Demasiados envíos seguidos. Esperá un minuto y volvé a intentar.' }
   }

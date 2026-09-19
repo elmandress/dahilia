@@ -1,3 +1,4 @@
+import { jsonLdScript } from '@/lib/json-ld'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/public'
 import EncargoForm, { type EncargoReferencia } from './EncargoForm'
@@ -98,11 +99,11 @@ export default async function EncargoPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(serviceJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(faqJsonLd) }}
       />
       <EncargoForm
         whatsappUrl={settings.contact_whatsapp_url || 'https://wa.me/59899850073'}

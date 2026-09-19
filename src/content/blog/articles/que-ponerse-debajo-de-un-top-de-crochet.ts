@@ -15,7 +15,7 @@ export const article: Article = {
   updatedAt: '2026-09-13',
   hero: { src: '/photos/blog/top-duna-calado.jpg', alt: 'Top DUNA tejido a crochet en punto calado, puesto', position: '50% 40%' },
   relatedCategorySlug: 'tops',
-  relatedProductSlugs: ['top-summer', 'top-halter', 'falda-serenada'],
+  relatedProductSlugs: ['top-summer', 'top-halter', 'top-amelie', 'falda-serenada'],
   relatedArticleSlugs: [
     'tops-de-crochet-para-verano',
     'holgura-prenda-tejida',

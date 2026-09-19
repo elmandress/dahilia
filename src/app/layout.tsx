@@ -1,3 +1,4 @@
+import { jsonLdScript } from '@/lib/json-ld'
 import type { Metadata, Viewport } from 'next'
 import { Fraunces, Inter } from 'next/font/google'
 import { CartProvider } from '@/components/CartProvider'
@@ -256,11 +257,11 @@ export default async function RootLayout({
       <head>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd(settings)) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdScript(organizationJsonLd(settings)) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdScript(websiteJsonLd) }}
         />
         {/* Icons are inline SVG (see components/ui/icons.tsx) — no icon-font
             CDN, so nothing render-blocking from a third-party domain here. */}

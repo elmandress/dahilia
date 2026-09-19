@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { CART_COOKIE } from '@/lib/cart-cookie'
+import { isUuid } from '@/lib/uuid'
 
 /**
  * El carrito de un visitante anónimo NO se puede scopear con RLS: no hay
@@ -93,6 +94,9 @@ export async function POST(req: NextRequest) {
     if (!productId || !size) {
       return NextResponse.json({ error: 'Faltan campos.' }, { status: 400 })
     }
+    if (!isUuid(productId)) {
+      return NextResponse.json({ error: 'Solicitud inválida.' }, { status: 400 })
+    }
 
     const { cartId, setCookie } = await getOrCreateCartId()
     const supabase = await getDb()
@@ -155,8 +159,19 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// Modificar y borrar también escriben en la base y vuelven a leer el carrito
+// entero con sus joins: sin límite, un script podía martillarlos en loop
+// (auditoría de seguridad 19/09/2026). Mismo balde que el POST: ninguna
+// clienta real hace 40 cambios de carrito por minuto.
+async function overLimit(): Promise<boolean> {
+  const ip = getClientIp(await headers())
+  return !checkRateLimit(`cart:${ip}`, { windowMs: 60_000, max: 40 })
+}
+const TOO_MANY = { error: 'Demasiados intentos. Esperá un minuto y volvé a intentar.' }
+
 export async function PATCH(req: NextRequest) {
   try {
+    if (await overLimit()) return NextResponse.json(TOO_MANY, { status: 429 })
     const body = await req.json().catch(() => null)
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Solicitud inválida.' }, { status: 400 })
@@ -165,6 +180,9 @@ export async function PATCH(req: NextRequest) {
     const qty = Math.max(0, Math.min(MAX_QTY_PER_ITEM, parseInt(String(body.qty)) || 0))
     if (!itemId) {
       return NextResponse.json({ error: 'Faltan campos.' }, { status: 400 })
+    }
+    if (!isUuid(itemId)) {
+      return NextResponse.json({ error: 'Solicitud inválida.' }, { status: 400 })
     }
 
     const { cartId, setCookie } = await getOrCreateCartId()
@@ -196,10 +214,14 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    if (await overLimit()) return NextResponse.json(TOO_MANY, { status: 429 })
     const url = new URL(req.url)
     const itemId = url.searchParams.get('itemId')
     if (!itemId) {
       return NextResponse.json({ error: 'Falta itemId.' }, { status: 400 })
+    }
+    if (!isUuid(itemId)) {
+      return NextResponse.json({ error: 'Solicitud inválida.' }, { status: 400 })
     }
     const { cartId, setCookie } = await getOrCreateCartId()
     const supabase = await getDb()

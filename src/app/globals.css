@@ -34,7 +34,7 @@
   /* ----- Ink ---------------------------------------------*/
   --ink-900:      #1F1A1B;
   --ink-700:      #4A4143;
-  --ink-500:      #8C8285;
+  --ink-500:      #756B6E; /* era #8C8285: no llegaba a 4,5:1 (19/09/2026) */
   --ink-300:      #C9C2C4;
   --ink-100:      #EDE9EA;
 
@@ -325,6 +325,21 @@ a {
   .header-search input { width: auto !important; flex: 1 1 auto !important; min-width: 160px !important; }
 }
 
+/* Pantallas de menos de 360 px (iPhone SE de primera generación, Android
+   chicos): con las medidas de arriba, el ícono del carrito terminaba en el
+   píxel 336 de una pantalla de 320 y quedaba cortado (medido el 19/09/2026;
+   WCAG 1.4.10 pide que todo funcione a 320 px). Menos aire entre íconos y un
+   logo apenas más chico devuelven unos 40 px sin tocar las pantallas comunes. */
+@media (max-width: 359px) {
+  .site-header-inner  { padding: 12px 10px !important; gap: 8px !important; }
+  .brand-wordmark     { font-size: 16px !important; letter-spacing: 0.1em !important; }
+  .brand-mark         { width: 26px !important; height: 26px !important; }
+  .header-actions     { gap: 8px !important; }
+  /* El aviso de arriba ocupa dos líneas a este ancho: que queden parejas en
+     vez de dejar "· A MEDIDA" sola en la segunda. */
+  .announce-bar       { text-wrap: balance; }
+}
+
 /* Header navigation: full horizontal nav stays visible on laptops and up.
    El hamburguesa aparece a ≤ 900px (antes 768px). El umbral se subió al sumar
    "Notas" al menú: con los 8 ítems posibles (Tienda, Colecciones, Ofertas, A
@@ -373,6 +388,15 @@ a {
   button, a[role="button"], .icon-button {
     min-height: 44px;
     min-width: 44px;
+  }
+  /* Excepción: los puntitos de los carruseles (CarouselControls). Con 44 px
+     cada uno, los 10 de los testimonios medían 494 px y se salían de la
+     pantalla (19/09/2026). Su área táctil es de 24 px, el mínimo de WCAG 2.5.8,
+     y las flechas de al lado sí tienen los 44. La clase le gana al selector
+     de elemento de arriba sin necesidad de !important. */
+  .carousel-dot {
+    min-height: 24px;
+    min-width: 24px;
   }
 }
 
@@ -459,8 +483,12 @@ a {
     border-top: 1px solid var(--border);
     box-shadow: 0 -8px 22px -14px rgba(31,26,27,0.22);
   }
-  /* Leave room so the sticky bar never covers page content/footer */
-  main:has(.pdp-sticky-bar) { padding-bottom: 84px; }
+  /* Espacio al final de la PÁGINA (body), no de <main> (19/09/2026): el pie
+     viene después de <main>, así que con el margen en <main> la barra fija
+     tapaba la última línea del pie al llegar abajo (el crédito "SIAR",
+     medido con Playwright). En body, lo último que queda debajo de la barra
+     es este espacio vacío. */
+  body:has(.pdp-sticky-bar) { padding-bottom: 84px; }
 }
 
 /* ============================================================
@@ -497,7 +525,9 @@ a {
     border-top: 1px solid var(--border);
     box-shadow: 0 -8px 22px -14px rgba(31,26,27,0.22);
   }
-  main:has(.cart-sticky-bar) { padding-bottom: 84px; }
+  /* Mismo motivo que body:has(.pdp-sticky-bar): en <main> la barra tapaba
+     el final del pie. */
+  body:has(.cart-sticky-bar) { padding-bottom: 84px; }
 }
 
 /* Cart badge "pop" — a single subtle bounce when the count changes (the badge
@@ -695,6 +725,12 @@ a {
   }
   /* Hide "Ordenar por" label to save space */
   .tienda-sort-label { display: none !important; }
+  /* El orden ocupa lo que sobra y el botón Filtrar no se aprieta. El select
+     vive dentro de un <label> que no se achicaba: el que cedía era el botón, y
+     a 320 px su contador de filtros quedaba afuera de la pantalla (19/09/2026). */
+  .tienda-toolbar-actions > label { flex: 1 1 auto; min-width: 0; }
+  .tienda-toolbar-actions > label select { width: 100%; min-width: 0; }
+  .tienda-toolbar-actions > button { flex-shrink: 0; }
   /* "Viste hace poco": en desktop es una fila cómoda; en un teléfono sus
      ~200px empujaban la primera prenda fuera del primer viewport. Miniaturas
      más chicas y menos aire — sigue siendo tocable (72px de ancho + gap). */
@@ -773,7 +809,7 @@ a {
    mobile existe la barra sticky de "Agregar al carrito" (.pdp-sticky-bar,
    ~84px de alto). Sin esto, la tarjeta cae encima de esa barra justo en la
    página de mayor intención de compra del sitio. Mismo patrón :has() que
-   main:has(.pdp-sticky-bar) más arriba. */
+   body:has(.pdp-sticky-bar) más arriba. */
 @media (max-width: 720px) {
   body:has(.pdp-sticky-bar) .weaver-callout {
     bottom: 100px !important;

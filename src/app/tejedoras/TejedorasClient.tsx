@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useTransition, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { dahila, Eyebrow, Field, TextInput, Button } from '@/components/ui/Primitives'
 import { submitTejedora } from './actions'
+import { safeAction } from '@/lib/safe-action'
 
 const EXPERIENCIAS = [
   { value: '<1', label: 'Menos de 1 año' },
@@ -31,7 +31,6 @@ const VALORAMOS = [
 ]
 
 export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }) {
-  const router = useRouter()
   const [name, setName] = useState('')
   const [location, setLocation] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
@@ -80,7 +79,7 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
             rel="noopener noreferrer"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: '#25D366', color: '#fff', textDecoration: 'none',
+              background: dahila.whatsapp, color: '#fff', textDecoration: 'none',
               borderRadius: 10, padding: '13px 22px',
               fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 500,
               letterSpacing: '0.06em', textTransform: 'uppercase',
@@ -88,7 +87,7 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
           >
             Escribinos por WhatsApp
           </a>
-          <Button variant="secondary" onClick={() => router.push('/tienda')}>Conocer la tienda</Button>
+          <Button variant="secondary" href="/tienda">Conocer la tienda</Button>
         </div>
       </div>
     )
@@ -116,7 +115,11 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
     fd.set('portfolio', portfolio)
     fd.set('message', message)
     startTransition(async () => {
-      const res = await submitTejedora(fd)
+      const res = await safeAction(() => submitTejedora(fd))
+      if (!res) {
+        setError('No se pudo enviar la postulación: parece que se cortó la conexión. Tus datos siguen acá; probá de nuevo.')
+        return
+      }
       if (res.ok) {
         setSubmitted(true)
       } else {
@@ -205,19 +208,19 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }} noValidate>
         <div className="encargo-grid-2" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 24 }}>
           <Field label="Tu nombre">
-            <TextInput placeholder="¿Cómo te llamás?" value={name} onChange={setName} />
+            <TextInput placeholder="¿Cómo te llamás?" value={name} onChange={setName} name="name" autoComplete="name" maxLength={80} />
           </Field>
           <Field label="¿De dónde sos?">
-            <TextInput placeholder="Montevideo, Canelones…" value={location} onChange={setLocation} />
+            <TextInput placeholder="Montevideo, Canelones…" value={location} onChange={setLocation} name="location" autoComplete="address-level1" maxLength={60} />
           </Field>
         </div>
 
         <div className="encargo-grid-2" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 24 }}>
           <Field label="WhatsApp" helper="Te respondemos más rápido por acá.">
-            <TextInput placeholder="+598 ..." value={whatsapp} onChange={setWhatsapp} />
+            <TextInput placeholder="+598 ..." value={whatsapp} onChange={setWhatsapp} type="tel" name="tel" autoComplete="tel" inputMode="tel" maxLength={40} />
           </Field>
           <Field label="Mail">
-            <TextInput placeholder="vos@correo.uy" type="email" value={email} onChange={setEmail} />
+            <TextInput placeholder="vos@correo.uy" type="email" value={email} onChange={setEmail} name="email" autoComplete="email" inputMode="email" maxLength={120} />
           </Field>
         </div>
         <p style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, margin: '-14px 0 0' }}>
@@ -269,7 +272,7 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
         </Field>
 
         <Field label="Mostranos tus trabajos" helper="Links a tu Instagram, fotos en Drive o donde tengas trabajos para ver.">
-          <TextInput placeholder="https://instagram.com/…" value={portfolio} onChange={setPortfolio} />
+          <TextInput placeholder="https://instagram.com/…" value={portfolio} onChange={setPortfolio} name="portfolio" autoComplete="url" inputMode="url" maxLength={400} />
         </Field>
 
         <Field label="Contanos de vos" helper="Qué te gusta tejer, con qué lanas trabajaste, si tejiste por encargo antes.">

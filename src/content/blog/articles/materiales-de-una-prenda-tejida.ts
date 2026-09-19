@@ -15,7 +15,7 @@ export const article: Article = {
   updatedAt: '2026-09-13',
   hero: { src: '/photos/blog/calentadores-chenille-rojos.jpg', alt: 'Calentadores tejidos a crochet en chenille rojo', position: '50% 50%' },
   relatedCategorySlug: 'tops',
-  relatedProductSlugs: ['top-summer', 'bolso-lola', 'cardigan-3-4'],
+  relatedProductSlugs: ['top-summer', 'bolso-lola', 'sweater-cherry', 'top-race'],
   relatedArticleSlugs: [
     'la-lana-pica-fibras-piel-sensible',
     'como-cuidar-prendas-de-crochet',

@@ -1,3 +1,4 @@
+import { jsonLdScript } from '@/lib/json-ld'
 import type { Metadata } from 'next'
 import { unstable_rethrow } from 'next/navigation'
 import { getCatalog } from '@/lib/catalog'
@@ -7,7 +8,7 @@ import { SITE_URL } from '@/lib/env'
 import { TiendaClient } from '../TiendaClient'
 import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
 import { MaintenanceScreen } from '@/components/MaintenanceScreen'
-import { OG_BASE_NO_IMAGE } from '@/lib/og'
+import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 3600
 
@@ -35,8 +36,12 @@ export async function generateMetadata(): Promise<Metadata> {
     title: TITULO,
     description,
     alternates: { canonical: '/tienda' },
+    // Foto real (la tarjeta de la home, /og). Hasta el 19/09/2026 /tienda se
+    // compartía SIN imagen: su opengraph-image.tsx vivía en un grupo de rutas
+    // ((listado)), donde Next le agrega un sufijo a la ruta (/tienda/opengraph-
+    // image-nfh255) y no la enlaza en la metadata.
     openGraph: {
-      ...OG_BASE_NO_IMAGE,
+      ...OG_BASE,
       title: TITULO,
       description,
       url: '/tienda',
@@ -127,7 +132,7 @@ export default async function TiendaPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(collectionJsonLd) }}
       />
     {source === 'snapshot' && <CatalogReadOnlyBanner />}
     <TiendaClient

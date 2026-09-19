@@ -413,7 +413,7 @@
 
 .admin-stat-card .stat-label {
   font-size: 0.8rem;
-  color: #8C8285;
+  color: #756B6E;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.5rem;
@@ -428,7 +428,7 @@
 
 .admin-stat-card .stat-sub {
   font-size: 0.8rem;
-  color: #8C8285;
+  color: #756B6E;
   margin-top: 0.25rem;
 }
 
@@ -447,7 +447,7 @@
   text-align: left;
   padding: 0.75rem 1rem;
   font-weight: 500;
-  color: #8C8285;
+  color: #756B6E;
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -486,7 +486,7 @@
 }
 
 .admin-badge.active { background: #e8f5e9; color: #2e7d32; }
-.admin-badge.draft { background: #EDE9EA; color: #8C8285; }
+.admin-badge.draft { background: #EDE9EA; color: #756B6E; }
 .admin-badge.soldout { background: #fff3e0; color: #e65100; }
 .admin-badge.new { background: #e3f2fd; color: #1565c0; }
 .admin-badge.replied { background: #f3e5f5; color: #7b1fa2; }
@@ -553,7 +553,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #8C8285;
+  color: #756B6E;
   border-radius: 6px;
   transition: all 0.15s ease;
   display: inline-flex;
@@ -633,7 +633,7 @@
 
 .admin-field .field-hint {
   font-size: 0.75rem;
-  color: #8C8285;
+  color: #756B6E;
 }
 
 .admin-field .field-error {
@@ -666,7 +666,7 @@
 }
 
 .admin-toggle-option:hover:not(.selected) {
-  border-color: #8C8285;
+  border-color: #756B6E;
 }
 
 /* ---------- Media Upload ---------- */
@@ -698,7 +698,7 @@
 }
 
 .admin-dropzone p {
-  color: #8C8285;
+  color: #756B6E;
   font-size: 0.9rem;
   margin: 0;
 }
@@ -919,7 +919,7 @@
 .admin-empty {
   text-align: center;
   padding: 3rem 2rem;
-  color: #8C8285;
+  color: #756B6E;
 }
 
 .admin-empty svg {
@@ -994,7 +994,7 @@
 }
 
 .admin-login-card .login-brand p {
-  color: #8C8285;
+  color: #756B6E;
   font-size: 0.85rem;
   margin: 0;
 }
@@ -1045,7 +1045,7 @@
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #8C8285;
+  color: #756B6E;
 }
 
 .admin-order-detail .detail-item .detail-value {

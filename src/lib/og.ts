@@ -28,8 +28,11 @@ export const OG_BASE: {
   images: [OG_DEFAULT_IMAGE],
 }
 
-// Para las páginas con un opengraph-image.tsx propio (/tienda, /atelier,
-// /info, /ofertas): sin la imagen por defecto. Ojo, al revés de lo que uno
+// Para las páginas con un opengraph-image.tsx propio (/atelier, /info,
+// /ofertas): sin la imagen por defecto. No sirve dentro de un grupo de rutas
+// (carpeta entre paréntesis): ahí Next le pone un sufijo a la ruta de la imagen
+// y no la enlaza; /tienda quedó así sin foto hasta el 19/09/2026 y ahora usa
+// OG_BASE. Ojo, al revés de lo que uno
 // esperaría, `images` escrito en la metadata le GANA al archivo — verificado
 // en el build del 11/09/2026: con OG_BASE, /tienda perdía su tarjeta propia.
 export const OG_BASE_NO_IMAGE = {

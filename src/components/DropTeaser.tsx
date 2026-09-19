@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { dahila, Eyebrow, Icon } from './ui/Primitives'
 import { BLUR_DATA_URL } from '@/lib/types'
 import { subscribeToVipList } from '@/lib/subscribe'
+import { safeAction } from '@/lib/safe-action'
 
 /**
  * Bloque "Próximo drop" del home — la mecánica de expectativa del playbook de
@@ -56,7 +57,11 @@ function VipCapture() {
     e.preventDefault()
     setError(null)
     startTransition(async () => {
-      const res = await subscribeToVipList(email, 'drop')
+      const res = await safeAction(() => subscribeToVipList(email, 'drop'))
+      if (!res) {
+        setError('No pudimos anotarte: revisá tu conexión y probá de nuevo.')
+        return
+      }
       if (res.ok) {
         setDone(res.already ? 'Ya estabas en la lista — lo vas a ver primero.' : '¡Lista! Lo vas a ver 24 horas antes que el resto.')
       } else {
@@ -82,6 +87,9 @@ function VipCapture() {
           required
           placeholder="tu@correo.uy"
           aria-label="Tu email para ver el drop antes"
+          name="email"
+          autoComplete="email"
+          maxLength={120}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           style={{
