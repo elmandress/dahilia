@@ -16,6 +16,7 @@ import { unstable_rethrow } from 'next/navigation'
 import type { Product, Category, Color, Discount, Collection } from '@/lib/types'
 import { sortSizes } from '@/lib/types'
 import { createClient } from '@/lib/supabase/public'
+import type { Testimonial } from '@/components/TestimonialsStrip'
 import snapshot from '@/lib/catalog-snapshot.json'
 
 export type CatalogSource = 'live' | 'snapshot'
@@ -227,5 +228,32 @@ export async function getProductBySlug(
     unstable_rethrow(e) // no tragar el bailout dinámico / notFound de Next
     const fromSnap = SNAPSHOT_PRODUCTS.find((p) => p.slug === slug) ?? null
     return { product: fromSnap, source: 'snapshot' }
+  }
+}
+
+/** Testimonios reales de la tienda, cacheados junto al catálogo. Los muestra la
+ *  home y, desde el 19/09/2026, la ficha de producto: sin este caché era una
+ *  consulta más por cada ficha renderizada. Si la DB falla, la lista vuelve
+ *  vacía (el bloque simplemente no se muestra) y el error NO queda cacheado. */
+const fetchTestimonialsCached = unstable_cache(
+  async (): Promise<Testimonial[]> => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('testimonials')
+      .select('id, author, location, text, sort_order')
+      .order('sort_order', { ascending: true })
+    if (error) throw new Error('catalog: testimonios con error')
+    return (data ?? []) as Testimonial[]
+  },
+  ['testimonials'],
+  { revalidate: CATALOG_TTL_SECONDS, tags: [CATALOG_TAG] }
+)
+
+export async function getTestimonials(): Promise<Testimonial[]> {
+  try {
+    return await fetchTestimonialsCached()
+  } catch (e) {
+    unstable_rethrow(e)
+    return []
   }
 }

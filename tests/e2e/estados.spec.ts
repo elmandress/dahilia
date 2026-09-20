@@ -59,3 +59,22 @@ test.describe('celular en horizontal', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
   })
 })
+
+// Las páginas de servidor que importaban los colores desde Primitives (un
+// módulo 'use client') recibían undefined en cada token: el botón de WhatsApp
+// de /ig salía blanco sobre blanco. Los tokens viven en ui/tokens.ts.
+test('las páginas de servidor reciben los colores de la marca', async ({ page, request }) => {
+  for (const ruta of ['/ig', '/info', '/atelier', '/terminos', '/colecciones', '/blog', '/blog/regalos-tejidos-a-mano']) {
+    const html = await (await request.get(ruta)).text()
+    const rotos = html.match(/style="[^"]*undefined[^"]*"/g) ?? []
+    expect(rotos, `${ruta} tiene estilos con undefined`).toEqual([])
+  }
+  await page.goto('/ig')
+  const wa = page.getByRole('link', { name: /WhatsApp/ }).first()
+  await expect(wa).toBeVisible()
+  expect(await wa.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(30, 132, 73)')
+  // El botón de cada nota hacia la tienda: era blanco sobre blanco.
+  await page.goto('/blog/regalos-tejidos-a-mano')
+  const cta = page.getByRole('main').getByRole('link', { name: 'Ver accesorios' }).first()
+  expect(await cta.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(31, 26, 27)')
+})

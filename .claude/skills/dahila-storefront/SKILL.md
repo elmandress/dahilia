@@ -15,8 +15,14 @@ call the person "Dahila". Uruguayan, handmade crochet, made-to-measure. Tone:
 warm, calm, boutique, not corporate. Spanish (es-UY), sentence-case headings.
 
 ## Design tokens (use these, don't invent values)
-- Source of truth: `src/components/ui/Primitives.tsx` (`dahila` object) and
+- Source of truth: `src/components/ui/tokens.ts` (`dahila` object) and
   `src/app/globals.css` (CSS variables).
+- **Server Components import `dahila` from `@/components/ui/tokens`, never from
+  `Primitives`.** Primitives is `'use client'`: importing a non-component value
+  from it in a Server Component yields a client reference, so every token is
+  `undefined` and the style is silently dropped (white-on-white buttons on /ig
+  and the blog, invisible in production for weeks — 19/09/2026). Client
+  components can keep importing it from Primitives (it re-exports).
 - Ink (text): `ink900` #1F1A1B, `ink700`, `ink500`, `ink300`. Cream surfaces:
   `cream50/100/200`. Wine accent: `wine600` #8F3B53. Sale/alert red: `#B6314A`.
 - Fonts via `next/font` only (Fraunces display + Inter sans). Never `@import`

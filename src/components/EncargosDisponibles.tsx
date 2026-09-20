@@ -1,4 +1,4 @@
-import { dahila } from './ui/Primitives'
+import { dahila } from './ui/tokens'
 
 export interface EncargosCuposState {
   enabled: boolean

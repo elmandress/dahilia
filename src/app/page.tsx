@@ -1,8 +1,7 @@
 import { jsonLdScript } from '@/lib/json-ld'
 import { createClient } from '@/lib/supabase/public'
 import { brandProfileUrls, googleBusinessUrl } from '@/lib/profiles'
-import { getCatalog } from '@/lib/catalog'
-import type { Testimonial } from '@/components/TestimonialsStrip'
+import { getCatalog, getTestimonials } from '@/lib/catalog'
 import { HomeClient } from './HomeClient'
 import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
 import { MaintenanceScreen } from '@/components/MaintenanceScreen'
@@ -32,13 +31,9 @@ export default async function Home() {
     .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
     .slice(0, 4)
 
-  // Testimonios: opcional y tolerante a DB caída (si falla, queda vacío).
-  const testimonialsRes = await supabase
-    .from('testimonials')
-    .select('*')
-    .order('sort_order', { ascending: true })
-    .then((r) => r, () => ({ data: [] as Testimonial[] }))
-  const testimonials = ((testimonialsRes as { data: Testimonial[] | null }).data ?? []) as Testimonial[]
+  // Testimonios: cacheados junto al catálogo (los usa también la ficha) y
+  // tolerantes a DB caída (si falla, queda vacío).
+  const testimonials = await getTestimonials()
 
   // Bloque "Próximo drop": si apunta a una colección, el link solo se pasa
   // cuando esa colección está realmente publicada — el teaser nunca puede
@@ -129,6 +124,8 @@ export default async function Home() {
         discounts={discounts}
         testimonials={testimonials}
         dropCollectionHref={dropCollectionHref}
+        // Solo lo que dibuja la tira: nombre y slug.
+        categorias={catalog.categories.map(({ name, slug }) => ({ name, slug }))}
         // Solo lo que muestra la tarjeta: el cuerpo de las notas no viaja al cliente.
         notes={getHomeArticles().map((a) => withHeroOverride(a, settings)).map(({ slug, title, excerpt, hero }) => ({ slug, title, excerpt, hero }))}
       />

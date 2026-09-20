@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Block } from '@/content/blog/types'
-import { dahila } from '@/components/ui/Primitives'
+import { dahila } from '@/components/ui/tokens'
 import { BLUR_DATA_URL } from '@/lib/types'
 import { RichText } from './RichText'
 import { headingId } from '@/content/blog/toc'

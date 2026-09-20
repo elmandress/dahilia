@@ -1000,6 +1000,239 @@ Lighthouse 13, mismas 6 páginas, celular simulado, mediana de 3:
 
 **Consola de producción** (9 páginas, servicios reales): ningún error de JavaScript ni respuestas 4xx/5xx. Solo quedan pedidos cortados al cerrar la pestaña, que son un artefacto de la prueba.
 
+## 20. 19/09 de tarde: los botones invisibles, y prueba social en la ficha
+
+Ronda enfocada en conversión, con datos reales de Search Console y un recorrido
+de compra contra producción desde el navegador de Instagram (390x740).
+
+### 20.1 El error de fondo: los colores no llegaban a las páginas de servidor
+
+`src/components/ui/Primitives.tsx` es un módulo `'use client'`. Una página de
+servidor que importa de ahí el objeto `dahila` **no recibe los valores**: recibe
+una referencia de cliente, y cada token vale `undefined`. Pasaba desde que cada
+página existe (Primitives es 'use client' desde el 01/06; /ig es del 11/07 y el
+blog del 31/08).
+
+Medido en producción, no deducido:
+
+- `/ig`, la página del link de la bio de Instagram: el botón "Escribime por
+  WhatsApp" quedaba con `background` ausente y `color: #fff`. **Letra blanca
+  sobre blanco**: existía, se podía tocar, no se veía.
+- **20 botones invisibles** en 18 de las 21 páginas que se pudieron recorrer
+  (las 9 restantes dieron 403 por pedir 33 páginas en un minuto desde la misma
+  IP; con navegador normal dan 200): el de /ig, "Escribinos" en /info, y el
+  botón hacia la tienda de cada nota del blog ("Ver accesorios", "Ver la
+  tienda", "Pedir a medida"…).
+- Además, `border: 1px solid undefined` en 3 a 12 estilos por página en /ig,
+  /atelier, /blog, /info y /terminos: los recuadros del blog salían sin fondo ni
+  borde.
+
+**Arreglo:** los tokens pasan a `src/components/ui/tokens.ts` (sin 'use
+client'); Primitives los importa y los re-exporta para los componentes de
+cliente; las 10 páginas o componentes de servidor importan de `tokens`. Se
+agregaron 3 archivos más que no son de cliente (EncargosDisponibles,
+ProcessStepper, PriceBlock) por prevención: hoy solo los muestran componentes de
+cliente, así que no fallaban.
+
+**Guardia contra la recaída:** prueba nueva en `tests/e2e/estados.spec.ts` que
+(1) revisa que el HTML de 7 páginas de servidor no tenga `undefined` en ningún
+estilo y (2) mide el color de fondo real del botón de WhatsApp de /ig y del
+botón del blog. Se verificó que la prueba **falla contra producción** y pasa con
+el arreglo.
+
+**Barrido del mismo tipo de error:** un script recorre las 78 URLs del sitemap
+buscando `undefined`, `NaN` y `[object Object]` en el texto visible. Cero
+hallazgos (el único "NaN" era la palabra "funcionan").
+
+### 20.2 El cartel de tejedoras tapaba el botón de WhatsApp
+
+En el celular, `.weaver-callout` se estiraba de borde a borde (`right: 12px`) y,
+con z-index 45 contra 40, **tapaba entera la burbuja de WhatsApp** mientras
+estaba abierta, en la home, en el blog y en la ficha. El propio comentario del
+componente decía lo contrario ("WhatsAppFloat vive a la derecha"). Medido con
+`document.elementFromPoint` en producción a 390 y 360 px.
+
+- Arreglo: en pantallas de hasta 480 px la tarjeta termina en `right: 88px` y
+  deja libre la esquina. Verificado a 320, 360 y 390 px: la burbuja ya no queda
+  tapada y no hay desborde horizontal.
+- Además, la invitación a tejedoras **ya no sale en la ficha de producto**
+  (`body:has(.producto-detail) .callout-tejedoras`): le habla a otro público
+  justo donde la clienta decide. No gasta el aviso: aparece cuando pasa a la
+  home, la tienda o el blog. La de la lista VIP no cambia (solo sale cuando la
+  de tejedoras ya fue cerrada).
+
+### 20.3 Prueba social en la ficha
+
+La ficha no tenía ninguna: los 10 testimonios reales viven solo en la home, y
+quien entra desde un link de Instagram nunca pasa por ahí.
+
+- Se muestra **un testimonio real** debajo de la línea de confianza, pegado al
+  botón. Elige el que nombra el mismo tipo de prenda (sweater, bufandas, set,
+  falda, chalecos, calentadores: 13 de 37 fichas tienen coincidencia exacta) y,
+  si no hay, uno fijo por ficha según el slug, para que no se repita el mismo en
+  todas.
+- Va con la etiqueta "Lo que dicen de Dahila", como Etsy muestra las reseñas de
+  la tienda en los productos que todavía no tienen reseñas propias: a veces la
+  cita habla de otra prenda y tiene que quedar claro que es de la tienda.
+- **No** se agregan al JSON-LD como `Review`: son opiniones de la tienda, no del
+  producto.
+- Costo: una consulta más por ficha, con ISR de 1 hora, y se saltea si se está
+  sirviendo el snapshot.
+
+### 20.4 Dos notas del blog sin salida a la tienda
+
+`chaleco-tejido-como-combinarlo` y `pelotitas-en-prendas-tejidas` eran las 2 de
+27 sin bloque `shopCta`. Se les agregó uno, antes de las preguntas frecuentes,
+como las otras 25.
+
+### 20.5 Lo que dicen los datos (Search Console, al 18/09)
+
+- Las impresiones crecen fuerte (de 134 por semana a mediados de agosto a 977 en
+  la semana del 14/09) pero **los clics siguen planos, en unos 3 por día**. El
+  pico del 17 al 19/08 (47 clics en tres días) fue puntual.
+- Celular: 79 clics y 1.529 impresiones en 30 días; escritorio, 17 y 397.
+- Conclusión honesta: hoy Google no es la palanca de ventas. Lo que mueve la
+  aguja es lo que ve quien llega desde Instagram, que es justo donde estaban los
+  botones invisibles.
+
+### 20.6 Lo que se miró y NO se tocó
+
+- **GA4 por API:** no se puede leer, falta habilitar la API de administración en
+  Google Cloud (tarea `ga4-acceso`, ya en el panel).
+- **Pedidos y carritos:** con la clave pública no se leen (RLS). El análisis del
+  embudo sigue viviendo en /admin.
+- **La foto principal de la home:** ya está en calidad 82 desde el 13/09 (197 KB
+  en el celular). No hay nada que ganar ahí.
+- **/ofertas sin ofertas:** la página avisa y ofrece alternativas. Está bien.
+- **Errores de consola de Lighthouse:** son precargas canceladas al navegar, no
+  errores reales.
+
+### 20.7 Doble toque en "Coordinar por WhatsApp": dos pedidos
+
+Lo encontró la suite, corriendo con la máquina cargada: la prueba "doble clic en
+WhatsApp registra un solo pedido" falló con 2 pedidos (1 de cada 6 corridas).
+
+**Causa:** la traba era estado de React (`if (checkingOut) return;
+setCheckingOut(true)`). Los dos toques de un doble tap ocurren antes del
+re-render, así que los dos leen `checkingOut` en `false` y entran los dos: dos
+filas en `orders` para el mismo pedido y, con cupón, dos intentos de canje. El
+`disabled` del botón llega tarde por el mismo motivo. En un celular real, más
+lento que esta máquina, es más fácil que acá.
+
+**Arreglo:** un `useRef` como cerrojo, que cambia en el acto, y se suelta 1,2 s
+después (no al terminar la función: sin cupón corre entera de una y el segundo
+toque volvía a pasar). Mientras tanto el botón dice "Abriendo WhatsApp…". El
+aviso "¿No se abrió WhatsApp?" sigue teniendo "Abrir de nuevo", que es un link y
+no registra otro pedido.
+
+**Verificado:** 12 corridas seguidas de esa prueba con 4 workers, todas en
+verde; antes fallaba sola.
+
+### 20.8 Testimonios: una consulta compartida, no una por ficha
+
+La primera versión consultaba `testimonials` en cada render de ficha. Pasó a
+`getTestimonials()` en `src/lib/catalog.ts`, con el mismo `unstable_cache`, TTL
+y tag que el catálogo; la home ahora también lo usa (antes tenía su propia
+consulta). Una consulta por hora para todo el sitio, en vez de una por página.
+
+## 21. 20/09: los datos de Umami, y la home con las prendas a la vista
+
+### 21.1 Umami ya es confiable (y el país no)
+
+Mati pasó 90 días de datos de Umami. Cruzados con Search Console en la misma
+ventana: Umami cuenta 195 visitantes desde Google (google.com 132 +
+com.google.android.googlequicksearchbox 63) y Search Console reporta 189 clics.
+**3% de diferencia.** La subcuenta de agosto (6 visitantes contra 21 carritos
+reales) la arregló el proxy por `/stats`.
+
+Lo que sí está mal es la columna **País: 100% Estados Unidos**. El beacon pasa
+por el servidor de Netlify (rewrite de `/stats/api/send`), así que Umami ve la
+IP de Netlify. No afecta vistas, eventos, referrers ni navegadores. Para país:
+Search Console (175 de 189 clics son de Uruguay). No se toca el proxy: es lo
+que hizo confiable la medición.
+
+### 21.2 El embudo real (90 días)
+
+3,85k visitas · 7,10k vistas · rebote 60% · 22 s de duración media.
+
+| Paso | Cantidad |
+|---|---|
+| Ven una ficha (product_view) | 1.660 (43% de las visitas) |
+| Agregan al carrito | 35 (2,1% de las fichas vistas) |
+| Abren /carrito | 22 |
+| Mandan el pedido (order_sent) | 4 |
+| Tocan la burbuja de WhatsApp | 11 |
+| Mandan un encargo | 5 |
+
+**Los 4 order_sent coinciden con las 4 filas de `orders` que muestra
+/admin/pedidos**, así que la medición del paso final es exacta (el tracker de
+Umami manda con `keepalive`: se verificó en el script servido). De esos 4, dos
+son el mismo Spring cardigan talle L con 12 horas de diferencia: son 3
+compradoras, 1 marcada como vendida (UYU 3.300).
+
+**Tráfico:** Instagram ~75% (l.instagram.com 796 de 1.074 referrers conocidos;
+66% de los navegadores son webview de apps), Google 5%, TikTok 19, Facebook 18,
+Pinterest 5, Bing 4, ChatGPT 3.
+
+**Rebote por tipo de página:** home 78%, /tienda 64%, categorías 64%, blog 85%,
+**fichas 12%**. Las fichas funcionan; la puerta de entrada no.
+
+**Corrección honesta de §20:** /ig tuvo 5 visitantes en 90 días (la bio de
+Instagram no apunta ahí) y el blog entero 157. Los 20 botones invisibles eran
+un error real, pero su impacto en ventas fue chico. Se deja dicho para no
+volver a sobredimensionar un hallazgo por lo grave que suena.
+
+### 21.3 La home: las prendas pasan arriba del corte
+
+**Problema medido:** en un celular de 390x740, la primera prenda estaba a 910px
+(1,2 pantallas de scroll) y la visita promedio dura 22 s. El hero ocupaba 520px
+y la barra de confianza otros 127px.
+
+**Evidencia externa:** NN/g ("The Fold Manifesto") documenta el "falso piso" de
+las imágenes a pantalla completa, que hacen creer que la página termina ahí, y
+mide que lo que está 100px arriba del corte se ve 102% más que lo que está
+100px abajo; el promedio de diferencia es 84%. Baymard, sobre homes móviles:
+un hero que empuja las entradas de categoría fuera de la primera pantalla es
+"un fallo de navegación disfrazado de victoria de marketing", y en móvil la
+home es de donde la clienta infiere qué vende el sitio.
+
+**Qué se hizo:**
+1. La barra "Por qué Dahila" pasa DEBAJO de la primera fila de prendas. Repetía,
+   con más palabras, lo que la cinta de arriba ya dice en la primera línea.
+2. El hero en el celular pasa de `clamp(380px, 75vh, 520px)` a
+   `clamp(340px, 60vh, 460px)`.
+3. El aire sobre "Nuevo" pasa de 56 a 28px en pantallas de hasta 720px.
+
+**Resultado medido:** la primera prenda pasa de 910px a **678px** en 390x740
+(62px de la foto asoman antes del corte) y a 694px en 430x932 (238px). En
+escritorio queda en 871px con el corte en 860: la fila asoma igual. Sin
+desborde horizontal a 320, 360 ni 390px.
+
+### 21.4 Ficha: un camino explícito al chat
+
+En 90 días hubo 11 toques a la burbuja flotante de WhatsApp (que no dice nada)
+contra 35 "agregar al carrito". Baymard: el chat que la clienta abre, como link
+estático, ayuda; el que se abre solo, molesta. Se agregó un link de texto
+debajo de la línea de confianza: "¿Dudas con el talle? Preguntame por
+WhatsApp", con la prenda y el talle ya escritos en el mensaje, medido como
+`whatsapp_click` con `source: pdp_pregunta`. Es secundario a propósito: texto,
+no botón, para no competir con "Agregar al carrito".
+
+### 21.5 El link de la bio de Instagram (tarea de Anush, no código)
+
+Instagram permite hasta 5 links con título propio desde abril de 2023, así que
+una página intermedia tipo Linktree es un toque de más. La tarea del panel pasó
+de "confirmar que la bio lleva a /ig" a poner dos links directos:
+`/tienda?utm_source=instagram&utm_medium=bio` y `/encargo?utm_source=...`.
+A la tienda y no a la home porque la home rebota 78% y la tienda 64%, y quien
+viene de Instagram ya sabe qué vende Dahila.
+
+**Fuentes:** NN/g, "The Fold Manifesto: Why the Page Fold Still Matters"
+(nngroup.com/articles/page-fold-manifesto) y "Scrolling and Attention";
+Baymard, "Homepage & Navigation UX Best Practices" y su investigación de
+homepage móvil; Baymard, "Three Popular Approaches to Live Chat" para el punto
+del chat iniciado por la clienta.
+
 ---
 
 ## 8. Qué no se tocó

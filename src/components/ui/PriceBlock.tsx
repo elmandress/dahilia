@@ -1,4 +1,4 @@
-import { dahila } from './Primitives'
+import { dahila } from './tokens'
 import { formatPrice } from '@/lib/types'
 
 const SALE = '#B6314A'

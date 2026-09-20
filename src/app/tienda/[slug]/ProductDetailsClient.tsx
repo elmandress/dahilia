@@ -23,6 +23,7 @@ import { useSizeSelection, getRestockWhatsAppUrl } from '@/lib/product-selection
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import { dahila, Button, Eyebrow, Icon, Breadcrumb } from '@/components/ui/Primitives'
 import { track, gaCommerce } from '@/lib/analytics'
+import type { Testimonial } from '@/components/TestimonialsStrip'
 
 export function ProductDetailsClient({
   product,
@@ -41,6 +42,7 @@ export function ProductDetailsClient({
   processEnabled = false,
   processSteps = [],
   encargosCupos,
+  testimonial = null,
 }: {
   product: Product
   discountPercent?: number
@@ -60,6 +62,8 @@ export function ProductDetailsClient({
   processEnabled?: boolean
   processSteps?: { icon: string; label: string; body: string }[]
   encargosCupos: EncargosCuposState
+  /** Un testimonio real de la tienda (ver pickTestimonial en page.tsx). */
+  testimonial?: Testimonial | null
 }) {
   const trust = trustItems && trustItems.length > 0 ? trustItems : [
     { icon: 'truck', text: 'Envío a todo Uruguay' },
@@ -354,6 +358,64 @@ export function ProductDetailsClient({
               </span>
             ))}
           </div>
+
+          {/* Preguntar antes de comprar, con la prenda y el talle ya puestos en
+              el mensaje. En 90 días hubo 11 toques a la burbuja flotante (que
+              no dice nada) contra 35 "agregar al carrito": el chat es un camino
+              que la clienta busca sola. Baymard: el chat que abre la clienta,
+              como link estático, ayuda; el que se abre solo, molesta. Va como
+              texto secundario para no competir con el botón principal. */}
+          {canBuy && (
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                const base = whatsappUrl.replace(/\/+$/, '')
+                const texto = `Hola! Estoy mirando ${product.name}${talle ? ` (talle ${talle})` : ''} en la web: ${window.location.origin}/tienda/${product.slug}\nTengo una consulta 🧶`
+                e.currentTarget.href = `${base}?text=${encodeURIComponent(texto)}`
+                track('whatsapp_click', { source: 'pdp_pregunta', product: product.slug })
+              }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7, alignSelf: 'flex-start',
+                fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700,
+                textDecoration: 'underline', textUnderlineOffset: 3, padding: '6px 0',
+              }}
+            >
+              <Icon name="whatsapp-logo" weight="fill" size={15} color={dahila.whatsapp} />
+              ¿Dudas con el talle? Preguntame por WhatsApp
+            </a>
+          )}
+
+          {/* Una clienta real, pegada al botón: quien entra directo desde
+              Instagram no pasa por los testimonios de la home. La etiqueta
+              dice que es de la tienda (como "Reseñas de esta tienda" en Etsy):
+              a veces la cita habla de otra prenda. */}
+          {testimonial && (
+            <figure style={{
+              margin: 0, padding: '2px 0 2px 12px',
+              borderLeft: `2px solid ${dahila.rose200}`,
+            }}>
+              <div style={{
+                fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
+                textTransform: 'uppercase', color: dahila.ink500, marginBottom: 4,
+              }}>
+                Lo que dicen de Dahila
+              </div>
+              <blockquote style={{
+                margin: 0, fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300,
+                fontSize: 15, lineHeight: 1.5, color: dahila.ink700,
+              }}>
+                “{testimonial.text.trim()}”
+              </blockquote>
+              <figcaption style={{
+                marginTop: 4, fontFamily: dahila.fontSans, fontSize: 11,
+                letterSpacing: '0.02em', color: dahila.ink500,
+              }}>
+                {testimonial.author.trim()}{testimonial.location?.trim() ? `, ${testimonial.location.trim()}` : ''}
+              </figcaption>
+            </figure>
+          )}
 
           {/* Descripción — abajo del bloque de compra: quien ya decidió no la
               necesita; quien duda la encuentra enseguida (y ANTES del

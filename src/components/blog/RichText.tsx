@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { dahila } from '@/components/ui/Primitives'
+import { dahila } from '@/components/ui/tokens'
 
 // Parser mínimo de texto en línea para los artículos: `[texto](/url)` y
 // `**negrita**`. Devuelve nodos de React, nunca HTML crudo — no hay

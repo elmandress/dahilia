@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/public'
-import { dahila, Eyebrow, Icon } from '@/components/ui/Primitives'
+import { Eyebrow, Icon } from '@/components/ui/Primitives'
+import { dahila } from '@/components/ui/tokens'
 import { SITE_URL } from '@/lib/env'
 import { OG_BASE_NO_IMAGE } from '@/lib/og'
 

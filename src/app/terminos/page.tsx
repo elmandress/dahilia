@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/public'
-import { dahila, Eyebrow } from '@/components/ui/Primitives'
+import { Eyebrow } from '@/components/ui/Primitives'
+import { dahila } from '@/components/ui/tokens'
 import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 86400

@@ -72,7 +72,8 @@ export function WeaverCallout() {
   return (
     <aside
       aria-label="Invitación a la red de tejedoras"
-      className="weaver-callout"
+      // callout-tejedoras: globals.css la oculta en la ficha de producto.
+      className="weaver-callout callout-tejedoras"
       style={{
         position: 'fixed', left: 16, bottom: 16, zIndex: 45,
         maxWidth: 300,

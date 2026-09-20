@@ -376,8 +376,19 @@ a {
 @media (max-width: 720px) {
   .hero-frame { height: clamp(440px, 78vh, 620px); }
 }
+/* En el celular el hero medía 520px de 740: ocupaba la primera pantalla entera
+   y la primera prenda caía a 910px, a 1,2 pantallas de scroll, con una visita
+   promedio de 22 segundos (Umami, 90 días). NN/g lo llama "falso piso": una
+   imagen a pantalla completa hace creer que la página termina ahí, y lo que
+   está justo arriba del corte se mira 102% más que lo que queda abajo. Con
+   esta altura la primera fila de prendas asoma antes del corte. */
 @media (max-width: 480px) {
-  .hero-frame { height: clamp(380px, 75vh, 520px); }
+  .hero-frame { height: clamp(300px, 52vh, 420px); }
+}
+/* Mismo motivo: el aire sobre "Nuevo" son 56px de los que dependía que la
+   primera prenda se viera o no. */
+@media (max-width: 720px) {
+  .seccion-nuevo { padding-top: 28px !important; }
 }
 
 /* ============================================================
@@ -798,12 +809,22 @@ a {
 .weaver-callout {
   animation: weaver-callout-in 260ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
+/* En el celular se estira, pero deja libre la esquina derecha: ahí vive la
+   burbuja de WhatsApp (right 24 + 52 de ancho). Con right: 12px la tarjeta
+   (z-index 45) la tapaba entera mientras estaba abierta, en todas las
+   páginas (medido en producción, 19/09/2026). */
 @media (max-width: 480px) {
   .weaver-callout {
     left: 12px !important;
-    right: 12px;
+    right: 88px;
     max-width: none !important;
   }
+}
+/* La de tejedoras le habla a otro público: en la ficha, donde la clienta está
+   decidiendo, no sale. Queda en espera (sin gastar el aviso) y aparece cuando
+   pasa a la home, la tienda o el blog. */
+body:has(.producto-detail) .callout-tejedoras {
+  display: none;
 }
 /* La invitación (Weaver/Vip) puede aparecer en la ficha de producto, donde en
    mobile existe la barra sticky de "Agregar al carrito" (.pdp-sticky-bar,

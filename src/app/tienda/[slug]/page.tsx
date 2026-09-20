@@ -7,7 +7,7 @@ import {
   getPrimaryPhoto, getFinalPrice, resolveDiscountPercent, getListingPrice, isReadyToShip,
   hasPriceRange as productHasPriceRange, sortSizes,
 } from '@/lib/types'
-import { getCatalog, getProductBySlug, getSnapshotData } from '@/lib/catalog'
+import { getCatalog, getProductBySlug, getSnapshotData, getTestimonials } from '@/lib/catalog'
 import { ProductDetailsClient } from './ProductDetailsClient'
 import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
 import { MaintenanceScreen } from '@/components/MaintenanceScreen'
@@ -19,6 +19,7 @@ import { botImageUrl } from '@/lib/media'
 import { COMPLEMENT_PREFS } from '@/lib/complements'
 import { slugRedirectTarget } from '@/lib/slug'
 import { getCategoryGuides } from '@/content/blog'
+import type { Testimonial } from '@/components/TestimonialsStrip'
 
 export const revalidate = 3600
 
@@ -415,6 +416,12 @@ async function ProductPage({ slug }: { slug: string }) {
     if (!related.some((r) => r.id === p.id) && !lookComplements.some((c) => c.id === p.id)) related.push(p)
   }
 
+  // Prueba social en la ficha (19/09/2026): quien llega desde un link de
+  // Instagram entra directo acá y nunca ve los testimonios de la home. Va uno
+  // real, cerca del botón. Si la base falla (o ya se está sirviendo el
+  // snapshot), la ficha sale igual, sin testimonio.
+  const testimonial = pickTestimonial(isSnapshot ? [] : await getTestimonials(), product)
+
   const photo = getPrimaryPhoto(product)
   // Full image set → richer Product structured data (Google can show several).
   // Vía /_next/image (botImageUrl): Googlebot-Image descarga ~100 KB desde
@@ -615,9 +622,30 @@ async function ProductPage({ slug }: { slug: string }) {
           { icon: getSetting('pdp_process_step_3_icon') || 'needle',     label: getSetting('pdp_process_step_3_label') || 'Te lo tejo',      body: getSetting('pdp_process_step_3_body') || 'Trabajo en tu prenda y te aviso cuando está lista para enviar.' },
         ].filter((s) => s.label.trim())}
         encargosCupos={encargosCupos}
+        testimonial={testimonial}
       />
     </div>
   )
+}
+
+// El testimonio que nombra el mismo tipo de prenda ("el sweater", "las
+// bufandas", "el set"), comparando palabra por palabra en singular. Si ninguno
+// la nombra, uno fijo por ficha (según el slug) para que no se repita el mismo
+// en todas. Son opiniones de la tienda, no del producto: por eso no van al
+// JSON-LD como Review.
+function pickTestimonial(list: Testimonial[], product: Product): Testimonial | null {
+  const usable = list.filter((t) => t.text?.trim() && t.author?.trim())
+  if (usable.length === 0) return null
+  const words = (s: string) =>
+    s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length >= 3)
+      .map((w) => w.replace(/(?<=[rldnz])es$/, '').replace(/s$/, ''))
+  const kind = new Set(words(`${product.category?.slug ?? ''} ${product.name}`))
+  const match = usable.find((t) => words(t.text).some((w) => kind.has(w)))
+  if (match) return match
+  const seed = [...product.slug].reduce((n, c) => n + c.charCodeAt(0), 0)
+  return usable[seed % usable.length]
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────

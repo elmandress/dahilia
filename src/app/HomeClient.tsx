@@ -104,7 +104,7 @@ function val<K extends keyof HomeSettings>(s: HomeSettings, key: K, fallback: st
 /** Nota del blog para la franja de la home (solo lo que la tarjeta muestra). */
 export type HomeNote = { slug: string; title: string; excerpt: string; hero?: { src: string; alt: string; position?: string } }
 
-export function HomeClient({ products, newest = [], settings, discounts = [], testimonials = [], dropCollectionHref = null, notes = [] }: { products: Product[]; newest?: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[]; dropCollectionHref?: string | null; notes?: HomeNote[] }) {
+export function HomeClient({ products, newest = [], settings, discounts = [], testimonials = [], dropCollectionHref = null, notes = [], categorias = [] }: { products: Product[]; newest?: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[]; dropCollectionHref?: string | null; notes?: HomeNote[]; categorias?: { name: string; slug: string }[] }) {
   const { queueNote } = useCart()
   // "Nuevo" = últimos publicados por fecha real de alta (con fallback al orden
   // manual si la consulta dedicada no trajo nada).
@@ -224,35 +224,35 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
         </div>
       </section>
 
-      {/* TRUST BAR — directly under the hero (F-pattern, top of viewport).
-          Reassures before the catalogue: the artisan/fair-trade selling points. */}
-      <section aria-label="Por qué Dahila" style={{ borderBottom: `1px solid ${dahila.border}` }}>
-        <div className="trust-bar" style={{
-          maxWidth: 1280, margin: '0 auto', padding: '20px 24px',
-          display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 18,
-        }}>
-          {[
-            ['hand-heart', 'Hecho a mano', 'Tejido pieza por pieza'],
-            ['ruler', 'A tu medida', 'Ajustado a vos'],
-            // Antes decía "Lana natural · Materiales nobles", pero el catálogo
-            // es mayormente algodón y hay acrílico, lurex, chenille y trapillo
-            // (verificado en la base el 12/09/2026). Esto es cierto para todo.
-            ['leaf', 'Algodón, lana y más', 'La fibra de cada pieza, en su ficha'],
-            ['truck', 'Envío a todo el país', 'Coordinás por WhatsApp'],
-          ].map(([icon, title, sub]) => (
-            <div key={title} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <Icon name={icon} size={22} color={dahila.wine600} />
-              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-                <span style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500, color: dahila.ink900 }}>{title}</span>
-                <span style={{ fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 300, color: dahila.ink500 }}>{sub}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* CATEGORÍAS — en el celular no hay menú a la vista: la clienta deduce
+          qué vende el sitio por lo que ve en el inicio (Baymard). Hasta hoy la
+          única entrada al catálogo por tipo de prenda estaba dentro del menú
+          hamburguesa, y la primera fila del inicio son las 4 piezas más nuevas,
+          que hoy son todas cardigans y sweaters: quien busca un top, un bolso o
+          un set no veía que existen. Mismo riel que /tienda. */}
+      {categorias.length > 0 && (
+        <nav aria-label="Categorías" style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 24px 0' }}>
+          <div className="tienda-toolbar-cats" style={{ display: 'flex', gap: 8 }}>
+            {categorias.map((c) => (
+              <Link
+                key={c.slug}
+                href={`/tienda/${c.slug}`}
+                style={{
+                  fontFamily: dahila.fontSans, fontSize: 12.5, fontWeight: 400, letterSpacing: '0.04em',
+                  padding: '9px 16px', borderRadius: 999, whiteSpace: 'nowrap', flexShrink: 0,
+                  background: '#fff', color: dahila.ink700, textDecoration: 'none',
+                  border: `1px solid ${dahila.borderStrong}`,
+                }}
+              >
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        </nav>
+      )}
 
       {/* NEW IN */}
-      <section style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 24px 0' }}>
+      <section className="seccion-nuevo" style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 24px 0' }}>
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
           marginBottom: 32, paddingBottom: 12,
@@ -290,6 +290,36 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
           {featured.length > 0
             ? featured.map((product) => <ProductCard key={product.id} product={product} discounts={discounts} />)
             : <EmptyCollectionState />}
+        </div>
+      </section>
+
+      {/* POR QUÉ DAHILA — debajo de la primera fila de prendas, no arriba
+          (20/09/2026). Estaba pegada al hero y empujaba la primera prenda a
+          1,2 pantallas de scroll en el celular; además repite, con más
+          palabras, lo que la cinta de arriba ya dice en la primera línea
+          ("Hecho a mano en Uruguay · Envío a todo el país · A medida"). */}
+      <section aria-label="Por qué Dahila" style={{ borderTop: `1px solid ${dahila.border}`, borderBottom: `1px solid ${dahila.border}`, marginTop: 48 }}>
+        <div className="trust-bar" style={{
+          maxWidth: 1280, margin: '0 auto', padding: '20px 24px',
+          display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 18,
+        }}>
+          {[
+            ['hand-heart', 'Hecho a mano', 'Tejido pieza por pieza'],
+            ['ruler', 'A tu medida', 'Ajustado a vos'],
+            // Antes decía "Lana natural · Materiales nobles", pero el catálogo
+            // es mayormente algodón y hay acrílico, lurex, chenille y trapillo
+            // (verificado en la base el 12/09/2026). Esto es cierto para todo.
+            ['leaf', 'Algodón, lana y más', 'La fibra de cada pieza, en su ficha'],
+            ['truck', 'Envío a todo el país', 'Coordinás por WhatsApp'],
+          ].map(([icon, title, sub]) => (
+            <div key={title} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Icon name={icon} size={22} color={dahila.wine600} />
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+                <span style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500, color: dahila.ink900 }}>{title}</span>
+                <span style={{ fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 300, color: dahila.ink500 }}>{sub}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 

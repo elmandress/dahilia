@@ -4,7 +4,8 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/public'
 import type { Product, Discount } from '@/lib/types'
 import { getPrimaryPhoto, formatListingPrice, BLUR_DATA_URL, getPrimaryPhotoAlt } from '@/lib/types'
-import { dahila, Icon } from '@/components/ui/Primitives'
+import { Icon } from '@/components/ui/Primitives'
+import { dahila } from '@/components/ui/tokens'
 
 export const revalidate = 300
 

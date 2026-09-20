@@ -1,4 +1,5 @@
-import { dahila, Icon } from './ui/Primitives'
+import { Icon } from './ui/Primitives'
+import { dahila } from './ui/tokens'
 
 export interface ProcessStep {
   icon: string

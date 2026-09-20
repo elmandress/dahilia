@@ -103,6 +103,14 @@ export const article: Article = {
       text: 'Si pasó algo más grave (se encogió, se estiró o tiene un enganche), está todo en los [primeros auxilios para tu prenda tejida](/blog/primeros-auxilios-prenda-tejida).',
     },
 
+    {
+      type: 'shopCta',
+      title: 'De qué está hecha cada pieza',
+      text: 'En la tienda, cada ficha dice su fibra: acrílico antipilling, algodón o lana.',
+      href: '/tienda',
+      label: 'Ver la tienda',
+    },
+
     { type: 'h2', text: 'Preguntas frecuentes' },
     {
       type: 'faq',

@@ -35,6 +35,10 @@ import path from 'node:path'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
+// .env.local: ahí vive PAGESPEED_API_KEY (opcional). Sin esto había que
+// exportarla a mano en cada terminal para que el informe la usara.
+try { process.loadEnvFile?.('.env.local') } catch { /* no existe: sigue igual */ }
+
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://dahila.uy').replace(/\/+$/, '')
 const DEFAULT_KEY_PATH = '.secrets/google-indexing-sa.json'
 const TOKEN_URI = 'https://oauth2.googleapis.com/token'

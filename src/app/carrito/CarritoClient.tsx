@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Button, Icon } from '@/components/ui/Primitives'
@@ -132,6 +132,11 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
   // carrera (una se rechaza, pero limpia el cupón igual) y dos filas en el
   // log de /api/orders para el mismo pedido.
   const [checkingOut, setCheckingOut] = useState(false)
+  // El estado no alcanza como traba: los dos toques de un doble tap ocurren
+  // antes del re-render, leen `checkingOut` todavía en false y entran los dos
+  // (con el celular ocupado es fácil de reproducir: 2 filas en `orders` para
+  // el mismo pedido, 19/09/2026). El ref cambia en el acto.
+  const checkoutLock = useRef(false)
   // El pedido que se acaba de mandar a WhatsApp: para ofrecer "Abrir de nuevo"
   // y "Copiar mi pedido" si la app no se abrió (ver el bloque .cart-fallback).
   const [sentOrder, setSentOrder] = useState<{ url: string; message: string } | null>(null)
@@ -250,7 +255,8 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
 
   const handleCheckout = async () => {
     if (typeof window === 'undefined') return
-    if (checkingOut) return
+    if (checkoutLock.current) return
+    checkoutLock.current = true
     setCheckingOut(true)
     const redeem = !!coupon && (couponDiscount > 0 || freeShipping)
     // Con cupón hay que esperar el canje (abajo) antes de mandar el pedido, y
@@ -273,6 +279,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           pending?.close()
           clearCoupon()
           setCouponError('Ese cupón se agotó justo ahora. El total quedó actualizado — volvé a tocar el botón.')
+          checkoutLock.current = false
           setCheckingOut(false)
           return
         }
@@ -344,7 +351,15 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       else window.location.assign(url)
     }
-    setCheckingOut(false)
+    // La traba se suelta un momento después, no al terminar: sin cupón esta
+    // función corre entera de una, y soltarla acá dejaba pasar el segundo
+    // toque de un doble tap. Mientras tanto el botón dice "Abriendo
+    // WhatsApp…". Si la app no se abrió, el aviso de abajo tiene "Abrir de
+    // nuevo", que es un link y no vuelve a registrar el pedido.
+    window.setTimeout(() => {
+      checkoutLock.current = false
+      setCheckingOut(false)
+    }, 1200)
   }
 
   if (isLoading) {

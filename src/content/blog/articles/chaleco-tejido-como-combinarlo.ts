@@ -88,6 +88,14 @@ export const article: Article = {
       text: 'Como cualquier prenda tejida: lavado a mano, secado en plano y guardado doblado, porque la percha lo estira con el tiempo. El paso a paso está en la guía de [cuidado](/blog/como-cuidar-prendas-de-crochet).',
     },
 
+    {
+      type: 'shopCta',
+      title: 'El chaleco del taller',
+      text: 'Tejido a mano, con el precio, los talles y la fibra a la vista.',
+      href: '/tienda/chaleco',
+      label: 'Ver el chaleco',
+    },
+
     { type: 'h2', text: 'Preguntas frecuentes' },
     {
       type: 'faq',
