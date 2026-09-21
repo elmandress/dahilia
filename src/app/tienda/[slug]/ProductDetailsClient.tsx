@@ -641,6 +641,31 @@ export function ProductDetailsClient({
               }}>Talle {talle}</span>
             )}
           </div>
+          {/* Con la base caída la barra fija también toma el pedido por
+              WhatsApp: si no, decía "Agregar" y fallaba al tocarla. */}
+          {soloConsulta ? (
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                const base = whatsappUrl.replace(/\/+$/, '')
+                const texto = `Hola! Quiero pedir ${product.name}${talle ? ` (talle ${talle})` : ''}: ${window.location.origin}/tienda/${product.slug}`
+                e.currentTarget.href = `${base}?text=${encodeURIComponent(texto)}`
+                track('whatsapp_click', { source: 'pdp_barra_solo_consulta', product: product.slug })
+              }}
+              style={{
+                flex: 1, marginLeft: 16,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                background: dahila.whatsapp, color: '#fff', textDecoration: 'none',
+                borderRadius: 10, padding: '14px 18px',
+                fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
+                letterSpacing: '0.06em', textTransform: 'uppercase',
+              }}
+            >
+              <Icon name="whatsapp-logo" weight="fill" size={16} /> Pedir
+            </a>
+          ) : (
           <button
             onClick={handleAdd}
             disabled={!sizeAvailable}
@@ -656,6 +681,7 @@ export function ProductDetailsClient({
           >
             {!sizeAvailable ? 'Sin stock' : added ? '✓ Agregado' : 'Agregar'}
           </button>
+          )}
         </div>
       )}
 
