@@ -83,12 +83,21 @@ const nextConfig: NextConfig = {
     // Allowlisted quality levels (Next 16 requires this when using the
     // `quality` prop). 82 cards · 90 detail · 95 hero · 100 lightbox.
     qualities: [82, 90, 95, 100],
-    // Prefer modern formats; AVIF first, WebP fallback.
-    formats: ['image/avif', 'image/webp'],
-    // Match the breakpoints we actually render at, so the optimizer doesn't
-    // ship oversized variants.
-    deviceSizes: [375, 420, 640, 750, 828, 1080, 1200, 1920],
-    imageSizes: [90, 160, 200, 256, 384],
+    // Solo WebP (21/09/2026). Cada formato duplica la cantidad de versiones de
+    // cada foto, y cada versión nueva obliga al optimizador a bajar otra vez el
+    // ORIGINAL desde Supabase Storage. Medido en producción antes del cambio:
+    // aun pidiendo AVIF en el Accept, Netlify servía WebP igual, así que la
+    // lista de dos formatos costaba el doble de descargas sin dar nada.
+    formats: ['image/webp'],
+    // Menos anchos = menos versiones por foto = menos descargas del original.
+    // Cada deploy vacía el caché de imágenes de Netlify, así que el costo se
+    // paga de nuevo en cada publicación: pasar de 8 anchos + 5 miniaturas a
+    // 5 + 3 baja esa factura a la mitad. El precio es que algunas pantallas
+    // bajan una foto un poco más grande de la que necesitan.
+    // Contexto: el 20/09/2026 el proyecto quedó restringido por pasarse de los
+    // 5 GB de egress del plan gratis.
+    deviceSizes: [420, 640, 828, 1200, 1920],
+    imageSizes: [96, 256, 384],
     remotePatterns: [
       {
         protocol: 'https',
