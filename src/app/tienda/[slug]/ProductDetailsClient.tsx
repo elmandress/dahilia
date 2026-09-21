@@ -331,7 +331,7 @@ export function ProductDetailsClient({
                 <Icon name="whatsapp-logo" weight="fill" size={18} /> Pedir por WhatsApp
               </a>
               <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, lineHeight: 1.5 }}>
-                El carrito está en mantenimiento por unas horas. Tu pedido se toma igual por WhatsApp, con el mismo precio.
+                El carrito está en mantenimiento. Tu pedido se toma igual por WhatsApp, con el mismo precio y el mismo plazo.
               </span>
             </div>
           )}
