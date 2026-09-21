@@ -25,13 +25,16 @@ const noSubscribe = () => () => {}
 const readSearch = () => window.location.search
 
 export default function EncargoForm({
-  whatsappUrl, encargosCupos, processEnabled = false, processSteps = [], referencias = [],
+  whatsappUrl, encargosCupos, processEnabled = false, processSteps = [], referencias = [], porWhatsApp = false,
 }: {
   whatsappUrl: string
   encargosCupos: EncargosCuposState
   processEnabled?: boolean
   processSteps?: ProcessStep[]
   referencias?: EncargoReferencia[]
+  /** La base no responde: el formulario no podría guardar el encargo, así que
+   *  se pide por WhatsApp en vez de dejar que se pierda lo escrito. */
+  porWhatsApp?: boolean
 }) {
   // Desde la ficha se llega con ?desde=<slug>&talle=<talle>: la prenda que
   // estaba mirando queda como referencia, con el tipo y el talle ya marcados,
@@ -241,6 +244,33 @@ export default function EncargoForm({
         </div>
       )}
 
+      {porWhatsApp ? (
+        <div style={{
+          display: 'flex', flexDirection: 'column', gap: 12,
+          background: dahila.cream50, border: `1px solid ${dahila.border}`,
+          borderRadius: 16, padding: '22px 20px',
+        }}>
+          <p style={{ fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink700, margin: 0, lineHeight: 1.6 }}>
+            El formulario está pausado unos días por un mantenimiento. Los encargos los tomamos
+            por WhatsApp, igual que siempre: contame qué prenda querés, tu talle y los colores, y
+            te paso el presupuesto y el plazo sin compromiso.
+          </p>
+          <a
+            href={`${whatsappUrl.replace(/\/+$/, '')}?text=${encodeURIComponent('Hola! Quiero encargar una prenda a medida 🧶')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+              background: dahila.whatsapp, color: '#fff', textDecoration: 'none',
+              borderRadius: 12, padding: '16px 20px', minHeight: 52,
+              fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
+              letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}
+          >
+            <Icon name="whatsapp-logo" weight="fill" size={18} /> Pedir por WhatsApp
+          </a>
+        </div>
+      ) : (
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }} noValidate>
 
         {referencia && (
@@ -393,6 +423,7 @@ export default function EncargoForm({
           {isPending ? 'Enviando...' : 'Enviar encargo'}
         </Button>
       </form>
+      )}
 
       {/* Contenido propio debajo del formulario. Auditoría SEO 04/09/2026:
           "tejidos a medida montevideo" es la única consulta del rubro sin

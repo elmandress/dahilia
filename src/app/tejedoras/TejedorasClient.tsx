@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect, useRef } from 'react'
-import { dahila, Eyebrow, Field, TextInput, Button } from '@/components/ui/Primitives'
+import { dahila, Eyebrow, Field, TextInput, Button, Icon } from '@/components/ui/Primitives'
 import { submitTejedora } from './actions'
 import { safeAction } from '@/lib/safe-action'
 
@@ -30,7 +30,11 @@ const VALORAMOS = [
   'Cumplir los tiempos que acordamos juntas',
 ]
 
-export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }) {
+export default function TejedorasClient({ whatsappUrl, porWhatsApp = false }: {
+  whatsappUrl: string
+  /** La base no responde: la postulación no se podría guardar. */
+  porWhatsApp?: boolean
+}) {
   const [name, setName] = useState('')
   const [location, setLocation] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
@@ -205,6 +209,32 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
         letterSpacing: '-0.01em', color: dahila.ink900, margin: '0 0 24px',
       }}>Postulate</h2>
 
+      {porWhatsApp ? (
+        <div style={{
+          display: 'flex', flexDirection: 'column', gap: 12,
+          background: dahila.cream50, border: `1px solid ${dahila.border}`,
+          borderRadius: 16, padding: '22px 20px',
+        }}>
+          <p style={{ fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink700, margin: 0, lineHeight: 1.6 }}>
+            El formulario está pausado unos días por un mantenimiento. Si querés tejer con Dahila,
+            escribinos por WhatsApp y te contamos cómo seguimos.
+          </p>
+          <a
+            href={`${whatsappUrl.replace(/\/+$/, '')}?text=${encodeURIComponent('Hola! Me gustaría tejer con Dahila 🧶')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+              background: dahila.whatsapp, color: '#fff', textDecoration: 'none',
+              borderRadius: 12, padding: '16px 20px', minHeight: 52,
+              fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
+              letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}
+          >
+            <Icon name="whatsapp-logo" weight="fill" size={18} /> Escribir por WhatsApp
+          </a>
+        </div>
+      ) : (
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 28 }} noValidate>
         <div className="encargo-grid-2" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 24 }}>
           <Field label="Tu nombre">
@@ -308,6 +338,7 @@ export default function TejedorasClient({ whatsappUrl }: { whatsappUrl: string }
           {isPending ? 'Enviando...' : 'Enviar postulación'}
         </Button>
       </form>
+      )}
     </div>
   )
 }

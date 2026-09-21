@@ -87,7 +87,7 @@ export default async function EncargoPage() {
 
   // Prendas que pueden llegar como referencia desde su ficha (?desde=slug).
   // Salen del catálogo en caché: no suman consultas a la base.
-  const { products, categories } = await getCatalog()
+  const { products, categories, source } = await getCatalog()
   const categorySlug = new Map(categories.map((c) => [c.id, c.slug]))
   const referencias: EncargoReferencia[] = products.map((p) => ({
     slug: p.slug,
@@ -106,6 +106,7 @@ export default async function EncargoPage() {
         dangerouslySetInnerHTML={{ __html: jsonLdScript(faqJsonLd) }}
       />
       <EncargoForm
+        porWhatsApp={source === 'snapshot'}
         whatsappUrl={settings.contact_whatsapp_url || 'https://wa.me/59899850073'}
         encargosCupos={getEncargosCuposState(settings)}
         referencias={referencias}

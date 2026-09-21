@@ -143,7 +143,11 @@ export function Footer({
   tagline = 'Prendas tejidas a mano, a tu medida, desde Montevideo.',
   showOfertas = true,
   showColecciones = true,
-}: { tagline?: string; showOfertas?: boolean; showColecciones?: boolean }) {
+  sinBase = false,
+}: { tagline?: string; showOfertas?: boolean; showColecciones?: boolean
+  /** La base no responde: la lista VIP no podría guardar el mail, así que el
+   *  bloque no se muestra (mejor no pedir un dato que se va a perder). */
+  sinBase?: boolean }) {
   const pathname = usePathname()
 
   if (pathname.startsWith('/admin')) return null
@@ -214,7 +218,8 @@ export function Footer({
           </div>
         )}
 
-        <VipSignup />
+        {/* Sin base no se puede guardar el mail: mejor no pedirlo. */}
+        {!sinBase && <VipSignup />}
 
         {/* Copyright row */}
         <div style={{

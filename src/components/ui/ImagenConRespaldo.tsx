@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image, { type ImageProps } from 'next/image'
 import { fotoRespaldo } from '@/lib/fotos-respaldo'
-import { PHOTO_PLACEHOLDER } from '@/lib/types'
+
 
 /**
  * `next/image` que no deja un hueco roto si la foto no carga.
@@ -27,7 +27,9 @@ export function ImagenConRespaldo({ slug, src, alt, respaldo: respaldoFijo, ...r
       alt={alt}
       src={actual}
       onError={() => {
-        const respaldo = respaldoFijo ?? fotoRespaldo(slug) ?? PHOTO_PLACEHOLDER
+        // Sin copia local: el marcador neutro. No el de 'sin foto', que es para
+        // las prendas que de verdad no tienen ninguna cargada.
+        const respaldo = respaldoFijo ?? fotoRespaldo(slug) ?? '/placeholder-foto-temporal.svg'
         // Si el respaldo también falla, no volver a intentar (evita el bucle).
         setActual((previa) => (previa === respaldo ? previa : respaldo))
       }}

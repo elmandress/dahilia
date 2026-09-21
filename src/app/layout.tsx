@@ -300,12 +300,12 @@ export default async function RootLayout({
             <main id="contenido">
               {children}
             </main>
-            <Footer tagline={tagline} showOfertas={showOfertas} showColecciones={showColecciones} />
+            <Footer tagline={tagline} showOfertas={showOfertas} showColecciones={showColecciones} sinBase={catalog.source === 'snapshot'} />
             <CartDrawer products={addonCandidates} />
             <BackToTop />
             <WhatsAppFloat enabled={waEnabled} waUrl={waUrl} />
             <WeaverCallout />
-            <VipCallout />
+            {catalog.source !== 'snapshot' && <VipCallout />}
           </FavoritesProvider>
         </CartProvider>
         <AttributionCapture />

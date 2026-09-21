@@ -325,6 +325,7 @@ async function CategoryPage({ slug, category }: { slug: string; category: Catego
       />
       {source === 'snapshot' && <CatalogReadOnlyBanner />}
       <TiendaClient
+        conFotoPrimero={source === 'snapshot'}
         key={`cat:${slug}`}
         initialProducts={products}
         categories={categories}

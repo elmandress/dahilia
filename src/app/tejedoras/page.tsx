@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/public'
+import { getCatalog } from '@/lib/catalog'
 import TejedorasClient from './TejedorasClient'
 import { OG_BASE } from '@/lib/og'
 
@@ -28,5 +29,8 @@ export default async function TejedorasPage() {
     .maybeSingle()
 
   const waUrl = (data?.value as string | undefined) || 'https://wa.me/59899850073'
-  return <TejedorasClient whatsappUrl={waUrl} />
+  // Si la base no responde, la postulación no se puede guardar: se pide por
+  // WhatsApp en vez de perder lo que la persona escriba.
+  const { source } = await getCatalog()
+  return <TejedorasClient whatsappUrl={waUrl} porWhatsApp={source === 'snapshot'} />
 }

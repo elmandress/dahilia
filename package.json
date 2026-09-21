@@ -12,6 +12,7 @@
     "sitemaps": "node scripts/sitemaps-submit.mjs",
     "indexnow": "node scripts/indexnow-submit.mjs",
     "ga": "node scripts/ga-report.mjs",
+    "respaldo-fotos": "node scripts/respaldo-fotos.mjs",
     "test:e2e": "playwright test",
     "test:e2e:setup": "playwright install chromium",
     "test:types": "tsc -p tests/tsconfig.json"

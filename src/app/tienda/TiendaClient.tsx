@@ -7,6 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Product, Category, Color, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
+import { FOTOS_RESPALDO } from '@/lib/fotos-respaldo'
 import { getListingPrice, resolveDiscountPercent, BLUR_DATA_URL, isReadyToShip, normalizeText, productPhotoAlt } from '@/lib/types'
 import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Chip, Icon, Breadcrumb, Button } from '@/components/ui/Primitives'
@@ -130,8 +131,12 @@ export function TiendaClient({
   initialHideOutOfStock,
   initialOnlyReadyToShip,
   guides = [],
+  conFotoPrimero = false,
 }: {
   initialProducts: Product[]
+  /** Base caída: las prendas con copia local de foto van primero, para que la
+   *  tienda no abra con una grilla de marcadores (20/09/2026). */
+  conFotoPrimero?: boolean
   categories: Category[]
   colors: Color[]
   discounts: Discount[]
@@ -359,8 +364,13 @@ export function TiendaClient({
         })
         break
     }
+    // Con la base caída, las que tienen foto local primero (el orden elegido
+    // se respeta dentro de cada grupo: Array.sort es estable).
+    if (conFotoPrimero) {
+      withFinal.sort((a, b) => Number(FOTOS_RESPALDO.has(b.p.slug)) - Number(FOTOS_RESPALDO.has(a.p.slug)))
+    }
     return withFinal.map((x) => x.p)
-  }, [initialProducts, filter, search, appliedColorIds, appliedSizes, appliedEffectiveMax, appliedOnlyDiscount, appliedHideOutOfStock, appliedOnlyReadyToShip, sort, discounts])
+  }, [initialProducts, filter, search, appliedColorIds, appliedSizes, appliedEffectiveMax, appliedOnlyDiscount, appliedHideOutOfStock, appliedOnlyReadyToShip, sort, discounts, conFotoPrimero])
 
   // Vista previa del borrador en mobile: cuántas prendas van a quedar si se
   // toca "Ver resultados" — así el botón no es una caja negra.

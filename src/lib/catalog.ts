@@ -16,6 +16,7 @@ import { unstable_rethrow } from 'next/navigation'
 import type { Product, Category, Color, Discount, Collection } from '@/lib/types'
 import { sortSizes } from '@/lib/types'
 import { createClient } from '@/lib/supabase/public'
+import { FOTOS_RESPALDO } from '@/lib/fotos-respaldo'
 import type { Testimonial } from '@/components/TestimonialsStrip'
 import snapshot from '@/lib/catalog-snapshot.json'
 
@@ -89,8 +90,15 @@ const PRODUCT_SELECT =
   '*, category:categories(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*))'
 
 function snapshotCatalog(): Catalog {
+  // Con la base caída, las fotos de Supabase tampoco cargan y solo se ven las
+  // prendas que tienen copia local (ver lib/fotos-respaldo). Ordenarlas
+  // primero hace que las primeras pantallas de la tienda se vean completas en
+  // vez de una grilla de marcadores. Es un orden estable: dentro de cada
+  // grupo se respeta el orden del catálogo. En modo normal esto no corre.
+  const conFoto = SNAPSHOT_PRODUCTS.filter((p) => FOTOS_RESPALDO.has(p.slug))
+  const sinFoto = SNAPSHOT_PRODUCTS.filter((p) => !FOTOS_RESPALDO.has(p.slug))
   return {
-    products: SNAPSHOT_PRODUCTS,
+    products: [...conFoto, ...sinFoto],
     categories: SNAPSHOT.categories,
     colors: SNAPSHOT.colors,
     discounts: SNAPSHOT.discounts,

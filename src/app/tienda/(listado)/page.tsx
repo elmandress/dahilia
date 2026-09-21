@@ -136,6 +136,7 @@ export default async function TiendaPage({
       />
     {source === 'snapshot' && <CatalogReadOnlyBanner />}
     <TiendaClient
+      conFotoPrimero={source === 'snapshot'}
       key={`${categoryFilter}|${searchQuery}|${colorParam}|${sizeParam}|${maxParam}|${sortParam}|${onlyOffers}|${hideOutOfStock}|${onlyReadyToShip}`}
       initialProducts={products}
       categories={categories}
