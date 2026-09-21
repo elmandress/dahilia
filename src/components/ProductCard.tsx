@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import { ImagenConRespaldo } from './ui/ImagenConRespaldo'
 import type { Product, Discount } from '@/lib/types'
 import {
   getEffectivePrice, getFinalPrice, resolveDiscountPercent, getPrimaryPhoto, getScarcity, BLUR_DATA_URL,
@@ -100,7 +100,8 @@ export function ProductCard({
         borderRadius: 12, overflow: 'hidden',
         background: dahila.cream50,
       }}>
-        <Image
+        <ImagenConRespaldo
+          slug={product.slug}
           src={photo}
           alt={getPrimaryPhotoAlt(product)}
           fill

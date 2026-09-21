@@ -71,10 +71,11 @@ export function QuickViewModal({
 
   const handleAdd = async () => {
     if (!sizeAvailable) return
-    await addToCart(product, talle, 1)
+    const ok = await addToCart(product, talle, 1)
     // addToCart opens the mini-cart drawer; close this modal so we don't stack
-    // two dialogs on top of each other.
-    onClose()
+    // two dialogs on top of each other. Si falló, la vista rápida se queda
+    // abierta: cerrarla escondería el aviso y la salida por WhatsApp.
+    if (ok) onClose()
   }
 
   return (

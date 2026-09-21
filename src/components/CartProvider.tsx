@@ -27,7 +27,8 @@ interface CartContextType {
   openDrawer: () => void
   closeDrawer: () => void
   refresh: () => Promise<void>
-  addToCart: (product: Product, size: string, qty: number, opts?: { openDrawer?: boolean }) => Promise<void>
+  /** true si la pieza quedó guardada; false si la base no respondió. */
+  addToCart: (product: Product, size: string, qty: number, opts?: { openDrawer?: boolean }) => Promise<boolean>
   updateQty: (itemId: string, qty: number) => Promise<void>
   removeFromCart: (itemId: string) => Promise<void>
 }
@@ -109,9 +110,11 @@ export function CartProvider({
   // clienta no tenía forma de saber que su cambio no se guardó.
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const addError = errorMsg !== null
+  // 6 s y no 3,5: el aviso ahora ofrece pedir por WhatsApp, y hay que darle
+  // tiempo a leerlo y tocarlo.
   const showError = useCallback((msg: string) => {
     setErrorMsg(msg)
-    setTimeout(() => setErrorMsg(null), 3500)
+    setTimeout(() => setErrorMsg(null), 6000)
   }, [])
   const hasFetchedRef = useRef(false)
 
@@ -204,10 +207,12 @@ export function CartProvider({
           quantity: qty, item_variant: size, item_category: product.category?.slug,
         }]),
       })
+      return true
     } catch (e) {
       console.error('addToCart failed', e)
       // Surface the error so the user knows the add failed.
       showError('No se pudo agregar al carrito. Intentá de nuevo.')
+      return false
     }
   }, [showError])
 
@@ -288,12 +293,30 @@ export function CartProvider({
           fontFamily: 'var(--font-sans), sans-serif', fontSize: 13,
           boxShadow: '0 12px 30px -12px rgba(31,26,27,0.5)',
           opacity: addError ? 1 : 0,
-          pointerEvents: 'none',
+          // Con el aviso a la vista el link tiene que poder tocarse; cuando no
+          // hay error, el globo no debe interceptar ningún toque.
+          pointerEvents: addError ? 'auto' : 'none',
           transition: 'opacity 200ms ease, transform 200ms ease',
-          whiteSpace: 'nowrap',
+          maxWidth: 'min(92vw, 460px)',
+          flexWrap: 'wrap', justifyContent: 'center', textAlign: 'center',
+          lineHeight: 1.45,
         }}
       >
-        {errorMsg ?? ''}
+        <span>{errorMsg ?? ''}</span>
+        {/* Salida real, no un callejón: si el carrito no puede guardar (base
+            caída por cuota, 20/09/2026, o sin red), el pedido se toma por
+            WhatsApp igual. */}
+        {addError && (
+          <a
+            href={`${whatsappUrl.replace(/\/+$/, '')}?text=${encodeURIComponent('Hola! Quiero hacer un pedido. El carrito de la web no me está funcionando 🧶')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => track('whatsapp_click', { source: 'carrito_error' })}
+            style={{ color: '#fff', textDecoration: 'underline', textUnderlineOffset: 3, fontWeight: 500, padding: '2px 0' }}
+          >
+            Pedir por WhatsApp
+          </a>
+        )}
       </div>
     </CartContext.Provider>
   )

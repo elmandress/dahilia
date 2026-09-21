@@ -623,6 +623,9 @@ async function ProductPage({ slug }: { slug: string }) {
         ].filter((s) => s.label.trim())}
         encargosCupos={encargosCupos}
         testimonial={testimonial}
+        // Con la base caída el carrito no puede guardar nada: la ficha toma el
+        // pedido por WhatsApp en vez de fallar al tocar "Agregar".
+        soloConsulta={isSnapshot}
       />
     </div>
   )

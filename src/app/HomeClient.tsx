@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { ImagenConRespaldo } from '@/components/ui/ImagenConRespaldo'
 import { ProductCard } from '@/components/ProductCard'
 import { DropTeaser } from '@/components/DropTeaser'
 import { TestimonialsStrip } from '@/components/TestimonialsStrip'
@@ -171,8 +172,9 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
       {/* HERO */}
       <section className="hero" style={{ position: 'relative', background: '#fff' }}>
         <div className="hero-frame" style={{ position: 'relative', overflow: 'hidden' }}>
-          <Image
+          <ImagenConRespaldo
             src={heroImage}
+            respaldo="/fotos-respaldo/hero.webp"
             alt="Prenda de crochet — Dahila"
             fill
             // Hero is the home LCP element (Next 16: fetchPriority replaces priority).

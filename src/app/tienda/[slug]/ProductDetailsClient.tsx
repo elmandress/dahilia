@@ -43,6 +43,7 @@ export function ProductDetailsClient({
   processSteps = [],
   encargosCupos,
   testimonial = null,
+  soloConsulta = false,
 }: {
   product: Product
   discountPercent?: number
@@ -64,6 +65,9 @@ export function ProductDetailsClient({
   encargosCupos: EncargosCuposState
   /** Un testimonio real de la tienda (ver pickTestimonial en page.tsx). */
   testimonial?: Testimonial | null
+  /** La base no responde y la ficha se está sirviendo del respaldo: el carrito
+   *  no puede guardar nada, así que el pedido se toma por WhatsApp. */
+  soloConsulta?: boolean
 }) {
   const trust = trustItems && trustItems.length > 0 ? trustItems : [
     { icon: 'truck', text: 'Envío a todo Uruguay' },
@@ -126,8 +130,12 @@ export function ProductDetailsClient({
 
   const handleAdd = async () => {
     if (!sizeAvailable) return
+    // El '✓ Agregado' sale SOLO si de verdad se guardó: con la base caída el
+    // botón decía 'Agregado' mientras el aviso decía que había fallado
+    // (20/09/2026).
+    const ok = await addToCart(product, talle, 1)
+    if (!ok) return
     setAdded(true)
-    await addToCart(product, talle, 1)
     setTimeout(() => setAdded(false), 2200)
   }
 
@@ -137,8 +145,9 @@ export function ProductDetailsClient({
   const handleLookAdd = async (p: Product) => {
     const avail = (p.sizes ?? []).filter((s) => s.available)
     const size = avail.length > 0 ? avail[0].size : 'Único'
+    const ok = await addToCart(p, size, 1, { openDrawer: false })
+    if (!ok) return
     setAddedLookId(p.id)
-    await addToCart(p, size, 1, { openDrawer: false })
     track('look_add', { from: product.slug, to: p.slug })
     setTimeout(() => setAddedLookId(null), 2200)
   }
@@ -168,7 +177,7 @@ export function ProductDetailsClient({
               −{discountPercent}%
             </span>
           )}
-          <ProductGallery images={galleryImages} productName={product.name} />
+          <ProductGallery images={galleryImages} productName={product.name} slug={product.slug} />
         </div>
 
         {/* Detail */}
@@ -299,7 +308,35 @@ export function ProductDetailsClient({
             </div>
           )}
 
-          {canBuy && (
+          {canBuy && soloConsulta && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  const base = whatsappUrl.replace(/\/+$/, '')
+                  const texto = `Hola! Quiero pedir ${product.name}${talle ? ` (talle ${talle})` : ''}: ${window.location.origin}/tienda/${product.slug}`
+                  e.currentTarget.href = `${base}?text=${encodeURIComponent(texto)}`
+                  track('whatsapp_click', { source: 'pdp_solo_consulta', product: product.slug })
+                }}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+                  background: dahila.whatsapp, color: '#fff', textDecoration: 'none',
+                  borderRadius: 12, padding: '16px 20px', minHeight: 52,
+                  fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                }}
+              >
+                <Icon name="whatsapp-logo" weight="fill" size={18} /> Pedir por WhatsApp
+              </a>
+              <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, lineHeight: 1.5 }}>
+                El carrito está en mantenimiento por unas horas. Tu pedido se toma igual por WhatsApp, con el mismo precio.
+              </span>
+            </div>
+          )}
+
+          {canBuy && !soloConsulta && (
             sizeAvailable ? (
               <Button variant="primary" size="lg" full onClick={handleAdd}>
                 {added ? '✓ Agregado' : 'Agregar al carrito'}

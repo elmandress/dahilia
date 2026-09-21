@@ -63,6 +63,19 @@ async function installGuard(page: Page): Promise<Guard> {
   page.on('popup', async (popup) => { waUrl = waUrl ?? popup.url(); await popup.close().catch(() => {}) })
 
   const ctx = page.context()
+  // FOTOS: nunca se piden de verdad. El optimizador de imágenes de Next
+  // descarga el ORIGINAL desde Supabase Storage en cada variante que no tenga
+  // cacheada, y `npm run build` borra ese caché (.next/cache/images). Correr la
+  // suite unas cuantas veces después de otros tantos builds hizo ~17.000
+  // descargas de originales y agotó los 5 GB de "Cached Egress" del plan
+  // gratis: el 20/09/2026 el proyecto quedó restringido (402) y el carrito del
+  // sitio dejó de andar para las clientas. Con este stub, las pruebas no le
+  // cuestan un byte a Supabase. El layout no cambia: el alto lo fijan el CSS y
+  // los atributos width/height, no los bytes de la foto.
+  const PIXEL = Buffer.from('R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==', 'base64')
+  await ctx.route(/\/_next\/image|supabase\.co\/storage\//, (r) =>
+    r.fulfill({ status: 200, contentType: 'image/gif', body: PIXEL, headers: { 'cache-control': 'public, max-age=31536000' } })
+  )
   await ctx.route(/googletagmanager|google-analytics|clarity\.ms|cloud\.umami|\/stats\//, (r) => r.abort())
   await ctx.route(/wa\.me|api\.whatsapp\.com/, (r) => { waUrl = r.request().url(); return r.fulfill({ body: 'ok' }) })
 

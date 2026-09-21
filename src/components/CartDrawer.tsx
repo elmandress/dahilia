@@ -70,8 +70,9 @@ export function CartDrawer({ products }: { products: Product[] }) {
   const handleAddonAdd = async (p: Product) => {
     // El talle del precio que se muestra (el disponible más barato).
     const size = getListingSize(p) ?? 'Único'
+    const ok = await addToCart(p, size, 1, { openDrawer: false })
+    if (!ok) return
     setAddedId(p.id)
-    await addToCart(p, size, 1, { openDrawer: false })
     track('cart_addon_add', { product: p.slug })
     setTimeout(() => setAddedId(null), 2000)
   }

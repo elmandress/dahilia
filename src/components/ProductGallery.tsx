@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
-import Image from 'next/image'
+import { ImagenConRespaldo } from './ui/ImagenConRespaldo'
 import { dahila, Icon } from './ui/Primitives'
 import { BLUR_DATA_URL } from '@/lib/types'
 import type { GalleryImage } from './ProductLightbox'
@@ -15,7 +15,7 @@ const ProductLightbox = dynamic(() => import('./ProductLightbox'), { ssr: false 
 // el dedo (antes solo cambiaba tocando las miniaturas, y deslizar la foto no
 // hacía nada). Sin librería: el swipe es el scroll nativo del navegador. Las
 // miniaturas y el lightbox mueven el riel; el riel actualiza la foto activa.
-export function ProductGallery({ images, productName }: { images: GalleryImage[]; productName: string }) {
+export function ProductGallery({ images, productName, slug }: { images: GalleryImage[]; productName: string; slug?: string }) {
   const safeImages = images.length > 0 ? images : [{ url: '/placeholder-product.svg', alt: productName }]
   const [active, setActive] = useState(0)
   const [lightbox, setLightbox] = useState(false)
@@ -67,7 +67,8 @@ export function ProductGallery({ images, productName }: { images: GalleryImage[]
                 background: dahila.cream50, border: 'none', padding: 0, cursor: 'zoom-in',
               }}
             >
-              <Image
+              <ImagenConRespaldo
+                slug={slug}
                 src={img.url}
                 alt={img.alt || productName}
                 fill
@@ -146,7 +147,8 @@ export function ProductGallery({ images, productName }: { images: GalleryImage[]
                 transition: `border-color 140ms ${dahila.ease}`,
               }}
             >
-              <Image
+              <ImagenConRespaldo
+                slug={slug}
                 src={img.url}
                 alt=""
                 fill
