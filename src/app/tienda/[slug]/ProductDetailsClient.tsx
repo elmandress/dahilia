@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
+import { ImagenConRespaldo } from '@/components/ui/ImagenConRespaldo'
 import { useCart } from '@/components/CartProvider'
 import { EncargosDisponibles, type EncargosCuposState } from '@/components/EncargosDisponibles'
 import { ProductGallery } from '@/components/ProductGallery'
@@ -500,7 +500,7 @@ export function ProductDetailsClient({
                         borderRadius: 8, overflow: 'hidden', background: dahila.cream50, display: 'block',
                       }}
                     >
-                      <Image src={cPhoto} alt={getPrimaryPhotoAlt(p)} fill sizes="46px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+                      <ImagenConRespaldo slug={p.slug} src={cPhoto} alt={getPrimaryPhotoAlt(p)} fill sizes="46px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
                     </Link>
                     <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
                       <Link
@@ -568,7 +568,7 @@ export function ProductDetailsClient({
             }}>
               {makerPhoto.trim().length > 0 && (
                 <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: 999, overflow: 'hidden', position: 'relative' }}>
-                  <Image src={makerPhoto} alt={makerName} fill sizes="40px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+                  <ImagenConRespaldo respaldo="/fotos-respaldo/sobre-anush.jpg" src={makerPhoto} alt={makerName} fill sizes="40px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
                 </div>
               )}
               <div>

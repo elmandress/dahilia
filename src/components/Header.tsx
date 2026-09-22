@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { ImagenConRespaldo } from '@/components/ui/ImagenConRespaldo'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCart } from './CartProvider'
 import { track } from '@/lib/analytics'
@@ -374,7 +375,7 @@ export function Header({
                             }}
                           >
                             <div style={{ position: 'relative', width: 40, height: 50, flexShrink: 0, borderRadius: 6, overflow: 'hidden', background: dahila.cream50 }}>
-                              <Image src={sug.photo} alt="" fill sizes="40px" style={{ objectFit: 'cover' }} />
+                              <ImagenConRespaldo slug={sug.slug} src={sug.photo} alt="" fill sizes="40px" style={{ objectFit: 'cover' }} />
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 14, color: dahila.ink900, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sug.name}</div>

@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import Image from 'next/image'
+import { ImagenConRespaldo } from '@/components/ui/ImagenConRespaldo'
 import type { Product, Category, Color, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
 import { FOTOS_RESPALDO } from '@/lib/fotos-respaldo'
@@ -53,7 +53,7 @@ function RecentlyViewedStrip() {
               position: 'relative', width: 100, height: 124,
               borderRadius: 8, overflow: 'hidden', background: dahila.cream50, marginBottom: 6,
             }}>
-              <Image src={p.photo} alt={productPhotoAlt(p.name)} fill quality={82} sizes="100px"
+              <ImagenConRespaldo slug={p.slug} src={p.photo} alt={productPhotoAlt(p.name)} fill quality={82} sizes="100px"
                 placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
             </div>
             <div style={{ fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink900, lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
