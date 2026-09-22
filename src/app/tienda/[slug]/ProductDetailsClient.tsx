@@ -316,7 +316,9 @@ export function ProductDetailsClient({
                 rel="noopener noreferrer"
                 onClick={(e) => {
                   const base = whatsappUrl.replace(/\/+$/, '')
-                  const texto = `Hola! Quiero pedir ${product.name}${talle ? ` (talle ${talle})` : ''}: ${window.location.origin}/tienda/${product.slug}`
+                  // Con el precio adentro: durante una caída el panel tampoco
+                  // anda, así que el chat tiene que bastarse solo.
+                  const texto = `Hola! Quiero pedir ${product.name}${talle ? ` (talle ${talle})` : ''}, ${formatPrice(finalPrice)}: ${window.location.origin}/tienda/${product.slug}`
                   e.currentTarget.href = `${base}?text=${encodeURIComponent(texto)}`
                   track('whatsapp_click', { source: 'pdp_solo_consulta', product: product.slug })
                 }}
@@ -331,7 +333,7 @@ export function ProductDetailsClient({
                 <Icon name="whatsapp-logo" weight="fill" size={18} /> Pedir por WhatsApp
               </a>
               <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, lineHeight: 1.5 }}>
-                El carrito está en mantenimiento. Tu pedido se toma igual por WhatsApp, con el mismo precio y el mismo plazo.
+                El carrito está en mantenimiento unos días. Tu pedido lo coordinamos por WhatsApp, igual que siempre, con el mismo precio y el mismo plazo.
               </span>
             </div>
           )}
@@ -650,7 +652,7 @@ export function ProductDetailsClient({
               rel="noopener noreferrer"
               onClick={(e) => {
                 const base = whatsappUrl.replace(/\/+$/, '')
-                const texto = `Hola! Quiero pedir ${product.name}${talle ? ` (talle ${talle})` : ''}: ${window.location.origin}/tienda/${product.slug}`
+                const texto = `Hola! Quiero pedir ${product.name}${talle ? ` (talle ${talle})` : ''}, ${formatPrice(finalPrice)}: ${window.location.origin}/tienda/${product.slug}`
                 e.currentTarget.href = `${base}?text=${encodeURIComponent(texto)}`
                 track('whatsapp_click', { source: 'pdp_barra_solo_consulta', product: product.slug })
               }}

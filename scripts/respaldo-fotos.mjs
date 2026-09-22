@@ -81,7 +81,8 @@ for (const p of productos) {
 
 // La lista del código se regenera desde la carpeta: nunca desfasada.
 const slugs = readdirSync(DESTINO)
-  .filter((f) => /\.(jpg|jpeg|webp|png)$/i.test(f) && !f.startsWith('hero'))
+  // hero y sobre-anush no son prendas: son fotos del sitio.
+  .filter((f) => /\.(jpg|jpeg|webp|png)$/i.test(f) && !['hero', 'sobre-anush'].includes(f.replace(/\.[^.]+$/, '')))
   .map((f) => f.replace(/\.[^.]+$/, ''))
   .sort()
 const modulo = readFileSync('src/lib/fotos-respaldo.ts', 'utf8')

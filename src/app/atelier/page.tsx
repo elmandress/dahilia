@@ -1,6 +1,7 @@
 import { jsonLdScript } from '@/lib/json-ld'
 import type { Metadata } from 'next'
 import Image from 'next/image'
+import { ImagenConRespaldo } from '@/components/ui/ImagenConRespaldo'
 import { createClient } from '@/lib/supabase/public'
 import { Eyebrow } from '@/components/ui/Primitives'
 import { dahila } from '@/components/ui/tokens'
@@ -85,8 +86,9 @@ export default async function AtelierPage() {
         display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: 64, alignItems: 'center',
       }}>
         <div style={{ position: 'relative', width: '100%', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden' }}>
-          <Image
+          <ImagenConRespaldo
             src={heroImage}
+            respaldo="/fotos-respaldo/sobre-anush.jpg"
             alt="Anush, la tejedora detrás de Dahila"
             fill
             // Hero is /atelier's LCP element (Next 16: fetchPriority replaces priority).

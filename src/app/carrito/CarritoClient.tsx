@@ -12,7 +12,7 @@ import type { Product, Discount } from '@/lib/types'
 import { computeCouponEffect, type PublicCoupon } from '@/lib/coupons'
 import { pickAddonSuggestions } from '@/lib/addons'
 import { PriceBlock } from '@/components/ui/PriceBlock'
-import Image from 'next/image'
+import { ImagenConRespaldo } from '@/components/ui/ImagenConRespaldo'
 import { SITE_URL } from '@/lib/env'
 import { track, gaCommerce } from '@/lib/analytics'
 import { getAttribution } from '@/lib/attribution'
@@ -438,7 +438,8 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                       position: 'relative', aspectRatio: '3/4',
                       borderRadius: 10, overflow: 'hidden', background: dahila.cream50,
                     }}>
-                      <Image
+                      <ImagenConRespaldo
+                        slug={p.slug}
                         src={photo}
                         alt={getPrimaryPhotoAlt(p)}
                         fill
@@ -494,7 +495,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                 width: 90, height: 108, borderRadius: 8, overflow: 'hidden',
                 background: dahila.cream50, position: 'relative', flexShrink: 0
               }}>
-                <Image src={photo} alt={item.product.name} fill sizes="90px" style={{ objectFit: 'cover' }} />
+                <ImagenConRespaldo slug={item.product.slug} src={photo} alt={item.product.name} fill sizes="90px" style={{ objectFit: 'cover' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ fontFamily: dahila.fontDisplay, fontSize: 18, color: dahila.ink900, lineHeight: 1.2 }}>
@@ -601,7 +602,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                     position: 'relative', width: 44, height: 54, flexShrink: 0,
                     borderRadius: 6, overflow: 'hidden', background: dahila.cream50, display: 'block',
                   }}>
-                    <Image src={photo} alt={getPrimaryPhotoAlt(p)} fill sizes="44px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+                    <ImagenConRespaldo slug={p.slug} src={photo} alt={getPrimaryPhotoAlt(p)} fill sizes="44px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
                   </Link>
                   <div style={{ minWidth: 0 }}>
                     <Link href={`/tienda/${p.slug}`} style={{

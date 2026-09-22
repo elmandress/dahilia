@@ -4,11 +4,10 @@ import { Icon } from '@/components/ui/Primitives'
  * Aviso de "pedidos por WhatsApp": aparece cuando el catálogo se sirve desde el
  * snapshot estático porque la base está caída (ver src/lib/catalog.ts).
  *
- * Dice qué se puede hacer y qué no, en ese orden (20/09/2026). Antes decía solo
- * "estamos actualizando la tienda": quien tocaba el carrito igual se llevaba un
- * error, y quien quería mirar precios no sabía si podía confiar en lo que veía.
- * El tono es de atención, no de falla: el precio, el talle y el plazo son los
- * mismos, y el pedido se toma igual.
+ * Dice qué está pausado y qué sigue igual (21/09/2026). Dos cosas que el texto
+ * NO puede hacer: dar a entender que se dejó de poder comprar (el catálogo y
+ * los precios se ven igual), ni que los pedidos por WhatsApp son una medida de
+ * emergencia — siempre se coordinaron así. Lo único que cambia es el carrito.
  */
 export function CatalogReadOnlyBanner({
   waUrl = 'https://wa.me/59899850073',
@@ -32,9 +31,9 @@ export function CatalogReadOnlyBanner({
       }}
     >
       <span style={{ maxWidth: 640 }}>
-        <strong style={{ fontWeight: 600 }}>Los pedidos los tomamos por WhatsApp estos días.</strong>{' '}
-        Podés ver todo el catálogo, los precios y los talles como siempre. El carrito y los favoritos
-        están pausados por un mantenimiento; el precio y el plazo son los mismos.
+        <strong style={{ fontWeight: 600 }}>El carrito está en mantenimiento unos días.</strong>{' '}
+        Podés ver todo el catálogo, los precios y los talles como siempre, y tu pedido lo coordinamos
+        por WhatsApp, igual que siempre.
       </span>
       <a
         href={waUrl}

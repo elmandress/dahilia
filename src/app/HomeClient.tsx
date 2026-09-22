@@ -174,7 +174,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
         <div className="hero-frame" style={{ position: 'relative', overflow: 'hidden' }}>
           <ImagenConRespaldo
             src={heroImage}
-            respaldo="/fotos-respaldo/hero.webp"
+            respaldo="/fotos-respaldo/hero.jpg"
             alt="Prenda de crochet — Dahila"
             fill
             // Hero is the home LCP element (Next 16: fetchPriority replaces priority).
@@ -462,8 +462,9 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
           display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 56, alignItems: 'center',
         }}>
           <div style={{ position: 'relative', width: '100%', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden' }}>
-            <Image
+            <ImagenConRespaldo
               src={aboutImage}
+              respaldo="/fotos-respaldo/sobre-anush.jpg"
               // La foto de "Sobre Anush" es un retrato (no la muestra tejiendo,
               // como decía el alt): se describe lo que se ve.
               alt="Anush, la tejedora detrás de Dahila"

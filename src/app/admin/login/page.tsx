@@ -67,8 +67,17 @@ export default function AdminLoginPage() {
       // Keep the spinner up until the navigation actually swaps the page —
       // there's no callback for "router finished", so we leave loading=true.
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Credenciales incorrectas.'
-      setError(msg)
+      const crudo = err instanceof Error ? err.message : ''
+      // Cuando el servicio está caído (cuota, mantenimiento, sin red), el error
+      // que devuelve Supabase no dice nada útil y parece un problema de
+      // contraseña: el 20/09/2026 el proyecto quedó restringido y entrar al
+      // panel tiraba un mensaje incomprensible. Se traduce a lo que pasa.
+      const esCaida = /fetch|network|failed|402|restricted|payment|503|timeout/i.test(crudo)
+      setError(
+        esCaida
+          ? 'No es tu contraseña: el servicio está en mantenimiento y el panel no puede entrar ahora. La tienda sigue funcionando y los pedidos llegan por WhatsApp.'
+          : crudo || 'Credenciales incorrectas.'
+      )
       setLoading(false)
     }
   }

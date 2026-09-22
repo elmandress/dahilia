@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
+import { ImagenConRespaldo } from '@/components/ui/ImagenConRespaldo'
 import { useCart } from './CartProvider'
 import { useScrollLock } from '@/lib/scroll-lock'
 import { useFocusTrap } from '@/lib/focus-trap'
@@ -177,7 +177,7 @@ export function CartDrawer({ products }: { products: Product[] }) {
                         border: 'none', padding: 0, cursor: 'pointer',
                       }}
                     >
-                      <Image src={photo} alt={item.product.name} fill sizes="64px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+                      <ImagenConRespaldo slug={item.product.slug} src={photo} alt={item.product.name} fill sizes="64px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
                     </button>
 
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -244,7 +244,7 @@ export function CartDrawer({ products }: { products: Product[] }) {
                             borderRadius: 8, overflow: 'hidden', background: dahila.cream50, display: 'block',
                           }}
                         >
-                          <Image src={photo} alt={getPrimaryPhotoAlt(p)} fill sizes="44px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
+                          <ImagenConRespaldo slug={p.slug} src={photo} alt={getPrimaryPhotoAlt(p)} fill sizes="44px" placeholder="blur" blurDataURL={BLUR_DATA_URL} style={{ objectFit: 'cover' }} />
                         </Link>
                         <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
                           <Link
