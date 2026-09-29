@@ -135,6 +135,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       supabase.from('discounts').select('id').eq('active', true).limit(1),
     ])
 
+    // Un fallo de Supabase (cuota agotada, proyecto pausado, DNS caído) vuelve
+    // como `{ error }`, NO como excepción: sin esto el catch de abajo nunca se
+    // ejecutaba y el sitemap salía "adelgazado" igual que antes del fix del
+    // 03/09. Verificado el 29/09/2026 con el proyecto pausado: el sitemap
+    // publicado tenía 36 URLs (solo blog y páginas fijas) en vez de 78, sin
+    // una sola ficha ni categoría.
+    if (productsRes.error || categoriesRes.error) {
+      throw new Error('sitemap: la base no respondió')
+    }
+
     const productsData = (productsRes.data ?? []) as Array<{
       slug: string
       updated_at: string | null
