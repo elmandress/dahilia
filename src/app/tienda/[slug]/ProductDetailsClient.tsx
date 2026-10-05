@@ -43,6 +43,7 @@ export function ProductDetailsClient({
   processSteps = [],
   encargosCupos,
   testimonial = null,
+  totalTestimonios = 0,
   soloConsulta = false,
 }: {
   product: Product
@@ -65,6 +66,8 @@ export function ProductDetailsClient({
   encargosCupos: EncargosCuposState
   /** Un testimonio real de la tienda (ver pickTestimonial en page.tsx). */
   testimonial?: Testimonial | null
+  /** Cuántos testimonios hay en total: el número pesa tanto como la cita. */
+  totalTestimonios?: number
   /** La base no responde y la ficha se está sirviendo del respaldo: el carrito
    *  no puede guardar nada, así que el pedido se toma por WhatsApp. */
   soloConsulta?: boolean
@@ -452,6 +455,14 @@ export function ProductDetailsClient({
                 letterSpacing: '0.02em', color: dahila.ink500,
               }}>
                 {testimonial.author.trim()}{testimonial.location?.trim() ? `, ${testimonial.location.trim()}` : ''}
+                {totalTestimonios > 1 && (
+                  <>
+                    {' · '}
+                    <Link href="/#testimonios" style={{ color: dahila.ink500, textDecoration: 'underline', textUnderlineOffset: 2 }}>
+                      una de {totalTestimonios} clientas
+                    </Link>
+                  </>
+                )}
               </figcaption>
             </figure>
           )}

@@ -52,7 +52,8 @@ export function TestimonialsStrip({ items }: { items: Testimonial[] }) {
   const item = items[current]
 
   return (
-    <section className="home-section" style={{ maxWidth: 880, margin: '88px auto 0', padding: '0 24px' }}>
+    // id: la ficha de producto enlaza acá desde "una de N clientas".
+    <section id="testimonios" className="home-section" style={{ maxWidth: 880, margin: '88px auto 0', padding: '0 24px' }}>
       <div style={{ textAlign: 'center', marginBottom: 36 }}>
         <Eyebrow>Lo que dicen</Eyebrow>
       </div>

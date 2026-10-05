@@ -381,6 +381,11 @@ async function ProductPage({ slug }: { slug: string }) {
     { icon: 'truck',         text: getSetting('pdp_trust_1')?.trim() || 'Envío a todo Uruguay' },
     { icon: 'hand-heart',    text: getSetting('pdp_trust_2')?.trim() || 'Hecho a mano' },
     { icon: 'whatsapp-logo', text: getSetting('pdp_trust_3')?.trim() || 'Coordinás por WhatsApp' },
+    // "¿Cuándo y cómo pago?" estaba contestado tres pantallas más abajo, en la
+    // lista de detalles. Es la duda que frena el botón, así que vive al lado
+    // del botón (05/10/2026). Dice lo mismo que el carrito: no se cobra nada
+    // hasta que está todo confirmado por WhatsApp.
+    { icon: 'sparkle', text: getSetting('pdp_trust_4')?.trim() || 'Pagás recién al confirmar' },
   ].filter((t) => t.text.length > 0)
   const encargosCupos = getEncargosCuposState({
     encargos_cupos_enabled: getSetting('encargos_cupos_enabled') || '',
@@ -421,7 +426,8 @@ async function ProductPage({ slug }: { slug: string }) {
   // Instagram entra directo acá y nunca ve los testimonios de la home. Va uno
   // real, cerca del botón. Si la base falla (o ya se está sirviendo el
   // snapshot), la ficha sale igual, sin testimonio.
-  const testimonial = pickTestimonial(isSnapshot ? [] : await getTestimonials(), product)
+  const testimonios = isSnapshot ? [] : await getTestimonials()
+  const testimonial = pickTestimonial(testimonios, product)
 
   const photo = getPrimaryPhoto(product)
   // Full image set → richer Product structured data (Google can show several).
@@ -624,6 +630,7 @@ async function ProductPage({ slug }: { slug: string }) {
         ].filter((s) => s.label.trim())}
         encargosCupos={encargosCupos}
         testimonial={testimonial}
+        totalTestimonios={testimonios.length}
         // Con la base caída el carrito no puede guardar nada: la ficha toma el
         // pedido por WhatsApp en vez de fallar al tocar "Agregar".
         soloConsulta={isSnapshot}
