@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T10:48:17.371Z",
+  "generatedAt": "2026-10-05T11:57:56.111Z",
   "products": [
     {
       "id": "5746fce3-ccd4-43f6-9370-e0bce317e958",
@@ -2918,6 +2918,9 @@
   "colors": [],
   "discounts": [],
   "settings": {
+    "tiktok_url": "https://www.tiktok.com/@dahila.crochet",
+    "pinterest_url": "https://www.pinterest.com/dahilacrochetuy/",
+    "google_business_url": "https://share.google/N5lNiSKUAV0A2zjhz",
     "pdp_trust_2": "Hecho a mano",
     "pdp_trust_3": "Coordinás por WhatsApp",
     "maker_name": "Anush",
@@ -2947,12 +2950,13 @@
     "pdp_trust_1": "Envío a todo Uruguay",
     "atelier_photo_2": "/photos/atelier-escritorio.png",
     "about_body_2": "",
-    "queue_note_text": "Por demanda, los pedidos estarán listos a principios de octubre",
+    "queue_note_text": "Por demanda, los pedidos estarán listos a principios de octubre ",
     "faq_5_q": "¿Dahila se escribe con H? ¿Es lo mismo que Dalia o Dahlia?",
     "faq_5_a": "Sí — somos Dahila Crochet. Mucha gente nos busca como \"Dalia\" o \"Dahlia\" y llega igual: es la misma marca, hecha a mano en Montevideo.",
     "contact_whatsapp_url": "https://wa.me/59899850073",
     "faq_2_a": "Sí. Después de confirmar el modelo te muestro las lanas reales que tengo y elegimos juntas.",
     "faq_3_q": "¿Hacen envíos al exterior?",
+    "free_shipping_threshold": "5000",
     "about_cta": "Conocé el espacio",
     "faq_1_q": "¿Cuánto tarda un encargo?",
     "faq_1_a": "Depende del modelo. Te aviso cuando empiezo y cuando está listo para que estés tranquila.",

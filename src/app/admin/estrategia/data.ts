@@ -493,11 +493,11 @@ export const WEAVER_PIPELINE = [
 export const WEAVER_SYSTEM = [
   {
     title: 'Cuánto y cómo pagar',
-    body: 'Precio por pieza = horas estándar de la ficha × tarifa según nivel: aprendiz $150/h, asociada $180/h, senior $210–250/h (el mínimo legal es $127/h — nunca menos, ni en la muestra). Se pacta ANTES de tejer y se paga al aprobar la pieza. La lana la ponés vos: controlás calidad y color.',
+    body: 'Precio por pieza = horas estándar de la ficha × tarifa según nivel: aprendiz $150/h, asociada $180/h, senior $210–250/h (el mínimo legal es $127/h — nunca menos, tampoco en el primer encargo). Se pacta ANTES de tejer y se paga al aprobar la pieza. La lana la ponés vos: controlás calidad y color.',
   },
   {
     title: 'Los números, honestos (y la cuenta que decide)',
-    body: 'La cuenta antes de delegar cualquier modelo: horas medidas × tarifa + lana ≤ 70% del precio de venta — el 30% restante paga tu control de calidad, el diseño y la marca. Ojo: con las horas de la tabla, hoy casi ninguna pieza pasa esa cuenta, ni siquiera a precios de 12 meses. Pero las horas de la tabla son TUS horas, que incluyen diseñar y resolver: una tejedora repitiendo el mismo modelo con ficha tarda bastante menos (un bolso "de 7 h" puede ser 4 en producción pura). Por eso la muestra pagada SE CRONOMETRA: además de filtro de calidad es tu dato real de costos. Delegá solo modelos donde la cuenta cierre con horas medidas; si no cierra, o el precio de esa pieza está corto o ese modelo todavía no es delegable.',
+    body: 'La cuenta antes de delegar cualquier modelo: horas medidas × tarifa + lana ≤ 70% del precio de venta — el 30% restante paga tu control de calidad, el diseño y la marca. Ojo: con las horas de la tabla, hoy casi ninguna pieza pasa esa cuenta, ni siquiera a precios de 12 meses. Pero las horas de la tabla son TUS horas, que incluyen diseñar y resolver: una tejedora repitiendo el mismo modelo con ficha tarda bastante menos (un bolso "de 7 h" puede ser 4 en producción pura). Como no pedís muestra de prueba (decisión de Anush, 05/10/2026), ese dato sale del PRIMER ENCARGO: preguntale cuántas horas le llevó y anotalo en la ficha del modelo. Sin ese número, la cuenta de arriba se hace con tus horas y da siempre que no conviene delegar. Delegá solo modelos donde la cuenta cierre con horas medidas; si no cierra, o el precio de esa pieza está corto o ese modelo todavía no es delegable.',
   },
   {
     title: 'Control de calidad, sin excepciones',
@@ -521,11 +521,11 @@ export const WEAVER_SYSTEM = [
   },
   {
     title: 'Postulante menor de 18: se puede, con INAU',
-    body: 'En Uruguay se puede trabajar desde los 15 años, pero SIEMPRE con el carné laboral adolescente de INAU (gratis, en las direcciones departamentales) más autorización firmada de madre/padre, carné de salud vigente y constancia de estudios. Tope legal: 6 horas por día y 36 semanales, sin interferir con el liceo. Para la postulante de 15: la charla inicial es con ella Y una persona adulta responsable; después la muestra pagada de una pieza chica (bandana o mini tote, cronometrada como siempre); si aprueba, el carné de INAU se tramita ANTES de encargarle trabajo regular. Y paga lo mismo por pieza que cualquier tejedora — la edad no descuenta tarifa. Tener los papeles en regla no es burocracia: protege a la marca y la protege a ella. Que su primera experiencia laboral sea contigo puede ser lo mejor que le pase — hacelo bien.',
+    body: 'En Uruguay se puede trabajar desde los 15 años, pero SIEMPRE con el carné laboral adolescente de INAU (gratis, en las direcciones departamentales) más autorización firmada de madre/padre, carné de salud vigente y constancia de estudios. Tope legal: 6 horas por día y 36 semanales, sin interferir con el liceo. Para la postulante de 15: la charla inicial es con ella Y una persona adulta responsable; después un primer encargo chico y pago (bandana o mini tote), preguntándole cuántas horas le llevó; si queda bien, el carné de INAU se tramita ANTES de encargarle trabajo regular. Y paga lo mismo por pieza que cualquier tejedora — la edad no descuenta tarifa. Tener los papeles en regla no es burocracia: protege a la marca y la protege a ella. Que su primera experiencia laboral sea contigo puede ser lo mejor que le pase — hacelo bien.',
   },
   {
     title: 'El control final, en 4 puntos',
-    body: 'Antes de enviar, cada pieza pasa por: (1) medidas contra la ficha (±1,5 cm), (2) tensión comparada con tu muestra maestra, (3) terminaciones y costuras miradas del revés, (4) etiqueta Dahila cosida + tarjeta de cuidado. Cuatro minutos por pieza que protegen todo lo demás.',
+    body: 'Antes de enviar, cada pieza pasa por: (1) medidas contra la ficha (±1,5 cm), (2) tensión comparada con una pieza tuya del mismo modelo, (3) terminaciones y costuras miradas del revés, (4) etiqueta Dahila cosida + tarjeta de cuidado. Cuatro minutos por pieza que protegen todo lo demás.',
   },
   {
     title: 'Cuando sean tres o más: la referente',
@@ -707,7 +707,7 @@ export const CLASSES_COMMUNITY = [
 ]
 
 export const CLASSES_FLYWHEEL =
-  'El círculo completo: las clases pagan tu hora mejor que tejer → las mejores alumnas del Nivel 3 pasan a la muestra pagada → las que aprueban tejen para la marca → vos tejés menos y diseñás más → hay más piezas para los drops → los drops traen más clientas y más alumnas. Cada vuelta empuja la siguiente.'
+  'El círculo completo: las clases pagan tu hora mejor que tejer → las mejores alumnas del Nivel 3 pasan a un primer encargo pago → las que quedan tejen para la marca → vos tejés menos y diseñás más → hay más piezas para los drops → los drops traen más clientas y más alumnas. Cada vuelta empuja la siguiente.'
 
 /** De dónde salen las alumnas — el embudo, con lo que ya existe. */
 export const CLASSES_FUNNEL = [
@@ -725,7 +725,7 @@ export const CLASSES_FUNNEL = [
   },
   {
     step: 'De alumna a tejedora',
-    detail: 'El Nivel 3 ES tu selección: quien termina una pieza del catálogo con su ficha ya demostró tensión, medidas y prolijidad. A las mejores les ofrecés la muestra pagada — el pipeline de tejedoras se alimenta solo.',
+    detail: 'El Nivel 3 ES tu selección: quien termina una pieza del catálogo con su ficha ya demostró tensión, medidas y prolijidad. A las mejores les ofrecés un primer encargo pago — el pipeline de tejedoras se alimenta solo.',
   },
 ]
 
@@ -1085,7 +1085,7 @@ export const NEXT_ACTIONS: TodoAction[] = [
   { id: 'mercadopago', label: 'Usar links de pago de Mercado Pago con cuotas', detail: 'Se arma en 2 minutos al cerrar cada venta por WhatsApp. Las cuotas hacen fácil el precio nuevo.', horizon: 'mes' },
   { id: 'cupon-vip', label: 'Crear el primer cupón para la lista VIP', detail: 'Un código de bienvenida chico (ej. 10%) da una razón concreta para anotarse. Se crea en Cupones.', horizon: 'mes' },
   { id: 'drop-verano', label: "Preparar el drop Verano '26", detail: 'Fotos, colección, cupón y el paso a paso de la pestaña Drops. Lanzamiento: noviembre.', horizon: 'trimestre' },
-  { id: 'primera-postulante', label: 'Responder a la primera postulante (15 años) — con INAU', detail: 'El paso a paso está en Tejedoras → "Postulante menor de 18": charla con ella Y una persona adulta responsable, muestra pagada cronometrada (bandana o mini tote), y carné laboral de INAU tramitado ANTES del trabajo regular. La ternura y los papeles en regla no se pelean: van juntas.', horizon: 'ya' },
+  { id: 'primera-postulante', label: 'Responder a la primera postulante (15 años) — con INAU', detail: 'El paso a paso está en Tejedoras → "Postulante menor de 18": charla con ella Y una persona adulta responsable, primer encargo chico y pago (bandana o mini tote), y carné laboral de INAU tramitado ANTES del trabajo regular. La ternura y los papeles en regla no se pelean: van juntas.', horizon: 'ya' },
   { id: 'lista-espera', label: 'Escribir el aviso de lista de espera', detail: 'En Configuración → "Lista de espera": ej. "Los pedidos nuevos entran a producción en agosto". La clienta lo ve en cada producto y en el carrito ANTES de escribirte — saberlo antes genera confianza, descubrirlo en el chat la rompe. Actualizalo cuando cambie la cola.', horizon: 'ya' },
   { id: 'mayorista', label: 'Cotizar el pedido mayorista de bolsos con cabeza fría', detail: 'Los bolsos a precio de lista ya son de tus mejores $/hora — el descuento mayorista máximo es 10%, con seña del 50% y entrega escalonada (20 bolsos ≈ 140 horas ≈ 5 semanas de una persona). Si piden mitad de precio, la respuesta es "no": cada hora tejiendo bolsos baratos es una hora que no teje pedidos que pagan más. Bonus: 20 piezas idénticas y simples son el encargo perfecto para estrenar la red de tejedoras — con la cuenta de la pestaña Tejedoras hecha antes.', horizon: 'ya' },
   { id: 'numero-nuevo', label: 'Propagar el número nuevo (099 850 073) fuera del sitio', detail: 'La web ya lo usa. Falta donde el sitio no llega: la app de WhatsApp Business (transferir el número), el link de la bio de Instagram, Google Business Profile, y tarjetas o packaging impresos con el número viejo.', horizon: 'ya' },

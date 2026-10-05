@@ -109,7 +109,7 @@ export function WeaverCallout() {
         fontSize: 15, lineHeight: 1.5, color: dahila.ink900, margin: '0 0 12px',
         paddingRight: 16,
       }}>
-        ¿Te apasiona el crochet? Estamos sumando tejedoras a nuestra red.
+        ¿Tejés a crochet o a dos agujas? Estamos sumando tejedoras a nuestra red.
       </p>
       <button
         type="button"

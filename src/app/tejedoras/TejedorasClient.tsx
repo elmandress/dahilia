@@ -16,11 +16,15 @@ const DISPONIBILIDADES = ['<5 h', '5-10 h', '10-20 h', '20+ h']
 
 const SKILLS = ['Tops', 'Cardigans y abrigo', 'Bolsos y accesorios', 'Bikinis y playa', 'Amigurumi']
 
+// No es solo crochet: también se teje a dos agujas y en telar (Anush, 05/10/2026).
+// Van en la misma lista que SKILLS (una sola columna en la base) pero se
+// preguntan aparte, porque "con qué tejés" y "qué sabés tejer" no son lo mismo.
+const TECNICAS = ['Crochet', 'Dos agujas', 'Telar']
+
 const PASOS: Array<[string, string, string]> = [
   ['1', 'Postulás', 'Nos contás tu experiencia y nos mostrás 2 o 3 trabajos tuyos. Las fotos son lo primero que miramos.'],
   ['2', 'Charlamos', 'Si tu estilo encaja, te escribimos por WhatsApp para conocerte y contarte cómo trabajamos.'],
-  ['3', 'Muestra pagada', 'Tejés una pieza de prueba contra una ficha técnica (lana, aguja, medidas). La pagamos siempre, quede o no.'],
-  ['4', 'Primeros encargos', 'Arrancás con piezas simples, con precio pactado antes de empezar, y vas subiendo a tu ritmo.'],
+  ['3', 'Primeros encargos', 'Arrancás con piezas simples, con la ficha del modelo y el precio pactado antes de empezar, y vas subiendo a tu ritmo.'],
 ]
 
 const VALORAMOS = [
@@ -74,7 +78,7 @@ export default function TejedorasClient({ whatsappUrl, porWhatsApp = false }: {
         }}>¡Gracias por querer tejer con nosotras!</h1>
         <p style={{ fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300, fontSize: 18, color: dahila.ink700, marginBottom: 28, lineHeight: 1.6 }}>
           Vamos a mirar tus trabajos con calma. Si tu estilo encaja con lo que buscamos,
-          te escribimos para coordinar una muestra pagada.
+          te escribimos por WhatsApp para conocerte y arrancar con un primer encargo.
         </p>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
           <a
@@ -150,10 +154,11 @@ export default function TejedorasClient({ whatsappUrl, porWhatsApp = false }: {
         <h1 style={{
           fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(32px, 5vw, 48px)',
           lineHeight: 1.05, letterSpacing: '-0.02em', color: dahila.ink900, margin: 0,
-        }}>¿Tejés a crochet? Trabajemos juntas</h1>
+        }}>¿Tejés a crochet o a dos agujas? Trabajemos juntas</h1>
         <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: 0 }}>
           Estamos armando una red de tejedoras uruguayas para crecer sin dejar de tejer todo a mano.
-          Trabajás desde tu casa, a tu ritmo, con <strong style={{ fontWeight: 500 }}>pago por pieza aprobada</strong> y
+          Crochet, dos agujas o telar: lo que importa es cómo te queda la pieza. Trabajás desde tu casa,
+          a tu ritmo, con <strong style={{ fontWeight: 500 }}>pago por pieza aprobada</strong> y
           la lana la ponemos nosotras.
         </p>
       </div>
@@ -268,6 +273,17 @@ export default function TejedorasClient({ whatsappUrl, porWhatsApp = false }: {
           </div>
         </Field>
 
+        <Field label="¿Con qué tejés?" helper="Marcá todo lo que uses. Si trabajás con otra técnica, contanos abajo.">
+          <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+            {TECNICAS.map((s) => (
+              <button key={s} type="button" onClick={() => toggleSkill(s)}
+                aria-pressed={skills.includes(s)} style={optionBtn(skills.includes(s))}>
+                {s}
+              </button>
+            ))}
+          </div>
+        </Field>
+
         <Field label="¿Qué sabés tejer?" helper="Marcá todo lo que aplique.">
           <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
             {SKILLS.map((s) => (
@@ -290,7 +306,7 @@ export default function TejedorasClient({ whatsappUrl, porWhatsApp = false }: {
           </div>
         </Field>
 
-        <Field label="¿Tenés agujas y lana propias?" helper="Para los encargos la lana la ponemos nosotras — esto es solo para la muestra.">
+        <Field label="¿Tenés tus agujas o ganchillos?" helper="La lana la ponemos nosotras en cada encargo.">
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             {[['Sí', true], ['No', false]].map(([label, val]) => (
               <button key={String(label)} type="button" onClick={() => setHasMaterials(val as boolean)}

@@ -7,9 +7,9 @@ import { OG_BASE } from '@/lib/og'
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'Tejé con Dahila — red de tejedoras',
+  title: 'Tejé con Dahila — red de tejedoras a crochet y dos agujas',
   description:
-    'Sumate a la red de tejedoras de Dahila Crochet. Trabajá desde casa, a tu ritmo, con pago por pieza aprobada y materiales incluidos. Postulate hoy.',
+    'Sumate a la red de tejedoras de Dahila Crochet: crochet, dos agujas o telar. Trabajá desde casa, a tu ritmo, con pago por pieza aprobada y materiales incluidos. Postulate hoy.',
   alternates: { canonical: '/tejedoras' },
   openGraph: {
     ...OG_BASE,
