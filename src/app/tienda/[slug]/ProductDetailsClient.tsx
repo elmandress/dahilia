@@ -24,6 +24,8 @@ import { PriceBlock } from '@/components/ui/PriceBlock'
 import { dahila, Button, Eyebrow, Icon, Breadcrumb } from '@/components/ui/Primitives'
 import { track, gaCommerce } from '@/lib/analytics'
 import type { Testimonial } from '@/components/TestimonialsStrip'
+import { NavidadFicha } from '@/components/NavidadAviso'
+import { ClientasGallery } from '@/components/ClientasGallery'
 
 export function ProductDetailsClient({
   product,
@@ -45,6 +47,9 @@ export function ProductDetailsClient({
   testimonial = null,
   totalTestimonios = 0,
   soloConsulta = false,
+  navidadEncargoHasta,
+  navidadStockHasta,
+  clientPhotos = [],
 }: {
   product: Product
   discountPercent?: number
@@ -71,6 +76,11 @@ export function ProductDetailsClient({
   /** La base no responde y la ficha se está sirviendo del respaldo: el carrito
    *  no puede guardar nada, así que el pedido se toma por WhatsApp. */
   soloConsulta?: boolean
+  /** Fechas de corte para Navidad ("2026-12-05"), desde Configuración. */
+  navidadEncargoHasta?: string
+  navidadStockHasta?: string
+  /** Testimonios con foto de clientas que compraron ESTA prenda. */
+  clientPhotos?: Testimonial[]
 }) {
   const trust = trustItems && trustItems.length > 0 ? trustItems : [
     { icon: 'truck', text: 'Envío a todo Uruguay' },
@@ -82,6 +92,8 @@ export function ProductDetailsClient({
   // Factorizado en un hook compartido con QuickViewModal (auditoría
   // 03/09/2026: antes duplicado letra por letra en los dos archivos).
   const { talle, setTalle, sizeAvailable } = useSizeSelection(product)
+  // Color con la foto del ovillo abierta (solo colores con image_url).
+  const [lanaAbierta, setLanaAbierta] = useState<string | null>(null)
   const [added, setAdded] = useState(false)
 
   useEffect(() => {
@@ -115,6 +127,9 @@ export function ProductDetailsClient({
   const scarcity = getScarcity(product)
   const sizes = sortSizes(product.sizes)
   const readyNow = isReadyToShip(product)
+  // numeric de Postgres puede llegar como string; 0, vacío o basura = no se muestra.
+  const knitHoursRaw = Number(product.knit_hours)
+  const knitHours = Number.isFinite(knitHoursRaw) && knitHoursRaw > 0 ? knitHoursRaw : null
 
   // Cuánto tarda, dicho una vez y arriba, junto al precio: antes vivía al final
   // de la lista de detalles, a tres pantallas del precio en el celular
@@ -228,6 +243,13 @@ export function ProductDetailsClient({
             )}
           </div>
 
+          <NavidadFicha
+            encargoHasta={navidadEncargoHasta}
+            stockHasta={navidadStockHasta}
+            readyNow={readyNow}
+            leadMaxWeeks={product.lead_time_weeks_max ?? 0}
+          />
+
           {/* Colour palette — these are the tones Anush can work this piece in.
               Selecting is coordinated over WhatsApp, so this is informational. */}
           {product.colors && product.colors.length > 0 && (
@@ -240,17 +262,68 @@ export function ProductDetailsClient({
                 Colores
               </span>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {product.colors.map((c) => (
-                  <span key={c.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <span aria-hidden style={{
-                      width: 16, height: 16, borderRadius: 999,
-                      background: c.hex || dahila.cream200,
-                      boxShadow: 'inset 0 0 0 1px rgba(31,26,27,0.18)',
-                    }} />
-                    <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700 }}>{c.name}</span>
-                  </span>
-                ))}
+                {product.colors.map((c) => {
+                  const swatch = (
+                    <>
+                      <span aria-hidden style={{
+                        width: 16, height: 16, borderRadius: 999,
+                        background: c.hex || dahila.cream200,
+                        boxShadow: 'inset 0 0 0 1px rgba(31,26,27,0.18)',
+                      }} />
+                      <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700 }}>{c.name}</span>
+                    </>
+                  )
+                  // Con foto del ovillo, el color se puede tocar para verlo de
+                  // verdad (sin devoluciones, el color real es lo que da confianza).
+                  return c.image_url ? (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setLanaAbierta(lanaAbierta === c.id ? null : c.id)}
+                      aria-pressed={lanaAbierta === c.id}
+                      aria-label={`Ver la lana ${c.name}`}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+                        minHeight: 32, padding: '4px 10px', borderRadius: 999,
+                        background: lanaAbierta === c.id ? dahila.cream100 : '#fff',
+                        border: `1px solid ${lanaAbierta === c.id ? dahila.ink900 : dahila.borderStrong}`,
+                      }}
+                    >
+                      {swatch}
+                    </button>
+                  ) : (
+                    <span key={c.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 0' }}>{swatch}</span>
+                  )
+                })}
               </div>
+              {(() => {
+                const lana = product.colors.find((c) => c.id === lanaAbierta && c.image_url)
+                if (!lana) {
+                  return product.colors.some((c) => c.image_url) ? (
+                    <span style={{ display: 'block', marginTop: 6, fontFamily: dahila.fontSans, fontSize: 11.5, color: dahila.ink500 }}>
+                      Tocá un color para ver la lana real.
+                    </span>
+                  ) : null
+                }
+                return (
+                  <figure style={{ margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ position: 'relative', width: 120, height: 120, borderRadius: 12, overflow: 'hidden', flexShrink: 0, background: dahila.cream100 }}>
+                      <ImagenConRespaldo
+                        src={lana.image_url as string}
+                        alt={`Lana color ${lana.name}, de cerca`}
+                        fill
+                        sizes="120px"
+                        quality={82}
+                        style={{ objectFit: 'cover' }}
+                      />
+                    </div>
+                    <figcaption style={{ fontFamily: dahila.fontSans, fontSize: 12.5, lineHeight: 1.5, color: dahila.ink700 }}>
+                      <strong style={{ fontWeight: 500, color: dahila.ink900 }}>{lana.name}</strong><br />
+                      La lana real, sin filtros. En pantalla puede variar un poco según el brillo.
+                    </figcaption>
+                  </figure>
+                )
+              })()}
             </div>
           )}
 
@@ -261,7 +334,15 @@ export function ProductDetailsClient({
                   fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
                   textTransform: 'uppercase', color: dahila.ink500, fontWeight: 400,
                 }}>Talle</span>
-                <SizeGuide note={sizeGuideNote} />
+                <SizeGuide
+                  note={sizeGuideNote}
+                  productSizes={sizes.map((s) => s.size)}
+                  encargoHref={encargoHref}
+                  onPick={(sz) => {
+                    const match = sizes.find((s) => s.size.trim().toUpperCase() === sz && s.available)
+                    if (match) setTalle(match.size)
+                  }}
+                />
               </div>
               {/* pdp-sizes: WhatsAppFloat lee de acá el talle elegido. */}
               <div className="pdp-sizes" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -603,6 +684,15 @@ export function ProductDetailsClient({
                 <Icon name="leaf" size={16} color={dahila.ink500}/> {product.material}
               </li>
             )}
+            {/* Las horas explican el precio de algo hecho a mano mejor que
+                cualquier adjetivo. Solo aparecen si Anush las cargó y marcó
+                "Mostrar en la ficha" en el admin (columna knit_hours). */}
+            {knitHours != null && (
+              <li style={liStyle}>
+                <Icon name="clock" size={16} color={dahila.ink500}/>
+                Lleva unas {knitHours.toLocaleString('es-UY')} horas de tejido a mano, punto por punto.
+              </li>
+            )}
             <li style={liStyle}>
               <Icon name="flower" size={16} color={dahila.ink500}/> Tejido a mano en Montevideo
             </li>
@@ -697,6 +787,9 @@ export function ProductDetailsClient({
           )}
         </div>
       )}
+
+      {/* Clientas con esta prenda puesta (solo si hay fotos cargadas). */}
+      <ClientasGallery items={clientPhotos} title="Así les quedó" compact />
 
       {/* Related products — cross-sell con título contextual */}
       {related.length > 0 && (() => {

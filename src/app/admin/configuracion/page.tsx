@@ -68,6 +68,22 @@ const SECTIONS = [
     ],
   },
   {
+    title: 'Navidad',
+    description: 'Fechas límite para que un pedido llegue antes de Navidad: se muestran en el inicio y en cada ficha, y desaparecen solas pasada la fecha. Sin fechas no se muestra nada. Una prenda a medida cuyo plazo ya no entra antes del 24/12 no muestra el aviso aunque la fecha siga vigente.',
+    fields: [
+      { key: 'navidad_enabled', label: '¿Mostrar las fechas de Navidad?', type: 'toggle' },
+      { key: 'navidad_encargo_hasta', label: 'Último día para encargar a medida (año-mes-día)', type: 'text', placeholder: '2026-12-01' },
+      { key: 'navidad_stock_hasta', label: 'Último día para pedir piezas ya tejidas (año-mes-día)', type: 'text', placeholder: '2026-12-18' },
+    ],
+  },
+  {
+    title: 'Tarjeta de regalo',
+    description: 'La página dahila.uy/regalo: quien regala elige monto y mensaje y te escribe por WhatsApp. Cuando cobrás, creá en /admin/cupones un cupón de monto fijo con ese valor y mandale el código. Los montos sugeridos salen de los precios reales de la tienda.',
+    fields: [
+      { key: 'regalo_enabled', label: '¿Ofrecer tarjetas de regalo? (página, link del pie y franja de Navidad)', type: 'toggle' },
+    ],
+  },
+  {
     title: 'Sobre nosotros',
     description: 'La sección del home (foto + texto) y la página "Sobre nosotros". Todo es editable.',
     fields: [
@@ -152,13 +168,19 @@ const SECTIONS = [
   },
   {
     title: 'Contacto',
-    description: 'Cómo te encuentran los clientes. Visible en footer y página de contacto.',
+    description: 'Cómo te encuentran los clientes. WhatsApp, Instagram y ubicación se ven en el footer y en Contacto. Los perfiles de abajo no se muestran: le dicen a Google y a las IAs cuáles son tus cuentas oficiales, y el link de reseñas activa dahila.uy/resena.',
     fields: [
       { key: 'contact_whatsapp',     label: 'WhatsApp (visible)',         type: 'text', placeholder: '+598 99 850 073' },
       { key: 'contact_whatsapp_url', label: 'WhatsApp link (wa.me/...)',  type: 'text', placeholder: 'https://wa.me/59899850073' },
       { key: 'contact_instagram',    label: 'Instagram (visible)',        type: 'text', placeholder: '@dahila.crochet' },
       { key: 'contact_instagram_url', label: 'Instagram link',            type: 'text', placeholder: 'https://www.instagram.com/dahila.crochet/' },
       { key: 'contact_location',     label: 'Ubicación',                  type: 'text' },
+      { key: 'google_business_url',  label: 'Perfil de Google (link de Maps)', type: 'text', placeholder: 'https://maps.app.goo.gl/...' },
+      { key: 'google_review_url',    label: 'Link para dejar reseña en Google (lo usa dahila.uy/resena)', type: 'text', placeholder: 'https://g.page/r/.../review' },
+      { key: 'youtube_url',          label: 'YouTube (link del canal)',   type: 'text', placeholder: 'https://www.youtube.com/@...' },
+      { key: 'tiktok_url',           label: 'TikTok (link)',              type: 'text', placeholder: 'https://www.tiktok.com/@...' },
+      { key: 'facebook_url',         label: 'Facebook (link)',            type: 'text', placeholder: 'https://www.facebook.com/...' },
+      { key: 'pinterest_url',        label: 'Pinterest (link)',           type: 'text', placeholder: 'https://www.pinterest.com/...' },
       { key: 'brand_short_intro',    label: 'Frase corta de marca (footer)', type: 'textarea' },
     ],
   },

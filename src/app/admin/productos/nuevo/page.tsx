@@ -9,6 +9,7 @@ import { draftDescription } from '@/lib/description-draft'
 import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
 import type { Category, Color, Collection } from '@/lib/types'
 import { DEFAULT_CARE_INSTRUCTIONS } from '@/lib/types'
+import { SameSizePrice, CalculadoraPrecio } from '../PriceTools'
 
 interface SizeEntry {
   tempId: string
@@ -71,6 +72,11 @@ export default function NuevoProductoPage() {
   // igual para una pieza que necesite algo distinto.
   const [careInstructions, setCareInstructions] = useState(DEFAULT_CARE_INSTRUCTIONS)
   const [isCustomOnly, setIsCustomOnly] = useState(false)
+  // Calculadora: horas y materiales van a product_costs (privada); las horas,
+  // si se marca, también a products.knit_hours para mostrarlas en la ficha.
+  const [hoursInput, setHoursInput] = useState('')
+  const [materialsInput, setMaterialsInput] = useState('')
+  const [showHours, setShowHours] = useState(false)
 
   // Media
   const [mediaEntries, setMediaEntries] = useState<MediaEntry[]>([])
@@ -409,16 +415,38 @@ export default function NuevoProductoPage() {
         if (colorError) throw new Error(`No se guardaron los colores: ${colorError.message}`)
       }
 
+      // Horas y materiales: no cortan el alta (el producto ya está creado y
+      // completo); si falta una tabla o columna se avisa qué SQL correr.
+      const warnings: string[] = []
+      const hoursNum = parseFloat(hoursInput.replace(',', '.'))
+      const materialsNum = parseInt(materialsInput)
+      const hoursVal = Number.isFinite(hoursNum) && hoursNum > 0 ? Math.round(hoursNum * 10) / 10 : null
+      const materialsVal = Number.isFinite(materialsNum) && materialsNum >= 0 ? materialsNum : null
+      if (hoursVal != null || materialsVal != null) {
+        const { error: costError } = await supabase.from('product_costs').upsert({
+          product_id: product.id,
+          labor_hours: hoursVal,
+          materials_cost_uyu: materialsVal,
+        })
+        if (costError) warnings.push('las horas y materiales de la calculadora no se guardaron (falta database/costos-produccion-2026-09.sql).')
+      }
+      if (showHours && hoursVal != null) {
+        const { error: knitError } = await supabase.from('products').update({ knit_hours: hoursVal }).eq('id', product.id)
+        if (knitError) warnings.push('las horas no se muestran en la ficha todavía (falta database/horas-de-tejido-2026-10.sql).')
+      }
+
       // Producto nuevo y visible → invalida el caché de esas páginas (si no,
       // hasta 1h de desfasaje) y avisale a Bing/Yandex ya mismo en vez de
       // esperar a que vuelvan a rastrear el sitemap por su cuenta.
       if (status === 'active') notifyReindex([`/tienda/${slug.trim()}`, '/tienda', '/'])
 
       setSavedOk(true)
-      setToast('Producto creado exitosamente')
+      setToast(warnings.length > 0
+        ? `Producto creado. Ojo: ${warnings.join(' ')}`
+        : 'Producto creado exitosamente')
       setTimeout(() => {
         router.push('/admin/productos')
-      }, 1000)
+      }, warnings.length > 0 ? 5000 : 1000)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error al crear el producto'
       setError(message)
@@ -622,6 +650,13 @@ export default function NuevoProductoPage() {
               </p>
             ) : (
               <div className="admin-sizes-list">
+                {sizes.length > 1 && (
+                  <SameSizePrice
+                    basePrice={basePriceUyu}
+                    onApply={(p) => setSizes((prev) => prev.map((s) => ({ ...s, price_uyu: p })))}
+                    onUseBase={() => setSizes((prev) => prev.map((s) => ({ ...s, price_uyu: '' })))}
+                  />
+                )}
                 {sizes.map((s) => (
                   <div key={s.tempId} className="admin-size-row">
                     <input
@@ -655,6 +690,26 @@ export default function NuevoProductoPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Calculadora de precio + horas de tejido de la ficha */}
+          <div className="admin-card">
+            <h3 style={{ margin: '0 0 0.35rem', fontSize: '1rem', fontWeight: 500 }}>Calculadora y horas de tejido</h3>
+            <p style={{ margin: '0 0 1rem', fontSize: '0.82rem', color: '#8C8285' }}>
+              Con las horas y los materiales de esta prenda calcula un precio que paga tu trabajo.
+            </p>
+            <CalculadoraPrecio
+              hours={hoursInput}
+              setHours={setHoursInput}
+              materials={materialsInput}
+              setMaterials={setMaterialsInput}
+              showHours={showHours}
+              setShowHours={setShowHours}
+              currentPrice={basePriceUyu ? parseInt(basePriceUyu) : null}
+              hasSizes={sizes.length > 0}
+              onUseBase={(p) => setBasePriceUyu(String(p))}
+              onUseAllSizes={(p) => setSizes((prev) => prev.map((s) => ({ ...s, price_uyu: String(p) })))}
+            />
           </div>
         </div>
 

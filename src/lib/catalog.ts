@@ -248,7 +248,10 @@ const fetchTestimonialsCached = unstable_cache(
     const supabase = createClient()
     const { data, error } = await supabase
       .from('testimonials')
-      .select('id, author, location, text, sort_order')
+      // * y no una lista de columnas: photo_url/product_id existen recién
+      // después de fotos-clientas-y-lanas-2026-10.sql, y pedir una columna
+      // inexistente haría fallar la consulta entera (sin testimonios).
+      .select('*')
       .order('sort_order', { ascending: true })
     if (error) throw new Error('catalog: testimonios con error')
     return (data ?? []) as Testimonial[]

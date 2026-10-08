@@ -4,6 +4,7 @@ import { SITE_URL } from '@/lib/env'
 import { getFinalPrice, getPrimaryPhoto } from '@/lib/types'
 import { botImageUrl } from '@/lib/media'
 import type { Product, Discount } from '@/lib/types'
+import { localTermFor } from '@/lib/vocabulario'
 
 export const revalidate = 3600
 
@@ -87,7 +88,8 @@ export async function GET() {
     const [{ data: prods, error: prodErr }, { data: disc, error: discErr }] = await Promise.all([
       supabase
         .from('products')
-        .select('*, category:categories(name), media:product_media(url, is_primary, type), sizes:product_sizes(size, price_uyu, available)')
+        // slug: para la palabra uruguaya del título (lib/vocabulario.ts).
+        .select('*, category:categories(name, slug), media:product_media(url, is_primary, type), sizes:product_sizes(size, price_uyu, available)')
         .in('status', ['active', 'soldout'])
         .order('sort_order', { ascending: true }),
       supabase.from('discounts').select('*').eq('active', true),
@@ -108,6 +110,14 @@ export async function GET() {
     items = products
       .map((p) => {
         const photo = getPrimaryPhoto(p)
+        // Título de Shopping con lo que la prenda ES, en el idioma de quien
+        // busca: "Spring cardigan · saco tejido a mano" (08/10/2026). Google
+        // empareja la búsqueda contra el título; el nombre solo no dice qué es.
+        const local = localTermFor(p)
+        const baseTitle = local ? `${p.name} · ${local} tejido a mano` : p.name
+        const productType = local && p.category?.name
+          ? `${p.category.name} > ${local[0].toUpperCase()}${local.slice(1)}s tejidos`
+          : p.category?.name
         if (!photo || photo.startsWith('/')) return '' // sin foto real, se omite
 
         // Disponibilidad honesta: solo "in_stock" si la pieza sale ya. Lo que
@@ -143,7 +153,7 @@ export async function GET() {
       <g:identifier_exists>no</g:identifier_exists>
       <g:age_group>adult</g:age_group>
       <g:gender>${genderFor(p.category?.name)}</g:gender>
-${p.category?.name ? `      <g:product_type>${xmlEscape(p.category.name)}</g:product_type>\n` : ''}${p.material ? `      <g:material>${xmlEscape(p.material)}</g:material>\n` : ''}      <g:min_handling_time>${minDays}</g:min_handling_time>
+${productType ? `      <g:product_type>${xmlEscape(productType)}</g:product_type>\n` : ''}${p.material ? `      <g:material>${xmlEscape(p.material)}</g:material>\n` : ''}      <g:min_handling_time>${minDays}</g:min_handling_time>
       <g:max_handling_time>${maxDays}</g:max_handling_time>`
 
         const talles = (p.sizes ?? []).filter((s) => s.available !== false)
@@ -161,7 +171,7 @@ ${p.category?.name ? `      <g:product_type>${xmlEscape(p.category.name)}</g:pro
               return `    <item>
       <g:id>${xmlEscape(`${p.slug}-${s.size}`)}</g:id>
       <g:item_group_id>${xmlEscape(p.slug)}</g:item_group_id>
-      <g:title>${xmlEscape(`${p.name} — talle ${s.size}`.slice(0, 150))}</g:title>
+      <g:title>${xmlEscape(`${baseTitle} — talle ${s.size}`.slice(0, 150))}</g:title>
       <g:size>${xmlEscape(s.size)}</g:size>
       <g:price>${price}.00 UYU</g:price>
 ${comunes}
@@ -176,7 +186,7 @@ ${comunes}
         if (!(price > 0)) return '' // sin precio no es publicable
         return `    <item>
       <g:id>${xmlEscape(p.slug)}</g:id>
-      <g:title>${xmlEscape(p.name.slice(0, 150))}</g:title>
+      <g:title>${xmlEscape(baseTitle.slice(0, 150))}</g:title>
       <g:price>${price}.00 UYU</g:price>
 ${comunes}
     </item>`

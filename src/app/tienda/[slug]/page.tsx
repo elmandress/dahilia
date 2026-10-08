@@ -8,6 +8,7 @@ import {
   hasPriceRange as productHasPriceRange, sortSizes,
 } from '@/lib/types'
 import { getCatalog, getProductBySlug, getSnapshotData, getTestimonials } from '@/lib/catalog'
+import { localTermFor } from '@/lib/vocabulario'
 import { ProductDetailsClient } from './ProductDetailsClient'
 import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
 import { MaintenanceScreen } from '@/components/MaintenanceScreen'
@@ -134,6 +135,11 @@ export async function generateMetadata({
       tops: 'Tops de crochet y de hilo tejidos a mano en Uruguay',
       accesorios: 'Bolsos, bufandas y bandanas tejidos a crochet en Uruguay',
       sets: 'Sets de crochet tejidos a mano: playa, salida y abrigo',
+      // 08/10/2026: con la palabra uruguaya (lib/vocabulario.ts). "cardigan"
+      // y "sweater" a secas rankean 20-48 contra fast fashion global; "saco
+      // tejido" y "buzo tejido a mano" casi no tienen tiendas uruguayas.
+      cardigans: 'Cardigans y sacos tejidos a crochet en Uruguay',
+      sweaters: 'Sweaters y buzos tejidos a mano en Uruguay',
     }
     const title = CATEGORY_TITLES[slug] ?? `${cat.name} de crochet tejidos a mano en Uruguay`
     // Precio de entrada al principio, como ya hacen las fichas: en Google, un
@@ -186,7 +192,8 @@ export async function generateMetadata({
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('*, media:product_media(*), sizes:product_sizes(*)')
+      // category: para el title con la palabra uruguaya (ver más abajo).
+      .select('*, category:categories(slug, name), media:product_media(*), sizes:product_sizes(*)')
       .eq('slug', slug)
       .maybeSingle()
     if (error) throw error
@@ -220,8 +227,13 @@ export async function generateMetadata({
     ? `${ownDescCut}${/[.!?…]$/.test(ownDescCut) ? '' : '.'} ${valueLine}`
     : `${product.name}: ${valueLine}`
 
+  // "Spring cardigan — saco tejido a mano, a tu medida": la palabra con la
+  // que se busca en Uruguay, solo si el nombre no la trae (lib/vocabulario.ts).
+  const local = localTermFor(product)
+  const pageTitle = `${product.name} — ${local ? `${local} ` : ''}tejido a mano, a tu medida`
+
   return {
-    title: `${product.name} — tejido a mano, a tu medida`,
+    title: pageTitle,
     description,
     alternates: { canonical: `/tienda/${product.slug}` },
     // La imagen para compartir es la tarjeta JPEG de ./og (ver og/route.tsx:
@@ -230,7 +242,7 @@ export async function generateMetadata({
     // twitter:image propio.
     openGraph: {
       ...OG_BASE,
-      title: `${product.name} — tejido a mano, a tu medida`,
+      title: pageTitle,
       description,
       url: `${SITE_URL}/tienda/${product.slug}`,
       images: [{
@@ -246,7 +258,7 @@ export async function generateMetadata({
     // /tienda en vez de la foto y el precio de ESTE producto.
     twitter: {
       card: 'summary_large_image',
-      title: `${product.name} — tejido a mano, a tu medida`,
+      title: pageTitle,
       description,
       images: [`${SITE_URL}/tienda/${product.slug}/og`],
     },
@@ -631,6 +643,9 @@ async function ProductPage({ slug }: { slug: string }) {
         encargosCupos={encargosCupos}
         testimonial={testimonial}
         totalTestimonios={testimonios.length}
+        navidadEncargoHasta={getSetting('navidad_enabled') !== 'false' ? getSetting('navidad_encargo_hasta') : undefined}
+        navidadStockHasta={getSetting('navidad_enabled') !== 'false' ? getSetting('navidad_stock_hasta') : undefined}
+        clientPhotos={testimonios.filter((t) => t.product_id === product.id && t.photo_url?.trim())}
         // Con la base caída el carrito no puede guardar nada: la ficha toma el
         // pedido por WhatsApp en vez de fallar al tocar "Agregar".
         soloConsulta={isSnapshot}
@@ -647,6 +662,10 @@ async function ProductPage({ slug }: { slug: string }) {
 function pickTestimonial(list: Testimonial[], product: Product): Testimonial | null {
   const usable = list.filter((t) => t.text?.trim() && t.author?.trim())
   if (usable.length === 0) return null
+  // Una clienta que compró ESTA prenda gana siempre (product_id, cargado
+  // desde /admin/testimonios).
+  const own = usable.find((t) => t.product_id === product.id)
+  if (own) return own
   const words = (s: string) =>
     s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
       .split(/[^a-z0-9]+/)

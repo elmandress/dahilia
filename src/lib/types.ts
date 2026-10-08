@@ -14,6 +14,8 @@ export interface Color {
   name: string;
   hex: string;
   sort_order: number;
+  /** Foto de cerca del ovillo real (fotos-clientas-y-lanas-2026-10.sql). */
+  image_url?: string | null;
 }
 
 export interface Product {
@@ -34,6 +36,9 @@ export interface Product {
   discount_percent: number;   // 0-90, per-product discount
   discount_active: boolean;
   collection_id: string | null;
+  /** Horas de tejido que se muestran en la ficha. NULL = no se muestran.
+   *  Requiere database/horas-de-tejido-2026-10.sql (opcional hasta entonces). */
+  knit_hours?: number | string | null;
   created_at: string;
   updated_at: string;
   // Joined data

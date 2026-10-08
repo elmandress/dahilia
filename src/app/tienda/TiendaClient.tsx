@@ -9,6 +9,7 @@ import type { Product, Category, Color, Discount } from '@/lib/types'
 import { ProductCard } from '@/components/ProductCard'
 import { FOTOS_RESPALDO } from '@/lib/fotos-respaldo'
 import { getListingPrice, resolveDiscountPercent, BLUR_DATA_URL, isReadyToShip, normalizeText, productPhotoAlt } from '@/lib/types'
+import { productSearchScore } from '@/lib/vocabulario'
 import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Chip, Icon, Breadcrumb, Button } from '@/components/ui/Primitives'
 import { track } from '@/lib/analytics'
@@ -73,9 +74,10 @@ const QuickViewModal = dynamic(
   { ssr: false }
 )
 
-type SortKey = 'recientes' | 'precio-asc' | 'precio-desc' | 'nombre'
+type SortKey = 'destacados' | 'recientes' | 'precio-asc' | 'precio-desc' | 'nombre'
 
 const SORT_LABELS: Record<SortKey, string> = {
+  destacados: 'Destacados',
   recientes: 'Más recientes',
   'precio-asc': 'Precio: de menor a mayor',
   'precio-desc': 'Precio: de mayor a menor',
@@ -95,11 +97,10 @@ function matchesFilters(p: Product, opts: {
   // buscar "amelie" sugería "Top AMÉLIE" y al apretar Enter esta grilla
   // contestaba "No encontramos prendas con esos filtros" — la tilde la
   // escribe casi nadie desde el teléfono.
+  // Desde el 08/10/2026 también busca en categoría y colores, con sinónimos
+  // rioplatenses ("buzo", "saco", "musculosa"): ver lib/vocabulario.ts.
   const q = normalizeText(opts.search)
-  const matchesSearch =
-    !q ||
-    normalizeText(p.name).includes(q) ||
-    (!!p.description && normalizeText(p.description).includes(q))
+  const matchesSearch = !q || productSearchScore(p, q) >= 0
   const matchesColor =
     opts.colorIds.length === 0 || (p.colors ?? []).some((c) => opts.colorIds.includes(c.id))
   const matchesSize =
@@ -217,7 +218,7 @@ export function TiendaClient({
   const [filter, setFilter] = useState(initialFilter || 'todo')
   const [search, setSearch] = useState(initialSearch || '')
   const [sort, setSort] = useState<SortKey>(
-    SORT_KEYS.includes(initialSort as SortKey) ? (initialSort as SortKey) : 'recientes'
+    SORT_KEYS.includes(initialSort as SortKey) ? (initialSort as SortKey) : 'destacados'
   )
   const [colorIds, setColorIds] = useState<string[]>(
     initialColor ? initialColor.split(',').filter(Boolean) : []
@@ -299,7 +300,7 @@ export function TiendaClient({
       if (appliedColorIds.length) sp.set('color', appliedColorIds.join(','))
       if (appliedSizes.length) sp.set('talle', appliedSizes.join(','))
       if (appliedMaxPrice !== null && appliedMaxPrice < priceBounds.max) sp.set('max', String(appliedMaxPrice))
-      if (sort !== 'recientes') sp.set('sort', sort)
+      if (sort !== 'destacados') sp.set('sort', sort)
       if (appliedOnlyDiscount) sp.set('oferta', '1')
       if (appliedHideOutOfStock) sp.set('disp', '1')
       if (appliedOnlyReadyToShip) sp.set('ya', '1')
@@ -354,8 +355,14 @@ export function TiendaClient({
       case 'nombre':
         withFinal.sort((a, b) => a.p.name.localeCompare(b.p.name, 'es'))
         break
-      case 'recientes':
+      case 'destacados':
       default:
+        // El orden que Anush arma en /admin/productos (sort_order). Hasta el
+        // 08/10/2026 el default era "recientes" y el orden manual solo
+        // desempataba: reordenar en el admin no cambiaba nada en la tienda.
+        withFinal.sort((a, b) => a.p.sort_order - b.p.sort_order)
+        break
+      case 'recientes':
         withFinal.sort((a, b) => {
           const ta = new Date(a.p.created_at).getTime()
           const tb = new Date(b.p.created_at).getTime()
@@ -410,7 +417,7 @@ export function TiendaClient({
     setAppliedHideOutOfStock(false)
     setAppliedOnlyReadyToShip(false)
     setSearch('')
-    setSort('recientes')
+    setSort('destacados')
   }
 
   const toggleColor = (id: string) => {

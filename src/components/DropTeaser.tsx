@@ -29,6 +29,10 @@ export interface DropTeaserProps {
   imageUrl: string
   /** Link a la colección, solo si el server confirmó que está publicada. */
   collectionHref: string | null
+  /** Hay piezas "en stock": pasada la fecha se ofrece verlas también. */
+  hasReadyToShip?: boolean
+  /** 'top' = pegado debajo del hero, con menos aire arriba. */
+  placement?: 'top' | 'inline'
 }
 
 function parseDropDate(iso: string): number | null {
@@ -137,7 +141,7 @@ function CountdownUnit({ value, label }: { value: number; label: string }) {
   )
 }
 
-export function DropTeaser({ name, dateIso, teaser, imageUrl, collectionHref }: DropTeaserProps) {
+export function DropTeaser({ name, dateIso, teaser, imageUrl, collectionHref, hasReadyToShip = false, placement = 'inline' }: DropTeaserProps) {
   const target = parseDropDate(dateIso)
   // El countdown solo existe en el cliente (el HTML del server mostraría una
   // cuenta congelada y distinta → mismatch). Hasta montar: guiones.
@@ -154,7 +158,7 @@ export function DropTeaser({ name, dateIso, teaser, imageUrl, collectionHref }: 
   const isLive = target !== null && now !== null && now >= target
 
   return (
-    <section className="home-section" aria-label={`Próximo drop: ${name}`} style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
+    <section className="home-section" aria-label={`Próximo drop: ${name}`} style={{ maxWidth: 1280, margin: placement === 'top' ? '32px auto 0' : '88px auto 0', padding: '0 24px' }}>
       <div className="home-banner" style={{
         display: 'grid', gridTemplateColumns: imageUrl ? '1fr 1.1fr' : '1fr',
         background: dahila.cream100, borderRadius: 20, overflow: 'hidden',
@@ -206,19 +210,35 @@ export function DropTeaser({ name, dateIso, teaser, imageUrl, collectionHref }: 
           )}
 
           {isLive ? (
-            <div style={{ marginTop: 4 }}>
+            // Ya salió: la cuenta regresiva deja lugar a los caminos de compra.
+            <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 10 }}>
               <Link
                 href={collectionHref || '/tienda'}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 8,
                   background: dahila.ink900, color: '#fff', textDecoration: 'none',
-                  borderRadius: 10, padding: '13px 22px',
+                  borderRadius: 10, padding: '13px 22px', minHeight: 44,
                   fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
                   letterSpacing: '0.06em', textTransform: 'uppercase',
                 }}
               >
                 {collectionHref ? 'Ver la colección' : 'Ver la tienda'}
               </Link>
+              {hasReadyToShip && (
+                <Link
+                  href="/tienda?ya=1"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    background: 'transparent', color: dahila.ink900, textDecoration: 'none',
+                    borderRadius: 10, padding: '12px 21px', minHeight: 44,
+                    border: `1px solid ${dahila.borderStrong}`,
+                    fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
+                    letterSpacing: '0.06em', textTransform: 'uppercase',
+                  }}
+                >
+                  Ver en stock
+                </Link>
+              )}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 440 }}>

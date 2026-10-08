@@ -17,7 +17,7 @@ export type IconName =
   | 'ruler' | 'flower' | 'package' | 'arrow-clockwise' | 'truck' | 'leaf'
   | 'hand-heart' | 'heart' | 'chat-circle' | 'check' | 'share-network' | 'caret-up'
   | 'instagram-logo' | 'whatsapp-logo' | 'pinterest-logo' | 'envelope-simple' | 'gift' | 'star' | 'quotes'
-  | 'needle' | 'sparkle' | 'chat-text' | 'scissors' | 'tag'
+  | 'needle' | 'sparkle' | 'chat-text' | 'scissors' | 'tag' | 'clock' | 'camera'
 
 export const ICON_PATHS: Record<string, React.ReactNode> = {
   'magnifying-glass': (
@@ -172,6 +172,19 @@ export const ICON_PATHS: Record<string, React.ReactNode> = {
     <>
       <rect x="32" y="48" width="192" height="160" rx="8" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
       <polyline points="224 56 128 144 32 56" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  // clock y camera: horas de tejido en la ficha y "Clientas con su Dahila" (08/10/2026).
+  'clock': (
+    <>
+      <circle cx="128" cy="128" r="96" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <polyline points="128 72 128 128 184 128" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  'camera': (
+    <>
+      <path d="M208,208H48a16,16,0,0,1-16-16V80A16,16,0,0,1,48,64H80L96,40h64l16,24h32a16,16,0,0,1,16,16V192A16,16,0,0,1,208,208Z" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="128" cy="132" r="36" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
     </>
   ),
   'gift': (

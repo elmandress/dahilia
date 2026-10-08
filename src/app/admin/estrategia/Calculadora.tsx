@@ -3,16 +3,12 @@
 // Calculadora de precios — herramienta interna para decidir el precio de una
 // pieza nueva (o revisar una existente) sin hacer cuentas a mano.
 //
-// Fórmula (la estándar del pricing artesanal, transparente):
-//   costos   = materiales + packaging + otros
-//   trabajo  = horas × tarifa por hora
-//   base     = costos + trabajo
-//   c/margen = base × (1 + margen%)          ← margen de marca: reinversión, fotos, muestras
-//   precio   = c/margen ÷ (1 − comisión%)    ← así la comisión no se come tu margen
-// Redondeado hacia arriba a la decena.
+// Fórmula: calcPrice() en lib/pricing.ts — la misma cuenta que usa la
+// calculadora del editor de cada producto.
 
 import { useState } from 'react'
 import { PRICE_TABLE, contribPerHour } from './data'
+import { calcPrice } from '@/lib/pricing'
 
 interface Props {
   /** Precios vivos de la tienda, por slug (para comparar contra el actual). */
@@ -49,17 +45,10 @@ export default function Calculadora({ livePrices }: Props) {
   }
 
   const h = num(hours)
-  const costs = num(materials) + num(packaging) + num(others)
-  const labour = h * num(rate)
-  const base = costs + labour
-  const withMargin = base * (1 + num(margin) / 100)
-  const commissionPct = Math.min(30, num(commission))
-  const raw = commissionPct > 0 ? withMargin / (1 - commissionPct / 100) : withMargin
-  const recommended = Math.ceil(raw / 10) * 10
-
-  const commissionAmount = Math.round(recommended * (commissionPct / 100))
-  const youKeep = recommended - commissionAmount - costs
-  const perHour = h > 0 ? Math.round(youKeep / h) : null
+  const { costs, labour, marginAmount, commissionPct, commissionAmount, recommended, youKeep, perHour } = calcPrice({
+    hours: h, materials: num(materials), packaging: num(packaging), others: num(others),
+    rate: num(rate), margin: num(margin), commission: num(commission),
+  })
 
   const currentPerHour = product && currentPrice != null && product.hours && product.materials != null
     ? contribPerHour(product, currentPrice)
@@ -123,7 +112,7 @@ export default function Calculadora({ livePrices }: Props) {
             <ul className="breakdown">
               <li><span>Materiales y costos</span><span>{money(Math.round(costs))}</span></li>
               <li><span>Tu trabajo ({h} h × {money(num(rate))})</span><span>{money(Math.round(labour))}</span></li>
-              <li><span>Margen de marca ({num(margin)}%)</span><span>{money(Math.round(withMargin - base))}</span></li>
+              <li><span>Margen de marca ({num(margin)}%)</span><span>{money(Math.round(marginAmount))}</span></li>
               {commissionPct > 0 && <li><span>Comisión ({commissionPct}%)</span><span>{money(commissionAmount)}</span></li>}
             </ul>
             <p className="keep">

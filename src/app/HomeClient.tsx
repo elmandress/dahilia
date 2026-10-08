@@ -7,6 +7,8 @@ import { ProductCard } from '@/components/ProductCard'
 import { DropTeaser } from '@/components/DropTeaser'
 import { TestimonialsStrip } from '@/components/TestimonialsStrip'
 import { GoogleReviews } from '@/components/GoogleReviews'
+import { NavidadHome } from '@/components/NavidadAviso'
+import { ClientasGallery } from '@/components/ClientasGallery'
 import type { Product, Discount } from '@/lib/types'
 import type { Testimonial } from '@/components/TestimonialsStrip'
 import { BLUR_DATA_URL, isReadyToShip } from '@/lib/types'
@@ -93,7 +95,8 @@ export type HomeSettings = Partial<Record<
   | 'faq_4_q' | 'faq_4_a'
   | 'faq_5_q' | 'faq_5_a'
   | 'atelier_note_enabled' | 'atelier_note_text' | 'atelier_note_cta_label' | 'atelier_note_cta_link'
-  | 'drop_enabled' | 'drop_name' | 'drop_date' | 'drop_teaser' | 'drop_image_url' | 'drop_collection_slug',
+  | 'drop_enabled' | 'drop_name' | 'drop_date' | 'drop_teaser' | 'drop_image_url' | 'drop_collection_slug'
+  | 'navidad_enabled' | 'navidad_encargo_hasta' | 'navidad_stock_hasta' | 'regalo_enabled',
   string
 >>
 
@@ -105,7 +108,7 @@ function val<K extends keyof HomeSettings>(s: HomeSettings, key: K, fallback: st
 /** Nota del blog para la franja de la home (solo lo que la tarjeta muestra). */
 export type HomeNote = { slug: string; title: string; excerpt: string; hero?: { src: string; alt: string; position?: string } }
 
-export function HomeClient({ products, newest = [], settings, discounts = [], testimonials = [], dropCollectionHref = null, notes = [], categorias = [] }: { products: Product[]; newest?: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[]; dropCollectionHref?: string | null; notes?: HomeNote[]; categorias?: { name: string; slug: string }[] }) {
+export function HomeClient({ products, newest = [], settings, discounts = [], testimonials = [], dropCollectionHref = null, notes = [], categorias = [], productLinks = {} }: { productLinks?: Record<string, { name: string; slug: string }>; products: Product[]; newest?: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[]; dropCollectionHref?: string | null; notes?: HomeNote[]; categorias?: { name: string; slug: string }[] }) {
   const { queueNote } = useCart()
   // "Nuevo" = últimos publicados por fecha real de alta (con fallback al orden
   // manual si la consulta dedicada no trajo nada).
@@ -225,6 +228,33 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
           </div>
         </div>
       </section>
+
+      {/* PRÓXIMO DROP — countdown + captura VIP; ver DropTeaser.tsx. Va
+          primero, antes de las prendas (pedido 08/10/2026: lo primero que se
+          ve al entrar es la colección que viene). Debajo siguen la tienda y
+          "Disponible ahora". Se apaga desde Configuración → "Próximo drop". */}
+      {showDrop && (
+        <DropTeaser
+          name={val(settings, 'drop_name', '')}
+          dateIso={val(settings, 'drop_date', '')}
+          teaser={val(settings, 'drop_teaser', '')}
+          imageUrl={val(settings, 'drop_image_url', '')}
+          collectionHref={dropCollectionHref}
+          hasReadyToShip={readyToShip.length > 0}
+          placement="top"
+        />
+      )}
+
+      {/* NAVIDAD — fechas de corte desde Configuración → "Navidad". Se
+          oculta sola pasada la fecha (ver lib/navidad.ts). */}
+      {settings.navidad_enabled !== 'false' && (
+        <NavidadHome
+          encargoHasta={settings.navidad_encargo_hasta}
+          stockHasta={settings.navidad_stock_hasta}
+          hasReadyToShip={readyToShip.length > 0}
+          giftEnabled={settings.regalo_enabled !== 'false'}
+        />
+      )}
 
       {/* CATEGORÍAS — en el celular no hay menú a la vista: la clienta deduce
           qué vende el sitio por lo que ve en el inicio (Baymard). Hasta hoy la
@@ -357,17 +387,6 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
             {readyToShip.map((product) => <ProductCard key={product.id} product={product} discounts={discounts} />)}
           </div>
         </section>
-      )}
-
-      {/* PRÓXIMO DROP — countdown + captura VIP; ver DropTeaser.tsx */}
-      {showDrop && (
-        <DropTeaser
-          name={val(settings, 'drop_name', '')}
-          dateIso={val(settings, 'drop_date', '')}
-          teaser={val(settings, 'drop_teaser', '')}
-          imageUrl={val(settings, 'drop_image_url', '')}
-          collectionHref={dropCollectionHref}
-        />
       )}
 
       {/* PROCESS STRIP */}
@@ -512,6 +531,9 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
 
       {/* TESTIMONIALS — social proof strip; only rendered when there are items */}
       {testimonials.length > 0 && <TestimonialsStrip items={testimonials} />}
+
+      {/* CLIENTAS CON SU DAHILA — fotos reales (solo si hay cargadas). */}
+      <ClientasGallery items={testimonials} productLinks={productLinks} />
 
       {/* ESTA SEMANA EN EL TALLER — nota de Anush, humaniza la marca.
           Solo aparece si atelier_note_enabled === 'true' Y hay texto. */}

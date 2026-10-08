@@ -166,3 +166,73 @@ export function recommendPrice(input: PricingInput): PricingRecommendation {
 
   return { ...base, status: 'under', gap, gapPct, stages, nextPrice: stages[0] ?? null, peer, reasons }
 }
+
+// ─────────────────────────────────────────────────────────────
+// Calculadora de precio (la misma cuenta de /admin/estrategia, ahora también
+// en el editor de cada producto — pedido 08/10/2026):
+//   costos   = materiales + packaging + otros
+//   trabajo  = horas × tarifa por hora
+//   c/margen = (costos + trabajo) × (1 + margen%)
+//   precio   = c/margen ÷ (1 − comisión%)   ← así la comisión no se come el margen
+// Redondeado hacia arriba a la decena.
+// ─────────────────────────────────────────────────────────────
+
+export interface PriceCalcInput {
+  hours: number
+  materials: number
+  packaging: number
+  others: number
+  rate: number
+  /** Margen de marca, en %. */
+  margin: number
+  /** Comisión de cobro, en % (tope 30). */
+  commission: number
+}
+
+export interface PriceCalcResult {
+  costs: number
+  labour: number
+  marginAmount: number
+  commissionPct: number
+  commissionAmount: number
+  recommended: number
+  /** Lo que queda limpio por pieza (precio − comisión − costos). */
+  youKeep: number
+  perHour: number | null
+}
+
+export function calcPrice(i: PriceCalcInput): PriceCalcResult {
+  const costs = i.materials + i.packaging + i.others
+  const labour = i.hours * i.rate
+  const base = costs + labour
+  const withMargin = base * (1 + i.margin / 100)
+  const commissionPct = Math.min(30, Math.max(0, i.commission))
+  const raw = commissionPct > 0 ? withMargin / (1 - commissionPct / 100) : withMargin
+  const recommended = ceil10(raw)
+  const commissionAmount = Math.round(recommended * (commissionPct / 100))
+  const youKeep = recommended - commissionAmount - costs
+  return {
+    costs,
+    labour,
+    marginAmount: withMargin - base,
+    commissionPct,
+    commissionAmount,
+    recommended,
+    youKeep,
+    perHour: i.hours > 0 ? Math.round(youKeep / i.hours) : null,
+  }
+}
+
+/** Ajuste en lote del listado de productos: "subir 10%", "fijar en $3.200"…
+ *  Los porcentajes redondean a la decena, como el resto de los precios. */
+export type BulkOp = 'pct-up' | 'pct-down' | 'add' | 'sub' | 'set'
+
+export function applyBulkOp(price: number, op: BulkOp, value: number): number {
+  switch (op) {
+    case 'pct-up': return round10(price * (1 + value / 100))
+    case 'pct-down': return Math.max(0, round10(price * (1 - value / 100)))
+    case 'add': return price + value
+    case 'sub': return Math.max(0, price - value)
+    case 'set': return value
+  }
+}

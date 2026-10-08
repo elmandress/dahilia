@@ -8,6 +8,7 @@ import { ProductCard } from '@/components/ProductCard'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 import { formatPrice, getFinalPrice } from '@/lib/types'
 import type { Discount, Product } from '@/lib/types'
+import { track } from '@/lib/analytics'
 
 // El mismo modal que /tienda y /ofertas. Antes el botón decía "Vista rápida"
 // pero navegaba a la ficha completa: se perdía el agregado rápido justo en la
@@ -30,6 +31,35 @@ export function FavoritosClient({ whatsappUrl, discounts = [] }: { whatsappUrl: 
     )
     return `${whatsappUrl}${whatsappUrl.includes('?') ? '&' : '?'}text=${text}`
   })()
+
+  // Lista compartible (08/10/2026): un link con los slugs para mandarle a
+  // quien le va a regalar. utm_source=compartido, como el resto de los links
+  // de Compartir, para que "De dónde vienen" lo cuente.
+  const [shareName, setShareName] = useState('')
+  const [shareMsg, setShareMsg] = useState<string | null>(null)
+  const shareList = async () => {
+    const sp = new URLSearchParams({ p: items.map((it) => it.product.slug).join(',') })
+    if (shareName.trim()) sp.set('de', shareName.trim().slice(0, 40))
+    sp.set('utm_source', 'compartido')
+    sp.set('utm_medium', 'lista-deseos')
+    const url = `${window.location.origin}/favoritos/compartida?${sp.toString()}`
+    const text = shareName.trim()
+      ? `Mi lista de deseos de Dahila (${shareName.trim()}) 🧶`
+      : 'Mi lista de deseos de Dahila 🧶'
+    track('wishlist_share', { items: items.length })
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Mi lista de Dahila', text, url })
+        return
+      }
+      await navigator.clipboard.writeText(url)
+      setShareMsg('¡Link copiado! Pegalo en WhatsApp o donde quieras.')
+    } catch (e) {
+      // Cerrar el menú de compartir no es un error.
+      if (e instanceof Error && e.name === 'AbortError') return
+      window.prompt('Copiá este link:', url)
+    }
+  }
 
   // Until the client has loaded the list we render the empty-state skeleton-free
   // (no flash of "vacío" before the fetch resolves).
@@ -89,6 +119,50 @@ export function FavoritosClient({ whatsappUrl, discounts = [] }: { whatsappUrl: 
         >
           <Icon name="whatsapp-logo" size={18} /> Consultar mis favoritos
         </a>
+      </div>
+
+      {/* Compartir la lista: para que te regalen exactamente lo que te gusta. */}
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 12,
+        background: dahila.cream50, border: `1px solid ${dahila.border}`, borderRadius: 14,
+        padding: '16px 18px', marginBottom: 32,
+      }}>
+        <div style={{ flex: '1 1 260px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 500, color: dahila.ink900 }}>
+            <Icon name="gift" size={18} color={dahila.wine600} /> ¿Se acerca un cumple o las fiestas?
+          </div>
+          <p style={{ margin: '4px 0 10px', fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink700 }}>
+            Mandale tu lista a quien te va a regalar: ve tus prendas y me escribe directo.
+          </p>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: 280 }}>
+            <span style={{ fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: dahila.ink500 }}>Tu nombre (opcional)</span>
+            <input
+              value={shareName}
+              onChange={(e) => setShareName(e.target.value)}
+              maxLength={40}
+              autoComplete="given-name"
+              placeholder="Así sabe que es tuya"
+              style={{
+                minHeight: 44, padding: '8px 12px', borderRadius: 8, border: `1px solid ${dahila.borderStrong}`,
+                fontFamily: dahila.fontSans, fontSize: 16, color: dahila.ink900, background: '#fff',
+              }}
+            />
+          </label>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <button
+            type="button"
+            onClick={shareList}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 44, padding: '0 20px',
+              borderRadius: 10, border: 'none', cursor: 'pointer', background: dahila.ink900, color: '#fff',
+              fontFamily: dahila.fontSans, fontSize: 12, letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}
+          >
+            <Icon name="share-network" size={16} /> Compartir mi lista
+          </button>
+          {shareMsg && <span role="status" style={{ fontFamily: dahila.fontSans, fontSize: 12.5, color: dahila.wine600 }}>{shareMsg}</span>}
+        </div>
       </div>
 
       <div className="tienda-grid" style={{

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCatalog } from '@/lib/catalog'
 import { getPrimaryPhoto, getListingPrice, hasPriceRange, normalizeText as normalize } from '@/lib/types'
 import type { Product } from '@/lib/types'
+import { productSearchScore } from '@/lib/vocabulario'
 
 export const revalidate = 0
 
@@ -37,19 +38,14 @@ export async function GET(req: NextRequest) {
   try {
     const { products, discounts } = await getCatalog()
 
-    // Rank: name match beats description match; earlier position beats later.
+    // Rank: name match beats description/category match; earlier beats later.
+    // Mismo criterio que la grilla de /tienda (lib/vocabulario.ts), con los
+    // sinónimos rioplatenses: "buzo" encuentra los sweaters, "saco" los
+    // cardigans, "musculosa" los tops.
     const scored = products
       .map((p) => {
-        const prod = p as unknown as Product & { description?: string | null }
-        const name = normalize(prod.name || '')
-        const desc = normalize(prod.description || '')
-        const nameIdx = name.indexOf(q)
-        const descIdx = desc.indexOf(q)
-        let score = -1
-        if (nameIdx === 0) score = 0
-        else if (nameIdx > 0) score = 1 + nameIdx / 100
-        else if (descIdx >= 0) score = 100 + descIdx / 100
-        return { prod, score }
+        const prod = p as unknown as Product
+        return { prod, score: productSearchScore(prod, q) }
       })
       .filter((x) => x.score >= 0)
       .sort((a, b) => a.score - b.score)

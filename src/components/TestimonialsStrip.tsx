@@ -10,6 +10,10 @@ export interface Testimonial {
   location: string | null
   text: string
   sort_order: number
+  /** Foto de la clienta con la prenda (fotos-clientas-y-lanas-2026-10.sql). */
+  photo_url?: string | null
+  /** Prenda que compró, para mostrar la foto en esa ficha. */
+  product_id?: string | null
 }
 
 export function TestimonialsStrip({ items }: { items: Testimonial[] }) {

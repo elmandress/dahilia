@@ -124,6 +124,8 @@ export default async function Home() {
         discounts={discounts}
         testimonials={testimonials}
         dropCollectionHref={dropCollectionHref}
+        // Para que cada foto de "Clientas con su Dahila" linkee a su prenda.
+        productLinks={Object.fromEntries(activeProducts.map((p) => [p.id, { name: p.name, slug: p.slug }]))}
         // Solo lo que dibuja la tira: nombre y slug.
         categorias={catalog.categories.map(({ name, slug }) => ({ name, slug }))}
         // Solo lo que muestra la tarjeta: el cuerpo de las notas no viaja al cliente.

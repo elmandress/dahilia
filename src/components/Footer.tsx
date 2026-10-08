@@ -143,8 +143,9 @@ export function Footer({
   tagline = 'Prendas tejidas a mano, a tu medida, desde Montevideo.',
   showOfertas = true,
   showColecciones = true,
+  showRegalo = true,
   sinBase = false,
-}: { tagline?: string; showOfertas?: boolean; showColecciones?: boolean
+}: { tagline?: string; showOfertas?: boolean; showColecciones?: boolean; showRegalo?: boolean
   /** La base no responde: la lista VIP no podría guardar el mail, así que el
    *  bloque no se muestra (mejor no pedir un dato que se va a perder). */
   sinBase?: boolean }) {
@@ -163,6 +164,7 @@ export function Footer({
     ...(showOfertas ? [{ label: 'Ofertas', href: '/ofertas' }] : []),
     ...(showColecciones ? [{ label: 'Colecciones', href: '/colecciones' }] : []),
     { label: 'A medida',     href: '/encargo' },
+    ...(showRegalo ? [{ label: 'Tarjeta de regalo', href: '/regalo' }] : []),
   ]
 
   return (

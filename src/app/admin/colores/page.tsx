@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { notifySiteWideChange } from '@/lib/seo-notify'
 import type { Color } from '@/lib/types'
+import { uploadAdminImage } from '@/lib/upload-image'
 
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 
@@ -115,6 +116,30 @@ export default function ColoresAdminPage() {
     }
   }
 
+  // Foto real del ovillo: en la ficha, tocar el color la muestra. Se guarda
+  // al toque (no hay "editar" de por medio) — es un dato aparte del nombre/hex.
+  const [photoBusy, setPhotoBusy] = useState<string | null>(null)
+  const setColorPhoto = async (col: Color, file: File | null) => {
+    setPhotoBusy(col.id)
+    setError(null)
+    try {
+      const url = file ? await uploadAdminImage(file, 'colores', col.name) : null
+      const supabase = createClient()
+      const { error: err } = await supabase.from('colors').update({ image_url: url }).eq('id', col.id)
+      if (err) {
+        throw new Error(/image_url/.test(err.message)
+          ? 'Falta correr database/fotos-clientas-y-lanas-2026-10.sql en Supabase para guardar fotos de lanas.'
+          : err.message)
+      }
+      setColors((prev) => prev.map((c) => (c.id === col.id ? { ...c, image_url: url } : c)))
+      notifySiteWideChange()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo guardar la foto.')
+    } finally {
+      setPhotoBusy(null)
+    }
+  }
+
   const handleDelete = async (id: string) => {
     const col = colors.find((c) => c.id === id)
     const used = productCounts[id] ?? 0
@@ -171,7 +196,7 @@ export default function ColoresAdminPage() {
       <div className="admin-page-header">
         <div>
           <h2>Colores</h2>
-          <p>La paleta de lanas disponibles. Los colores que marques en cada producto se muestran como opciones en su ficha.</p>
+          <p>La paleta de lanas disponibles. Los colores que marques en cada producto se muestran como opciones en su ficha. Con una foto de cerca del ovillo, la clienta ve el color real al tocarlo.</p>
         </div>
       </div>
 
@@ -259,6 +284,7 @@ export default function ColoresAdminPage() {
                     <th>Orden</th>
                     <th>Color</th>
                     <th>Hex</th>
+                    <th>Foto de la lana</th>
                     <th style={{ textAlign: 'right' }}>Acciones</th>
                   </tr>
                 </thead>
@@ -326,6 +352,33 @@ export default function ColoresAdminPage() {
                         ) : (
                           <code style={{ fontSize: '0.85rem', background: '#EDE9EA', padding: '2px 6px', borderRadius: '4px' }}>{col.hex}</code>
                         )}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          {col.image_url && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={col.image_url} alt={`Lana ${col.name}`} style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
+                          )}
+                          <label className="admin-btn admin-btn-secondary admin-btn-sm" style={{ cursor: 'pointer' }}>
+                            {photoBusy === col.id ? 'Subiendo…' : col.image_url ? 'Cambiar' : 'Subir foto'}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              hidden
+                              disabled={photoBusy === col.id}
+                              onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; if (file) setColorPhoto(col, file) }}
+                            />
+                          </label>
+                          {col.image_url && (
+                            <button
+                              type="button"
+                              className="admin-btn-icon"
+                              onClick={() => setColorPhoto(col, null)}
+                              aria-label={`Quitar foto de ${col.name}`}
+                              title="Quitar foto"
+                            >✕</button>
+                          )}
+                        </div>
                       </td>
                       <td style={{ textAlign: 'right' }}>
                         {editingId === col.id ? (

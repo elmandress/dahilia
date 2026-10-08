@@ -5,7 +5,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { test, expect, scrollThrough } from './support/guard'
 
-const PAGINAS = ['/', '/tienda', '/tienda/cardigans', '/tienda/spring-cardigan', '/carrito', '/encargo', '/encargo/estado', '/atelier', '/blog', '/blog/regalos-tejidos-a-mano', '/info', '/contacto', '/tejedoras', '/tienda/no-existe']
+const PAGINAS = ['/', '/tienda', '/tienda/cardigans', '/tienda/spring-cardigan', '/carrito', '/encargo', '/encargo/estado', '/atelier', '/blog', '/blog/regalos-tejidos-a-mano', '/info', '/contacto', '/tejedoras', '/tienda/no-existe', '/regalo', '/favoritos/compartida?p=spring-cardigan,bandana']
 
 for (const ruta of PAGINAS) {
   test(`axe sin violaciones en ${ruta}`, async ({ page }) => {

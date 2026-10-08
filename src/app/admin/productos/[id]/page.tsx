@@ -8,6 +8,7 @@ import { notifyReindex } from '@/lib/seo-notify'
 import { draftDescription } from '@/lib/description-draft'
 import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
 import { recommendPrice, formatUyu, type PricingRecommendation, type PricingPeer } from '@/lib/pricing'
+import { SameSizePrice, CalculadoraPrecio } from '../PriceTools'
 import type { Category, Color, Collection, Product, ProductMedia, ProductSize, ProductColor } from '@/lib/types'
 
 type LoadedProductColor = Partial<ProductColor> & { color_id?: string; color?: { id: string } }
@@ -78,7 +79,14 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
   // interna product_costs (null mientras no se corra
   // database/costos-produccion-2026-09.sql: el marcador usa entonces la tabla
   // de precios aprobada) + productos activos, para comparar con la categoría.
-  const [costs, setCosts] = useState<{ hours: number | null; materials: number | null } | null>(null)
+  // Se editan acá mismo (calculadora): costsTableOk dice si la tabla existe,
+  // para no fallar al guardar en una base donde todavía no se corrió el SQL.
+  const [hoursInput, setHoursInput] = useState('')
+  const [materialsInput, setMaterialsInput] = useState('')
+  const [costsTableOk, setCostsTableOk] = useState(false)
+  // Horas visibles en la ficha (products.knit_hours, horas-de-tejido-2026-10.sql).
+  const [showHours, setShowHours] = useState(false)
+  const [loadedKnitHours, setLoadedKnitHours] = useState<number | null>(null)
   const [peers, setPeers] = useState<PricingPeer[]>([])
 
   // Media
@@ -104,7 +112,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
   const snapshot = JSON.stringify({
     name, slug, description, categoryId, collectionId, badge, status,
     basePriceUyu, discountPercent, discountActive, leadTimeMin, leadTimeMax,
-    material, careInstructions, isCustomOnly,
+    material, careInstructions, isCustomOnly, hoursInput, materialsInput, showHours,
     media: mediaEntries.map((m) => [m.url, m.alt, m.is_primary]),
     sizes: sizes.map((s) => [s.size, s.price_uyu, s.available]),
     colors: [...selectedColors].sort(),
@@ -143,6 +151,12 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
     setMaterial(p.material || '')
     setCareInstructions(p.care_instructions || '')
     setIsCustomOnly(p.is_custom_only || false)
+    const knit = Number(p.knit_hours)
+    const knitOk = Number.isFinite(knit) && knit > 0
+    setLoadedKnitHours(knitOk ? knit : null)
+    setShowHours(knitOk)
+    // Si la cuenta interna no tiene horas pero la ficha sí, se parte de esas.
+    if (knitOk) setHoursInput((prev) => prev || String(knit))
 
     if (p.media && p.media.length > 0) {
       const mappedMedia: MediaEntry[] = [...p.media]
@@ -198,9 +212,11 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       if (collRes.data) setCollections(collRes.data as Collection[])
       // Opcionales, como collections: si falla (tabla sin crear), el marcador
       // igual funciona con la tabla de precios aprobada.
+      setCostsTableOk(!costRes.error)
       if (!costRes.error && costRes.data) {
         const c = costRes.data as { labor_hours: number | string | null; materials_cost_uyu: number | null }
-        setCosts({ hours: c.labor_hours != null ? Number(c.labor_hours) : null, materials: c.materials_cost_uyu })
+        if (c.labor_hours != null) setHoursInput(String(Number(c.labor_hours)))
+        if (c.materials_cost_uyu != null) setMaterialsInput(String(c.materials_cost_uyu))
       }
       if (peersRes.data) {
         setPeers((peersRes.data as Array<{ slug: string; name: string; base_price_uyu: number | null; category_id: string | null }>)
@@ -568,6 +584,33 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
         if (colorError) throw new Error(`No se guardaron los colores: ${colorError.message}`)
       }
 
+      // Horas y materiales de la calculadora. Van después de lo principal y
+      // NO cortan el guardado: si falta una tabla o columna, el producto ya
+      // quedó bien y solo se avisa qué SQL falta correr.
+      const warnings: string[] = []
+      const hoursNum = parseFloat(hoursInput.replace(',', '.'))
+      const materialsNum = parseInt(materialsInput)
+      const hoursVal = Number.isFinite(hoursNum) && hoursNum > 0 ? Math.round(hoursNum * 10) / 10 : null
+      const materialsVal = Number.isFinite(materialsNum) && materialsNum >= 0 ? materialsNum : null
+      if (costsTableOk && (hoursVal != null || materialsVal != null)) {
+        const { error: costError } = await supabase.from('product_costs').upsert({
+          product_id: productId,
+          labor_hours: hoursVal,
+          materials_cost_uyu: materialsVal,
+          updated_at: new Date().toISOString(),
+        })
+        if (costError) warnings.push(`No se guardaron las horas y materiales de la calculadora (${costError.message}).`)
+      }
+      const knitVal = showHours ? hoursVal : null
+      if (knitVal !== loadedKnitHours) {
+        const { error: knitError } = await supabase.from('products').update({ knit_hours: knitVal }).eq('id', productId)
+        if (knitError) {
+          warnings.push('Las horas no se pueden mostrar en la ficha todavía: falta correr database/horas-de-tejido-2026-10.sql en Supabase.')
+        } else {
+          setLoadedKnitHours(knitVal)
+        }
+      }
+
       // Cualquier cambio (nombre, precio, fotos, estado): invalida el HTML
       // cacheado de esta ficha para que se vea al toque (no hasta 1h) y
       // avisale a Bing/Yandex de paso.
@@ -576,6 +619,12 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       // Ya está guardado: nuevo punto de referencia, así el aviso de "cambios
       // sin guardar" no salta al salir de la página.
       setSavedSnapshot(snapshot)
+      if (warnings.length > 0) {
+        // Se queda en la página para que el aviso se lea.
+        setError(`El producto se guardó, pero: ${warnings.join(' ')}`)
+        setSaving(false)
+        return
+      }
       setToast('Producto actualizado exitosamente')
       setTimeout(() => {
         router.push('/admin/productos')
@@ -680,6 +729,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           ['#prod-sec-general', 'Información'],
           ['#prod-sec-fotos', 'Fotos'],
           ['#prod-sec-talles', 'Talles y precios'],
+          ['#prod-sec-calculo', 'Calculadora y horas'],
           ['#prod-sec-colores', 'Colores'],
           ['#prod-sec-specs', 'Especificaciones'],
         ].map(([href, label]) => (
@@ -832,8 +882,8 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
               rec={recommendPrice({
                 slug: slug.trim(),
                 price: basePriceUyu ? parseInt(basePriceUyu) : null,
-                hours: costs?.hours,
-                materials: costs?.materials,
+                hours: hoursInput ? parseFloat(hoursInput.replace(',', '.')) : null,
+                materials: materialsInput ? parseInt(materialsInput) : null,
                 categoryId: categoryId || null,
                 peers,
               })}
@@ -1043,6 +1093,13 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {sizes.length > 1 && (
+                    <SameSizePrice
+                      basePrice={basePriceUyu}
+                      onApply={(p) => setSizes((prev) => prev.map((s) => ({ ...s, price_uyu: p })))}
+                      onUseBase={() => setSizes((prev) => prev.map((s) => ({ ...s, price_uyu: '' })))}
+                    />
+                  )}
                   {sizes.map((s) => (
                     <div key={s.tempId} className="admin-size-row" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <input
@@ -1078,6 +1135,27 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
               )}
             </div>
           )}
+
+          {/* Calculadora de precio + horas de tejido de la ficha */}
+          <div id="prod-sec-calculo" className="admin-card" style={{ scrollMarginTop: 16 }}>
+            <h3 style={{ margin: '0 0 0.35rem 0', fontWeight: 400, fontFamily: 'var(--font-display)' }}>Calculadora y horas de tejido</h3>
+            <p style={{ margin: '0 0 1rem', fontSize: '0.82rem', color: '#8C8285' }}>
+              Con las horas y los materiales de esta prenda calcula un precio que paga tu trabajo.
+              {!costsTableOk && ' (La tabla interna de costos no está creada: la cuenta funciona, pero horas y materiales no se guardan.)'}
+            </p>
+            <CalculadoraPrecio
+              hours={hoursInput}
+              setHours={setHoursInput}
+              materials={materialsInput}
+              setMaterials={setMaterialsInput}
+              showHours={showHours}
+              setShowHours={setShowHours}
+              currentPrice={basePriceUyu ? parseInt(basePriceUyu) : null}
+              hasSizes={!isCustomOnly && sizes.length > 0}
+              onUseBase={(p) => setBasePriceUyu(String(p))}
+              onUseAllSizes={(p) => setSizes((prev) => prev.map((s) => ({ ...s, price_uyu: String(p) })))}
+            />
+          </div>
 
           {/* Color pickers */}
           <div id="prod-sec-colores" className="admin-card" style={{ scrollMarginTop: 16 }}>

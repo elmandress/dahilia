@@ -214,6 +214,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...(hasCollections
         ? [{ url: `${SITE_URL}/colecciones`, changeFrequency: 'weekly' as const, priority: 0.7 }]
         : []),
+      // Tarjeta de regalo: misma semántica que la página (ON salvo 'false').
+      ...(blogSettings.regalo_enabled !== 'false'
+        ? [{ url: `${SITE_URL}/regalo`, changeFrequency: 'monthly' as const, priority: 0.6 }]
+        : []),
     ]
 
     return [...staticRoutes, ...blogRoutes, ...conditionalHubs, ...categoryRoutes, ...productRoutes, ...collectionRoutes]
