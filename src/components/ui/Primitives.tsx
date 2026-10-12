@@ -19,8 +19,14 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   href?: string
 }
 
-export function Button({ variant = 'primary', size = 'md', children, onClick, full = false, style, disabled, href, ...rest }: ButtonProps) {
+export function Button({ variant = 'primary', size = 'md', children, onClick, full = false, style, disabled, href, className, ...rest }: ButtonProps) {
   const [hover, setHover] = useState(false)
+  // Hover solo con mouse (12/10/2026): con onMouseEnter, en el celular el
+  // toque disparaba el hover y el botón quedaba pegado en bordó después de
+  // tocarlo. La respuesta al toque la da .dh-btn:active (globals.css).
+  const hoverOn = (e: React.PointerEvent) => { if (e.pointerType === 'mouse') setHover(true) }
+  const hoverOff = () => setHover(false)
+  const cls = ['dh-btn', className].filter(Boolean).join(' ')
   const base: React.CSSProperties = {
     fontFamily: dahila.fontSans,
     fontWeight: 400,
@@ -68,8 +74,9 @@ export function Button({ variant = 'primary', size = 'md', children, onClick, fu
         // onClick también acá: la rama <Link> lo descartaba, así que un
         // `<Button href>` con tracking navegaba pero no registraba el evento.
         onClick={onClick as unknown as React.MouseEventHandler<HTMLAnchorElement>}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
+        onPointerEnter={hoverOn}
+        onPointerLeave={hoverOff}
+        className={cls}
         style={{ ...mergedStyle, textDecoration: 'none' }}
       >
         {children}
@@ -80,8 +87,9 @@ export function Button({ variant = 'primary', size = 'md', children, onClick, fu
   return (
     <button
       onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      onPointerEnter={hoverOn}
+      onPointerLeave={hoverOff}
+      className={cls}
       disabled={disabled}
       style={mergedStyle}
       {...rest}
@@ -95,7 +103,7 @@ export function Button({ variant = 'primary', size = 'md', children, onClick, fu
 export function Chip({ children, on, onClick }: { children: React.ReactNode, on: boolean, onClick: () => void }) {
   const [hover, setHover] = useState(false)
   return (
-    <button onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+    <button onClick={onClick} className="dh-btn" onPointerEnter={(e) => { if (e.pointerType === 'mouse') setHover(true) }} onPointerLeave={() => setHover(false)}
       aria-pressed={on}
       style={{
         fontFamily: dahila.fontSans, fontSize: 12.5, fontWeight: on ? 500 : 400, letterSpacing: '0.04em',

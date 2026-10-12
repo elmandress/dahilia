@@ -15,18 +15,56 @@ import { headingId } from '@/content/blog/toc'
  * navegador como HTML, sin JS de hidratación propio. Es lo que hace que una
  * nota larga siga siendo liviana en un celular de gama media.
  */
-export function ArticleBody({ blocks }: { blocks: Block[] }) {
+/** Prenda con horas de tejido medidas (para el bloque measuredHours). */
+export type MeasuredPiece = { name: string; slug: string; hours: number }
+
+export function ArticleBody({ blocks, measured = [] }: { blocks: Block[]; measured?: MeasuredPiece[] }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       {blocks.map((block, i) => (
-        <BlockView key={i} block={block} />
+        <BlockView key={i} block={block} measured={measured} />
       ))}
     </div>
   )
 }
 
-function BlockView({ block }: { block: Block }) {
+function BlockView({ block, measured }: { block: Block; measured: MeasuredPiece[] }) {
   switch (block.type) {
+    case 'measuredHours':
+      if (measured.length === 0) return null
+      return (
+        <figure style={{ ...ctaStyle, flexDirection: 'column', alignItems: 'stretch', gap: 12 }}>
+          <figcaption style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 22, color: dahila.ink900, lineHeight: 1.2 }}>
+              {block.title}
+            </span>
+            {block.text && (
+              <span style={{ ...bodyText, margin: 0, fontSize: 14.5 }}><RichText text={block.text} /></span>
+            )}
+          </figcaption>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: dahila.fontSans, fontSize: 15 }}>
+            <thead>
+              <tr>
+                <th scope="col" style={measuredTh}>Prenda</th>
+                <th scope="col" style={{ ...measuredTh, textAlign: 'right' }}>Horas de tejido</th>
+              </tr>
+            </thead>
+            <tbody>
+              {measured.map((m) => (
+                <tr key={m.slug}>
+                  <td style={measuredTd}>
+                    <Link href={`/tienda/${m.slug}`} style={{ color: dahila.wine600, textDecoration: 'underline', textUnderlineOffset: 3 }}>{m.name}</Link>
+                  </td>
+                  <td style={{ ...measuredTd, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                    {m.hours.toLocaleString('es-UY')} h
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </figure>
+      )
+
     case 'p':
       return <p style={bodyText}><RichText text={block.text} /></p>
 
@@ -279,6 +317,14 @@ const stepNumber: React.CSSProperties = {
 // Antes usaba `borderTop` de ancho completo: una línea horizontal en medio
 // del texto se lee como "acá termina la sección", que es justo lo que NO es.
 // Con la barra a la izquierda queda claro que es una aclaración al margen.
+const measuredTh: React.CSSProperties = {
+  textAlign: 'left', padding: '8px 0', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase',
+  fontWeight: 500, color: dahila.ink500, borderBottom: `1px solid ${dahila.borderStrong}`,
+}
+const measuredTd: React.CSSProperties = {
+  padding: '10px 0', color: dahila.ink700, borderBottom: `1px solid ${dahila.border}`,
+}
+
 const noteStyle: React.CSSProperties = {
   fontFamily: dahila.fontSans, fontSize: 13.5, fontWeight: 300,
   lineHeight: 1.7, color: dahila.ink500,

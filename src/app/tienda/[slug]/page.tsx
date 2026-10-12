@@ -645,6 +645,7 @@ async function ProductPage({ slug }: { slug: string }) {
         totalTestimonios={testimonios.length}
         navidadEncargoHasta={getSetting('navidad_enabled') !== 'false' ? getSetting('navidad_encargo_hasta') : undefined}
         navidadStockHasta={getSetting('navidad_enabled') !== 'false' ? getSetting('navidad_stock_hasta') : undefined}
+        giftEnabled={getSetting('regalo_enabled') !== 'false'}
         clientPhotos={testimonios.filter((t) => t.product_id === product.id && t.photo_url?.trim())}
         // Con la base caída el carrito no puede guardar nada: la ficha toma el
         // pedido por WhatsApp en vez de fallar al tocar "Agregar".

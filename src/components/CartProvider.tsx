@@ -200,6 +200,11 @@ export function CartProvider({
       // En /carrito el ítem aparece en la lista ahí mismo — abrir el drawer
       // encima sería redundante; el caller lo apaga con { openDrawer: false }.
       if (opts?.openDrawer !== false) setDrawerOpen(true)
+      // Un toque háptico mínimo al agregar (Android; iOS lo ignora). Se
+      // respeta "reducir movimiento" (12/10/2026).
+      try {
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) navigator.vibrate(10)
+      } catch { /* sin vibración disponible */ }
       // GA4: add_to_cart con precio y producto (informes de e-commerce).
       track('add_to_cart', { product: product.slug, size, qty }, {
         params: gaCommerce([{

@@ -9,6 +9,7 @@ import { draftDescription } from '@/lib/description-draft'
 import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
 import { recommendPrice, formatUyu, type PricingRecommendation, type PricingPeer } from '@/lib/pricing'
 import { SameSizePrice, CalculadoraPrecio } from '../PriceTools'
+import { saveProductCosts, parseNum, DEFAULT_MARGIN_PCT } from '@/lib/product-costs'
 import type { Category, Color, Collection, Product, ProductMedia, ProductSize, ProductColor } from '@/lib/types'
 
 type LoadedProductColor = Partial<ProductColor> & { color_id?: string; color?: { id: string } }
@@ -83,6 +84,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
   // para no fallar al guardar en una base donde todavía no se corrió el SQL.
   const [hoursInput, setHoursInput] = useState('')
   const [materialsInput, setMaterialsInput] = useState('')
+  const [marginInput, setMarginInput] = useState(String(DEFAULT_MARGIN_PCT))
   const [costsTableOk, setCostsTableOk] = useState(false)
   // Horas visibles en la ficha (products.knit_hours, horas-de-tejido-2026-10.sql).
   const [showHours, setShowHours] = useState(false)
@@ -112,7 +114,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
   const snapshot = JSON.stringify({
     name, slug, description, categoryId, collectionId, badge, status,
     basePriceUyu, discountPercent, discountActive, leadTimeMin, leadTimeMax,
-    material, careInstructions, isCustomOnly, hoursInput, materialsInput, showHours,
+    material, careInstructions, isCustomOnly, hoursInput, materialsInput, marginInput, showHours,
     media: mediaEntries.map((m) => [m.url, m.alt, m.is_primary]),
     sizes: sizes.map((s) => [s.size, s.price_uyu, s.available]),
     colors: [...selectedColors].sort(),
@@ -202,7 +204,9 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
         supabase.from('categories').select('*').order('sort_order'),
         supabase.from('colors').select('*').order('sort_order'),
         supabase.from('collections').select('*').order('sort_order'),
-        supabase.from('product_costs').select('labor_hours, materials_cost_uyu').eq('product_id', productId).maybeSingle(),
+        // * y no columnas sueltas: margin_pct existe recién después de
+        // margen-por-prenda-2026-10.sql, y pedirla antes rompería la consulta.
+        supabase.from('product_costs').select('*').eq('product_id', productId).maybeSingle(),
         supabase.from('products').select('slug, name, base_price_uyu, category_id').eq('status', 'active'),
       ])
 
@@ -214,9 +218,10 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       // igual funciona con la tabla de precios aprobada.
       setCostsTableOk(!costRes.error)
       if (!costRes.error && costRes.data) {
-        const c = costRes.data as { labor_hours: number | string | null; materials_cost_uyu: number | null }
+        const c = costRes.data as { labor_hours: number | string | null; materials_cost_uyu: number | null; margin_pct?: number | string | null }
         if (c.labor_hours != null) setHoursInput(String(Number(c.labor_hours)))
         if (c.materials_cost_uyu != null) setMaterialsInput(String(c.materials_cost_uyu))
+        if (c.margin_pct != null) setMarginInput(String(Number(c.margin_pct)))
       }
       if (peersRes.data) {
         setPeers((peersRes.data as Array<{ slug: string; name: string; base_price_uyu: number | null; category_id: string | null }>)
@@ -584,22 +589,15 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
         if (colorError) throw new Error(`No se guardaron los colores: ${colorError.message}`)
       }
 
-      // Horas y materiales de la calculadora. Van después de lo principal y
-      // NO cortan el guardado: si falta una tabla o columna, el producto ya
-      // quedó bien y solo se avisa qué SQL falta correr.
+      // Horas, materiales y margen de la calculadora. Van después de lo
+      // principal y NO cortan el guardado: si falta una tabla o columna, el
+      // producto ya quedó bien y solo se avisa qué SQL falta correr.
       const warnings: string[] = []
-      const hoursNum = parseFloat(hoursInput.replace(',', '.'))
-      const materialsNum = parseInt(materialsInput)
-      const hoursVal = Number.isFinite(hoursNum) && hoursNum > 0 ? Math.round(hoursNum * 10) / 10 : null
-      const materialsVal = Number.isFinite(materialsNum) && materialsNum >= 0 ? materialsNum : null
-      if (costsTableOk && (hoursVal != null || materialsVal != null)) {
-        const { error: costError } = await supabase.from('product_costs').upsert({
-          product_id: productId,
-          labor_hours: hoursVal,
-          materials_cost_uyu: materialsVal,
-          updated_at: new Date().toISOString(),
-        })
-        if (costError) warnings.push(`No se guardaron las horas y materiales de la calculadora (${costError.message}).`)
+      const hoursNum = parseNum(hoursInput)
+      const hoursVal = hoursNum != null && hoursNum > 0 ? Math.round(hoursNum * 10) / 10 : null
+      if (costsTableOk) {
+        const costWarning = await saveProductCosts(supabase, productId, { hours: hoursInput, materials: materialsInput, margin: marginInput })
+        if (costWarning) warnings.push(costWarning)
       }
       const knitVal = showHours ? hoursVal : null
       if (knitVal !== loadedKnitHours) {
@@ -1150,6 +1148,8 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
               setMaterials={setMaterialsInput}
               showHours={showHours}
               setShowHours={setShowHours}
+              margin={marginInput}
+              setMargin={setMarginInput}
               currentPrice={basePriceUyu ? parseInt(basePriceUyu) : null}
               hasSizes={!isCustomOnly && sizes.length > 0}
               onUseBase={(p) => setBasePriceUyu(String(p))}

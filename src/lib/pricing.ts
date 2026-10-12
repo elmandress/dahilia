@@ -236,3 +236,42 @@ export function applyBulkOp(price: number, op: BulkOp, value: number): number {
     case 'set': return value
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// Delegación a tejedoras (12/10/2026) — la regla de /admin/estrategia →
+// Tejedoras: un modelo es delegable a una tejedora cuando
+//   horas medidas × tarifa + materiales ≤ 70% del precio
+// (el 30% restante paga control de calidad, diseño y marca). Las horas son
+// las de SU muestra cronometrada, no las de Anush (que incluyen diseñar).
+// ─────────────────────────────────────────────────────────────
+
+export const DELEGATION_MAX_SHARE = 0.7
+
+export interface DelegationResult {
+  /** Lo que cuesta la pieza hecha por la tejedora: su pago + materiales. */
+  cost: number
+  /** Pago a la tejedora (horas × tarifa). */
+  pay: number
+  /** Tope: 70% del precio. */
+  limit: number
+  ok: boolean
+  /** Lo que le queda a Dahila, en pesos y en % del precio. */
+  brandKeeps: number
+  brandPct: number
+  /** Tarifa por hora más alta que todavía cierra la cuenta. */
+  maxRate: number | null
+}
+
+export function delegationCheck(i: { hours: number; rate: number; materials: number; price: number }): DelegationResult | null {
+  if (!(i.hours > 0) || !(i.price > 0)) return null
+  const pay = Math.round(i.hours * i.rate)
+  const cost = pay + Math.max(0, i.materials)
+  const limit = Math.round(i.price * DELEGATION_MAX_SHARE)
+  const brandKeeps = i.price - cost
+  const maxRate = Math.floor((limit - Math.max(0, i.materials)) / i.hours)
+  return {
+    cost, pay, limit, ok: cost <= limit,
+    brandKeeps, brandPct: Math.round((brandKeeps / i.price) * 100),
+    maxRate: maxRate > 0 ? maxRate : null,
+  }
+}

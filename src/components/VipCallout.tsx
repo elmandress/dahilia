@@ -1,124 +1,77 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { dahila, Icon } from './ui/Primitives'
-import { subscribeToVipList } from '@/lib/subscribe'
-import { track } from '@/lib/analytics'
-import { safeAction } from '@/lib/safe-action'
+import { VipForm, VIP_STORAGE_KEY, markVipSeen } from './VipForm'
 
 /**
- * Invitación discreta a la lista VIP, hermana de WeaverCallout.
+ * Invitación a la lista privada — el ÚNICO popup del sitio (12/10/2026).
  *
- * Por qué existe: en todo el tiempo que lleva el sitio, el formulario del
- * footer captó UNA sola suscripción, mientras que una casilla puesta en medio
- * del formulario de encargo —o sea, en un momento de intención real— captó el
- * doble. El footer no se lee; el momento sí importa. Y hay 42 carritos
- * abandonados: gente que mostró interés y se fue sin dejar forma de avisarle
- * cuando abra la próxima tanda.
+ * Hasta hoy esperaba a que se cerrara la invitación a tejedoras: en la primera
+ * visita salía la de tejedoras y esta recién en otra visita. Por eso la lista
+ * tenía 6 personas. La de tejedoras dejó de ser popup (vive en /tejedoras).
  *
- * Formato: el mismo que ya funciona para tejedoras (4 postulaciones) — tarjeta
- * no bloqueante, no modal, con X clara y silencio de 30 días al cerrarla.
+ * Tono: privado y con algo de misterio ("lo próximo ya se está tejiendo"), sin
+ * inventar escasez: lo que se promete es lo que pasa — cada tanda es chica y
+ * la lista la ve 24 horas antes. Si hay un drop cargado en Configuración, se
+ * nombra.
  *
- * DOS REGLAS PARA NO INVADIR:
- *  1. Nunca junto con la de tejedoras. Si esa todavía puede aparecer, esta se
- *     calla: dos tarjetas flotantes a la vez es ruido, no captación.
- *  2. Nunca en el carrito ni en encargo. Ahí la persona ya está convirtiendo;
- *     interrumpir un checkout para pedir un email es cambiar una venta por un
- *     email.
- *
- * El email se toma acá mismo: mandarla a otra página a suscribirse pierde a la
- * mayoría en el salto.
+ * Formato NN/g: tarjeta no bloqueante, X clara, 30 días de silencio al
+ * cerrarla o al anotarse en cualquier lado. Timing: 12 s (Wisepops: el
+ * disparo por tiempo a los 11–15 s es el que mejor convierte).
+ * Nunca en carrito, encargo, admin, /vip (ya es el formulario) ni /ig.
  */
-const STORAGE_KEY = 'dahila_vip_cta'
-const WEAVER_KEY = 'dahila_weaver_cta'
 const SNOOZE_DAYS = 30
-const DELAY_MS = 14_000
+const DELAY_MS = 12_000
 
-function snoozedFor(key: string): boolean {
+function snoozed(): boolean {
   try {
-    const raw = localStorage.getItem(key)
+    const raw = localStorage.getItem(VIP_STORAGE_KEY)
     if (!raw) return false
     const ts = parseInt(raw, 10)
     if (isNaN(ts)) return true
     return Date.now() - ts < SNOOZE_DAYS * 86_400_000
   } catch {
-    // Sin localStorage (modo incógnito, storage bloqueado) no hay forma de
-    // recordar que la cerró — mejor no mostrarla que mostrarla en cada visita.
+    // Sin localStorage no se puede recordar que la cerró: mejor no mostrarla.
     return true
   }
 }
 
-export function VipCallout() {
+export function VipCallout({ dropName = '' }: { dropName?: string }) {
   const pathname = usePathname()
   const [show, setShow] = useState(false)
-  const [email, setEmail] = useState('')
-  const [done, setDone] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [pending, startTransition] = useTransition()
-
-  const snooze = () => {
-    try { localStorage.setItem(STORAGE_KEY, String(Date.now())) } catch { /* modo incógnito */ }
-  }
 
   useEffect(() => {
-    // Ya suscripta o ya la cerró → no volver a molestar.
-    if (snoozedFor(STORAGE_KEY)) return
-    // La de tejedoras tiene prioridad: si todavía puede salir, esta espera a
-    // otra visita.
-    if (!snoozedFor(WEAVER_KEY)) return
+    if (snoozed()) return
     const timer = setTimeout(() => setShow(true), DELAY_MS)
     return () => clearTimeout(timer)
   }, [])
 
-  // /ig: landing tipo Linktree — cero overlays no pedidos, mismo criterio
-  // que WeaverCallout.
   if (
     pathname.startsWith('/admin') ||
     pathname.startsWith('/carrito') ||
     pathname.startsWith('/encargo') ||
-    pathname.startsWith('/tejedoras') ||
+    pathname.startsWith('/vip') ||
     pathname === '/ig'
   ) return null
 
   if (!show) return null
 
-  const dismiss = () => { snooze(); setShow(false) }
-
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    const value = email.trim()
-    if (!value) return
-    startTransition(async () => {
-      const res = await safeAction(() => subscribeToVipList(value, 'drop'))
-      if (!res) {
-        setError('No pudimos anotarte: revisá tu conexión y probá de nuevo.')
-        return
-      }
-      if (res.ok) {
-        if (!res.already) track('vip_subscribe', { source: 'callout' }, { name: 'sign_up', params: { method: 'lista_vip' } })
-        setDone(res.already ? 'Ya estabas anotada — te avisamos igual.' : '¡Listo! Te escribimos antes del próximo drop.')
-        snooze()
-        setTimeout(() => setShow(false), 3200)
-      } else {
-        setError(res.error ?? 'No pudimos anotarte ahora.')
-      }
-    })
-  }
+  const dismiss = () => { markVipSeen(); setShow(false) }
 
   return (
     <aside
-      aria-label="Anotate a la lista para ver los drops antes"
-      className="weaver-callout"
+      aria-label="Lista privada de Dahila"
+      className="weaver-callout vip-callout"
       style={{
         position: 'fixed', left: 16, bottom: 16, zIndex: 45,
-        maxWidth: 300,
-        background: '#fff',
-        border: `1px solid ${dahila.border}`,
-        borderRadius: 14,
-        boxShadow: dahila.shadowMd,
-        padding: '16px 18px',
+        maxWidth: 320,
+        background: dahila.ink900, color: '#F5EDE6',
+        borderRadius: 16,
+        boxShadow: '0 18px 40px -18px rgba(31,26,27,0.55)',
+        padding: '18px 18px 16px',
       }}
     >
       <button
@@ -126,78 +79,27 @@ export function VipCallout() {
         onClick={dismiss}
         aria-label="Cerrar invitación"
         style={{
-          position: 'absolute', top: 6, right: 6,
-          width: 32, height: 32,
+          position: 'absolute', top: 6, right: 6, width: 36, height: 36,
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          background: 'transparent', border: 'none', cursor: 'pointer',
-          color: dahila.ink500, borderRadius: 8,
+          background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(245,237,230,0.7)', borderRadius: 8,
         }}
       >
         <Icon name="x" size={14} />
       </button>
 
-      <div style={{
-        fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.2em',
-        textTransform: 'uppercase', color: dahila.wine600, marginBottom: 6,
-      }}>
-        Acceso anticipado
+      <div style={{ fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.24em', textTransform: 'uppercase', color: '#E9B8C4', marginBottom: 8 }}>
+        Lista privada
       </div>
-
-      {done ? (
-        <p role="status" style={{
-          fontFamily: dahila.fontSans, fontSize: 13, lineHeight: 1.5,
-          color: dahila.ink900, margin: 0, paddingRight: 16,
-        }}>
-          {done}
-        </p>
-      ) : (
-        <>
-          <p style={{
-            fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300,
-            fontSize: 15, lineHeight: 1.5, color: dahila.ink900, margin: '0 0 12px',
-            paddingRight: 16,
-          }}>
-            Cada colección sale en cantidades chicas. Enterate 24 horas antes.
-          </p>
-          <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label htmlFor="vip-callout-email" className="sr-only">Tu email</label>
-            <input
-              id="vip-callout-email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              autoComplete="email"
-              style={{
-                fontFamily: dahila.fontSans, fontSize: 14,
-                border: `1px solid ${dahila.borderStrong}`, borderRadius: 8,
-                padding: '10px 12px', minHeight: 44, width: '100%',
-                background: '#fff', color: dahila.ink900,
-              }}
-            />
-            {error && (
-              <span role="alert" style={{ fontFamily: dahila.fontSans, fontSize: 12, color: '#7a1e2f' }}>
-                {error}
-              </span>
-            )}
-            <button
-              type="submit"
-              disabled={pending}
-              style={{
-                fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 500,
-                letterSpacing: '0.08em', textTransform: 'uppercase',
-                background: dahila.ink900, color: '#fff', border: 'none',
-                borderRadius: 8, padding: '11px 16px',
-                cursor: pending ? 'default' : 'pointer',
-                opacity: pending ? 0.7 : 1, minHeight: 44,
-              }}
-            >
-              {pending ? 'Anotando…' : 'Quiero verlo antes'}
-            </button>
-          </form>
-        </>
-      )}
+      <p style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 22, lineHeight: 1.15, margin: '0 0 8px', paddingRight: 18, color: '#F5EDE6' }}>
+        {dropName ? <>«{dropName}» ya se está tejiendo.</> : 'Lo próximo ya se está tejiendo.'}
+      </p>
+      <p style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, lineHeight: 1.55, margin: '0 0 14px', color: 'rgba(245,237,230,0.82)' }}>
+        Son pocas piezas por tanda. La lista las ve 24 horas antes que nadie y elige primero.
+      </p>
+      <VipForm source="popup" tone="dark" idSuffix="popup" onDone={() => setTimeout(() => setShow(false), 3200)} />
+      <Link href="/vip" onClick={markVipSeen} style={{ display: 'inline-block', marginTop: 10, fontFamily: dahila.fontSans, fontSize: 11.5, color: 'rgba(245,237,230,0.7)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+        ¿Qué es la lista?
+      </Link>
     </aside>
   )
 }

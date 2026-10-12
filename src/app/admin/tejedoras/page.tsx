@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { WeaverApplication } from '@/lib/types'
+import { formatUyu } from '@/lib/pricing'
+import { PruebaTejedora, delegationFor, type SampleProduct, type SampleValues } from './PruebaTejedora'
 
 type Status = WeaverApplication['status']
 
@@ -48,6 +50,7 @@ export default function AdminTejedorasPage() {
   const [tableMissing, setTableMissing] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [notesDraft, setNotesDraft] = useState<Record<string, string>>({})
+  const [products, setProducts] = useState<SampleProduct[]>([])
 
   const load = useCallback(async () => {
     const supabase = createClient()
@@ -64,6 +67,19 @@ export default function AdminTejedorasPage() {
     } else {
       setApps((data ?? []) as WeaverApplication[])
     }
+    // Modelos para la muestra: precio de referencia (base o talle más barato)
+    // y materiales de la tabla interna de costos, si están cargados.
+    const [prodRes, costRes] = await Promise.all([
+      supabase.from('products').select('id, name, base_price_uyu, sizes:product_sizes(price_uyu)').neq('status', 'draft').order('name'),
+      supabase.from('product_costs').select('product_id, materials_cost_uyu'),
+    ])
+    const materials = new Map(((costRes.data ?? []) as Array<{ product_id: string; materials_cost_uyu: number | null }>).map((c) => [c.product_id, c.materials_cost_uyu]))
+    setProducts(((prodRes.data ?? []) as Array<{ id: string; name: string; base_price_uyu: number | null; sizes?: Array<{ price_uyu: number | null }> }>)
+      .map((p) => {
+        const sizePrices = (p.sizes ?? []).map((x) => x.price_uyu).filter((n): n is number => !!n)
+        return { id: p.id, name: p.name, price: p.base_price_uyu || (sizePrices.length ? Math.min(...sizePrices) : 0), materials: materials.get(p.id) ?? null }
+      })
+      .filter((p) => p.price > 0))
     setLoading(false)
   }, [])
 
@@ -100,6 +116,20 @@ export default function AdminTejedorasPage() {
     }
   }
 
+  const saveSample = async (id: string, values: SampleValues): Promise<boolean> => {
+    const supabase = createClient()
+    const { error } = await supabase.from('weaver_applications').update(values).eq('id', id)
+    if (error) {
+      showToast(/sample_/.test(error.message)
+        ? 'Falta correr database/pruebas-tejedoras-2026-10.sql en Supabase para guardar la muestra.'
+        : 'No se pudo guardar la muestra.')
+      return false
+    }
+    setApps((a) => a.map((x) => (x.id === id ? { ...x, ...values } : x)))
+    showToast('Muestra guardada.')
+    return true
+  }
+
   const remove = async (id: string) => {
     if (!confirm('¿Eliminar esta postulación definitivamente?')) return
     const supabase = createClient()
@@ -112,6 +142,10 @@ export default function AdminTejedorasPage() {
   }
 
   const filtered = tab === 'all' ? apps : apps.filter((a) => a.status === tab)
+  // Ranking de muestras: mejor calidad primero; a igual calidad, la más rápida.
+  const tested = apps
+    .filter((a) => a.status !== 'rejected' && Number(a.sample_hours) > 0)
+    .sort((x, y) => (y.sample_quality ?? 0) - (x.sample_quality ?? 0) || Number(x.sample_hours) - Number(y.sample_hours))
   const count = (k: Status) => apps.filter((a) => a.status === k).length
 
   if (loading) {
@@ -153,6 +187,38 @@ export default function AdminTejedorasPage() {
         </div>
       ) : (
         <>
+          {tested.length > 0 && (
+            <div className="admin-card" style={{ marginBottom: '1.25rem' }}>
+              <h3 style={{ margin: '0 0 0.25rem', fontSize: '1rem' }}>Muestras comparadas</h3>
+              <p style={{ margin: '0 0 0.75rem', fontSize: '0.82rem', color: '#8C8285' }}>
+                Mejor calidad primero; a igual calidad, la más rápida. &quot;Delegable&quot; = horas × tarifa + materiales ≤ 70% del precio.
+              </p>
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr><th>Tejedora</th><th>Modelo</th><th>Horas</th><th>Calidad</th><th>Delegable</th></tr>
+                  </thead>
+                  <tbody>
+                    {tested.map((a) => {
+                      const d = delegationFor(a, products)
+                      return (
+                        <tr key={a.id}>
+                          <td>{a.name}</td>
+                          <td>{products.find((p) => p.id === a.sample_product_id)?.name ?? '—'}</td>
+                          <td>{Number(a.sample_hours).toLocaleString('es-UY')} h</td>
+                          <td>{a.sample_quality ? '★'.repeat(a.sample_quality) : '—'}</td>
+                          <td style={{ color: d ? (d.ok ? '#1E5E3A' : '#7a1e2f') : '#8C8285' }}>
+                            {d ? (d.ok ? `Sí · quedan ${formatUyu(Math.max(0, d.brandKeeps))}` : `No (tope ${formatUyu(d.limit)})`) : '—'}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* Tabs con contadores, mismo patrón que encargos */}
           <div className="admin-filters" style={{ marginBottom: '1.25rem' }}>
             {TABS.map((t) => (
@@ -245,6 +311,10 @@ export default function AdminTejedorasPage() {
                     Eliminar
                   </button>
                 </div>
+
+                {a.status !== 'new' && a.status !== 'rejected' && (
+                  <PruebaTejedora app={a} products={products} onSave={(v) => saveSample(a.id, v)} />
+                )}
 
                 <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                   <textarea

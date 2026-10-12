@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { getAllArticles, getArticle, getRelatedArticles } from '@/content/blog'
 import { CLUSTER_LABEL, type Article } from '@/content/blog/types'
 import { readingMinutes, tableOfContents } from '@/content/blog/toc'
-import { ArticleBody } from '@/components/blog/ArticleBody'
+import { ArticleBody, type MeasuredPiece } from '@/components/blog/ArticleBody'
 import { ProductCard } from '@/components/ProductCard'
 import { getCatalog } from '@/lib/catalog'
 import { Breadcrumb } from '@/components/ui/Primitives'
@@ -99,7 +99,16 @@ export default async function ArticlePage({
   const found = getArticle(slug)
   if (!found) notFound()
   // La portada elegida en /admin/blog, si hay (settings del catálogo cacheado).
-  const article = withHeroOverride(found, (await getCatalog()).settings)
+  const catalog = await getCatalog()
+  const article = withHeroOverride(found, catalog.settings)
+  // Horas medidas en el taller (bloque measuredHours): solo prendas activas
+  // con knit_hours cargado — el mismo dato que muestra cada ficha.
+  const measured: MeasuredPiece[] = article.body.some((b) => b.type === 'measuredHours')
+    ? catalog.products
+      .filter((p) => p.status === 'active' && Number(p.knit_hours) > 0)
+      .map((p) => ({ name: p.name, slug: p.slug, hours: Number(p.knit_hours) }))
+      .sort((a, b) => a.hours - b.hours)
+    : []
 
   const toc = tableOfContents(article.body)
   const related = getRelatedArticles(article)
@@ -204,7 +213,7 @@ export default async function ArticlePage({
           </nav>
         )}
 
-        <ArticleBody blocks={article.body} />
+        <ArticleBody blocks={article.body} measured={measured} />
       </div>
 
       {/* Productos reales relacionados. Salen del catálogo cacheado, así que

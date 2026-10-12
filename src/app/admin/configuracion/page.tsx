@@ -225,6 +225,18 @@ const SECTIONS = [
       { key: 'info_payment',     label: 'Formas de pago', type: 'textarea' },
     ],
   },
+  {
+    title: 'Tarjeta QR (gracias por tu compra)',
+    description: 'La página que se abre al escanear el QR de la tarjetita que va en cada paquete (dahila.uy/gracias — no está linkeada en ningún otro lado del sitio). Muestra una nota tuya firmada, el regalo para la próxima compra (se aplica solo en el carrito), cómo cuidar la prenda, cómo dejar una reseña o mandar una foto, y la lista privada. El código tiene que existir como cupón real en /admin/cupones con el mismo texto exacto.',
+    fields: [
+      { key: 'qr_thanks_enabled', label: '¿Mostrar el descuento? (apagalo si se te acabaron las tarjetas o el cupón)', type: 'toggle' },
+      { key: 'qr_thanks_eyebrow', label: 'Antetítulo', type: 'text', placeholder: 'Solo para vos' },
+      { key: 'qr_thanks_title',   label: 'Título', type: 'text', placeholder: 'Gracias por elegir algo hecho a mano' },
+      { key: 'qr_thanks_body',    label: 'Nota firmada (va con tu nombre y tu foto de "La artesana")', type: 'textarea', placeholder: 'Tu prenda se tejió a mano, punto por punto, en Montevideo. Ojalá la uses mucho y te acompañe años.' },
+      { key: 'qr_discount_code',    label: 'Código del cupón (tiene que existir igual en /admin/cupones)', type: 'text', placeholder: 'GRACIAS15' },
+      { key: 'qr_discount_percent', label: 'Porcentaje a mostrar', type: 'text', placeholder: '15' },
+    ],
+  },
 ] as const
 
 type FieldType = 'text' | 'textarea' | 'image' | 'hero' | 'toggle' | 'color'

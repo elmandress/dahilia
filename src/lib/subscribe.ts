@@ -6,6 +6,10 @@
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { getCatalog } from '@/lib/catalog'
+import { listaConfigured, sendToList, welcomeMail } from '@/lib/email/lista'
+import { parseDropDateUY, dropWhenText } from '@/lib/drop-date'
 
 export interface SubscribeResult {
   ok: boolean
@@ -15,7 +19,11 @@ export interface SubscribeResult {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
-const SOURCES = new Set(['footer', 'encargo', 'drop'])
+// popup / vip / home desde el 12/10/2026 (lista-vip-origenes-2026-10.sql): para
+// saber qué entrada a la lista funciona. Sin ese SQL la base rechaza el
+// origen nuevo y se guarda como 'drop' (ver más abajo): nadie queda afuera.
+const SOURCES = new Set(['footer', 'encargo', 'drop', 'popup', 'vip', 'home', 'gracias'])
+const LEGACY_SOURCES = new Set(['footer', 'encargo', 'drop'])
 
 const RATE_WINDOW_MS = 60_000
 const RATE_MAX = 4
@@ -37,18 +45,52 @@ export async function subscribeToVipList(rawEmail: string, rawSource?: string): 
 
   try {
     const supabase = await createClient()
-    const { error } = await supabase.from('subscribers').insert({ email, source })
+    let { error } = await supabase.from('subscribers').insert({ email, source })
+    // 23514 = check_violation: la base todavía no acepta el origen nuevo.
+    if (error?.code === '23514' && !LEGACY_SOURCES.has(source)) {
+      ;({ error } = await supabase.from('subscribers').insert({ email, source: 'drop' }))
+    }
     if (error) {
       // Duplicate = already subscribed → success from the user's point of view.
       if (error.code === '23505' || /duplicate|unique/i.test(error.message || '')) {
+        // Se había dado de baja y se vuelve a anotar: vuelve a la lista.
+        // (Con la clave pública no se puede actualizar; con la de servicio sí.)
+        const db = createAdminClient()
+        if (db) {
+          const { data: back } = await db.from('subscribers').update({ unsubscribed_at: null })
+            .eq('email', email).not('unsubscribed_at', 'is', null).select('id')
+          if (back && back.length > 0) { await sendWelcome(email); return { ok: true } }
+        }
         return { ok: true, already: true }
       }
       console.error('subscribe insert error', error)
       return { ok: false, error: 'No pudimos anotarte ahora. Probá de nuevo en un rato.' }
     }
+    await sendWelcome(email)
     return { ok: true }
   } catch (e) {
     console.error('subscribe unexpected error', e)
     return { ok: false, error: 'Error inesperado. Probá de nuevo.' }
+  }
+}
+
+/**
+ * Mail de bienvenida a la lista (12/10/2026): confirma que entró y qué va a
+ * recibir. Además de ser lo esperado, un primer mail abierto y sin quejas
+ * ayuda a que el aviso del drop no caiga en spam. Nunca rompe la
+ * suscripción: si el mail falla, la persona igual queda anotada.
+ */
+async function sendWelcome(email: string): Promise<void> {
+  if (!listaConfigured()) return
+  try {
+    const { settings } = await getCatalog()
+    const name = settings.drop_enabled !== 'false' ? (settings.drop_name ?? '').trim() : ''
+    const when = parseDropDateUY(settings.drop_date)
+    const nextDrop = name
+      ? { name, whenText: when && when.getTime() > Date.now() ? dropWhenText(when) : undefined }
+      : undefined
+    await sendToList([email], (e) => welcomeMail(e, nextDrop), `bienvenida:${email}`)
+  } catch (e) {
+    console.error('lista: bienvenida', e)
   }
 }

@@ -493,7 +493,15 @@ a {
     -webkit-backdrop-filter: blur(12px);
     border-top: 1px solid var(--border);
     box-shadow: 0 -8px 22px -14px rgba(31,26,27,0.22);
+    /* Escondida hasta que el botón principal sale de pantalla (12/10/2026):
+       visible desde el primer momento tapaba el nombre y el precio de la
+       prenda en la primera pantalla, y duplicaba el botón grande que ya se
+       ve. Patrón Baymard: sticky solo cuando el CTA principal no está a la
+       vista. "Reducir movimiento" la anula con el guard global. */
+    transform: translateY(110%);
+    transition: transform 220ms cubic-bezier(.2,.7,.2,1);
   }
+  .pdp-sticky-bar.is-visible { transform: none; }
   /* Espacio al final de la PÁGINA (body), no de <main> (19/09/2026): el pie
      viene después de <main>, así que con el margen en <main> la barra fija
      tapaba la última línea del pie al llegar abajo (el crédito "SIAR",
@@ -820,12 +828,8 @@ a {
     max-width: none !important;
   }
 }
-/* La de tejedoras le habla a otro público: en la ficha, donde la clienta está
-   decidiendo, no sale. Queda en espera (sin gastar el aviso) y aparece cuando
-   pasa a la home, la tienda o el blog. */
-body:has(.producto-detail) .callout-tejedoras {
-  display: none;
-}
+/* (12/10/2026) La invitación a tejedoras ya no es un popup: vive solo en
+   /tejedoras y en el link "Tejé con Dahila". El único popup es el de la VIP. */
 /* La invitación (Weaver/Vip) puede aparecer en la ficha de producto, donde en
    mobile existe la barra sticky de "Agregar al carrito" (.pdp-sticky-bar,
    ~84px de alto). Sin esto, la tarjeta cae encima de esa barra justo en la
@@ -845,4 +849,70 @@ body:has(.producto-detail) .callout-tejedoras {
   body:has(.pdp-sticky-bar) .back-to-top {
     bottom: 164px !important;
   }
+}
+
+/* ============================================================
+   Respuesta al toque (12/10/2026). En el celular el único feedback de los
+   botones era el color de "hover", que en táctil no existe (y antes quedaba
+   pegado después del toque). Una compresión leve confirma que el toque se
+   registró — por debajo de 100 ms de respuesta, que es lo que hace sentir
+   "rápido" a un botón. El guard de prefers-reduced-motion deja el cambio
+   instantáneo. Solo en botones del sistema (.dh-btn) y talles: otros usan
+   transform para posicionarse y no deben moverse.
+   ============================================================ */
+.dh-btn, .pdp-sizes button, .pdp-sticky-bar button {
+  -webkit-tap-highlight-color: transparent;
+}
+.dh-btn:not(:disabled):active,
+.pdp-sizes button:not(:disabled):active,
+.pdp-sticky-bar button:not(:disabled):active {
+  transform: scale(0.97);
+  transition-duration: 90ms;
+}
+
+/* Entrada del popup de la lista privada (12/10/2026): sube y aparece en
+   260 ms en vez de saltar a la pantalla. "Reducir movimiento" la deja
+   instantánea con el guard global. */
+@keyframes vip-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.vip-callout { animation: vip-in 260ms cubic-bezier(.2,.7,.2,1) both; }
+/* En el celular, la regla de .weaver-callout (más arriba) ya la estira dejando
+   libre la esquina de la burbuja de WhatsApp. */
+
+/* Corazón de favoritos (12/10/2026): un pulso corto al guardar confirma que
+   quedó guardado sin necesidad de leer nada. Solo al prender (la key cambia y
+   la animación arranca de nuevo); quitar es instantáneo. */
+@keyframes fav-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.28); }
+  100% { transform: scale(1); }
+}
+.fav-pop { animation: fav-pop 280ms cubic-bezier(.2,.7,.2,1); }
+
+/* ============================================================
+   Microinteracciones de costo cero (12/10/2026)
+   Solo transform/opacity (no recalculan el layout), sin JavaScript, y
+   apagadas con "reducir movimiento".
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  /* Anclas suaves (índice de las notas, "volver arriba"). scroll-padding:
+     el título al que salta no queda tapado por el header fijo. */
+  html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+
+  /* Las secciones de la home aparecen suaves al entrar en pantalla, con una
+     animación atada al scroll del propio navegador (sin JS, sin observers).
+     Donde no está soportado (@supports), se ven igual que siempre. */
+  @supports (animation-timeline: view()) {
+    .home-section {
+      animation: section-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}
+@keyframes section-reveal {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
 }

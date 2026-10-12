@@ -115,6 +115,15 @@ const nextConfig: NextConfig = {
   //
   // Proxy de Umami por el propio dominio — ver comentario junto a umamiOrigin
   // arriba. Sin la env var, no agrega rewrites (comportamiento actual).
+  // URLs con errores de tipeo que Google llegó a ver (Search Console,
+  // 12/10/2026: tenían impresiones y daban 404). Redirección permanente a la
+  // nota correcta, para no perder lo que ya aparecía.
+  async redirects() {
+    return [
+      { source: '/blog/como-guardar-prendas-tejas', destination: '/blog/como-guardar-prendas-tejidas', permanent: true },
+      { source: '/blog/el-crochet-se-hace-a-machine', destination: '/blog/el-crochet-se-hace-a-maquina', permanent: true },
+    ]
+  },
   async rewrites() {
     if (!umamiOrigin) return []
     return [

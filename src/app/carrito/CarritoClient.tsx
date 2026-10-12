@@ -15,6 +15,7 @@ import { PriceBlock } from '@/components/ui/PriceBlock'
 import { ImagenConRespaldo } from '@/components/ui/ImagenConRespaldo'
 import { SITE_URL } from '@/lib/env'
 import { track, gaCommerce } from '@/lib/analytics'
+import { makeOrderCode } from '@/lib/order-tracking'
 import { getAttribution } from '@/lib/attribution'
 
 // Recuerda el código ingresado entre recargas (se re-valida siempre contra el
@@ -70,7 +71,9 @@ function buildWhatsAppMessage(
   giftNote?: string,
   coupon?: { code: string; discount: number; freeShipping: boolean } | null,
   /** Umbral de envío gratis alcanzado (monto en UYU); null si no aplica. */
-  freeShippingOver?: number | null
+  freeShippingOver?: number | null,
+  /** Código de seguimiento (PED-XXXXXX): la clienta lo usa en /pedido. */
+  trackingCode?: string
 ): string {
   const lines: string[] = []
   lines.push('Hola Anush! Quiero coordinar este pedido:')
@@ -114,6 +117,12 @@ function buildWhatsAppMessage(
   // El envío va en la pregunta (auditoría 12/09/2026): es la duda que más
   // frena, y así la primera respuesta ya puede traer el costo.
   lines.push('¿Me confirmás el plazo, el costo de envío a mi zona y la forma de pago? ¡Gracias!')
+  if (trackingCode) {
+    // Al final, para no tapar el pedido. Le sirve a Anush para ubicarlo en
+    // el admin y a la clienta para seguirlo (12/10/2026).
+    lines.push('')
+    lines.push(`Código de pedido: ${trackingCode} (para seguirlo en ${SITE_URL.replace(/^https?:\/\//, '')}/pedido)`)
+  }
 
   return lines.join('\n')
 }
@@ -287,10 +296,12 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
         /* sin red para registrar: no bloqueamos la venta */
       }
     }
+    const trackingCode = makeOrderCode()
     const message = buildWhatsAppMessage(
       items, discounts, total, giftNote.trim(),
       coupon ? { code: coupon.code, discount: couponDiscount, freeShipping } : null,
-      overThreshold ? freeShippingThreshold : null
+      overThreshold ? freeShippingThreshold : null,
+      trackingCode
     )
     // wa.me supports `?text=` query param. encodeURIComponent handles the rest.
     // Strip any trailing slash from the base URL so we can append cleanly.
@@ -328,6 +339,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
         subtotal_uyu: subtotal,
         discount_uyu: couponDiscount,
         total_uyu: total,
+        tracking_code: trackingCode,
         coupon_code: coupon?.code ?? null,
         free_shipping: freeShipping || overThreshold,
         gift_note: giftNote.trim() || null,

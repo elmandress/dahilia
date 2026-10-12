@@ -12,6 +12,7 @@ export const article: Article = {
   role: 'support',
   funnel: 'TOFU',
   publishedAt: '2026-09-04',
+  updatedAt: '2026-10-12',
   hero: { src: '/photos/blog/bufanda-lana-cruda-puesta.jpg', alt: 'Bufanda de lana tejida a crochet en crudo, puesta al cuello', position: '50% 40%' },
   relatedCategorySlug: 'tops',
   relatedProductSlugs: ['top-summer', 'top-duna', 'cardigan-3-4', 'bufanda-sophie'],
@@ -93,6 +94,24 @@ export const article: Article = {
       ],
     },
 
+    // 12/10/2026: la nota con más impresiones del blog (761 en 28 días) no
+    // decía qué prenda de Dahila es de qué fibra. Sale del material cargado en
+    // cada ficha; "lana acrílica" es acrílico (no lana natural).
+    { type: 'h2', text: 'Qué fibra tiene cada prenda de Dahila' },
+    {
+      type: 'p',
+      text: 'Para elegir sin dudar, acá está cada pieza agrupada por su fibra. El material exacto está siempre en la ficha, y lo que se teje a pedido se puede hacer en otra fibra.',
+    },
+    {
+      type: 'ul',
+      items: [
+        '**Algodón (no pica, va directo sobre la piel):** los tops [SUMMER](/tienda/top-summer), [DUNA](/tienda/top-duna), [FLOWER](/tienda/top-flower) y [HIGGIE](/tienda/top-higgie); el [Granny’s cardigan](/tienda/granny-s-cardigan), el [Cardigan 3/4](/tienda/cardigan-3-4), el [Poncho](/tienda/poncho) y el [BEACH set](/tienda/beach-set).',
+        '**Acrílico (no pica):** el [Spring cardigan](/tienda/spring-cardigan) y el [Cardigan amour](/tienda/cardigan-amour) en acrílico antipilling, los tops [LAGOM](/tienda/top-lagom) y [RACE](/tienda/top-race) en hilo acrílico, y el [Sweater Senda](/tienda/sweater-senda) en lana acrílica.',
+        '**Con lana natural (si sos sensible, mejor sobre otra prenda):** el [Sweater cherry](/tienda/sweater-cherry), mitad lana natural y mitad acrílico; la [Bufanda SOPHIE](/tienda/bufanda-sophie) y el [Set de bufanda y guantes](/tienda/set-de-bufanda-y-guantes), en lana.',
+        '**Chenille (suave al tacto):** los [Calentadores](/tienda/calentadores).',
+      ],
+    },
+
     { type: 'h2', text: 'Cosas que hacen que pique más (y que se pueden evitar)' },
     {
       type: 'ul',
@@ -140,8 +159,8 @@ export const article: Article = {
       type: 'shopCta',
       title: 'Elegí la fibra, no solo el modelo',
       text: 'Cada prenda dice de qué está hecha, y las que se tejen a pedido se pueden hacer en la fibra que te sirva.',
-      href: '/tienda',
-      label: 'Ver la tienda',
+      href: '/tienda/tops',
+      label: 'Ver los tops',
     },
   ],
 }

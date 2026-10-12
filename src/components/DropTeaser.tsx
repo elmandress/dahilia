@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { dahila, Eyebrow, Icon } from './ui/Primitives'
 import { BLUR_DATA_URL } from '@/lib/types'
 import { subscribeToVipList } from '@/lib/subscribe'
+import { markVipSeen } from './VipForm'
 import { safeAction } from '@/lib/safe-action'
 
 /**
@@ -67,6 +68,7 @@ function VipCapture() {
         return
       }
       if (res.ok) {
+        markVipSeen()
         setDone(res.already ? 'Ya estabas en la lista — lo vas a ver primero.' : '¡Lista! Lo vas a ver 24 horas antes que el resto.')
       } else {
         setError(res.error || 'No pudimos anotarte. Probá de nuevo.')

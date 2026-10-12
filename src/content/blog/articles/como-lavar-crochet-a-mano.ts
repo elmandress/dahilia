@@ -12,6 +12,9 @@ export const article: Article = {
   role: 'support',
   funnel: 'TOFU',
   publishedAt: '2026-08-31',
+  // 12/10/2026: sección por fibra con las prendas reales (573 impresiones en
+  // 28 días y casi sin clics hacia la tienda).
+  updatedAt: '2026-10-12',
   hero: { src: '/photos/blog/mini-bufanda-rayas-en-plano.jpg', alt: 'Mini bufanda tejida a crochet a rayas verdes y crudas, apoyada en plano', position: '50% 50%' },
   relatedCategorySlug: 'tops',
   relatedProductSlugs: ['top-summer', 'cardigan-cruzado'],
@@ -77,6 +80,21 @@ export const article: Article = {
         '**Retorcer para escurrir.** Es el gesto más natural del mundo y el que más deforma. Toalla siempre.',
         '**Colgar mojada.** El peso del agua estira los hombros y el largo. Una prenda colgada mojada puede crecer varios centímetros y no volver.',
         '**Secarropas.** Calor y tambor: encoge, endurece y aplasta el relieve del punto.',
+      ],
+    },
+
+    { type: 'h2', text: 'Según la fibra de tu prenda Dahila' },
+    {
+      type: 'p',
+      text: 'El paso a paso de arriba sirve para todas. Lo que cambia, según de qué está tejida, es dónde tener más cuidado. La fibra de cada pieza está en su ficha.',
+    },
+    {
+      type: 'ul',
+      items: [
+        '**Algodón** (los tops [SUMMER](/tienda/top-summer) y [DUNA](/tienda/top-duna), el [Granny’s cardigan](/tienda/granny-s-cardigan), la [Bandana](/tienda/bandana)): es la más fácil. Lo que más la cuida es secarla a la sombra, para que no pierda color.',
+        '**Acrílico antipilling** (el [Spring cardigan](/tienda/spring-cardigan), el [Cardigan amour](/tienda/cardigan-amour)): aguanta bien el lavado; lo importante es no retorcerlo para que no pierda la forma.',
+        '**Con lana** (el [Sweater cherry](/tienda/sweater-cherry), la [Bufanda SOPHIE](/tienda/bufanda-sophie)): agua fría y sin frotar. El agua caliente y el roce la apelmazan.',
+        '**Trapillo** (los bolsos como el [Bolso LOLA](/tienda/bolso-lola)): a mano, y que seque bien abierto antes de guardarlo.',
       ],
     },
 

@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/public'
-import type { Product, Discount } from '@/lib/types'
-import { getPrimaryPhoto, formatListingPrice, BLUR_DATA_URL, getPrimaryPhotoAlt } from '@/lib/types'
+import { getCatalog } from '@/lib/catalog'
+import { getPrimaryPhoto, formatListingPrice, BLUR_DATA_URL, getPrimaryPhotoAlt, isReadyToShip } from '@/lib/types'
 import { Icon } from '@/components/ui/Primitives'
 import { dahila } from '@/components/ui/tokens'
 
@@ -33,44 +32,29 @@ export const metadata: Metadata = {
 }
 
 export default async function IgLandingPage() {
-  const supabase = await createClient()
-
-  const [{ data: newestData }, { data: discountData }, { data: settingRows }] = await Promise.all([
-    supabase
-      .from('products')
-      .select('*, media:product_media(*), sizes:product_sizes(*)')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(4),
-    supabase.from('discounts').select('*').eq('active', true),
-    supabase
-      .from('site_settings')
-      .select('key, value')
-      .in('key', ['drop_enabled', 'drop_name', 'drop_collection_slug', 'contact_whatsapp_url']),
-  ])
-
-  const newest = (newestData ?? []) as Product[]
-  const discounts = (discountData ?? []) as Discount[]
-  const settings = (settingRows ?? []).reduce<Record<string, string>>(
-    (acc, r) => ({ ...acc, [r.key as string]: String(r.value ?? '') }), {}
-  )
+  // Desde el 12/10/2026 lee el catálogo cacheado como el resto del sitio (antes
+  // consultaba la base directo cada 5 min: más egress y sin respaldo si la
+  // base se cae). Es la página de la bio: la entrada de la mayoría del tráfico.
+  const { products, discounts, settings, collections } = await getCatalog()
+  const active = products.filter((p) => p.status === 'active')
+  const newest = [...active].sort((x, y) => (y.created_at ?? '').localeCompare(x.created_at ?? '')).slice(0, 4)
+  const readyCount = active.filter(isReadyToShip).length
+  // "Fijar en la bio" (admin → Productos): la prenda del último reel, grande y
+  // primera. Las guías de link-in-bio coinciden: el reel muestra UNA prenda y
+  // la bio tiene que llevar a esa, no a una página genérica.
+  const pinnedSlug = (settings.ig_destacado_slug ?? '').trim()
+  const pinned = pinnedSlug ? active.find((p) => p.slug === pinnedSlug) : undefined
+  const giftOn = settings.regalo_enabled !== 'false'
   const waUrl = settings.contact_whatsapp_url?.trim() || 'https://wa.me/59899850073'
 
   // Bloque de drop — solo si está prendido, tiene nombre y (si apunta a una
   // colección) esa colección está publicada. Misma regla que la home: el
   // teaser nunca linkea una página que dé 404.
-  let dropHref: string | null = null
   const dropName = (settings.drop_name ?? '').trim()
   const showDrop = settings.drop_enabled !== 'false' && dropName.length > 0
   const dropSlug = (settings.drop_collection_slug ?? '').trim()
-  if (showDrop && dropSlug) {
-    const { data: dropCol } = await supabase
-      .from('collections')
-      .select('slug, published')
-      .eq('slug', dropSlug)
-      .maybeSingle()
-    if (dropCol?.published) dropHref = `/colecciones/${dropCol.slug}`
-  }
+  const dropCol = dropSlug ? collections.find((c) => c.slug === dropSlug && c.published) : undefined
+  const dropHref: string | null = dropCol ? `/colecciones/${dropCol.slug}` : null
 
   const bigLink: React.CSSProperties = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
@@ -91,6 +75,44 @@ export default async function IgLandingPage() {
           Tejido a mano en Uruguay, a tu medida.
         </p>
       </div>
+
+      {pinned && (
+        <Link
+          href={`/tienda/${pinned.slug}?utm_source=instagram&utm_medium=bio&utm_campaign=reel`}
+          style={{ display: 'block', textDecoration: 'none', marginBottom: 14, borderRadius: 16, overflow: 'hidden', border: `1px solid ${dahila.border}`, background: '#fff' }}
+        >
+          <span style={{ position: 'relative', display: 'block', aspectRatio: '4 / 5', background: dahila.cream50 }}>
+            <Image
+              src={getPrimaryPhoto(pinned)}
+              alt={getPrimaryPhotoAlt(pinned)}
+              fill
+              quality={82}
+              sizes="(max-width: 480px) 100vw, 440px"
+              fetchPriority="high"
+              loading="eager"
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
+              style={{ objectFit: 'cover' }}
+            />
+            <span style={{
+              position: 'absolute', top: 12, left: 12, padding: '6px 11px', borderRadius: 999,
+              background: 'rgba(255,255,255,0.94)', fontFamily: dahila.fontSans, fontSize: 10.5,
+              letterSpacing: '0.16em', textTransform: 'uppercase', color: dahila.ink900,
+            }}>La del último reel</span>
+          </span>
+          <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 20, color: dahila.ink900 }}>{pinned.name}</span>
+              <span style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700 }}>{formatListingPrice(pinned, discounts)}</span>
+            </span>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', borderRadius: 10,
+              background: dahila.ink900, color: '#fff', fontFamily: dahila.fontSans, fontSize: 12,
+              letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}>Verla <Icon name="caret-right" size={13} color="#fff" /></span>
+          </span>
+        </Link>
+      )}
 
       {/* Drop activo — el motivo #1 por el que alguien toca el link de la bio
           en semana de lanzamiento va primero. */}
@@ -123,7 +145,7 @@ export default async function IgLandingPage() {
             Lo nuevo
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
-            {newest.map((p) => {
+            {newest.filter((p) => p.slug !== pinned?.slug).map((p) => {
               const photo = getPrimaryPhoto(p)
               // Mismo precio que la tarjeta de la tienda y la ficha (antes esta
               // página mostraba el precio base: el Granny's salía 3.300 acá y
@@ -160,17 +182,34 @@ export default async function IgLandingPage() {
           </span>
           <Icon name="caret-right" size={15} color={dahila.ink300} />
         </Link>
+        {readyCount > 0 && (
+          <Link href="/tienda?ya=1" style={bigLink}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+              <Icon name="package" size={18} color={dahila.wine600} /> Ya tejido, sale sin espera
+            </span>
+            <Icon name="caret-right" size={15} color={dahila.ink300} />
+          </Link>
+        )}
+        {giftOn && (
+          <Link href="/regalo" style={bigLink}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+              <Icon name="gift" size={18} color={dahila.wine600} /> Tarjeta de regalo
+            </span>
+            <Icon name="caret-right" size={15} color={dahila.ink300} />
+          </Link>
+        )}
         <Link href="/encargo" style={bigLink}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
             <Icon name="ruler" size={18} color={dahila.wine600} /> Pedir una prenda a medida
           </span>
           <Icon name="caret-right" size={15} color={dahila.ink300} />
         </Link>
-        <Link href="/tejedoras" style={bigLink}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-            <Icon name="hand-heart" size={18} color={dahila.wine600} /> Tejé con Dahila
+        <Link href="/vip" style={{ ...bigLink, background: dahila.ink900, color: '#F5EDE6', border: 'none' }}>
+          <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#E9B8C4' }}>Lista privada</span>
+            <span>Ver cada tanda 24 h antes</span>
           </span>
-          <Icon name="caret-right" size={15} color={dahila.ink300} />
+          <Icon name="caret-right" size={15} color="#F5EDE6" />
         </Link>
         <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ ...bigLink, background: dahila.whatsapp, color: '#fff', border: 'none' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
@@ -178,15 +217,14 @@ export default async function IgLandingPage() {
           </span>
           <Icon name="caret-right" size={15} color="#fff" />
         </a>
+        <Link href="/tejedoras" style={bigLink}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+            <Icon name="hand-heart" size={18} color={dahila.wine600} /> Tejé con Dahila
+          </span>
+          <Icon name="caret-right" size={15} color={dahila.ink300} />
+        </Link>
       </nav>
 
-      <p style={{
-        fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 300, color: dahila.ink500,
-        textAlign: 'center', margin: '26px 0 0', lineHeight: 1.6,
-      }}>
-        Cada colección sale en cantidades chicas, y la lista VIP la ve 24 horas antes.
-        Anotate al pie de la página.
-      </p>
     </div>
   )
 }

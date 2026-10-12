@@ -9,6 +9,7 @@ import { TestimonialsStrip } from '@/components/TestimonialsStrip'
 import { GoogleReviews } from '@/components/GoogleReviews'
 import { NavidadHome } from '@/components/NavidadAviso'
 import { ClientasGallery } from '@/components/ClientasGallery'
+import { VipForm } from '@/components/VipForm'
 import type { Product, Discount } from '@/lib/types'
 import type { Testimonial } from '@/components/TestimonialsStrip'
 import { BLUR_DATA_URL, isReadyToShip } from '@/lib/types'
@@ -385,6 +386,37 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
             display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22,
           }}>
             {readyToShip.map((product) => <ProductCard key={product.id} product={product} discounts={discounts} />)}
+          </div>
+        </section>
+      )}
+
+      {/* LISTA PRIVADA (12/10/2026) — a la vista y sin esperar al popup, cuando
+          no hay un drop activo (si lo hay, DropTeaser ya junta los mails). La
+          lista tenía 6 personas: solo existía en un popup y en el footer. */}
+      {!showDrop && (
+        <section aria-label="Lista privada" className="home-section" style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
+          <div style={{
+            background: dahila.ink900, color: '#F5EDE6', borderRadius: 20,
+            padding: 'clamp(28px, 5vw, 52px)', display: 'grid', gap: 18,
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', alignItems: 'center',
+          }}>
+            <div>
+              <div style={{ fontFamily: dahila.fontSans, fontSize: 10.5, letterSpacing: '0.26em', textTransform: 'uppercase', color: '#E9B8C4', marginBottom: 10 }}>
+                Lista privada
+              </div>
+              <h2 style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(28px, 4vw, 40px)', lineHeight: 1.08, margin: 0, color: '#F5EDE6' }}>
+                Lo próximo ya se está tejiendo.
+              </h2>
+              <p style={{ fontFamily: dahila.fontSans, fontSize: 14.5, fontWeight: 300, lineHeight: 1.65, color: 'rgba(245,237,230,0.8)', margin: '12px 0 0', maxWidth: 440 }}>
+                Cada tanda es chica. La lista la ve 24 horas antes que la tienda y elige primero.
+              </p>
+            </div>
+            <div>
+              <VipForm source="home" tone="dark" idSuffix="home" cta="Quiero entrar" />
+              <Link href="/vip" style={{ display: 'inline-block', marginTop: 10, fontFamily: dahila.fontSans, fontSize: 12, color: 'rgba(245,237,230,0.7)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                ¿Qué es la lista?
+              </Link>
+            </div>
           </div>
         </section>
       )}

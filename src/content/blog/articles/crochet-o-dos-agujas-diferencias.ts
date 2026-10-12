@@ -12,6 +12,9 @@ export const article: Article = {
   role: 'support',
   funnel: 'TOFU',
   publishedAt: '2026-08-31',
+  // 12/10/2026: ejemplos con prendas reales (311 impresiones en 28 días y 0
+  // clics: la nota no mostraba cómo se ve cada técnica en una prenda).
+  updatedAt: '2026-10-12',
   hero: {
     src: '/photos/blog/cardigan-crochet-calado-rosa.jpg',
     alt: 'Cardigan 3/4 tejido a crochet en rosa, con punto calado',
@@ -68,6 +71,12 @@ export const article: Article = {
     {
       type: 'p',
       text: 'Por eso, cuando ves un bolso tejido que se sostiene solo o un top con un calado que dibuja una figura, casi siempre estás viendo crochet.',
+    },
+
+    { type: 'h2', text: 'Cómo se ve en prendas reales' },
+    {
+      type: 'p',
+      text: 'Las piezas de Dahila son de crochet, y algunas muestran muy bien lo que solo esta técnica permite. El [Top DUNA](/tienda/top-duna) está tejido en punto calado: ese dibujo abierto, con huecos que forman parte del diseño, es típico del crochet. El [Spring cardigan](/tienda/spring-cardigan) lleva flores tejidas aparte y aplicadas una por una, algo que en dos agujas se resuelve muy distinto.',
     },
 
     { type: 'h2', text: 'Una consecuencia práctica: el precio' },

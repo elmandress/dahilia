@@ -5,6 +5,8 @@ import { getListingPrice } from '@/lib/types'
 import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
 import { RegaloClient, type GiftSuggestion } from './RegaloClient'
+import { REGALO_FAQ } from './faq'
+import { jsonLdScript } from '@/lib/json-ld'
 
 export const revalidate = 3600
 
@@ -47,5 +49,17 @@ export default async function RegaloPage() {
     .filter((p, i, arr) => arr.findIndex((q) => q.price === p.price) === i)
     .map((p) => ({ amount: p.price, label: p.name }))
 
-  return <RegaloClient whatsappUrl={whatsappUrl} suggestions={suggestions} />
+  // Las mismas preguntas que se ven en la página, como FAQPage para Google.
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: REGALO_FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
+  }
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(faqJsonLd) }} />
+      <RegaloClient whatsappUrl={whatsappUrl} suggestions={suggestions} />
+    </>
+  )
 }

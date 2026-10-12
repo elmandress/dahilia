@@ -119,6 +119,72 @@ function findCatalogIssues(products: ProductCheckRow[]): CatalogIssue[] {
   return issues
 }
 
+/** Algo de la configuración que falta terminar: un SQL sin correr o un
+ *  ajuste de temporada vacío. Sin href = se resuelve fuera del panel. */
+interface SetupIssue { id: string; label: string; detail: string; href?: string }
+
+type SupabaseBrowser = ReturnType<typeof createClient>
+
+/**
+ * Qué falta terminar de configurar (12/10/2026). Cada ronda de mejoras deja
+ * SQL para correr en Supabase, y hasta hoy la única forma de saber cuáles
+ * faltaban era preguntar. Se detecta pidiendo UNA fila de la columna nueva:
+ * si la columna no existe, la consulta falla. Consultas mínimas, sin fotos.
+ */
+async function findSetupIssues(supabase: SupabaseBrowser): Promise<SetupIssue[]> {
+  const sql = (file: string, what: string): SetupIssue => ({
+    id: file,
+    label: `Falta correr ${file}`,
+    detail: `En el SQL Editor de Supabase. Sin esto, ${what}`,
+  })
+  const [knit, colorPhoto, margin, sample, cardigans, navidad, tracking] = await Promise.all([
+    supabase.from('products').select('knit_hours').limit(1),
+    supabase.from('colors').select('image_url').limit(1),
+    supabase.from('product_costs').select('margin_pct').limit(1),
+    supabase.from('weaver_applications').select('sample_hours').limit(1),
+    supabase.from('categories').select('description').eq('slug', 'cardigans').maybeSingle(),
+    supabase.from('site_settings').select('key, value').in('key', ['navidad_enabled', 'navidad_encargo_hasta', 'qr_thanks_enabled', 'qr_discount_code']),
+    supabase.from('orders').select('tracking_code').limit(1),
+  ])
+  const out: SetupIssue[] = []
+  if (knit.error) out.push(sql('horas-de-tejido-2026-10.sql', 'las horas de tejido no se pueden mostrar en las fichas.'))
+  if (colorPhoto.error) out.push(sql('fotos-clientas-y-lanas-2026-10.sql', 'no se guardan fotos de lanas ni de clientas.'))
+  if (margin.error) out.push(sql('margen-por-prenda-2026-10.sql', 'el margen de la calculadora vuelve a 15% en cada prenda.'))
+  if (sample.error) out.push(sql('pruebas-tejedoras-2026-10.sql', 'no se guardan las muestras de las tejedoras ni el ranking.'))
+  if (tracking.error) out.push(sql('seguimiento-pedidos-2026-10.sql', 'los pedidos no tienen código de seguimiento, ni etapas, ni el tablero de Producción.'))
+  const desc = (cardigans.data as { description: string | null } | null)?.description ?? ''
+  if (!cardigans.error && desc && !/sacos/i.test(desc)) {
+    out.push(sql('vocabulario-uruguayo-2026-10.sql', 'las categorías no usan "sacos", "buzos" ni "musculosas", que es como se busca en Uruguay.'))
+  }
+  // Navidad: avisar de octubre a mediados de diciembre si no hay fecha.
+  const now = new Date()
+  const inSeason = now.getMonth() === 9 || now.getMonth() === 10 || (now.getMonth() === 11 && now.getDate() <= 15)
+  const settings = Object.fromEntries(((navidad.data ?? []) as Array<{ key: string; value: string }>).map((r) => [r.key, r.value]))
+  if (inSeason && settings.navidad_enabled !== 'false' && !(settings.navidad_encargo_hasta ?? '').trim()) {
+    out.push({
+      id: 'navidad',
+      label: 'Navidad está apagada',
+      detail: 'Sin fecha límite, el aviso "llega para Navidad" no aparece en el inicio ni en las fichas. Hay fechas propuestas en navidad-2026.sql, o se cargan a mano en Configuración → Navidad.',
+      href: '/admin/configuracion',
+    })
+  }
+  // Tarjeta QR: el cupón que muestra /gracias tiene que existir de verdad, o
+  // "Usarlo ahora" no aplica nada en el carrito.
+  const qrCode = (settings.qr_discount_code ?? 'GRACIAS15').trim()
+  if (settings.qr_thanks_enabled !== 'false' && qrCode) {
+    const { data: cp, error: cpErr } = await supabase.from('coupons').select('id').ilike('code', qrCode.replace(/[\\%_]/g, (c) => `\\${c}`)).limit(1)
+    if (!cpErr && (cp ?? []).length === 0) {
+      out.push({
+        id: 'qr-cupon',
+        label: `El cupón ${qrCode} de la tarjeta QR no existe`,
+        detail: 'La página /gracias lo muestra, pero el carrito no lo va a aceptar. Correr tarjeta-qr-agradecimiento-2026-08.sql o crearlo en Cupones.',
+        href: '/admin/cupones',
+      })
+    }
+  }
+  return out
+}
+
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
     totalProducts: 0,
@@ -132,6 +198,8 @@ export default function AdminDashboardPage() {
     totalCollections: 0,
   })
   const [issues, setIssues] = useState<CatalogIssue[]>([])
+  const [setupIssues, setSetupIssues] = useState<SetupIssue[]>([])
+  const [vipCount, setVipCount] = useState<number | null>(null)
   const [recentOrders, setRecentOrders] = useState<CustomOrder[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -171,6 +239,11 @@ export default function AdminDashboardPage() {
       totalCollections: (collectionsRes as { count: number | null }).count ?? 0,
     })
     setIssues(findCatalogIssues(products))
+    // Configuración pendiente y lista privada: no frenan el resto del panel.
+    findSetupIssues(supabase).then(setSetupIssues).catch(() => setSetupIssues([]))
+    Promise.resolve(supabase.from('subscribers').select('id', { count: 'exact', head: true }).is('unsubscribed_at', null))
+      .then((r) => setVipCount(r.error ? null : (r.count ?? 0)))
+      .catch(() => setVipCount(null))
     setRecentOrders(orders)
     setLoading(false)
   }, [])
@@ -268,6 +341,13 @@ export default function AdminDashboardPage() {
           <div className="stat-value">{stats.activeCarts}</div>
           <div className="stat-sub">Potenciales consultas</div>
         </Link>
+        {vipCount != null && (
+          <Link href="/admin/suscriptores" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div className="stat-label">Lista privada</div>
+            <div className="stat-value">{vipCount}</div>
+            <div className="stat-sub">Ven cada tanda 24 h antes</div>
+          </Link>
+        )}
         {stats.totalCollections > 0 && (
           <Link href="/admin/colecciones" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="stat-label">Colecciones publicadas</div>
@@ -276,6 +356,36 @@ export default function AdminDashboardPage() {
           </Link>
         )}
       </div>
+
+      {setupIssues.length > 0 && (
+        <div className="admin-card" style={{ marginBottom: '1.5rem', borderColor: 'rgba(143,59,83,0.3)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', marginBottom: '0.9rem' }}>
+            <h3 style={{ margin: 0 }}>Falta terminar de configurar</h3>
+            <span style={{ fontSize: '0.8rem', color: '#8C8285' }}>Desaparece solo cuando queda hecho</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {setupIssues.map((it) => {
+              const body = (
+                <>
+                  <span aria-hidden style={{ flexShrink: 0, marginTop: 3, width: 8, height: 8, borderRadius: 999, background: '#8F3B53' }} />
+                  <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
+                    <span style={{ fontSize: '0.92rem', fontWeight: 600, color: '#1F1A1B', overflowWrap: 'anywhere' }}>{it.label}</span>
+                    <span style={{ fontSize: '0.82rem', color: '#5c5556', lineHeight: 1.55 }}>{it.detail}</span>
+                  </span>
+                  {it.href && <span style={{ marginLeft: 'auto', color: '#8F3B53', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>Ir →</span>}
+                </>
+              )
+              const box: React.CSSProperties = {
+                display: 'flex', alignItems: 'flex-start', gap: 12, textDecoration: 'none', color: 'inherit',
+                background: '#FCF5F7', border: '1px solid rgba(143,59,83,0.18)', borderRadius: 12, padding: '13px 16px',
+              }
+              return it.href
+                ? <Link key={it.id} href={it.href} style={box}>{body}</Link>
+                : <div key={it.id} style={box}>{body}</div>
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Chequeo de salud del catálogo — se calcula solo con los datos que ya
           trajo el dashboard, sin consultas extra. Si no hay nada que revisar,

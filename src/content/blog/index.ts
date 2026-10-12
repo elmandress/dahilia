@@ -27,6 +27,12 @@ import { article as regaloAmiga } from './articles/regalos-para-una-amiga-tejido
 import { article as accesoriosPlaya } from './articles/accesorios-tejidos-para-la-playa'
 import { article as chalecoCombinar } from './articles/chaleco-tejido-como-combinarlo'
 import { article as pelotitas } from './articles/pelotitas-en-prendas-tejidas'
+import { article as regalarSinTalle } from './articles/regalar-ropa-sin-saber-el-talle'
+import { article as regalosMamaAbuela } from './articles/regalos-tejidos-para-mama-y-abuela'
+import { article as cuidarVerano } from './articles/cuidar-crochet-en-verano-playa-sol-cloro'
+import { article as looksFiestas } from './articles/looks-tejidos-fiestas-fin-de-ano'
+import { article as cuantoDura } from './articles/cuanto-dura-una-prenda-tejida-a-mano'
+import { article as bandanaUsos } from './articles/bandana-tejida-como-usarla'
 
 /**
  * Registro de artículos. Agregar una nota = crear el archivo en `articles/` e
@@ -38,6 +44,11 @@ import { article as pelotitas } from './articles/pelotitas-en-prendas-tejidas'
  * criterio editorial (qué nota queremos arriba) se decide acá, no por fecha.
  */
 const ARTICLES: Article[] = [
+  // Temporada de regalos (oct-dic 2026): arriba lo que vende en Navidad.
+  regalarSinTalle,
+  regalosMamaAbuela,
+  looksFiestas,
+  regalosNavidad,
   comprarUruguay,
   crochetAMaquina,
   queTalle,
@@ -51,6 +62,8 @@ const ARTICLES: Article[] = [
   setVsSueltas,
   bolsosDuran,
   accesoriosPlaya,
+  bandanaUsos,
+  cuidarVerano,
   cuidarPrendas,
   primerosAuxilios,
   pelotitas,
@@ -58,10 +71,10 @@ const ARTICLES: Article[] = [
   cuantoDemora,
   lanaPica,
   regalosTejidos,
-  regalosNavidad,
   amigoInvisible,
   regaloAmiga,
   cuantoCuesta,
+  cuantoDura,
   lavarCrochet,
   crochetODosAgujas,
   guardarTejidas,
@@ -85,10 +98,12 @@ export function getArticle(slug: string): Article | undefined {
 // 14/09/2026: "regalos tejidos a mano" entra primera. Search Console avisó que
 // sus impresiones subieron 232% (125 en 28 días, posición 6,8): el enlace
 // desde la home le da más fuerza justo a la página que Google está probando.
+// 12/10/2026: las dos notas nuevas de regalos (la home es lo que Google
+// rastrea más seguido: así las descubre rápido) + Navidad.
 const HOME_ARTICLE_SLUGS = [
-  'regalos-tejidos-a-mano',
+  'regalar-ropa-sin-saber-el-talle',
+  'regalos-tejidos-para-mama-y-abuela',
   'regalos-de-navidad-tejidos-a-mano',
-  'accesorios-tejidos-para-la-playa',
 ]
 
 export function getHomeArticles(limit = 3): Article[] {

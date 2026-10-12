@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { dahila, Eyebrow, Icon } from '@/components/ui/Primitives'
 import { formatPrice } from '@/lib/types'
 import { track } from '@/lib/analytics'
+import { REGALO_FAQ } from './faq'
 
 export interface GiftSuggestion {
   amount: number
@@ -61,10 +62,24 @@ export function RegaloClient({ whatsappUrl, suggestions }: { whatsappUrl: string
         fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(32px, 5vw, 48px)',
         lineHeight: 1.05, letterSpacing: '-0.02em', color: dahila.ink900, margin: '10px 0 12px',
       }}>Regalá algo tejido a mano</h1>
-      <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: '0 0 36px', maxWidth: 620 }}>
+      <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: '0 0 16px', maxWidth: 620 }}>
         Sin adivinar el talle ni el color: elegís el monto, le escribís unas palabras y quien la recibe elige
         su prenda. Si es a medida, la tejo con sus medidas exactas.
       </p>
+      {/* Lo esencial antes de bajar (12/10/2026): qué es, dónde sirve y cómo
+          se paga — Baymard: la mayoría de los sitios no explica sus opciones
+          de regalo, y la duda frena la compra. */}
+      <ul aria-label="Lo esencial" style={{ listStyle: 'none', padding: 0, margin: '0 0 36px', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {['Sirve en la tienda o a medida', 'Llega por WhatsApp, lista para reenviar', 'Pagás por transferencia o Mercado Pago'].map((t) => (
+          <li key={t} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 999,
+            background: dahila.cream100, border: `1px solid ${dahila.border}`,
+            fontFamily: dahila.fontSans, fontSize: 12.5, color: dahila.ink700,
+          }}>
+            <Icon name="check" size={13} color={dahila.wine600} /> {t}
+          </li>
+        ))}
+      </ul>
 
       <div className="regalo-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 40, alignItems: 'start' }}>
         {/* Formulario */}
@@ -201,6 +216,21 @@ export function RegaloClient({ whatsappUrl, suggestions }: { whatsappUrl: string
           </ol>
         </div>
       </div>
+
+      {/* Preguntas frecuentes: condiciones claras, sin letra chica. */}
+      <section aria-labelledby="regalo-faq" style={{ maxWidth: 720, marginTop: 64 }}>
+        <h2 id="regalo-faq" style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 28, color: dahila.ink900, margin: '0 0 12px' }}>
+          Preguntas
+        </h2>
+        {REGALO_FAQ.map(([q, a]) => (
+          <details key={q} style={{ borderBottom: `1px solid ${dahila.border}`, padding: '14px 0' }}>
+            <summary style={{ cursor: 'pointer', fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 500, color: dahila.ink900, minHeight: 28 }}>
+              {q}
+            </summary>
+            <p style={{ fontFamily: dahila.fontSans, fontSize: 14.5, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: '8px 0 0' }}>{a}</p>
+          </details>
+        ))}
+      </section>
 
       <style>{`
         @media (max-width: 760px) {

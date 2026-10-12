@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useFavorites } from './FavoritesProvider'
 import { dahila, Icon } from './ui/Primitives'
 
@@ -21,11 +22,15 @@ export function FavoriteButton({
   const { isFavorite, toggle, hasMounted } = useFavorites()
   const active = hasMounted && isFavorite(productId)
   const label = active ? 'Quitar de favoritos' : 'Guardar en favoritos'
+  // El pulso solo cuando la persona toca (no al cargar una página donde ya
+  // estaba guardado, que haría latir todos los corazones a la vez).
+  const [touched, setTouched] = useState(false)
 
   const onClick = (e: React.MouseEvent) => {
     // Cards are clickable buttons themselves — don't navigate when hearting.
     e.stopPropagation()
     e.preventDefault()
+    setTouched(true)
     void toggle(productId)
   }
 
@@ -43,7 +48,7 @@ export function FavoriteButton({
           transition: `color 140ms ${dahila.ease}`,
         }}
       >
-        <Icon name="heart" size={size} weight={active ? 'fill' : 'light'} color={active ? '#B6314A' : dahila.ink700} />
+        <span key={active ? 'on' : 'off'} className={active && touched ? 'fav-pop' : undefined} style={{ display: 'inline-flex' }}><Icon name="heart" size={size} weight={active ? 'fill' : 'light'} color={active ? '#B6314A' : dahila.ink700} /></span>
         {active ? 'Guardado en favoritos' : 'Guardar en favoritos'}
       </button>
     )
@@ -67,7 +72,7 @@ export function FavoriteButton({
         transition: `color 140ms ${dahila.ease}, transform 140ms ${dahila.ease}`,
       }}
     >
-      <Icon name="heart" size={size} weight={active ? 'fill' : 'light'} color={active ? '#B6314A' : dahila.ink700} />
+      <span key={active ? 'on' : 'off'} className={active && touched ? 'fav-pop' : undefined} style={{ display: 'inline-flex' }}><Icon name="heart" size={size} weight={active ? 'fill' : 'light'} color={active ? '#B6314A' : dahila.ink700} /></span>
     </button>
   )
 }

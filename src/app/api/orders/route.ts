@@ -1,3 +1,4 @@
+import { ORDER_CODE_RE } from '@/lib/order-tracking'
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies, headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
@@ -81,7 +82,12 @@ export async function POST(req: NextRequest) {
     // inexistente (no el 42703 crudo de Postgres): por eso también se mira el
     // mensaje, mismo criterio que usan las páginas del admin.
     const supabase = await createClient()
+    // Código de seguimiento (seguimiento-pedidos-2026-10.sql): lo genera el
+    // carrito y va en el mensaje de WhatsApp. Solo el formato válido.
+    const rawCode = typeof body.tracking_code === 'string' ? body.tracking_code.trim().toUpperCase() : ''
+    const trackingCols = ORDER_CODE_RE.test(rawCode) ? { tracking_code: rawCode } : {}
     const attempts = [
+      { ...baseRow, ...attributionCols, cart_id: cartId, ...trackingCols },
       { ...baseRow, ...attributionCols, cart_id: cartId },
       { ...baseRow, ...attributionCols },
       baseRow,
@@ -89,8 +95,9 @@ export async function POST(req: NextRequest) {
     let error: { code?: string; message?: string } | null = null
     for (const row of attempts) {
       ;({ error } = await supabase.from('orders').insert(row))
-      const missingColumn = error?.code === '42703' || error?.code === 'PGRST204'
-        || /cart_id|utm_source|utm_medium|utm_campaign|referrer_host/.test(error?.message || '')
+      // 23505: el código de seguimiento chocó con otro (rarísimo): se guarda sin él.
+      const missingColumn = error?.code === '42703' || error?.code === 'PGRST204' || error?.code === '23505'
+        || /cart_id|utm_source|utm_medium|utm_campaign|referrer_host|tracking_code/.test(error?.message || '')
       if (!error || !missingColumn) break
     }
     // La tabla `orders` es opcional (migración no corrida todavía) — no

@@ -10,6 +10,7 @@ import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
 import type { Category, Color, Collection } from '@/lib/types'
 import { DEFAULT_CARE_INSTRUCTIONS } from '@/lib/types'
 import { SameSizePrice, CalculadoraPrecio } from '../PriceTools'
+import { saveProductCosts, parseNum, DEFAULT_MARGIN_PCT } from '@/lib/product-costs'
 
 interface SizeEntry {
   tempId: string
@@ -76,6 +77,7 @@ export default function NuevoProductoPage() {
   // si se marca, también a products.knit_hours para mostrarlas en la ficha.
   const [hoursInput, setHoursInput] = useState('')
   const [materialsInput, setMaterialsInput] = useState('')
+  const [marginInput, setMarginInput] = useState(String(DEFAULT_MARGIN_PCT))
   const [showHours, setShowHours] = useState(false)
 
   // Media
@@ -415,21 +417,13 @@ export default function NuevoProductoPage() {
         if (colorError) throw new Error(`No se guardaron los colores: ${colorError.message}`)
       }
 
-      // Horas y materiales: no cortan el alta (el producto ya está creado y
-      // completo); si falta una tabla o columna se avisa qué SQL correr.
+      // Horas, materiales y margen: no cortan el alta (el producto ya está
+      // creado y completo); si falta una tabla o columna se avisa qué SQL correr.
       const warnings: string[] = []
-      const hoursNum = parseFloat(hoursInput.replace(',', '.'))
-      const materialsNum = parseInt(materialsInput)
-      const hoursVal = Number.isFinite(hoursNum) && hoursNum > 0 ? Math.round(hoursNum * 10) / 10 : null
-      const materialsVal = Number.isFinite(materialsNum) && materialsNum >= 0 ? materialsNum : null
-      if (hoursVal != null || materialsVal != null) {
-        const { error: costError } = await supabase.from('product_costs').upsert({
-          product_id: product.id,
-          labor_hours: hoursVal,
-          materials_cost_uyu: materialsVal,
-        })
-        if (costError) warnings.push('las horas y materiales de la calculadora no se guardaron (falta database/costos-produccion-2026-09.sql).')
-      }
+      const hoursNum = parseNum(hoursInput)
+      const hoursVal = hoursNum != null && hoursNum > 0 ? Math.round(hoursNum * 10) / 10 : null
+      const costWarning = await saveProductCosts(supabase, product.id as string, { hours: hoursInput, materials: materialsInput, margin: marginInput })
+      if (costWarning) warnings.push(costWarning)
       if (showHours && hoursVal != null) {
         const { error: knitError } = await supabase.from('products').update({ knit_hours: hoursVal }).eq('id', product.id)
         if (knitError) warnings.push('las horas no se muestran en la ficha todavía (falta database/horas-de-tejido-2026-10.sql).')
@@ -705,6 +699,8 @@ export default function NuevoProductoPage() {
               setMaterials={setMaterialsInput}
               showHours={showHours}
               setShowHours={setShowHours}
+              margin={marginInput}
+              setMargin={setMarginInput}
               currentPrice={basePriceUyu ? parseInt(basePriceUyu) : null}
               hasSizes={sizes.length > 0}
               onUseBase={(p) => setBasePriceUyu(String(p))}

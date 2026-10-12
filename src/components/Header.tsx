@@ -28,6 +28,9 @@ const NAV_ITEMS = [
   { id: '/colecciones', label: 'Colecciones' },
   { id: '/ofertas',     label: 'Ofertas', accent: true },
   { id: '/encargo',     label: 'A medida' },
+  // 12/10/2026: la tarjeta de regalo no se encontraba (ni el equipo sabía que
+  // existía). Gift cards: entrada fija en el menú principal (Blackhawk/NAPCO).
+  { id: '/regalo',      label: 'Regalos' },
   { id: '/blog',        label: 'Notas' },
   { id: '/tejedoras',   label: 'Tejé con Dahila' },
   { id: '/contacto',    label: 'Contacto' },
@@ -59,12 +62,14 @@ export function Header({
   promo,
   showOfertas = true,
   showColecciones = true,
+  showRegalo = true,
   categories,
   readyToShipCount = 0,
 }: {
   promo?: PromoBar
   showOfertas?: boolean
   showColecciones?: boolean
+  showRegalo?: boolean
   /** Categorías reales del catálogo (las pasa el layout raíz). Vacío o ausente
    *  → se usa el fallback estático. */
   categories?: { slug: string; label: string }[]
@@ -79,7 +84,8 @@ export function Header({
   // entrena a ignorar la navegación.
   const navItems = NAV_ITEMS.filter((it) =>
     (showOfertas || it.id !== '/ofertas') &&
-    (showColecciones || it.id !== '/colecciones')
+    (showColecciones || it.id !== '/colecciones') &&
+    (showRegalo || it.id !== '/regalo')
   )
   const [open, setOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
@@ -521,6 +527,9 @@ export function Header({
                 )}
                 {showColecciones && (
                   <li><Link href="/colecciones" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>Colecciones</Link></li>
+                )}
+                {showRegalo && (
+                  <li><Link href="/regalo" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.wine600 }}>Tarjeta de regalo</Link></li>
                 )}
                 <li><Link href="/encargo" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>Encargo a medida</Link></li>
                 <li><Link href="/atelier" onClick={() => setMegaOpen(false)} style={{ textDecoration: 'none', fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17, color: dahila.ink700 }}>Sobre nosotros</Link></li>

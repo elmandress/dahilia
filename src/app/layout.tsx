@@ -8,7 +8,6 @@ import { BackToTop } from '@/components/BackToTop'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { WhatsAppFloat } from '@/components/WhatsAppFloat'
-import { WeaverCallout } from '@/components/WeaverCallout'
 import { VipCallout } from '@/components/VipCallout'
 import { AnalyticsScript } from '@/components/AnalyticsScript'
 import { ClarityScript } from '@/components/ClarityScript'
@@ -290,6 +289,7 @@ export default async function RootLayout({
               promo={promo}
               showOfertas={showOfertas}
               showColecciones={showColecciones}
+              showRegalo={catalog.settings.regalo_enabled !== 'false'}
               categories={catalog.categories.map((c) => ({ slug: c.slug, label: c.name }))}
               readyToShipCount={catalog.products.filter(isReadyToShip).length}
             />
@@ -304,8 +304,9 @@ export default async function RootLayout({
             <CartDrawer products={addonCandidates} />
             <BackToTop />
             <WhatsAppFloat enabled={waEnabled} waUrl={waUrl} />
-            <WeaverCallout />
-            {catalog.source !== 'snapshot' && <VipCallout />}
+            {catalog.source !== 'snapshot' && (
+              <VipCallout dropName={catalog.settings.drop_enabled !== 'false' ? (catalog.settings.drop_name ?? '').trim() : ''} />
+            )}
           </FavoritesProvider>
         </CartProvider>
         <AttributionCapture />

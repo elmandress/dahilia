@@ -119,5 +119,9 @@ export const article: Article = {
         },
       ],
     },
+    {
+      type: 'note',
+      text: '¿No sabés su talle? Hay una [tarjeta de regalo](/regalo) para que elija ella, y en [cómo regalar ropa sin saber el talle](/blog/regalar-ropa-sin-saber-el-talle) están las otras salidas.',
+    },
   ],
 }

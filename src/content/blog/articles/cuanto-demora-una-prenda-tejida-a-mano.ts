@@ -7,11 +7,14 @@ export const article: Article = {
   description:
     'Cuántas horas lleva tejer a crochet un top, un cardigan o un bolso, cuánto tarda desde el pedido hasta que llega y qué hace que una pieza demore más.',
   excerpt:
-    'Un bolso chico son unas cinco horas de trabajo. Un cardigan pasa las veinte. Acá está el detalle de por qué una prenda tejida a mano tarda lo que tarda.',
+    'Un bolso chico son unas cinco horas de trabajo. Un cardigan, de 16 a más de 20. Acá está el detalle de por qué una prenda tejida a mano tarda lo que tarda.',
   cluster: 'a-medida',
   role: 'support',
   funnel: 'BOFU',
   publishedAt: '2026-09-04',
+  // 12/10/2026: primera medición cronometrada (Spring cardigan, 16 h) y bloque
+  // measuredHours, que suma solo cada prenda que se mida en el admin.
+  updatedAt: '2026-10-12',
   hero: { src: '/photos/blog/top-maresia-flor-tejida.jpg', alt: 'Top MARESIA tejido a crochet en blanco, con una flor lila tejida en el frente', position: '50% 50%' },
   relatedCategorySlug: 'cardigans',
   relatedProductSlugs: ['cardigan-3-4', 'bolso-lola', 'top-summer'],
@@ -24,7 +27,7 @@ export const article: Article = {
     {
       type: 'callout',
       title: 'La versión corta',
-      text: 'Las horas de tejido de una pieza van de unas 3 para un accesorio chico a más de 20 para un cardigan. El plazo de entrega es otra cosa: depende de cuántos pedidos hay antes del tuyo. El plazo actualizado de cada pieza está siempre en su ficha de producto.',
+      text: 'Las horas de tejido de una pieza van de unas 3 para un accesorio chico a entre 16 y más de 20 para un cardigan. El plazo de entrega es otra cosa: depende de cuántos pedidos hay antes del tuyo. El plazo actualizado de cada pieza está siempre en su ficha de producto.',
     },
 
     { type: 'h2', text: 'Las horas de tejido, por tipo de pieza' },
@@ -41,12 +44,17 @@ export const article: Article = {
         '**Tops:** entre 11 y 16 horas, según el largo y el calado.',
         '**Sets de varias piezas:** entre 16 y 20 horas.',
         '**Poncho:** cerca de 19 horas.',
-        '**Cardigans:** más de 20 horas.',
+        '**Cardigans:** de 16 a más de 20 horas, según el modelo.',
       ],
     },
     {
       type: 'note',
       text: 'Son los tiempos estimados que usa el taller para planificar la producción, no una medición cronometrada pieza por pieza. Varían con el punto, el grosor de la lana y el talle: un mismo modelo en XL lleva más horas que en S.',
+    },
+    {
+      type: 'measuredHours',
+      title: 'Medido en el taller',
+      text: 'Estas sí están cronometradas: prenda por prenda, con reloj, mientras se tejía. La lista crece a medida que se miden más piezas.',
     },
 
     { type: 'h2', text: 'Por qué un cardigan lleva cuatro veces más que un bolso' },

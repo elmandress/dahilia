@@ -249,8 +249,12 @@ export function ProductCard({
       {/* Material tag — tiny pill, solo si el producto lo tiene cargado */}
       {product.material && (
         <div style={{ padding: '0 2px', marginTop: 2 }}>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 4,
+          {/* Un solo renglón (12/10/2026): "Lana 50% natural y 50% acrílica"
+              ocupaba dos y desalineaba la fila de tarjetas en el celular. El
+              texto completo queda en title y en la ficha. */}
+          <span title={product.material} style={{
+            display: 'inline-block', maxWidth: '100%',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'top',
             fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 400,
             color: dahila.ink500, letterSpacing: '0.04em',
             background: dahila.cream100,

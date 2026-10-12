@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { AvisoAutomatico } from './AvisoAutomatico'
 import type { Subscriber } from '@/lib/types'
 
 const SOURCE_LABEL: Record<Subscriber['source'], string> = {
@@ -10,6 +11,10 @@ const SOURCE_LABEL: Record<Subscriber['source'], string> = {
   encargo: 'Encargo',
   drop: 'Drop',
   manual: 'Manual',
+  popup: 'Popup',
+  vip: 'Página /vip',
+  home: 'Inicio',
+  gracias: 'Tarjeta QR (/gracias)',
 }
 
 export default function AdminSuscriptoresPage() {
@@ -97,7 +102,7 @@ export default function AdminSuscriptoresPage() {
       <div className="admin-page-header">
         <div>
           <h2>Lista VIP</h2>
-          <p>Emails para avisar de drops y lanzamientos (captados en el footer)</p>
+          <p>La lista privada: ven cada drop 24 h antes. Se anotan desde el popup, el inicio, dahila.uy/vip y el pie.</p>
         </div>
         {active.length > 0 && (
           <div style={{ display: 'flex', gap: 8 }}>
@@ -110,6 +115,8 @@ export default function AdminSuscriptoresPage() {
           </div>
         )}
       </div>
+
+      <AvisoAutomatico />
 
       {toast && (
         <div role="status" style={{

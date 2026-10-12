@@ -104,5 +104,9 @@ export const article: Article = {
       type: 'note',
       text: 'Las horas de trabajo mencionadas son órdenes de magnitud del tejido a mano en general, no una tarifa de Dahila. Los precios reales, por pieza, están siempre a la vista en la tienda.',
     },
+    {
+      type: 'note',
+      text: 'La otra mitad de la cuenta es cuánto te va a durar: está en [cuánto dura una prenda tejida a mano](/blog/cuanto-dura-una-prenda-tejida-a-mano).',
+    },
   ],
 }

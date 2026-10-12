@@ -116,5 +116,9 @@ export const article: Article = {
         },
       ],
     },
+    {
+      type: 'note',
+      text: 'Las tres formas de llevar la bandana (pelo, cuello y cartera) están en [bandana tejida: cómo usarla](/blog/bandana-tejida-como-usarla).',
+    },
   ],
 }

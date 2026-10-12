@@ -168,6 +168,12 @@ export interface WeaverApplication {
   message: string | null;
   status: 'new' | 'contacted' | 'sample' | 'approved' | 'rejected';
   admin_notes: string | null;
+  // Resultado de la muestra pagada (pruebas-tejedoras-2026-10.sql; opcionales
+  // hasta correrlo).
+  sample_product_id?: string | null;
+  sample_hours?: number | string | null;
+  sample_quality?: number | null;
+  sample_rate_uyu?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -177,7 +183,7 @@ export interface Subscriber {
   id: string;
   email: string;
   name: string | null;
-  source: 'footer' | 'encargo' | 'drop' | 'manual';
+  source: 'footer' | 'encargo' | 'drop' | 'manual' | 'popup' | 'vip' | 'home' | 'gracias';
   created_at: string;
   unsubscribed_at: string | null;
 }

@@ -75,6 +75,7 @@ export function CalculadoraPrecio({
   hours, setHours,
   materials, setMaterials,
   showHours, setShowHours,
+  margin, setMargin,
   currentPrice,
   hasSizes,
   onUseBase,
@@ -87,6 +88,9 @@ export function CalculadoraPrecio({
   /** Si las horas se muestran en la ficha pública (columna knit_hours). */
   showHours: boolean
   setShowHours: (v: boolean) => void
+  /** Margen de ganancia en % — se guarda por prenda (product_costs.margin_pct). */
+  margin: string
+  setMargin: (v: string) => void
   /** Precio base actual, para comparar. */
   currentPrice: number | null
   hasSizes: boolean
@@ -94,11 +98,11 @@ export function CalculadoraPrecio({
   onUseAllSizes: (price: number) => void
 }) {
   // Los supuestos generales viven solo en la pantalla (como en la Calculadora
-  // de estrategia): lo que se guarda por prenda son horas y materiales.
+  // de estrategia). Por prenda se guardan horas, materiales y el margen: una
+  // pieza de entrada y una de colección no llevan la misma ganancia.
   const [packaging, setPackaging] = useState('40')
   const [others, setOthers] = useState('0')
   const [rate, setRate] = useState('150')
-  const [margin, setMargin] = useState('15')
   const [commission, setCommission] = useState('0')
 
   const h = num(hours)
@@ -142,13 +146,57 @@ export function CalculadoraPrecio({
         </span>
       </label>
 
+      {/* Margen de ganancia a la vista (pedido 12/10/2026): antes estaba
+          escondido en "Supuestos" y volvía a 15% en cada prenda. */}
+      <div>
+        <label htmlFor="calc-margin" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, color: '#4A4143', marginBottom: 6 }}>
+          Margen de ganancia
+        </label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
+          {['0', '15', '30', '50'].map((m) => {
+            const on = num(margin) === num(m)
+            return (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMargin(m)}
+                aria-pressed={on}
+                style={{
+                  minHeight: 36, minWidth: 52, padding: '0 12px', borderRadius: 999, cursor: 'pointer', fontSize: 13,
+                  border: `1px solid ${on ? '#8F3B53' : 'rgba(31,26,27,0.18)'}`,
+                  background: on ? '#8F3B53' : '#fff', color: on ? '#fff' : '#4A4143',
+                }}
+              >
+                {m}%
+              </button>
+            )
+          })}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <input
+              id="calc-margin"
+              type="number"
+              inputMode="decimal"
+              min={0}
+              max={300}
+              value={margin}
+              onChange={(e) => setMargin(e.target.value)}
+              aria-label="Margen de ganancia en porcentaje"
+              style={{ width: 72, minHeight: 36, padding: '4px 8px', borderRadius: 8, border: '1px solid rgba(31,26,27,0.18)', fontSize: 14 }}
+            />
+            <span style={{ fontSize: 13, color: '#8C8285' }}>%</span>
+          </span>
+        </div>
+        <span className="field-hint" style={{ display: 'block', marginTop: 4 }}>
+          Se suma arriba de tu trabajo y los materiales: es lo que queda para la marca (fotos, muestras, reinvertir). Se guarda con la prenda.
+        </span>
+      </div>
+
       <details>
         <summary style={{ cursor: 'pointer', fontSize: '0.85rem', color: '#8F3B53' }}>
-          Supuestos de la cuenta (tarifa, margen, comisión…)
+          Supuestos de la cuenta (tarifa, packaging, comisión…)
         </summary>
         <div className="admin-form-grid" style={{ marginTop: 10 }}>
           {field('calc-rate', 'Tarifa por hora ($)', rate, setRate, 'Mínimo nacional ~$127. Referencia: $150–250.')}
-          {field('calc-margin', 'Margen de marca (%)', margin, setMargin, 'Para reinvertir: fotos, muestras, packaging.')}
           {field('calc-packaging', 'Packaging ($)', packaging, setPackaging)}
           {field('calc-others', 'Otros costos ($)', others, setOthers, 'Envío que absorbés, feria…')}
           {field('calc-commission', 'Comisión de cobro (%)', commission, setCommission, 'Mercado Pago ~6%. Transferencia: 0.')}
@@ -165,7 +213,7 @@ export function CalculadoraPrecio({
             <ul style={{ margin: '0 0 8px', paddingLeft: 18, fontSize: 13, lineHeight: 1.6, color: '#4A4043' }}>
               <li>Materiales y costos: {formatUyu(r.costs)}</li>
               <li>Trabajo: {h.toLocaleString('es-UY')} h × {formatUyu(num(rate))} = {formatUyu(r.labour)}</li>
-              <li>Margen de marca ({num(margin)}%): {formatUyu(r.marginAmount)}</li>
+              <li>Ganancia ({num(margin)}%): {formatUyu(r.marginAmount)}</li>
               {r.commissionPct > 0 && <li>Comisión ({r.commissionPct}%): {formatUyu(r.commissionAmount)}</li>}
             </ul>
             <p style={{ margin: '0 0 10px', fontSize: 13, color: '#4A4043' }}>

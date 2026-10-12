@@ -149,5 +149,9 @@ export const article: Article = {
       href: '/tienda/sets',
       label: 'Ver los sets',
     },
+    {
+      type: 'note',
+      text: 'Ideas para usar los sets con brillo en las fiestas, en [looks tejidos para fin de año](/blog/looks-tejidos-fiestas-fin-de-ano).',
+    },
   ],
 }

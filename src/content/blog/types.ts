@@ -39,6 +39,11 @@ export type Block =
    *  los reales del archivo: el espacio queda reservado y la foto no mueve el
    *  texto al cargar. Con href, la foto lleva a la ficha del producto. */
   | { type: 'image'; src: string; alt: string; width: number; height: number; caption?: Inline; href?: string }
+  /** Horas de tejido MEDIDAS (12/10/2026): las prendas con knit_hours cargado
+   *  en el admin, leídas del catálogo en cada regeneración. Dato propio que
+   *  ninguna otra página tiene, y se actualiza solo cuando Anush cronometra
+   *  una pieza nueva. Sin prendas medidas, el bloque no se dibuja. */
+  | { type: 'measuredHours'; title: string; text?: Inline }
 
 /** Etapa del embudo. Sirve para no llenar el blog de tráfico que no compra. */
 export type Funnel = 'TOFU' | 'MOFU' | 'BOFU'

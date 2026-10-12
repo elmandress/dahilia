@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatPrice } from '@/lib/types'
 import { channelLabel } from '@/lib/attribution'
+import { ProduccionControls, type ProductionFields, type WeaverOption } from './Produccion'
 
 interface OrderItem {
   name: string
@@ -36,6 +37,12 @@ interface OrderRow {
   utm_source: string | null
   referrer_host: string | null
   status?: OrderStatus | null
+  // Seguimiento y producción (seguimiento-pedidos-2026-10.sql)
+  tracking_code?: ProductionFields['tracking_code']
+  stage?: ProductionFields['stage']
+  weaver_id?: ProductionFields['weaver_id']
+  weaver_pay_uyu?: ProductionFields['weaver_pay_uyu']
+  weaver_paid?: ProductionFields['weaver_paid']
 }
 
 const DAY = 86_400_000
@@ -56,6 +63,8 @@ export default function PedidosAdminPage() {
   // Momento de la última carga: "los últimos 30 días" se cuentan desde ahí
   // (llamar a Date.now() durante el render lo prohíbe la regla de pureza).
   const [loadedAt, setLoadedAt] = useState(0)
+  // Tejedoras a las que se les puede asignar un pedido (aprobadas o a prueba).
+  const [weavers, setWeavers] = useState<WeaverOption[]>([])
 
   const load = useCallback(async () => {
     setError(null)
@@ -81,6 +90,8 @@ export default function PedidosAdminPage() {
       }
       const rows = (data ?? []) as OrderRow[]
       setOrders(rows)
+      const { data: ws } = await supabase.from('weaver_applications').select('id, name').in('status', ['approved', 'sample']).order('name')
+      setWeavers((ws ?? []) as WeaverOption[])
       setLoadedAt(Date.now())
       // Lista vacía: ¿no hay pedidos, o RLS los está escondiendo? La función
       // is_admin() lo responde sin escribir nada. Si no existe (migración
@@ -105,6 +116,7 @@ export default function PedidosAdminPage() {
   // `select('*')` trae la columna si la migración corrió: con una sola fila
   // alcanza para saberlo.
   const hasStatus = orders.some((o) => o.status !== undefined)
+  const hasTracking = orders.some((o) => o.stage !== undefined)
 
   const updateStatus = async (id: string, status: OrderStatus) => {
     setStatusError(null)
@@ -145,7 +157,7 @@ export default function PedidosAdminPage() {
       <div className="admin-page-header">
         <div>
           <h2>Pedidos enviados</h2>
-          <p>Cada vez que alguien toca &quot;Coordinar por WhatsApp&quot; queda una foto del pedido acá. Después de hablar con la clienta, marcá si se vendió: así se sabe cuánto de lo que llega por el sitio termina en venta.</p>
+          <p>Cada vez que alguien toca &quot;Coordinar por WhatsApp&quot; queda una foto del pedido acá, con su código (el mismo que la clienta ve en su mensaje). Marcá si se vendió, en qué etapa está (la clienta la ve en dahila.uy/pedido) y quién lo teje.</p>
         </div>
         <button className="admin-btn admin-btn-secondary admin-btn-sm" onClick={() => load()}>Actualizar</button>
       </div>
@@ -306,6 +318,14 @@ export default function PedidosAdminPage() {
                     </div>
                   ))}
                 </div>
+
+                {hasTracking && o.status !== 'no_concreto' && (
+                  <ProduccionControls
+                    order={o}
+                    weavers={weavers}
+                    onChange={(patch) => setOrders((prev) => prev.map((x) => (x.id === o.id ? { ...x, ...patch } : x)))}
+                  />
+                )}
 
                 {o.gift_note && (
                   <p style={{ marginTop: 10, fontSize: '0.85rem', color: '#4A4143', fontStyle: 'italic' }}>

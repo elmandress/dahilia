@@ -7,6 +7,7 @@ import { useState, useTransition } from 'react'
 import { dahila } from './ui/Primitives'
 import { STUDIO_INSTAGRAM, STUDIO_URL } from '@/lib/env'
 import { subscribeToVipList } from '@/lib/subscribe'
+import { markVipSeen } from './VipForm'
 import { track } from '@/lib/analytics'
 import { safeAction } from '@/lib/safe-action'
 
@@ -62,6 +63,7 @@ function VipSignup() {
         return
       }
       if (res.ok) {
+        markVipSeen()
         if (!res.already) track('vip_subscribe', { source: 'footer' }, { name: 'sign_up', params: { method: 'lista_vip' } })
         setDone(res.already ? 'Ya estabas en la lista — te avisamos primero.' : '¡Lista! Vas a ver cada colección antes que nadie.')
       } else {
@@ -84,7 +86,7 @@ function VipSignup() {
         <div style={{
           fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
           textTransform: 'uppercase', color: dahila.ink500, marginBottom: 8,
-        }}>Lista VIP</div>
+        }}>Lista privada</div>
         <p style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, lineHeight: 1.6, color: dahila.ink700, margin: 0 }}>
           Cada colección sale en cantidades chicas: es tejido a mano.
           Anotate y comprá 24 horas antes que el resto.
@@ -101,7 +103,7 @@ function VipSignup() {
               type="email"
               required
               placeholder="tu@correo.uy"
-              aria-label="Tu email para la lista VIP"
+              aria-label="Tu email para la lista privada"
               name="email"
               autoComplete="email"
               maxLength={120}
@@ -206,6 +208,7 @@ export function Footer({
                 { label: 'Sobre nosotros',    href: '/atelier' },
                 { label: 'Contacto',          href: '/contacto' },
                 { label: 'Estado de encargo', href: '/encargo/estado' },
+                { label: 'Seguí tu pedido',   href: '/pedido' },
                 { label: 'Tejé con Dahila',   href: '/tejedoras' },
                 { label: 'Términos y cond.',  href: '/terminos' },
               ]}
@@ -221,7 +224,8 @@ export function Footer({
         )}
 
         {/* Sin base no se puede guardar el mail: mejor no pedirlo. */}
-        {!sinBase && <VipSignup />}
+        {/* En /vip la página ya es el formulario: dos iguales en la misma pantalla confunden. */}
+        {!sinBase && pathname !== '/vip' && <VipSignup />}
 
         {/* Copyright row */}
         <div style={{

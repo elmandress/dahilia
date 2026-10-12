@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ImagenConRespaldo } from '@/components/ui/ImagenConRespaldo'
@@ -50,6 +50,7 @@ export function ProductDetailsClient({
   navidadEncargoHasta,
   navidadStockHasta,
   clientPhotos = [],
+  giftEnabled = false,
 }: {
   product: Product
   discountPercent?: number
@@ -81,6 +82,8 @@ export function ProductDetailsClient({
   navidadStockHasta?: string
   /** Testimonios con foto de clientas que compraron ESTA prenda. */
   clientPhotos?: Testimonial[]
+  /** La tarjeta de regalo está prendida (Configuración). */
+  giftEnabled?: boolean
 }) {
   const trust = trustItems && trustItems.length > 0 ? trustItems : [
     { icon: 'truck', text: 'Envío a todo Uruguay' },
@@ -94,6 +97,21 @@ export function ProductDetailsClient({
   const { talle, setTalle, sizeAvailable } = useSizeSelection(product)
   // Color con la foto del ovillo abierta (solo colores con image_url).
   const [lanaAbierta, setLanaAbierta] = useState<string | null>(null)
+
+  // Barra fija de "Agregar" (mobile): solo cuando el botón principal ya quedó
+  // arriba, fuera de pantalla. La marca va justo antes del botón; con
+  // rootMargin negativo arriba, cuenta como "pasada" apenas el botón se va.
+  const buyAnchorRef = useRef<HTMLSpanElement>(null)
+  const [showSticky, setShowSticky] = useState(false)
+  useEffect(() => {
+    const el = buyAnchorRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(([entry]) => {
+      setShowSticky(!entry.isIntersecting && entry.boundingClientRect.top < 0)
+    }, { rootMargin: '-80px 0px 0px 0px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
   const [added, setAdded] = useState(false)
 
   useEffect(() => {
@@ -422,6 +440,9 @@ export function ProductDetailsClient({
             </div>
           )}
 
+          {/* Marca invisible justo arriba del botón principal: cuando sale de
+              pantalla hacia arriba, entra la barra fija de abajo. */}
+          <span ref={buyAnchorRef} aria-hidden style={{ display: 'block', height: 0 }} />
           {canBuy && !soloConsulta && (
             sizeAvailable ? (
               <Button variant="primary" size="lg" full onClick={handleAdd}>
@@ -508,6 +529,23 @@ export function ProductDetailsClient({
               <Icon name="whatsapp-logo" weight="fill" size={15} color={dahila.whatsapp} />
               ¿Dudas con el talle? Preguntame por WhatsApp
             </a>
+          )}
+          {/* Para quien regala (12/10/2026): la tarjeta de regalo no se
+              encontraba desde ningún lado. Solo en piezas con talle, que es
+              donde regalar es difícil. */}
+          {giftEnabled && sizes.length > 0 && (
+            <Link
+              href="/regalo"
+              onClick={() => track('gift_link_click', { source: 'pdp', product: product.slug })}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7, alignSelf: 'flex-start',
+                fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700,
+                textDecoration: 'underline', textUnderlineOffset: 3, padding: '6px 0', marginTop: -8,
+              }}
+            >
+              <Icon name="gift" size={15} color={dahila.wine600} />
+              ¿Es un regalo y no sabés su talle? Regalá una tarjeta
+            </Link>
           )}
 
           {/* Una clienta real, pegada al botón: quien entra directo desde
@@ -690,7 +728,12 @@ export function ProductDetailsClient({
             {knitHours != null && (
               <li style={liStyle}>
                 <Icon name="clock" size={16} color={dahila.ink500}/>
-                Lleva unas {knitHours.toLocaleString('es-UY')} horas de tejido a mano, punto por punto.
+                <span>
+                  Lleva unas {knitHours.toLocaleString('es-UY')} horas de tejido a mano, punto por punto.{' '}
+                  <Link href="/blog/cuanto-demora-una-prenda-tejida-a-mano" style={{ color: dahila.ink500, textDecoration: 'underline', textUnderlineOffset: 2 }}>
+                    ¿Por qué tanto?
+                  </Link>
+                </span>
               </li>
             )}
             <li style={liStyle}>
@@ -723,7 +766,11 @@ export function ProductDetailsClient({
 
       {/* Sticky mobile add-to-cart — visible only on small screens */}
       {canBuy && (
-        <div className="pdp-sticky-bar">
+        <div
+          className={`pdp-sticky-bar${showSticky ? ' is-visible' : ''}`}
+          // Escondida = fuera del orden de tabulación y del lector de pantalla.
+          inert={!showSticky}
+        >
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, minWidth: 0, flex: '0 1 auto' }}>
             <span style={{
               fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 14,
