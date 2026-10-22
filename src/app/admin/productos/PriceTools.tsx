@@ -71,6 +71,68 @@ export function SameSizePrice({
   )
 }
 
+/**
+ * Margen de ganancia de la prenda: atajos 0/15/30/50 y un campo libre. Lo usan
+ * la Calculadora y el Marcador de precio del editor, sobre el mismo estado: se
+ * cambia en cualquiera de los dos y los dos recalculan (pedido 21/10/2026).
+ */
+export function MarginPicker({
+  id, margin, setMargin, hint,
+}: {
+  /** id del campo libre: único en la página (hay dos selectores en el editor). */
+  id: string
+  margin: string
+  setMargin: (v: string) => void
+  hint?: string
+}) {
+  return (
+    <div>
+      <label htmlFor={id} style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, color: '#4A4143', marginBottom: 6 }}>
+        Margen de ganancia
+      </label>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
+        {['0', '15', '30', '50'].map((m) => {
+          const on = num(margin) === num(m)
+          return (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMargin(m)}
+              aria-pressed={on}
+              style={{
+                minHeight: 36, minWidth: 52, padding: '0 12px', borderRadius: 999, cursor: 'pointer', fontSize: 13,
+                border: `1px solid ${on ? '#8F3B53' : 'rgba(31,26,27,0.18)'}`,
+                background: on ? '#8F3B53' : '#fff', color: on ? '#fff' : '#4A4143',
+              }}
+            >
+              {m}%
+            </button>
+          )
+        })}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <input
+            id={id}
+            type="number"
+            inputMode="decimal"
+            min={0}
+            max={300}
+            value={margin}
+            onChange={(e) => setMargin(e.target.value)}
+            aria-label="Margen de ganancia en porcentaje"
+            style={{ width: 72, minHeight: 36, padding: '4px 8px', borderRadius: 8, border: '1px solid rgba(31,26,27,0.18)', fontSize: 14 }}
+          />
+          <span style={{ fontSize: 13, color: '#8C8285' }}>%</span>
+        </span>
+      </div>
+      {hint && (
+        <span className="field-hint" style={{ display: 'block', marginTop: 4 }}>
+          {hint}
+        </span>
+      )}
+    </div>
+  )
+}
+
 export function CalculadoraPrecio({
   hours, setHours,
   materials, setMaterials,
@@ -148,48 +210,12 @@ export function CalculadoraPrecio({
 
       {/* Margen de ganancia a la vista (pedido 12/10/2026): antes estaba
           escondido en "Supuestos" y volvía a 15% en cada prenda. */}
-      <div>
-        <label htmlFor="calc-margin" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, color: '#4A4143', marginBottom: 6 }}>
-          Margen de ganancia
-        </label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
-          {['0', '15', '30', '50'].map((m) => {
-            const on = num(margin) === num(m)
-            return (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMargin(m)}
-                aria-pressed={on}
-                style={{
-                  minHeight: 36, minWidth: 52, padding: '0 12px', borderRadius: 999, cursor: 'pointer', fontSize: 13,
-                  border: `1px solid ${on ? '#8F3B53' : 'rgba(31,26,27,0.18)'}`,
-                  background: on ? '#8F3B53' : '#fff', color: on ? '#fff' : '#4A4143',
-                }}
-              >
-                {m}%
-              </button>
-            )
-          })}
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <input
-              id="calc-margin"
-              type="number"
-              inputMode="decimal"
-              min={0}
-              max={300}
-              value={margin}
-              onChange={(e) => setMargin(e.target.value)}
-              aria-label="Margen de ganancia en porcentaje"
-              style={{ width: 72, minHeight: 36, padding: '4px 8px', borderRadius: 8, border: '1px solid rgba(31,26,27,0.18)', fontSize: 14 }}
-            />
-            <span style={{ fontSize: 13, color: '#8C8285' }}>%</span>
-          </span>
-        </div>
-        <span className="field-hint" style={{ display: 'block', marginTop: 4 }}>
-          Se suma arriba de tu trabajo y los materiales: es lo que queda para la marca (fotos, muestras, reinvertir). Se guarda con la prenda.
-        </span>
-      </div>
+      <MarginPicker
+        id="calc-margin"
+        margin={margin}
+        setMargin={setMargin}
+        hint="Se suma arriba de tu trabajo y los materiales: es lo que queda para la marca (fotos, muestras, reinvertir). Se guarda con la prenda."
+      />
 
       <details>
         <summary style={{ cursor: 'pointer', fontSize: '0.85rem', color: '#8F3B53' }}>

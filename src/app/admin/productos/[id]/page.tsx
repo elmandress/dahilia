@@ -8,7 +8,7 @@ import { notifyReindex } from '@/lib/seo-notify'
 import { draftDescription } from '@/lib/description-draft'
 import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
 import { recommendPrice, formatUyu, type PricingRecommendation, type PricingPeer } from '@/lib/pricing'
-import { SameSizePrice, CalculadoraPrecio } from '../PriceTools'
+import { SameSizePrice, CalculadoraPrecio, MarginPicker } from '../PriceTools'
 import { saveProductCosts, parseNum, DEFAULT_MARGIN_PCT } from '@/lib/product-costs'
 import type { Category, Color, Collection, Product, ProductMedia, ProductSize, ProductColor } from '@/lib/types'
 
@@ -884,8 +884,11 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                 materials: materialsInput ? parseInt(materialsInput) : null,
                 categoryId: categoryId || null,
                 peers,
+                margin: parseNum(marginInput),
               })}
               onApply={(p) => setBasePriceUyu(String(p))}
+              margin={marginInput}
+              setMargin={setMarginInput}
             />
           )}
 
@@ -1310,13 +1313,21 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
  * escribe el precio. "Usar" solo completa el campo; se guarda con el botón de
  * siempre, así nada cambia en la tienda sin que Anush lo confirme.
  */
-function PricingPanel({ rec, onApply }: { rec: PricingRecommendation; onApply: (price: number) => void }) {
+function PricingPanel({ rec, onApply, margin, setMargin }: {
+  rec: PricingRecommendation
+  onApply: (price: number) => void
+  /** El mismo margen de la Calculadora (marginInput): cambiarlo acá la mueve a ella también. */
+  margin: string
+  setMargin: (v: string) => void
+}) {
   const tone = rec.status === 'under' ? '#8F3B53' : rec.status === 'ok' ? '#1E8449' : '#8C8285'
   const headline =
     rec.status === 'under'
       ? `Está ${formatUyu(rec.gap)} por debajo del precio justo (${rec.gapPct}% menos)`
       : rec.status === 'ok'
-        ? 'En precio: ya paga al menos el mínimo por hora'
+        ? rec.margin > 0
+        ? `En precio: paga el mínimo por hora y deja el ${rec.margin.toLocaleString('es-UY')}% de margen`
+        : 'En precio: ya paga al menos el mínimo por hora'
         : rec.status === 'hold'
           ? 'Pieza de entrada: no se recomienda subirla'
           : 'Faltan datos para calcular'
@@ -1349,6 +1360,16 @@ function PricingPanel({ rec, onApply }: { rec: PricingRecommendation; onApply: (
       <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, lineHeight: 1.55, color: '#4A4043' }}>
         {rec.reasons.map((r) => <li key={r}>{r}</li>)}
       </ul>
+      {rec.status !== 'hold' && (
+        <div style={{ marginTop: 12 }}>
+          <MarginPicker
+            id="pricing-margin"
+            margin={margin}
+            setMargin={setMargin}
+            hint="Es el mismo margen de la Calculadora de más abajo: cambia en los dos lados y se guarda con la prenda."
+          />
+        </div>
+      )}
       {rec.source && (
         <p style={{ margin: '8px 0 0', fontSize: 11.5, color: '#8C8285' }}>
           Horas y materiales: {rec.source === 'cargado'

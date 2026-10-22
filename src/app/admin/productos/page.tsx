@@ -8,6 +8,7 @@ import { formatPrice, getPrimaryPhoto } from '@/lib/types'
 import { notifyReindex } from '@/lib/seo-notify'
 import { recommendPrice, formatUyu, applyBulkOp, type BulkOp, type PricingRecommendation, type PricingPeer } from '@/lib/pricing'
 import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
+import { DEFAULT_MARGIN_PCT } from '@/lib/product-costs'
 
 // ---- Edición de precios en lote (08/10/2026) ----
 // Antes cada precio se cambiaba entrando a la prenda, una por una. Acá se
@@ -50,7 +51,9 @@ export default function ProductosPage() {
   // Horas y materiales por product_id (tabla interna product_costs). Vacío
   // mientras no se corra database/costos-produccion-2026-09.sql: el marcador
   // cae entonces a los datos de la tabla aprobada (ver lib/pricing.ts).
-  const [costs, setCosts] = useState<Record<string, { hours: number | null; materials: number | null }>>({})
+  // Con el margen de cada prenda (margin_pct): el aviso de la fila hace la misma
+  // cuenta que el marcador del editor.
+  const [costs, setCosts] = useState<Record<string, { hours: number | null; materials: number | null; margin: number | null }>>({})
   // Productos activos, para que cada recomendación pueda mostrar si la misma
   // categoría ya vende a ese nivel de precio.
   const peers: PricingPeer[] = products
@@ -81,18 +84,21 @@ export default function ProductosPage() {
         `)
         .order('sort_order', { ascending: true }),
       supabase.from('categories').select('*').order('sort_order'),
-      supabase.from('product_costs').select('product_id, labor_hours, materials_cost_uyu'),
+      // * y no columnas sueltas: margin_pct existe recién después de
+      // database/margen-por-prenda-2026-10.sql (igual que en el editor).
+      supabase.from('product_costs').select('*'),
     ])
 
     setLoadError(productsRes.error ? 'No se pudieron cargar los productos (no es que no haya: no se pudo leer la base). Probá recargar la página.' : null)
     setProducts((productsRes.data ?? []) as Product[])
     setCategories((categoriesRes.data ?? []) as Category[])
     if (!costsRes.error) {
-      const map: Record<string, { hours: number | null; materials: number | null }> = {}
-      for (const c of (costsRes.data ?? []) as Array<{ product_id: string; labor_hours: number | string | null; materials_cost_uyu: number | null }>) {
+      const map: Record<string, { hours: number | null; materials: number | null; margin: number | null }> = {}
+      for (const c of (costsRes.data ?? []) as Array<{ product_id: string; labor_hours: number | string | null; materials_cost_uyu: number | null; margin_pct?: number | string | null }>) {
         map[c.product_id] = {
           hours: c.labor_hours != null ? Number(c.labor_hours) : null,
           materials: c.materials_cost_uyu,
+          margin: c.margin_pct != null ? Number(c.margin_pct) : null,
         }
       }
       setCosts(map)
@@ -728,6 +734,8 @@ export default function ProductosPage() {
                           materials: costs[product.id]?.materials,
                           categoryId: product.category?.id ?? null,
                           peers,
+                          // Sin margen guardado, el mismo 15% con el que abre el editor.
+                          margin: costs[product.id]?.margin ?? DEFAULT_MARGIN_PCT,
                         })}
                       />
                     </td>
@@ -834,11 +842,17 @@ function PriceHint({ rec }: { rec: PricingRecommendation }) {
     return (
       <span title={tip} style={{ ...base, color: '#8F3B53', fontWeight: 500 }}>
         ▲ Subir a {formatUyu(rec.nextPrice)}
-        <span style={{ fontWeight: 400, color: '#8C8285' }}> · etapa 1 de {rec.stages.length}</span>
+        <span style={{ fontWeight: 400, color: '#8C8285' }}> · etapa 1 de {rec.stages.length} · margen {rec.margin.toLocaleString('es-UY')}%</span>
       </span>
     )
   }
-  if (rec.status === 'ok') return <span title={tip} style={{ ...base, color: '#1E8449' }}>✓ Paga el mínimo por hora</span>
+  if (rec.status === 'ok') {
+    return (
+      <span title={tip} style={{ ...base, color: '#1E8449' }}>
+        {rec.margin > 0 ? `✓ En precio, con ${rec.margin.toLocaleString('es-UY')}% de margen` : '✓ Paga el mínimo por hora'}
+      </span>
+    )
+  }
   if (rec.status === 'hold') return <span title={tip} style={{ ...base, color: '#8C8285' }}>Pieza de entrada</span>
   return <span title={tip} style={{ ...base, color: '#8C8285' }}>Sin horas cargadas</span>
 }

@@ -16,6 +16,8 @@ import { BLUR_DATA_URL, isReadyToShip } from '@/lib/types'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 import { useCart } from '@/components/CartProvider'
 import Link from 'next/link'
+import { ReelsSection } from '@/components/ReelsSection'
+import type { ReelCard } from '@/lib/reels'
 
 function FAQ({ items }: { items: [string, string][] }) {
   const [open, setOpen] = useState<number>(-1)
@@ -109,7 +111,7 @@ function val<K extends keyof HomeSettings>(s: HomeSettings, key: K, fallback: st
 /** Nota del blog para la franja de la home (solo lo que la tarjeta muestra). */
 export type HomeNote = { slug: string; title: string; excerpt: string; hero?: { src: string; alt: string; position?: string } }
 
-export function HomeClient({ products, newest = [], settings, discounts = [], testimonials = [], dropCollectionHref = null, notes = [], categorias = [], productLinks = {} }: { productLinks?: Record<string, { name: string; slug: string }>; products: Product[]; newest?: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[]; dropCollectionHref?: string | null; notes?: HomeNote[]; categorias?: { name: string; slug: string }[] }) {
+export function HomeClient({ products, newest = [], settings, discounts = [], testimonials = [], dropCollectionHref = null, notes = [], categorias = [], productLinks = {}, reels = [] }: { reels?: ReelCard[]; productLinks?: Record<string, { name: string; slug: string }>; products: Product[]; newest?: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[]; dropCollectionHref?: string | null; notes?: HomeNote[]; categorias?: { name: string; slug: string }[] }) {
   const { queueNote } = useCart()
   // "Nuevo" = últimos publicados por fecha real de alta (con fallback al orden
   // manual si la consulta dedicada no trajo nada).
@@ -355,6 +357,10 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
           ))}
         </div>
       </section>
+
+      {/* REELS (21/10/2026): la prenda en movimiento y, debajo, el camino a
+          su ficha. Se oculta sola si no hay reels cargados (admin → Reels). */}
+      <ReelsSection reels={reels} />
 
       {/* DISPONIBLE AHORA — piezas ya tejidas, sin la espera de a-medida.
           Se oculta sola cuando no hay ninguna (readyToShip vacío). */}

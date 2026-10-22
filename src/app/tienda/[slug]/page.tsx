@@ -21,6 +21,7 @@ import { COMPLEMENT_PREFS } from '@/lib/complements'
 import { slugRedirectTarget } from '@/lib/slug'
 import { getCategoryGuides } from '@/content/blog'
 import type { Testimonial } from '@/components/TestimonialsStrip'
+import { resolveReels } from '@/lib/reels'
 
 export const revalidate = 3600
 
@@ -214,18 +215,26 @@ export async function generateMetadata({
   // Sin reglas de lote: el precio exacto ya viaja en el schema. Es el mismo
   // precio "desde" que la tarjeta (antes: el precio base, que en algunos
   // productos no es el de ningún talle disponible — auditoría 12/09/2026).
+  //
+  // 21/10/2026: el precio va primero y el texto propio se corta en la primera
+  // oración, no a los 87 caracteres. En el celular (86% de las impresiones)
+  // Google muestra ~120 caracteres: antes se leía "en el pelo, al cuello o…" y
+  // el precio y el envío quedaban fuera (bandana: 254 impresiones, 0 clics).
+  // "En tu talle" solo si la prenda tiene talles: una bandana no los tiene.
   const finalPrice = getListingPrice(product)
   const priceBit = finalPrice > 0
-    ? `${productHasPriceRange(product) ? 'Desde ' : ''}UYU ${finalPrice.toLocaleString('es-UY')}, `
+    ? `${productHasPriceRange(product) ? 'Desde ' : ''}UYU ${finalPrice.toLocaleString('es-UY')}. `
     : ''
-  const valueLine = priceBit
-    ? `Tejido a mano en Montevideo. ${priceBit}a tu talle y en tus colores. Envío a todo Uruguay.`
-    : 'Tejido a mano en Montevideo, a tu talle y en tus colores. Envío a todo Uruguay.'
+  const hasSizes = (product.sizes?.length ?? 0) > 0
+  const valueLine = `Tejido a mano en Montevideo, ${hasSizes ? 'en tu talle y ' : ''}en tus colores. Envío a todo Uruguay.`
   const ownDesc = (product.description ?? '').replace(/\s+/g, ' ').trim()
-  const ownDescCut = ownDesc.length > 90 ? `${ownDesc.slice(0, 87).trimEnd()}…` : ownDesc
+  const firstSentence = ownDesc.split(/(?<=[.!?])\s/)[0] ?? ''
+  const ownDescCut = firstSentence.length <= 115
+    ? firstSentence
+    : `${firstSentence.slice(0, 112).replace(/[\s,;:]+\S*$/, '')}…`
   const description = ownDesc
-    ? `${ownDescCut}${/[.!?…]$/.test(ownDescCut) ? '' : '.'} ${valueLine}`
-    : `${product.name}: ${valueLine}`
+    ? `${priceBit}${ownDescCut}${/[.!?…]$/.test(ownDescCut) ? '' : '.'} ${valueLine}`
+    : `${priceBit}${product.name}. ${valueLine}`
 
   // "Spring cardigan — saco tejido a mano, a tu medida": la palabra con la
   // que se busca en Uruguay, solo si el nombre no la trae (lib/vocabulario.ts).
@@ -643,6 +652,8 @@ async function ProductPage({ slug }: { slug: string }) {
         encargosCupos={encargosCupos}
         testimonial={testimonial}
         totalTestimonios={testimonios.length}
+        // El reel de esta prenda, si hay uno cargado (admin → Reels).
+        reel={resolveReels(settings.reels, catalog.products).find((r) => r.product.slug === product.slug) ?? null}
         navidadEncargoHasta={getSetting('navidad_enabled') !== 'false' ? getSetting('navidad_encargo_hasta') : undefined}
         navidadStockHasta={getSetting('navidad_enabled') !== 'false' ? getSetting('navidad_stock_hasta') : undefined}
         giftEnabled={getSetting('regalo_enabled') !== 'false'}

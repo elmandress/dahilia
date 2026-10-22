@@ -19,6 +19,10 @@ import { PRICE_TABLE } from '@/app/admin/estrategia/data'
 // piezas de la misma categoría que ya se venden a ese nivel (se muestra en
 // cada recomendación cuando pasa). La Calculadora de /admin/estrategia sigue
 // existiendo para una cuenta más completa (tarifa propia + margen + comisión).
+//
+// 21/10/2026: el marcador suma el margen de ganancia de cada prenda (el mismo
+// que se guarda en la Calculadora). Antes ignoraba el margen y podía decir "en
+// precio" mientras la Calculadora, en la misma pantalla, pedía más.
 // ─────────────────────────────────────────────────────────────
 
 /** Salario mínimo nacional por hora (jul 2026: $25.383/mes ÷ 200 h). Misma
@@ -57,6 +61,10 @@ export interface PricingInput {
   categoryId?: string | null
   /** Otros productos activos: para mostrar si el catálogo ya vende a ese nivel. */
   peers?: PricingPeer[]
+  /** Margen de ganancia de la prenda, en % (product_costs.margin_pct, el mismo
+   *  de la Calculadora). Va arriba del mínimo por hora + materiales; sin
+   *  margen, el precio justo es solo el piso del salario mínimo. */
+  margin?: number | null
 }
 
 export interface PricingRecommendation {
@@ -68,8 +76,10 @@ export interface PricingRecommendation {
   materials: number | null
   /** Lo que queda por hora hoy: (precio − materiales) / horas. */
   perHour: number | null
-  /** Precio que paga al menos el salario mínimo por hora. */
+  /** Precio que paga al menos el salario mínimo por hora, más el margen. */
   fairPrice: number | null
+  /** Margen usado en la cuenta, en %. */
+  margin: number
   /** Cuánto falta para el precio justo, en pesos y en % del precio justo. */
   gap: number
   gapPct: number
@@ -112,8 +122,13 @@ export function recommendPrice(input: PricingInput): PricingRecommendation {
     : hours != null && materials != null ? 'tabla' : null
   const price = input.price != null && input.price > 0 ? input.price : null
 
+  const margin = input.margin != null && Number.isFinite(input.margin) && input.margin > 0
+    ? Math.min(300, input.margin)
+    : 0
+  const marginLabel = `${margin.toLocaleString('es-UY')}%`
+
   const empty: PricingRecommendation = {
-    status: 'no-data', source, price, hours, materials,
+    status: 'no-data', source, price, hours, materials, margin,
     perHour: null, fairPrice: null, gap: 0, gapPct: 0,
     stages: [], nextPrice: null, peer: null, reasons: [],
   }
@@ -128,11 +143,11 @@ export function recommendPrice(input: PricingInput): PricingRecommendation {
   }
 
   const perHour = Math.round((price - materials) / hours)
-  const fairPrice = ceil10(materials + hours * HOURLY_FLOOR_UYU)
+  const fairPrice = ceil10((materials + hours * HOURLY_FLOOR_UYU) * (1 + margin / 100))
   const gap = Math.max(0, fairPrice - price)
   const gapPct = Math.round((gap / fairPrice) * 100)
   const hoursLabel = Number.isInteger(hours) ? String(hours) : hours.toLocaleString('es-UY')
-  const base = { source, price, hours, materials, perHour, fairPrice }
+  const base = { source, price, hours, materials, perHour, fairPrice, margin }
   const reasons: string[] = [
     `Hoy te quedan ${formatUyu(perHour)} por hora de trabajo: (${formatUyu(price)} − ${formatUyu(materials)} de materiales) ÷ ${hoursLabel} h.`,
   ]
@@ -143,7 +158,9 @@ export function recommendPrice(input: PricingInput): PricingRecommendation {
   }
 
   if (price >= fairPrice * (1 - OK_TOLERANCE)) {
-    reasons.push(`Ya te paga al menos el salario mínimo por hora (${formatUyu(HOURLY_FLOOR_UYU)}). Por esta cuenta no hace falta subirla.`)
+    reasons.push(margin > 0
+      ? `Ya te paga al menos el salario mínimo por hora (${formatUyu(HOURLY_FLOOR_UYU)}) y deja el ${marginLabel} de margen. Por esta cuenta no hace falta subirla.`
+      : `Ya te paga al menos el salario mínimo por hora (${formatUyu(HOURLY_FLOOR_UYU)}). Por esta cuenta no hace falta subirla.`)
     return { ...base, status: 'ok', gap: 0, gapPct: 0, stages: [], nextPrice: null, peer: null, reasons }
   }
 
@@ -155,7 +172,9 @@ export function recommendPrice(input: PricingInput): PricingRecommendation {
   candidates.sort((a, b) => Math.abs((a.price as number) - fairPrice) - Math.abs((b.price as number) - fairPrice))
   const peer = candidates[0] ? { name: candidates[0].name, price: candidates[0].price as number } : null
 
-  reasons.push(`Para pagarte al menos el salario mínimo (${formatUyu(HOURLY_FLOOR_UYU)} por hora), esta pieza tendría que valer ${formatUyu(fairPrice)}: ${formatUyu(materials)} de materiales + ${hoursLabel} h × ${formatUyu(HOURLY_FLOOR_UYU)}.`)
+  reasons.push(margin > 0
+    ? `Para pagarte al menos el salario mínimo (${formatUyu(HOURLY_FLOOR_UYU)} por hora) y dejar el ${marginLabel} de margen, esta pieza tendría que valer ${formatUyu(fairPrice)}: (${formatUyu(materials)} de materiales + ${hoursLabel} h × ${formatUyu(HOURLY_FLOOR_UYU)}) + ${marginLabel}.`
+    : `Para pagarte al menos el salario mínimo (${formatUyu(HOURLY_FLOOR_UYU)} por hora), esta pieza tendría que valer ${formatUyu(fairPrice)}: ${formatUyu(materials)} de materiales + ${hoursLabel} h × ${formatUyu(HOURLY_FLOOR_UYU)}.`)
   if (peer) {
     reasons.push(`No es un precio fuera de lo que tus clientas pagan: ${peer.name} ya se vende a ${formatUyu(peer.price)} en la misma categoría.`)
   }

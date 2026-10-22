@@ -919,22 +919,23 @@ export const IG_WEEKLY = [
 ]
 
 // ─── Google Merchant Center ────────────────────────────────────
-// Investigado jul 2026: Uruguay es uno de los 58 países con Google Shopping
-// habilitado. Es gratis, complementa el canal "Google" de arriba y el sitio
-// ya cumple todo lo técnico que pide (precio, stock, marca, fotos en el
-// Product schema) — falta solo el paso de cuenta. Fuentes: Google Merchant
-// Center Help ("Free listings for products", "Benefits of free local
-// listings") y Search Central.
+// Verificado 21/10/2026 en Merchant Center Help: Uruguay/UYU están admitidos,
+// pero la pestaña Shopping no está disponible en el país. El feed está listo;
+// falta confirmar elegibilidad porque Google pide checkout completado en el
+// sitio y Dahila hoy cierra por WhatsApp.
 
 export const MERCHANT_WHY =
-  'Antes que nada (verificado el 12/09/2026): Uruguay no figura en la documentación oficial de Google sobre los países con listados gratuitos. Al crear la cuenta, fijate si te deja elegir Uruguay como país de venta; si no aparece, este canal hoy no aplica y no hace falta seguir con los pasos. Si aparece: es gratis y usa lo que el sitio ya tiene: aparecer con foto y precio en la pestaña Shopping de Google, en Google Imágenes y en Maps (si está atado al Perfil de Negocio) — más lugares donde te encuentra alguien que ya está por comprar. No reemplaza a Instagram ni es un chorro de ventas garantizado: es un canal extra, gratis, que se prepara una vez y queda funcionando solo. Google también tiene un sello "Pequeña empresa" que ayuda a diferenciarte de las tiendas grandes. Y si algún día se quiere invertir en Google Ads/Shopping, Merchant Center es el paso obligatorio previo — armarlo ahora no se pierde.'
+  'Verificado el 21/10/2026 en la ayuda oficial: Uruguay y UYU figuran como país y moneda admitidos; Uruguay no tiene la marca † que indica que la pestaña Shopping está disponible. Los listados gratuitos sí pueden aparecer en otras superficies de Google, como Búsqueda e Imágenes, si los productos cumplen los requisitos. El feed del sitio (dahila.uy/merchant-feed.xml) ya está armado con precios por talle y disponibilidad. Importante antes de cargarlo: Google pide que quien compra pueda agregar la prenda al carrito y completar la compra en la tienda. Hoy Dahila termina el pedido por WhatsApp, así que eso puede impedir que aprueben los productos; conviene confirmar o resolver ese requisito primero. No es un canal de ventas garantizado. Fuentes oficiales: support.google.com/merchants/answer/160637 y support.google.com/merchants/answer/9158778.'
 
 export const MERCHANT_STEPS = [
   { step: 'Verificar el sitio en Search Console', detail: 'Si ya se hizo como parte de la migración a dahila.uy, este paso ya está — confirmar en search.google.com/search-console que la propiedad "Dominio: dahila.uy" existe y está verificada.' },
   { step: 'Crear la cuenta en Merchant Center', detail: 'Gratis, en business.google.com/merchant. Usar la misma cuenta de Google que Search Console.' },
   { step: 'Vincular Merchant Center con Search Console', detail: 'Se hace desde Configuración → Herramientas empresariales, en un par de clics una vez que ambas cuentas existen.' },
-  { step: 'Activar "usar datos estructurados del sitio"', detail: 'En vez de subir un archivo de productos a mano, Merchant Center puede leer directo el precio/stock/marca que el sitio ya publica en cada ficha (Product schema) — cero trabajo técnico extra.' },
-  { step: 'Activar "Listados gratuitos" para Uruguay', detail: 'Dentro de Merchant Center, en el programa de listados gratuitos, elegir Uruguay como país de venta. Si Uruguay no aparece como opción, frená acá: los demás pasos no sirven sin esto.' },
+  { step: 'Confirmar país, moneda y superficies', detail: 'Uruguay y UYU están admitidos. La pestaña Shopping no está disponible para usuarios de Uruguay según la marca † de la tabla oficial; los listados gratuitos podrían aparecer en otras superficies de Google.' },
+  { step: 'Resolver el requisito de compra en línea', detail: 'La política de Google pide que la clienta pueda agregar una prenda disponible al carrito y terminar la compra en la tienda. El checkout actual deriva a WhatsApp: antes de cargar el feed, confirmá con Google si lo acepta o implementá un checkout web. No sigas esperando que los productos se aprueben hasta resolverlo.' },
+  { step: 'Cargar el feed del sitio (cuando cumpla los requisitos)', detail: 'Productos → Agregar productos → Agregar desde un archivo → "Agregar un vínculo a un archivo": https://dahila.uy/merchant-feed.xml, país Uruguay, idioma español, actualización diaria. Trae un producto por talle, con su precio y disponibilidad.' },
+  { step: 'Revisar el envío y los plazos reales', detail: 'Si Merchant Center pide o muestra datos de envío, configurá costos y tiempos que coincidan con lo que la clienta paga y recibe. El feed ya informa el tiempo de preparación/tejido; completá el tránsito con el plazo real del transportista. No pongas "lo coordinamos" ni un plazo estimado si no se puede cumplir.' },
+  { step: 'Confirmar que los listados gratuitos estén activos', detail: 'Las cuentas nuevas suelen tenerlos activados por defecto. Revisá en Crecimiento → Administrar programas; si Google pide una política de devoluciones, cargala ahí y asegurate de que coincida con la publicada en el sitio.' },
   { step: 'Activar el atributo "Pequeña empresa"', detail: 'Si aparece disponible para la cuenta — es el sello que ayuda a diferenciarse de las tiendas grandes en los resultados.' },
   { step: 'Revisar el Diagnóstico a los pocos días', detail: 'Merchant Center avisa si algún producto tiene un error (precio que no coincide, falta imagen, etc.) antes de que eso baje la visibilidad del resto.' },
 ]
@@ -1094,7 +1095,7 @@ export const NEXT_ACTIONS: TodoAction[] = [
   { id: 'tiktok-utm', label: 'Poner el link de TikTok con UTM', detail: 'TikTok ya trae visitas (9 en la última semana, según GA4 al 14/09). Para que GA4 y Umami las cuenten como TikTok y no se mezclen con las directas, el link de la bio de TikTok tiene que ser: dahila.uy/?utm_source=tiktok&utm_medium=social', horizon: 'ya' },
   { id: 'ig-checklist-viral', label: 'Usar el checklist de reel viral en el próximo que despegue', detail: 'Comentario fijado con el link a la pieza, responder todos los comentarios el primer día, "comentá LINK y te lo mando por DM", y anotar el formato ganador. El playbook completo está en la pestaña Canales.', horizon: 'ya' },
   { id: 'precios-fase2', label: 'Segundo paso de precios', detail: 'Con el drop de verano, tops y bolsos suben hacia la meta de 12 meses (columna "12m" de la tabla).', horizon: 'trimestre' },
-  { id: 'merchant-center', label: 'Activar Google Merchant Center', detail: 'Gratis, ~30 minutos, pero primero confirmá que Merchant Center deje elegir Uruguay para listados gratuitos (al 12/09/2026 no figura en la documentación oficial). El paso a paso está en la pestaña Canales, debajo de "Google".', horizon: 'mes' },
+  { id: 'merchant-center', label: 'Confirmar elegibilidad de Google Merchant Center', detail: 'Uruguay y UYU están admitidos, pero el checkout por WhatsApp puede incumplir el requisito de finalizar la compra en la tienda. Confirmá ese punto antes de cargar dahila.uy/merchant-feed.xml; el paso a paso está en la pestaña Canales, debajo de "Google".', horizon: 'mes' },
   { id: 'bing-webmaster', label: 'Registrar el sitio en Bing Webmaster Tools', detail: 'Gratis, ~15 minutos (bing.com/webmasters, se puede importar directo desde Search Console). Importa más de lo que suena: ChatGPT busca con el índice de Bing — estar bien indexada ahí es la vía más directa a que la IA recomiende Dahila.', horizon: 'mes' },
   { id: 'etiquetas-clientas', label: 'Etiquetar a las clientas en WhatsApp Business', detail: 'Dos etiquetas por clienta: "frecuente" (2+ compras) y su mes de cumpleaños. Son la base de los referidos, el cumple y el acceso anticipado — 2 minutos por clienta. El sistema completo está en la pestaña Clientas.', horizon: 'mes' },
   { id: 'cupon-amiga', label: 'Crear los primeros cupones AMIGA-(nombre)', detail: 'Elegí 5 clientas contentas y mandale a cada una su código para regalar (15%, 3 usos). La receta exacta está en la pestaña Clientas.', horizon: 'mes' },

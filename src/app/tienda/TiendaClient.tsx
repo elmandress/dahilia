@@ -821,14 +821,29 @@ export function TiendaClient({
           <h2 style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, color: dahila.ink900, margin: 0 }}>
             {initialProducts.length === 0
               ? 'No hay prendas en la tienda por ahora.'
-              : 'No encontramos prendas con esos filtros.'}
+              : search.trim()
+                ? `No tengo «${search.trim()}» en la tienda`
+                : 'No encontramos prendas con esos filtros.'}
           </h2>
           <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, color: dahila.ink700, margin: 0, maxWidth: 460, lineHeight: 1.7 }}>
             {initialProducts.length === 0
               ? 'Estoy preparando la próxima edición. Mientras tanto, podés pedir una prenda a medida.'
-              : 'Probá ampliando el precio o sacando algún filtro.'}
+              : search.trim()
+                ? 'Pero casi todo se puede tejer a pedido: contame qué buscás y te paso modelo, lana y precio.'
+                : 'Probá ampliando el precio o sacando algún filtro.'}
           </p>
-          {initialProducts.length === 0 ? (
+          {/* Búsqueda sin resultados → encargo con la idea ya escrita
+              (21/10/2026): "hombre", "chaleco hombre", "bolero", "pantalones"
+              se buscaron y no había nada; ahora tienen un camino. */}
+          {initialProducts.length > 0 && search.trim() ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginTop: 8 }}>
+              <Button
+                href={`/encargo?idea=${encodeURIComponent(search.trim())}`}
+                onClick={() => track('encargo_click', { source: 'tienda_busqueda_vacia', q: search.trim() })}
+              >Pedirlo a medida</Button>
+              <Button variant="secondary" onClick={clearAll}>Ver toda la tienda</Button>
+            </div>
+          ) : initialProducts.length === 0 ? (
             <Button
               href="/encargo"
               style={{ marginTop: 8 }}

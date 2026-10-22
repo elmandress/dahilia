@@ -46,6 +46,8 @@ const analyticsImgSrc = [
   clarityEnabled ? 'https://*.clarity.ms https://c.bing.com' : '',
   gaEnabled ? 'https://www.googletagmanager.com https://*.google-analytics.com' : '',
 ].filter(Boolean).join(' ')
+// frame-src: el único iframe del sitio es el reproductor de reels de Instagram
+// (components/ReelsSection.tsx), que se carga recién al tocar play.
 const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}${analyticsScriptSrc ? ' ' + analyticsScriptSrc : ''};
@@ -53,6 +55,7 @@ const cspHeader = `
   img-src 'self' blob: data: https://*.supabase.co${googleReviewsEnabled ? ' https://*.googleusercontent.com' : ''}${analyticsImgSrc ? ' ' + analyticsImgSrc : ''};
   font-src 'self' data:;
   connect-src 'self' https://*.supabase.co wss://*.supabase.co${analyticsConnectSrc ? ' ' + analyticsConnectSrc : ''};
+  frame-src https://www.instagram.com;
   object-src 'none';
   base-uri 'self';
   form-action 'self';

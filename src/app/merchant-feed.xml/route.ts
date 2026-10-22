@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/public'
 import { getSnapshotData } from '@/lib/catalog'
 import { SITE_URL } from '@/lib/env'
-import { getFinalPrice, getPrimaryPhoto } from '@/lib/types'
+import { getFinalPrice, getPrimaryPhoto, isReadyToShip } from '@/lib/types'
 import { botImageUrl } from '@/lib/media'
 import type { Product, Discount } from '@/lib/types'
 import { localTermFor } from '@/lib/vocabulario'
@@ -49,12 +49,11 @@ function cleanDescription(raw: string | null, fallback: string): string {
 /**
  * Fecha estimada en que la pieza va a estar lista, en ISO 8601.
  *
- * Google EXIGE `availability_date` en todo lo marcado `backorder`: sin ella
- * rechaza el producto entero — era lo que desaprobaba las 34 fichas enteras.
- * Como acá nada está en stock (todo se teje cuando se encarga), la fecha sale
- * del plazo real de producción de cada ficha: hoy + el máximo de semanas que
- * esa misma ficha promete. Así el feed nunca dice algo distinto de lo que lee
- * la clienta en la página, y se recalcula sola en cada revalidación.
+ * Google exige `availability_date` en cada producto marcado `backorder`.
+ * La fecha sale del plazo real de producción de la ficha: hoy + el máximo de
+ * semanas que esa misma ficha promete. Los productos listos para enviar no
+ * llevan este atributo. Así el feed coincide con lo que lee la clienta y se
+ * recalcula solo en cada revalidación.
  */
 function availabilityDate(weeksMax: number): string {
   const d = new Date()
@@ -122,8 +121,11 @@ export async function GET() {
 
         // Disponibilidad honesta: solo "in_stock" si la pieza sale ya. Lo que
         // se teje a pedido es "backorder" — mismo criterio que el schema de la
-        // ficha, para que el feed y la página no se contradigan.
-        const enStock = p.lead_time_weeks_min === 0 && p.lead_time_weeks_max === 0
+        // ficha, para que el feed y la página no se contradigan. 21/10/2026:
+        // antes pedía además plazo máximo 0, y la Box de regalo y las Mini
+        // bufandas salían "en stock" en la ficha y "a pedido" acá; Merchant
+        // Center marca esa diferencia como error de disponibilidad.
+        const enStock = isReadyToShip(p)
         const availability =
           p.status === 'soldout' ? 'out_of_stock' : enStock ? 'in_stock' : 'backorder'
 

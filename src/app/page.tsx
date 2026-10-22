@@ -8,6 +8,7 @@ import { MaintenanceScreen } from '@/components/MaintenanceScreen'
 import { SITE_URL } from '@/lib/env'
 import { getHomeArticles } from '@/content/blog'
 import { withHeroOverride } from '@/content/blog/hero'
+import { resolveReels } from '@/lib/reels'
 
 export const revalidate = 3600
 
@@ -124,6 +125,8 @@ export default async function Home() {
         discounts={discounts}
         testimonials={testimonials}
         dropCollectionHref={dropCollectionHref}
+        // Reels cargados en el admin, cada uno con su prenda (lib/reels.ts).
+        reels={resolveReels(settings.reels, activeProducts)}
         // Para que cada foto de "Clientas con su Dahila" linkee a su prenda.
         productLinks={Object.fromEntries(activeProducts.map((p) => [p.id, { name: p.name, slug: p.slug }]))}
         // Solo lo que dibuja la tira: nombre y slug.

@@ -26,6 +26,12 @@ import { track, gaCommerce } from '@/lib/analytics'
 import type { Testimonial } from '@/components/TestimonialsStrip'
 import { NavidadFicha } from '@/components/NavidadAviso'
 import { ClientasGallery } from '@/components/ClientasGallery'
+import { ReelLink } from '@/components/ReelsSection'
+import type { ReelCard } from '@/lib/reels'
+
+/** Desde este precio base la ficha muestra "En otro color o a tu medida" como
+ *  botón propio (ver el bloque del botón principal). */
+const PREMIUM_FROM_UYU = 2800
 
 export function ProductDetailsClient({
   product,
@@ -46,6 +52,7 @@ export function ProductDetailsClient({
   encargosCupos,
   testimonial = null,
   totalTestimonios = 0,
+  reel = null,
   soloConsulta = false,
   navidadEncargoHasta,
   navidadStockHasta,
@@ -74,6 +81,8 @@ export function ProductDetailsClient({
   testimonial?: Testimonial | null
   /** Cuántos testimonios hay en total: el número pesa tanto como la cita. */
   totalTestimonios?: number
+  /** Reel de Instagram de esta prenda (admin → Reels), o null. */
+  reel?: ReelCard | null
   /** La base no responde y la ficha se está sirviendo del respaldo: el carrito
    *  no puede guardar nada, así que el pedido se toma por WhatsApp. */
   soloConsulta?: boolean
@@ -345,6 +354,10 @@ export function ProductDetailsClient({
             </div>
           )}
 
+          {/* El reel de la prenda, antes de elegir el talle: ver cómo cae
+              puesta es lo que la foto quieta no muestra. */}
+          {reel && <ReelLink reel={reel} />}
+
           {!isSoldOut && !product.is_custom_only && sizes.length > 0 && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -445,9 +458,26 @@ export function ProductDetailsClient({
           <span ref={buyAnchorRef} aria-hidden style={{ display: 'block', height: 0 }} />
           {canBuy && !soloConsulta && (
             sizeAvailable ? (
-              <Button variant="primary" size="lg" full onClick={handleAdd}>
-                {added ? '✓ Agregado' : 'Agregar al carrito'}
-              </Button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <Button variant="primary" size="lg" full onClick={handleAdd}>
+                  {added ? '✓ Agregado' : 'Agregar al carrito'}
+                </Button>
+                {/* Prendas de $2.800 o más (21/10/2026): en 60 días juntaron 18
+                    de los 28 toques a "a medida" y la mayor intención cada 100
+                    vistas (3,4 contra 1,6–2,7 del resto). Quien mira una pieza
+                    así quiere su color o su medida: el camino va a la vista,
+                    como secundario para no competir con el carrito. */}
+                {(product.base_price_uyu ?? 0) >= PREMIUM_FROM_UYU && (
+                  <Button
+                    variant="secondary"
+                    full
+                    href={encargoHref}
+                    onClick={() => track('encargo_click', { source: 'pdp_premium', product: product.slug })}
+                  >
+                    En otro color o a tu medida
+                  </Button>
+                )}
+              </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <Button variant="secondary" size="lg" full disabled>Sin stock en el talle {talle}</Button>

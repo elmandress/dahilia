@@ -21,6 +21,14 @@ const TALLES = ['XS', 'S', 'M', 'L', 'XL']
 // Categoría de la prenda de referencia → opción de "¿Qué querés tejer?".
 const TIPO_POR_CATEGORIA: Record<string, string> = { cardigans: 'Cardigan', tops: 'Top', sets: 'Set' }
 const MESSAGE_MAX = 1500 // el mismo tope que aplica actions.ts
+/** Tipo de prenda a partir de lo que se buscó; lo que no encaja es "Otro". */
+function tipoPorIdea(idea: string): string {
+  const t = idea.toLowerCase()
+  if (/cardig|saco/.test(t)) return 'Cardigan'
+  if (/\btop|musculosa/.test(t)) return 'Top'
+  if (/\bset\b|conjunto/.test(t)) return 'Set'
+  return 'Otro'
+}
 const noSubscribe = () => () => {}
 const readSearch = () => window.location.search
 
@@ -47,8 +55,14 @@ export default function EncargoForm({
   const talleDesde = params.get('talle')
   const [sinReferencia, setSinReferencia] = useState(false)
   const referencia = sinReferencia ? null : desde
+  // Desde el buscador sin resultados se llega con ?idea=<lo que buscó>
+  // (21/10/2026): "chaleco hombre", "bolero", "pantalón" no están en la tienda
+  // pero se pueden tejer. La idea ya viene escrita y el tipo, deducido.
+  const idea = (params.get('idea') ?? '').replace(/\s+/g, ' ').trim().slice(0, 80)
   const [tipoElegido, setTipo] = useState<string | null>(null)
-  const tipo = tipoElegido ?? (desde ? TIPO_POR_CATEGORIA[desde.category ?? ''] ?? 'Otro' : 'Cardigan')
+  const tipo = tipoElegido ?? (desde
+    ? TIPO_POR_CATEGORIA[desde.category ?? ''] ?? 'Otro'
+    : idea ? tipoPorIdea(idea) : 'Cardigan')
   const [talleElegido, setTalle] = useState<string | null>(null)
   const talle = talleElegido ?? (talleDesde && TALLES.includes(talleDesde) ? talleDesde : 'M')
   // La referencia viaja al principio del mensaje: Anush la ve en el admin y en
@@ -57,7 +71,9 @@ export default function EncargoForm({
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
-  const [message, setMessage] = useState('')
+  // null = la clienta todavía no escribió: se muestra la idea del buscador.
+  const [messageEdited, setMessage] = useState<string | null>(null)
+  const message = messageEdited ?? (idea ? `Lo que busco: ${idea}. ` : '')
   const [vipOptIn, setVipOptIn] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [trackingCode, setTrackingCode] = useState<string | null>(null)
@@ -203,8 +219,8 @@ export default function EncargoForm({
         // El encargo a medida es la otra "venta" del sitio — sin este evento,
         // el embudo de Umami solo veía el camino carrito→WhatsApp.
         // GA4: generate_lead (un encargo es un pedido de presupuesto).
-        track('encargo_sent', referencia ? { tipo, desde: referencia.slug } : { tipo }, {
-          name: 'generate_lead', params: { lead_source: 'encargo' },
+        track('encargo_sent', referencia ? { tipo, desde: referencia.slug } : idea ? { tipo, busqueda: idea } : { tipo }, {
+          name: 'generate_lead', params: { lead_source: idea && !referencia ? 'encargo_buscador' : 'encargo' },
         })
         // Alta en la lista VIP si la pidió — nunca bloquea el encargo.
         if (vipOptIn && email.trim()) {

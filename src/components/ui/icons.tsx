@@ -17,7 +17,7 @@ export type IconName =
   | 'ruler' | 'flower' | 'package' | 'arrow-clockwise' | 'truck' | 'leaf'
   | 'hand-heart' | 'heart' | 'chat-circle' | 'check' | 'share-network' | 'caret-up'
   | 'instagram-logo' | 'whatsapp-logo' | 'pinterest-logo' | 'envelope-simple' | 'gift' | 'star' | 'quotes'
-  | 'needle' | 'sparkle' | 'chat-text' | 'scissors' | 'tag' | 'clock' | 'camera'
+  | 'needle' | 'sparkle' | 'chat-text' | 'scissors' | 'tag' | 'clock' | 'camera' | 'play' | 'play-circle'
 
 export const ICON_PATHS: Record<string, React.ReactNode> = {
   'magnifying-glass': (
@@ -230,10 +230,23 @@ export const ICON_PATHS: Record<string, React.ReactNode> = {
       <line x1="100.65" y1="100.65" x2="236" y2="236" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
     </>
   ),
+  'play': (
+    <path d="M72,39.88V216.12a8,8,0,0,0,12.15,6.69l144.08-88.12a7.82,7.82,0,0,0,0-13.38L84.15,33.19A8,8,0,0,0,72,39.88Z" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+  ),
+  'play-circle': (
+    <>
+      <circle cx="128" cy="128" r="96" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+      <polygon points="176 128 112 88 112 168 176 128" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
 }
 
 // Filled variants for the few places that need them (currently WhatsApp).
 export const ICON_PATHS_FILL: Record<string, React.ReactNode> = {
+  // El play de las tarjetas de reels (21/10/2026).
+  'play': (
+    <path d="M72,39.88V216.12a8,8,0,0,0,12.15,6.69l144.08-88.12a7.82,7.82,0,0,0,0-13.38L84.15,33.19A8,8,0,0,0,72,39.88Z" fill="currentColor" />
+  ),
   heart: (
     <path d="M240,98c0,70-103.79,126.66-108.21,129a8,8,0,0,1-7.58,0C119.79,224.66,16,168,16,98A62.07,62.07,0,0,1,78,36c20.65,0,38.73,8.88,50,23.89C139.27,44.88,157.35,36,178,36A62.07,62.07,0,0,1,240,98Z" fill="currentColor" />
   ),

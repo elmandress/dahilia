@@ -366,7 +366,19 @@ export function Header({
                     {searching && suggestions.length === 0 ? (
                       <div style={{ padding: '16px', fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink500 }}>Buscando…</div>
                     ) : suggestions.length === 0 ? (
-                      <div style={{ padding: '16px', fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink500 }}>Sin resultados.</div>
+                      // Sin resultados ya no es un callejón (21/10/2026): lo
+                      // que se busca y no está ("chaleco hombre", "bolero",
+                      // "pantalón") casi siempre se puede tejer a pedido.
+                      <div style={{ padding: '14px 16px', fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700, lineHeight: 1.5 }}>
+                        <div>No lo tengo en la tienda, pero se puede tejer a pedido.</div>
+                        <Link
+                          href={`/encargo?idea=${encodeURIComponent(searchVal.trim())}`}
+                          onClick={() => { track('encargo_click', { source: 'buscador_sin_resultados', q: searchVal.trim() }); setShowSearch(false); setSearchVal('') }}
+                          style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, marginTop: 4, color: dahila.wine600, fontWeight: 500, textDecoration: 'underline', textUnderlineOffset: 3 }}
+                        >
+                          Pedir «{searchVal.trim()}» a medida
+                        </Link>
+                      </div>
                     ) : (
                       <>
                         {suggestions.map((sug) => (
