@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getAllArticles, getArticle, getRelatedArticles } from '@/content/blog'
-import { CLUSTER_LABEL, type Article } from '@/content/blog/types'
+import { CLUSTER_LABEL, type Article, type Block } from '@/content/blog/types'
 import { readingMinutes, tableOfContents } from '@/content/blog/toc'
 import { ArticleBody, type MeasuredPiece } from '@/components/blog/ArticleBody'
 import { ProductCard } from '@/components/ProductCard'
@@ -110,6 +110,10 @@ export default async function ArticlePage({
       .sort((a, b) => a.hours - b.hours)
     : []
 
+  // Prendas que hoy existen para el público (activas, agotadas o categorías).
+  const alive = new Set([...catalog.products.map((p) => p.slug), ...catalog.categories.map((c) => c.slug)])
+  const body = withoutDeadProductLinks(article.body, alive)
+
   const toc = tableOfContents(article.body)
   const related = getRelatedArticles(article)
   const products = await pickProducts(article)
@@ -213,7 +217,7 @@ export default async function ArticlePage({
           </nav>
         )}
 
-        <ArticleBody blocks={article.body} measured={measured} />
+        <ArticleBody blocks={body} measured={measured} />
       </div>
 
       {/* Productos reales relacionados. Salen del catálogo cacheado, así que
@@ -289,6 +293,35 @@ export default async function ArticlePage({
       )}
     </article>
   )
+}
+
+/** Las notas viven en el repo y las prendas en la base: cuando una prenda pasa a
+ *  borrador (o su drop todavía no se abrió), los links del texto que la
+ *  nombraban daban 404. 26/10/2026: set-brisa en 2 notas, de las que más
+ *  rinden en verano. El texto queda igual y solo se va el link; la foto deja de
+ *  ser clic y el botón de compra lleva a la tienda. Vuelve sola cuando la prenda
+ *  se publica de nuevo. */
+function withoutDeadProductLinks(blocks: Block[], alive: Set<string>): Block[] {
+  const dead = (href: string) => {
+    const m = /^\/tienda\/([^/?#]+)/.exec(href)
+    return !!m && !alive.has(m[1])
+  }
+  const walk = (v: unknown): unknown => {
+    if (typeof v === 'string') {
+      return v.replace(/\[([^\]]+)\]\((\/tienda\/[^)]+)\)/g, (all, label: string, href: string) => (dead(href) ? label : all))
+    }
+    if (Array.isArray(v)) return v.map(walk)
+    if (v && typeof v === 'object') {
+      const o = Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)])) as Record<string, unknown>
+      if (typeof o.href === 'string' && dead(o.href)) {
+        if (o.type === 'image') delete o.href
+        else o.href = '/tienda'
+      }
+      return o
+    }
+    return v
+  }
+  return blocks.map((b) => walk(b) as Block)
 }
 
 /** Productos recomendados: los declarados en el artículo (respetando el orden)
