@@ -3,7 +3,7 @@ import { getSnapshotData } from '@/lib/catalog'
 import { SITE_URL } from '@/lib/env'
 import { formatPrice, getFinalPrice } from '@/lib/types'
 import { getAllArticles } from '@/content/blog'
-import type { Product, Discount } from '@/lib/types'
+import { dropVisibility, type Product, type Discount } from '@/lib/types'
 
 export const revalidate = 3600
 
@@ -27,7 +27,7 @@ export async function GET() {
     const [{ data: prods }, { data: disc }, { data: settingRows }] = await Promise.all([
       supabase
         .from('products')
-        .select('slug, name, description, base_price_uyu, discount_active, discount_percent, sizes:product_sizes(price_uyu)')
+        .select('slug, name, description, base_price_uyu, discount_active, discount_percent, collection_id, collection:collections(*), sizes:product_sizes(price_uyu)')
         .eq('status', 'active')
         .order('sort_order', { ascending: true }),
       supabase.from('discounts').select('*').eq('active', true),
@@ -43,6 +43,7 @@ export async function GET() {
 
     const discounts = (disc ?? []) as Discount[]
     productLines = ((prods ?? []) as unknown as Product[])
+      .filter((p) => dropVisibility(p) === 'public')
       .map((p) => {
         const price = formatPrice(getFinalPrice(p, undefined, discounts))
         const desc = p.description ? ` — ${p.description.replace(/\s+/g, ' ').trim()}` : ''

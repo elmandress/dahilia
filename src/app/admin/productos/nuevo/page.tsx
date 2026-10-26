@@ -783,6 +783,19 @@ export default function NuevoProductoPage() {
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
+                {(() => {
+                  // Las prendas siguen a su colección (dropVisibility): activa
+                  // pero oculta hasta que se abra el drop.
+                  const c = collections.find((x) => x.id === collectionId)
+                  if (!c || (c.published && !c.unlisted)) return null
+                  return (
+                    <p style={{ fontSize: '0.78rem', color: '#8C8285', margin: '6px 0 0', lineHeight: 1.5 }}>
+                      {c.published
+                        ? 'Esta colección está en acceso VIP: la prenda se ve solo con el link, no en la tienda.'
+                        : 'Esta colección todavía no se lanzó: aunque la prenda esté activa, no se ve en el sitio hasta que publiques la colección.'}
+                    </p>
+                  )
+                })()}
               </div>
             )}
           </div>

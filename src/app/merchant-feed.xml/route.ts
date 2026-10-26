@@ -3,7 +3,7 @@ import { getSnapshotData } from '@/lib/catalog'
 import { SITE_URL } from '@/lib/env'
 import { getFinalPrice, getPrimaryPhoto, isReadyToShip } from '@/lib/types'
 import { botImageUrl } from '@/lib/media'
-import type { Product, Discount } from '@/lib/types'
+import { dropVisibility, type Product, type Discount } from '@/lib/types'
 import { localTermFor } from '@/lib/vocabulario'
 
 export const revalidate = 3600
@@ -88,7 +88,7 @@ export async function GET() {
       supabase
         .from('products')
         // slug: para la palabra uruguaya del título (lib/vocabulario.ts).
-        .select('*, category:categories(name, slug), media:product_media(url, is_primary, type), sizes:product_sizes(size, price_uyu, available)')
+        .select('*, category:categories(name, slug), collection:collections(*), media:product_media(url, is_primary, type), sizes:product_sizes(size, price_uyu, available)')
         .in('status', ['active', 'soldout'])
         .order('sort_order', { ascending: true }),
       supabase.from('discounts').select('*').eq('active', true),
@@ -96,7 +96,8 @@ export async function GET() {
     if (prodErr) throw prodErr
     if (discErr) throw discErr
     discounts = (disc ?? []) as Discount[]
-    products = (prods ?? []) as Product[]
+    // Prendas de un drop que todavía no es público: fuera del feed.
+    products = ((prods ?? []) as Product[]).filter((p) => dropVisibility(p) === 'public')
   } catch (e) {
     console.error('merchant-feed fetch failed, usando snapshot', e)
     const snap = getSnapshotData()

@@ -34,14 +34,18 @@ if (!URL_ || !KEY) {
 
 const supabase = createClient(URL_, KEY)
 
-// Mismo shape que consume src/lib/catalog.ts (products con joins).
+// Mismo shape que consume src/lib/catalog.ts (products con joins). La colección
+// se pide solo para dejar afuera los drops que no son públicos (mismo criterio
+// que dropVisibility en src/lib/types.ts) y se descarta antes de escribir.
 const PRODUCT_SELECT =
-  '*, category:categories(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*))'
+  '*, category:categories(*), collection:collections(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*))'
+
+const isPublicDrop = (p) => !p.collection_id || (p.collection?.published && !p.collection?.unlisted)
 
 function normalizeProducts(rows) {
-  return (rows ?? []).map((p) => {
+  return (rows ?? []).filter(isPublicDrop).map((p) => {
     const joined = p.colors ?? []
-    return { ...p, colors: joined.map((c) => c.color).filter(Boolean) }
+    return { ...p, collection: undefined, colors: joined.map((c) => c.color).filter(Boolean) }
   })
 }
 

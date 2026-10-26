@@ -2,7 +2,7 @@ import { jsonLdScript } from '@/lib/json-ld'
 import { createClient } from '@/lib/supabase/public'
 import { notFound, permanentRedirect, unstable_rethrow } from 'next/navigation'
 import type { Metadata } from 'next'
-import type { Product, Category, Discount } from '@/lib/types'
+import { dropVisibility, type Product, type Category, type Discount } from '@/lib/types'
 import {
   getPrimaryPhoto, getFinalPrice, resolveDiscountPercent, getListingPrice, isReadyToShip,
   hasPriceRange as productHasPriceRange, sortSizes,
@@ -61,13 +61,14 @@ async function resolveSlug(slug: string): Promise<ResolvedSlug> {
   try {
     const [catRes, prodRes] = await Promise.all([
       supabase.from('categories').select('*').eq('slug', slug).maybeSingle(),
-      supabase.from('products').select('slug, status').eq('slug', slug).maybeSingle(),
+      supabase.from('products').select('slug, status, collection_id, collection:collections(*)').eq('slug', slug).maybeSingle(),
     ])
     // Un 402 de cuota puede volver como {error} o como excepción — cubrimos las
     // dos: cualquier señal de fallo cae al snapshot.
     if (catRes.error || prodRes.error) throw new Error('db-down')
     if (catRes.data) return { type: 'category', category: catRes.data as Category }
-    if (prodRes.data) return { type: 'product' }
+    // Drop sin lanzar (colección en borrador / próximamente) → 404.
+    if (prodRes.data && dropVisibility(prodRes.data as unknown as Product) !== 'hidden') return { type: 'product' }
     return null
   } catch (e) {
     // Dejar pasar los errores de control de Next (bailout dinámico, notFound…);
@@ -190,15 +191,19 @@ export async function generateMetadata({
 
   // Try product (con fallback al snapshot si la DB está caída).
   let product: Product | null = null
+  // El snapshot solo guarda prendas públicas (scripts/snapshot-catalog.mjs) y
+  // no trae el join de la colección: la visibilidad por drop se mira en vivo.
+  let visibility: ReturnType<typeof dropVisibility> = 'public'
   try {
     const { data, error } = await supabase
       .from('products')
       // category: para el title con la palabra uruguaya (ver más abajo).
-      .select('*, category:categories(slug, name), media:product_media(*), sizes:product_sizes(*)')
+      .select('*, category:categories(slug, name), collection:collections(*), media:product_media(*), sizes:product_sizes(*)')
       .eq('slug', slug)
       .maybeSingle()
     if (error) throw error
     product = data as Product | null
+    if (product) visibility = dropVisibility(product)
   } catch (e) {
     unstable_rethrow(e)
     product = getSnapshotData().products.find((p) => p.slug === slug) ?? null
@@ -206,7 +211,9 @@ export async function generateMetadata({
     // noindex para una ficha que puede existir (ver resolveSlug).
     if (!product) throw e
   }
-  if (!product) return { title: 'Producto no encontrado', robots: { index: false, follow: false } }
+  if (!product || visibility === 'hidden') {
+    return { title: 'Producto no encontrado', robots: { index: false, follow: false } }
+  }
 
   // CTR de la ficha: el title lleva el diferencial ("tejido a mano, a tu
   // medida") y la descripción VENDE — precio incluido cuando existe (los
@@ -245,6 +252,9 @@ export async function generateMetadata({
     title: pageTitle,
     description,
     alternates: { canonical: `/tienda/${product.slug}` },
+    // Drop en acceso anticipado ("Solo con link"): la ficha abre para la lista
+    // VIP pero Google no la indexa hasta que la colección se publique.
+    ...(visibility === 'link' ? { robots: { index: false, follow: false } } : {}),
     // La imagen para compartir es la tarjeta JPEG de ./og (ver og/route.tsx:
     // la convención opengraph-image.tsx generaba un PNG de ~915 KB que
     // WhatsApp descartaba). X/Twitter cae solo al og:image cuando no hay

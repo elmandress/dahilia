@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/public'
 import { getCatalog, getSnapshotData } from '@/lib/catalog'
 import { SITE_URL } from '@/lib/env'
 import { botImageUrl } from '@/lib/media'
+import { dropVisibility, type Product } from '@/lib/types'
 import { getAllArticles } from '@/content/blog'
 import { withHeroOverride } from '@/content/blog/hero'
 
@@ -117,7 +118,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const [productsRes, categoriesRes, collectionsRes, discountsRes] = await Promise.all([
       supabase
         .from('products')
-        .select('slug, updated_at, status, discount_active, discount_percent, media:product_media(url, is_primary, type)')
+        .select('slug, updated_at, status, discount_active, discount_percent, collection_id, collection:collections(*), media:product_media(url, is_primary, type)')
         .in('status', ['active', 'soldout'])
         .order('sort_order', { ascending: true }),
       supabase
@@ -145,7 +146,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       throw new Error('sitemap: la base no respondió')
     }
 
-    const productsData = (productsRes.data ?? []) as Array<{
+    // Prendas de un drop sin lanzar (o en acceso VIP "solo con link") afuera.
+    const productsData = (productsRes.data ?? []).filter((p) => dropVisibility(p as unknown as Product) === 'public') as Array<{
       slug: string
       updated_at: string | null
       status: string

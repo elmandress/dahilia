@@ -14,7 +14,7 @@
 import { unstable_cache } from 'next/cache'
 import { unstable_rethrow } from 'next/navigation'
 import type { Product, Category, Color, Discount, Collection } from '@/lib/types'
-import { sortSizes } from '@/lib/types'
+import { sortSizes, dropVisibility } from '@/lib/types'
 import { createClient } from '@/lib/supabase/public'
 import { FOTOS_RESPALDO } from '@/lib/fotos-respaldo'
 import type { Testimonial } from '@/components/TestimonialsStrip'
@@ -86,8 +86,10 @@ function normalizeProducts(rows: unknown[]): Product[] {
   }) as Product[]
 }
 
+// collection(*): solo para decidir la visibilidad por drop (ver dropVisibility);
+// `*` y no columnas sueltas para tolerar una DB sin drops-2026-07.sql.
 const PRODUCT_SELECT =
-  '*, category:categories(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*))'
+  '*, category:categories(*), collection:collections(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*))'
 
 function snapshotCatalog(): Catalog {
   // Con la base caída, las fotos de Supabase tampoco cargan y solo se ven las
@@ -175,8 +177,15 @@ const fetchCatalogCached = unstable_cache(
     const settings = ((settingsRes.data ?? []) as Array<{ key: string; value: string }>)
       .reduce<Record<string, string>>((acc, r) => ({ ...acc, [r.key]: String(r.value ?? '') }), {})
 
+    // Las prendas de un drop que todavía no se lanzó (colección en borrador,
+    // "Próximamente" o "Solo con link") quedan fuera de todos los listados. El
+    // join se descarta después: no hace falta que viaje en cada tarjeta.
+    const products = normalizeProducts(productsRes.data ?? [])
+      .filter((p) => dropVisibility(p) === 'public')
+      .map((p) => ({ ...p, collection: undefined }))
+
     return {
-      products: normalizeProducts(productsRes.data ?? []),
+      products,
       categories: (categoriesRes.data ?? []) as Category[],
       colors: (colorsRes.data ?? []) as Color[],
       discounts: (discountsRes.data ?? []) as Discount[],
@@ -218,7 +227,9 @@ const fetchProductBySlugCached = unstable_cache(
       .maybeSingle()
 
     if (error) throw new Error('catalog: producto por slug con error')
-    if (!data) return null
+    // Drop sin lanzar → como si no existiera. "Solo con link" sí abre: es el
+    // acceso anticipado de la lista VIP (la ficha se marca noindex).
+    if (!data || dropVisibility(data) === 'hidden') return null
     return normalizeProducts([data])[0]
   },
   ['product-by-slug'],

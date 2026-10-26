@@ -17,11 +17,13 @@ const STATE_LABEL: Record<CollectionState, string> = {
   publicada: 'Publicada',
 }
 
+// Las prendas siguen a su colección (dropVisibility en lib/types.ts): se pueden
+// dejar activas de antemano y aparecen recién cuando el drop se abre.
 const STATE_HELP: Record<CollectionState, string> = {
-  borrador: 'No existe para el público.',
-  proximamente: 'La portada aparece en /colecciones con la etiqueta "Próximamente", sin poder entrar. Para las semanas de expectativa.',
-  anticipada: 'La página funciona pero no aparece en listados ni en Google. Mandale el link a la lista VIP 24 h antes del lanzamiento.',
-  publicada: 'Visible en todo el sitio.',
+  borrador: 'No existe para el público. Sus prendas tampoco, aunque estén activas: dejalas listas de antemano.',
+  proximamente: 'La portada aparece en /colecciones con la etiqueta "Próximamente", sin poder entrar. Las prendas siguen ocultas aunque estén activas. Para las semanas de expectativa.',
+  anticipada: 'La página y sus prendas funcionan con el link, pero no aparecen en la tienda, el inicio, el buscador ni Google. Mandale el link a la lista VIP 24 h antes del lanzamiento.',
+  publicada: 'Visible en todo el sitio, con todas sus prendas activas.',
 }
 
 function stateOf(c: Collection): CollectionState {

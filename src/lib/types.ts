@@ -68,6 +68,27 @@ export interface Collection {
   updated_at: string;
 }
 
+/**
+ * Qué tan visible es un producto según el estado de su colección (el drop).
+ * Así Anush puede dejar las prendas del drop ACTIVAS de antemano sin que nadie
+ * las vea: antes había que tenerlas en borrador y, al ponerlas activas,
+ * aparecían para todo el mundo y no solo para la lista VIP.
+ *   'public' → sin colección, o colección publicada: en todos lados.
+ *   'link'   → colección "Solo con link": la colección y las fichas abren, pero
+ *              no aparecen en /tienda, home, buscador, sitemap ni feeds.
+ *   'hidden' → colección en borrador o "Próximamente": no existe.
+ * Exige el join `collection:collections(*)`. Si el producto tiene colección y el
+ * join vino vacío es porque la RLS no deja leerla (borrador) → 'hidden'.
+ */
+export function dropVisibility(p: {
+  collection_id?: string | null;
+  collection?: Pick<Collection, 'published' | 'unlisted'> | null;
+}): 'public' | 'link' | 'hidden' {
+  if (!p.collection_id) return 'public';
+  if (!p.collection?.published) return 'hidden';
+  return p.collection.unlisted ? 'link' : 'public';
+}
+
 export interface Discount {
   id: string;
   label: string;
