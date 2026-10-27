@@ -1,7 +1,7 @@
 import 'server-only'
 import { createHmac, timingSafeEqual, createHash } from 'node:crypto'
 import { SITE_URL } from '@/lib/env'
-import { renderEmail, paragraph, escapeHtml } from './render'
+import { renderLetter, escapeHtml } from './render'
 import { VERIFIED_FROM, isUnverifiedDomain } from './from'
 
 // ─────────────────────────────────────────────────────────────
@@ -132,51 +132,61 @@ export async function sendToList(
   return { sent, failed, error: lastError, usedFallbackFrom }
 }
 
+// Los dos mails de la lista tienen forma de carta de Anush (renderLetter, 27/10/2026):
+// la plantilla con logo, botón y footer cargado de links cayó dos veces en Spam.
+// Además: sin "gratis", "limitadas", "antes que nadie" ni mayúsculas, que son
+// palabras de promoción; y piden respuesta, que es la señal que más le enseña a
+// Gmail que el remitente es alguien conocido.
+const SIGNATURE = 'Anush\nDahila Crochet, Montevideo'
+
 function footer(email: string): string {
   const url = unsubscribeUrl(email)
-  return `Recibís esto porque te anotaste en la lista privada de Dahila.${url ? ` <a href="${escapeHtml(url)}" style="color:#8F3B53;">Darte de baja</a>.` : ''}`
+  return `Te llega porque te anotaste en la lista de Dahila Crochet (Montevideo, Uruguay).${url ? ` Si no querés recibir más, <a href="${escapeHtml(url)}" style="color:#777777;">date de baja acá</a>.` : ''}`
 }
 
 function textFooter(email: string): string {
   const url = unsubscribeUrl(email)
-  return `\n\n—\nDahila Crochet · Hecho a mano en Montevideo\nRecibís esto porque te anotaste en la lista privada.${url ? `\nDarte de baja: ${url}` : ''}`
+  return `\n\n--\nTe llega porque te anotaste en la lista de Dahila Crochet (Montevideo, Uruguay).${url ? `\nDarte de baja: ${url}` : ''}`
 }
 
 /** Bienvenida: confirma que entró y qué va a recibir (y nada más). */
 export function welcomeMail(email: string, nextDrop?: { name: string; whenText?: string }): ListaMail {
-  const subject = 'Estás en la lista privada de Dahila'
-  const next = nextDrop?.name
-    ? `La próxima tanda, «${nextDrop.name}»${nextDrop.whenText ? `, sale ${nextDrop.whenText}` : ''}. Te escribimos 24 horas antes de que llegue a la tienda.`
-    : 'Cuando haya una tanda nueva, te escribimos 24 horas antes de que llegue a la tienda.'
-  const html = renderEmail({
-    preheader: 'Cada tanda nueva la ves 24 horas antes que nadie.',
-    heading: 'Ya estás adentro',
-    intro: escapeHtml('Gracias por anotarte. Cada tanda de Dahila es chica y se teje a mano, una pieza por vez.'),
-    bodyHtml: paragraph(next) + paragraph('Solo te escribimos cuando hay algo nuevo. Si en algún momento no querés más, respondé este mail o usá el link de abajo.'),
-    button: { label: 'Mirar lo que ya está', url: `${SITE_URL}/tienda?utm_source=lista&utm_medium=email&utm_campaign=bienvenida` },
-    footerNote: footer(email),
+  const subject = 'Ya estás en la lista de Dahila'
+  const paragraphs = [
+    'Hola, soy Anush, de Dahila. Gracias por anotarte.',
+    nextDrop?.name
+      ? `La próxima tanda es «${nextDrop.name}»${nextDrop.whenText ? ` y sale ${nextDrop.whenText}` : ''}. Te escribo un día antes de que llegue a la tienda, para que la veas primero.`
+      : 'Cuando haya una tanda nueva, te escribo un día antes de que llegue a la tienda, para que la veas primero.',
+    'Solo te escribo cuando hay algo nuevo. Y si tenés una duda o querés algo a medida, respondé este mail: lo leo yo.',
+  ]
+  const url = `${SITE_URL}/tienda?utm_source=lista&utm_medium=email&utm_campaign=bienvenida`
+  const html = renderLetter({
+    preheader: 'Te escribo un día antes de cada tanda nueva.',
+    paragraphs,
+    link: { label: 'Mirar lo que ya está tejido', url },
+    signature: SIGNATURE,
+    footerHtml: footer(email),
   })
-  const text = `Ya estás adentro.\n\nGracias por anotarte. Cada tanda de Dahila es chica y se teje a mano, una pieza por vez.\n\n${next}\n\nSolo te escribimos cuando hay algo nuevo.\n\nMirar lo que ya está: ${SITE_URL}/tienda${textFooter(email)}`
+  const text = `${paragraphs.join('\n\n')}\n\nMirar lo que ya está tejido: ${url}\n\n${SIGNATURE}${textFooter(email)}`
   return { subject, html, text }
 }
 
-/** Acceso anticipado: 24 h antes del drop. Asunto, título y cuerpo vienen ya
- *  armados del texto que Anush edita en /admin/suscriptores (lista-drop.ts). */
+/** Acceso anticipado: 24 h antes del drop. Asunto, primera línea y cuerpo vienen
+ *  ya armados del texto que Anush edita en /admin/suscriptores (lista-drop.ts). */
 export function dropEarlyAccessMail(
   email: string,
   drop: { subject: string; heading: string; body: string; url: string; whenText: string },
 ): ListaMail {
   const link = `${drop.url}${drop.url.includes('?') ? '&' : '?'}utm_source=lista&utm_medium=email&utm_campaign=acceso-anticipado`
   // Línea en blanco = párrafo nuevo; salto simple = salto de línea. Todo escapado.
-  const paragraphs = drop.body.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
-  const bodyHtml = paragraphs.map((p) => paragraph(p).replace(/\n/g, '<br>')).join('')
-  const html = renderEmail({
-    preheader: `Llega a la tienda ${drop.whenText}. Para la lista, ya está.`,
-    heading: drop.heading,
-    bodyHtml,
-    button: { label: 'Ver la tanda', url: link },
-    footerNote: footer(email),
+  const paragraphs = [drop.heading, ...drop.body.split(/\n\s*\n/)].map((p) => p.trim()).filter(Boolean)
+  const html = renderLetter({
+    preheader: `Llega a la tienda ${drop.whenText}.`,
+    paragraphs,
+    link: { label: 'Ver la colección', url: link },
+    signature: SIGNATURE,
+    footerHtml: footer(email),
   })
-  const text = `${drop.heading}\n\n${paragraphs.join('\n\n')}\n\nVer la tanda: ${link}${textFooter(email)}`
+  const text = `${paragraphs.join('\n\n')}\n\nVer la colección: ${link}\n\n${SIGNATURE}${textFooter(email)}`
   return { subject: drop.subject, html, text }
 }

@@ -82,6 +82,44 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;c
 </html>`
 }
 
+/**
+ * Mail con forma de carta, para la lista privada (27/10/2026). La plantilla de
+ * arriba (logo, tarjeta, botón negro, footer con sitio + Instagram + WhatsApp)
+ * se lee como publicidad: 6 links a 4 dominios distintos y un botón grande son
+ * señales que los filtros de Gmail asocian a promociones y spam, y la prueba
+ * del aviso del drop cayó dos veces en Spam. Esta se parece a un mail escrito a
+ * mano: párrafos, UN link en el texto (al mismo dominio que el remitente),
+ * firma y la baja. Párrafos en texto plano: se escapan acá.
+ */
+export function renderLetter(opts: {
+  preheader?: string
+  paragraphs: string[]
+  link?: { label: string; url: string }
+  signature: string
+  footerHtml: string
+}): string {
+  const p = (html: string) =>
+    `<p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#222222;">${html}</p>`
+  const body = opts.paragraphs.map((t) => p(escapeHtml(t).replace(/\n/g, '<br>'))).join('')
+  const link = opts.link
+    ? p(`<a href="${escapeHtml(opts.link.url)}" style="color:#8F3B53;">${escapeHtml(opts.link.label)}</a>`)
+    : ''
+  return `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="margin:0;padding:24px 16px;background:#ffffff;">
+${opts.preheader ? `<div style="display:none;max-height:0;overflow:hidden;">${escapeHtml(opts.preheader)}</div>` : ''}
+<div style="max-width:560px;">
+${body}${link}${p(escapeHtml(opts.signature).replace(/\n/g, '<br>'))}
+<p style="margin:28px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#777777;">${opts.footerHtml}</p>
+</div>
+</body>
+</html>`
+}
+
 /** A definition-list style key/value block. Keys and values are both escaped. */
 export function infoTable(rows: Array<[string, string]>): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin:8px 0;">

@@ -254,7 +254,7 @@ export function AvisoAutomatico() {
       {/* Texto del aviso */}
       <h4 style={{ margin: '1.5rem 0 0.4rem', fontSize: '0.92rem' }}>Texto del mail del drop</h4>
       <p style={{ ...muted, margin: '0 0 0.75rem' }}>
-        Se reemplazan solos: <code>{'{nombre}'}</code> (nombre del drop), <code>{'{cuando}'}</code> (&quot;el miércoles 28 de octubre a las 10:00&quot;) y <code>{'{adelanto}'}</code> (el texto de expectativa de Configuración). Una línea en blanco separa párrafos. El botón &quot;Ver la tanda&quot; y el link de baja se agregan solos.
+        Se reemplazan solos: <code>{'{nombre}'}</code> (nombre del drop), <code>{'{cuando}'}</code> (&quot;el miércoles 28 de octubre a las 10:00&quot;) y <code>{'{adelanto}'}</code> (el texto de expectativa de Configuración). Una línea en blanco separa párrafos. El link Una línea en blanco separa párrafos. El botón &quot;Ver la tanda&quot; y el link de baja se agregan solos.quot;Ver la colecciónUna línea en blanco separa párrafos. El botón &quot;Ver la tanda&quot; y el link de baja se agregan solos.quot;, la firma de Anush y la baja se agregan solos. Para no caer en Spam: escribilo como un mail a una amiga, sin palabras de promoción (gratis, oferta, limitado, urgente, últimas), sin MAYÚSCULAS ni signos de más.
       </p>
       <div className="admin-field">
         <label htmlFor="lista-asunto">Asunto</label>
@@ -262,7 +262,7 @@ export function AvisoAutomatico() {
           onChange={(e) => setCopy({ ...copy, lista_drop_asunto: e.target.value })} />
       </div>
       <div className="admin-field">
-        <label htmlFor="lista-titulo">Título dentro del mail</label>
+        <label htmlFor="lista-titulo">Primera línea (el saludo)</label>
         <input id="lista-titulo" type="text" style={field} value={copy.lista_drop_titulo} maxLength={150}
           onChange={(e) => setCopy({ ...copy, lista_drop_titulo: e.target.value })} />
       </div>
