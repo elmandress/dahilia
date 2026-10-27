@@ -209,8 +209,8 @@ export function AvisoAutomatico() {
       .filter((t) => /Netlify/.test(t))
       .map((text) => ({ ok: false, text })),
     p.cronSeen
-      ? { ok: now - new Date(p.cronSeen).getTime() < 3 * 3_600_000, text: `El reloj automático (Netlify, cada hora a los :07) pasó por última vez ${ago(p.cronSeen, now)}.` }
-      : { ok: false, text: 'Todavía no hay registro del reloj automático. Pasa cada hora a los :07: si después de eso sigue así, revisá en Netlify → Logs → Functions la función reloj-lista-privada.' },
+      ? { ok: now - new Date(p.cronSeen).getTime() < 3 * 3_600_000, text: `El reloj automático (Netlify, cada hora en punto) pasó por última vez ${ago(p.cronSeen, now)}.` }
+      : { ok: false, text: 'Todavía no hay registro del reloj automático. Pasa cada hora en punto: si después de eso sigue así, revisá en Netlify → Logs → Functions la función reloj-lista-privada.' },
   ]
 
   const field = { width: '100%', boxSizing: 'border-box' } as const
@@ -243,7 +243,7 @@ export function AvisoAutomatico() {
         <div style={{ fontSize: '0.88rem', marginBottom: 8 }}>
           <strong>Envío automático: {p.auto ? 'activado' : 'en pausa'}.</strong>{' '}
           {p.auto
-            ? 'El aviso sale solo 24 h antes del lanzamiento, con el texto de abajo.'
+            ? 'El aviso sale solo 24 h antes del lanzamiento, con el texto de abajo. A la hora del lanzamiento, la colección pasa sola de "Solo con link" a "Publicada" y aparece en la tienda.'
             : 'No sale nada a las clientas hasta que lo actives. Primero revisá el texto y mandate una prueba.'}
         </div>
         <button type="button" className={`admin-btn admin-btn-sm ${p.auto ? 'admin-btn-secondary' : 'admin-btn-primary'}`} onClick={toggleAuto} disabled={togglingAuto}>

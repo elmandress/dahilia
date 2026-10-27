@@ -21,4 +21,4 @@ export default async function reloj() {
   console.log('reloj-lista-privada', res.status, (await res.text()).slice(0, 300))
 }
 
-export const config = { schedule: '7 * * * *' }
+export const config = { schedule: '0 * * * *' }

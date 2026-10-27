@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
+import { CATALOG_TAG } from '@/lib/catalog'
 import { timingSafeEqual } from 'node:crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendToList } from '@/lib/email/lista'
@@ -11,7 +13,7 @@ export const dynamic = 'force-dynamic'
  * del drop (Configuración → Próximo drop), un mail a cada persona de la lista
  * con el link a la tanda. Es la promesa de la lista ("la ves 24 h antes").
  *
- * Lo llama netlify/functions/reloj-lista-privada.mts cada hora (a los :07),
+ * Lo llama netlify/functions/reloj-lista-privada.mts cada hora en punto,
  * con el mismo CRON_SECRET que el resumen diario. Se manda UNA vez por drop (nombre +
  * fecha quedan anotados en site_settings.lista_email_enviado); cambiar la
  * fecha o el nombre arma un envío nuevo.
@@ -27,6 +29,8 @@ export const dynamic = 'force-dynamic'
  * última vez, que es la única forma de saber desde el sitio que el reloj (y su
  * CRON_SECRET) andan.
  */
+
+const EARLY_MS = 5 * 60_000
 
 function authorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET
@@ -61,9 +65,32 @@ export async function GET(req: NextRequest) {
   }
   if (!plan.name || !plan.launch || !plan.sendAt) return NextResponse.json({ ok: true, skipped: 'sin drop configurado' })
 
-  const now = Date.now()
+  // El reloj pasa en punto, pero puede dispararse unos segundos antes: con esta
+  // tolerancia, el aviso de las 19:00 sale a las 19:00 y no una hora después.
+  const now = Date.now() + EARLY_MS
   if (now < plan.sendAt.getTime()) return NextResponse.json({ ok: true, skipped: 'todavía no', sendsAt: plan.sendAt.toISOString() })
-  if (now >= plan.launch.getTime()) return NextResponse.json({ ok: true, skipped: 'el drop ya salió' })
+
+  if (now >= plan.launch.getTime()) {
+    // Hora del lanzamiento (28/10/2026: Anush no puede estar a esa hora). Con
+    // el envío automático activado, la colección pasa sola de "Solo con link"
+    // a "Publicada" y aparece en la tienda. Una sola vez (después ya no está
+    // unlisted) y solo hasta 2 días después, para no publicar un drop viejo.
+    const c = plan.collection
+    if (plan.auto && c?.published && c.unlisted && now - plan.launch.getTime() < 2 * 86_400_000) {
+      const { error: pubErr } = await db.from('collections').update({ unlisted: false }).eq('slug', plan.slug)
+      if (pubErr) return NextResponse.json({ error: pubErr.message }, { status: 500 })
+      try {
+        revalidateTag(CATALOG_TAG, { expire: 0 })
+        revalidatePath('/', 'layout')
+      } catch {
+        // El caché vence solo en una hora: no tumbar la publicación por esto.
+      }
+      const stamp = new Date().toLocaleString('es-UY', { timeZone: 'America/Montevideo' })
+      await setStatus(`«${plan.name}» se publicó sola en la tienda el ${stamp}.${plan.alreadySent ? ' El aviso a la lista ya había salido el día anterior.' : ''}`)
+      return NextResponse.json({ ok: true, published: plan.slug })
+    }
+    return NextResponse.json({ ok: true, skipped: 'el drop ya salió' })
+  }
   if (plan.alreadySent) return NextResponse.json({ ok: true, skipped: 'ya enviado' })
 
   if (!plan.auto) {
