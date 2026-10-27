@@ -11,8 +11,8 @@ export const dynamic = 'force-dynamic'
  * del drop (Configuración → Próximo drop), un mail a cada persona de la lista
  * con el link a la tanda. Es la promesa de la lista ("la ves 24 h antes").
  *
- * Lo llama .github/workflows/lista-privada.yml cada hora, con el mismo
- * CRON_SECRET que el resumen diario. Se manda UNA vez por drop (nombre +
+ * Lo llama netlify/functions/reloj-lista-privada.mts cada hora (a los :07),
+ * con el mismo CRON_SECRET que el resumen diario. Se manda UNA vez por drop (nombre +
  * fecha quedan anotados en site_settings.lista_email_enviado); cambiar la
  * fecha o el nombre arma un envío nuevo.
  *
@@ -24,8 +24,8 @@ export const dynamic = 'force-dynamic'
  *    daría 404): espera, y lo deja escrito en lista_email_estado para el admin.
  *
  * Cada pasada anota lista_cron_visto: el panel muestra cuándo pasó el reloj por
- * última vez, que es la única forma de saber desde el sitio que la Action de
- * GitHub (y su CRON_SECRET) andan.
+ * última vez, que es la única forma de saber desde el sitio que el reloj (y su
+ * CRON_SECRET) andan.
  */
 
 function authorized(req: NextRequest): boolean {

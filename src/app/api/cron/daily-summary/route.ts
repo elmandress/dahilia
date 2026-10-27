@@ -6,11 +6,11 @@ import { sendDailySummary, reportSystemError, type DailySummaryData } from '@/li
 
 export const dynamic = 'force-dynamic'
 
-// Protected daily-digest endpoint. `.github/workflows/daily-summary.yml` es
-// el único caller real hoy y ya usa el header — builds the summary and emails
-// the owner.
+// Protected daily-digest endpoint — builds the summary and emails the owner.
 //
-// SCHEDULING: GitHub Actions (ya configurado) u otro cron externo, pegándole con
+// SCHEDULING (27/10/2026): netlify/functions/reloj-resumen-diario.mts, todos
+// los días a las 9:00 de Montevideo. Antes era una Action de GitHub sin el
+// secreto (fallaba siempre). Cualquier otro cron externo puede pegarle con
 //   GET https://<dominio>/api/cron/daily-summary
 //   Header  Authorization: Bearer <CRON_SECRET>
 //

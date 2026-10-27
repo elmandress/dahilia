@@ -209,8 +209,8 @@ export function AvisoAutomatico() {
       .filter((t) => /Netlify/.test(t))
       .map((text) => ({ ok: false, text })),
     p.cronSeen
-      ? { ok: now - new Date(p.cronSeen).getTime() < 3 * 3_600_000, text: `El reloj automático (GitHub, cada hora) pasó por última vez ${ago(p.cronSeen, now)}.` }
-      : { ok: false, text: 'Todavía no hay registro del reloj automático. Pasa cada hora: si en un par de horas sigue así, falta el secreto CRON_SECRET en GitHub (Settings → Secrets → Actions).' },
+      ? { ok: now - new Date(p.cronSeen).getTime() < 3 * 3_600_000, text: `El reloj automático (Netlify, cada hora a los :07) pasó por última vez ${ago(p.cronSeen, now)}.` }
+      : { ok: false, text: 'Todavía no hay registro del reloj automático. Pasa cada hora a los :07: si después de eso sigue así, revisá en Netlify → Logs → Functions la función reloj-lista-privada.' },
   ]
 
   const field = { width: '100%', boxSizing: 'border-box' } as const
