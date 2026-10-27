@@ -5,6 +5,7 @@ import { dahila } from '@/components/ui/tokens'
 import { VipForm } from '@/components/VipForm'
 import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
+import { parseDropDateUY, dropDayText } from '@/lib/drop-date'
 
 export const revalidate = 3600
 
@@ -20,7 +21,6 @@ export const metadata: Metadata = {
   openGraph: { ...OG_BASE, title: TITLE, description: DESCRIPTION, url: `${SITE_URL}/vip` },
 }
 
-const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre']
 
 /**
  * /vip (12/10/2026): la entrada a la lista privada que se puede compartir.
@@ -33,8 +33,8 @@ export default async function VipPage() {
   const { settings } = await getCatalog()
   const dropOn = settings.drop_enabled !== 'false' && (settings.drop_name ?? '').trim() !== ''
   const dropName = dropOn ? settings.drop_name!.trim() : ''
-  const m = (settings.drop_date ?? '').trim().match(/^(\d{4})-(\d{2})-(\d{2})/)
-  const dropDate = dropOn && m ? `${Number(m[3])} de ${MONTHS[Number(m[2]) - 1]}` : ''
+  const launch = parseDropDateUY(settings.drop_date)
+  const dropDate = dropOn && launch ? dropDayText(launch) : ''
 
   const perks: Array<[string, string]> = [
     ['24 horas antes', 'Cada tanda nueva la ve la lista un día antes de que llegue a la tienda.'],

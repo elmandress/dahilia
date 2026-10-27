@@ -8,6 +8,7 @@ import { BLUR_DATA_URL } from '@/lib/types'
 import { subscribeToVipList } from '@/lib/subscribe'
 import { markVipSeen } from './VipForm'
 import { safeAction } from '@/lib/safe-action'
+import { parseDropDateUY } from '@/lib/drop-date'
 
 /**
  * Bloque "Próximo drop" del home — la mecánica de expectativa del playbook de
@@ -36,10 +37,9 @@ export interface DropTeaserProps {
   placement?: 'top' | 'inline'
 }
 
+// Hora de Uruguay y el mismo parser tolerante que el aviso a la lista (lib/drop-date).
 function parseDropDate(iso: string): number | null {
-  if (!iso.trim()) return null
-  const t = new Date(iso.trim().replace(' ', 'T')).getTime()
-  return Number.isFinite(t) ? t : null
+  return parseDropDateUY(iso)?.getTime() ?? null
 }
 
 /** Días/horas/minutos restantes, en el idioma del resto del sitio. */

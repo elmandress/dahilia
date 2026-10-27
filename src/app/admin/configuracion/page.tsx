@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { mediaPath, prepareImageForUpload, STORAGE_CACHE_SECONDS } from '@/lib/media'
 import { notifySiteWideChange } from '@/lib/seo-notify'
 import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
+import { parseDropDateUY, dropDateInputs, dropWhenText } from '@/lib/drop-date'
 
 // All keys the CMS surfaces. The DB may contain extras (e.g. legacy)
 // — we preserve them on save by passing through whatever loaded.
@@ -61,7 +62,7 @@ const SECTIONS = [
     fields: [
       { key: 'drop_enabled', label: '¿Mostrar el bloque del próximo drop?', type: 'toggle' },
       { key: 'drop_name', label: 'Nombre del drop', type: 'text', placeholder: "Verano '26" },
-      { key: 'drop_date', label: 'Fecha y hora del lanzamiento (hora de Uruguay)', type: 'text', placeholder: '2026-11-15 10:00' },
+      { key: 'drop_date', label: 'Fecha y hora del lanzamiento (hora de Montevideo)', type: 'datetime' },
       { key: 'drop_teaser', label: 'Texto de expectativa', type: 'textarea', placeholder: 'Bikinis, salidas de playa y tops nuevos — pocas unidades de cada uno, tejidas una por una.' },
       { key: 'drop_image_url', label: 'Foto del adelanto (opcional)', type: 'image' },
       { key: 'drop_collection_slug', label: 'Slug de la colección (opcional)', type: 'text', placeholder: 'verano-26' },
@@ -239,7 +240,50 @@ const SECTIONS = [
   },
 ] as const
 
-type FieldType = 'text' | 'textarea' | 'image' | 'hero' | 'toggle' | 'color'
+type FieldType = 'text' | 'textarea' | 'image' | 'hero' | 'toggle' | 'color' | 'datetime'
+
+/**
+ * Fecha + hora del drop, siempre en hora de Montevideo (27/10/2026). Antes era
+ * texto libre: "2026/10/28 " no lo entendía el servidor y, al agregarle la
+ * hora, la cuenta regresiva del inicio marcaba cualquier cosa. Guarda
+ * "2026-10-28 18:00", el formato que leen el inicio, /vip y el aviso a la lista.
+ */
+function DropDateField({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+  // Derivado del valor guardado (los ajustes llegan después del primer
+  // render). Solo la hora elegida antes que el día vive aparte.
+  const parsed = dropDateInputs(value)
+  const [pendingTime, setPendingTime] = useState('')
+  const date = parsed?.date ?? ''
+  const time = parsed?.time ?? pendingTime
+  const set = (d: string, t: string) => {
+    setPendingTime(t)
+    onChange(d ? `${d} ${t || '00:00'}` : '')
+  }
+  const launch = parseDropDateUY(value)
+  const unreadable = value.trim() !== '' && !launch
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <input id={id} type="date" value={date} onChange={(e) => set(e.target.value, time)}
+          aria-label="Día del lanzamiento" style={{ flex: '1 1 160px', minWidth: 0 }} />
+        <input type="time" value={time} step={300} onChange={(e) => set(date, e.target.value)}
+          aria-label="Hora del lanzamiento, en hora de Montevideo" style={{ flex: '0 1 130px', minWidth: 0 }} />
+        {value && (
+          <button type="button" className="admin-btn admin-btn-secondary admin-btn-sm" onClick={() => set('', '')}>
+            Borrar fecha
+          </button>
+        )}
+      </div>
+      <p style={{ margin: '6px 0 0', fontSize: '0.8rem', lineHeight: 1.5, color: unreadable ? '#7a1e2f' : '#8C8285' }}>
+        {unreadable
+          ? `La fecha guardada ("${value}") no se entiende: elegila de nuevo arriba.`
+          : launch
+            ? `Sale ${dropWhenText(launch)}, hora de Montevideo. El aviso a la lista VIP sale 24 h antes: ${dropWhenText(new Date(launch.getTime() - 86_400_000))}.`
+            : 'Elegí el día y la hora. Es siempre hora de Montevideo, aunque abras el admin desde otro país.'}
+      </p>
+    </div>
+  )
+}
 
 // Shared upload helper used by both the simple image field and the hero banner.
 // Nombre de archivo descriptivo (ver lib/media.ts) — solo subidas nuevas.
@@ -698,6 +742,9 @@ export default function ConfiguracionAdminPage() {
                           style={{ flex: '1 1 140px', minWidth: 0 }}
                         />
                       </div>
+                    )}
+                    {fieldType === 'datetime' && (
+                      <DropDateField id={field.key} value={value} onChange={(v) => update(field.key, v)} />
                     )}
                     {fieldType === 'image' && (
                       <ImageUploader value={value} onChange={(v) => update(field.key, v)} hint={field.key.replace(/_(image_)?url$/, '')} />

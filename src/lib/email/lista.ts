@@ -2,6 +2,7 @@ import 'server-only'
 import { createHmac, timingSafeEqual, createHash } from 'node:crypto'
 import { SITE_URL } from '@/lib/env'
 import { renderEmail, paragraph, escapeHtml } from './render'
+import { VERIFIED_FROM, isUnverifiedDomain } from './from'
 
 // ─────────────────────────────────────────────────────────────
 // Mails a la lista privada (12/10/2026): bienvenida al anotarse y aviso
@@ -69,18 +70,19 @@ export async function sendToList(
   emails: string[],
   build: (email: string) => ListaMail,
   idempotencyBase: string,
-): Promise<{ sent: number; failed: number; error?: string }> {
+): Promise<{ sent: number; failed: number; error?: string; usedFallbackFrom?: boolean }> {
   const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.EMAIL_FROM_LISTA || process.env.EMAIL_FROM
+  let from = process.env.EMAIL_FROM_LISTA || process.env.EMAIL_FROM
   if (!apiKey || !from || !secret()) return { sent: 0, failed: emails.length, error: 'Faltan RESEND_API_KEY, EMAIL_FROM o CRON_SECRET.' }
   const replyTo = process.env.OWNER_NOTIFICATION_EMAIL
 
   let sent = 0
   let failed = 0
   let lastError: string | undefined
+  let usedFallbackFrom = false
   for (let i = 0; i < emails.length; i += 100) {
     const chunk = emails.slice(i, i + 100)
-    const payload = chunk.map((to) => {
+    const payload = () => chunk.map((to) => {
       const mail = build(to)
       const oneClick = oneClickUrl(to)!
       return {
@@ -97,26 +99,37 @@ export async function sendToList(
       }
     })
     try {
-      const res = await fetch(BATCH_ENDPOINT, {
+      const post = (key: string) => fetch(BATCH_ENDPOINT, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'Idempotency-Key': createHash('sha256').update(`${idempotencyBase}:${i}`).digest('hex').slice(0, 48),
+          'Idempotency-Key': createHash('sha256').update(key).digest('hex').slice(0, 48),
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload()),
       })
+      let res = await post(`${idempotencyBase}:${i}`)
+      let detail = res.ok ? '' : await res.text().catch(() => '')
+      // Remitente con dominio sin verificar en Resend → una vez más desde
+      // dahila.uy (ver from.ts). Clave nueva: la anterior quedó usada por el 403.
+      if (!res.ok && from !== VERIFIED_FROM && isUnverifiedDomain(res.status, detail)) {
+        console.error('[lista] remitente sin verificar, uso el de respaldo:', from)
+        from = VERIFIED_FROM
+        usedFallbackFrom = true
+        res = await post(`${idempotencyBase}:${i}:respaldo`)
+        detail = res.ok ? '' : await res.text().catch(() => '')
+      }
       if (res.ok) sent += chunk.length
       else {
         failed += chunk.length
-        lastError = `HTTP ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`
+        lastError = `HTTP ${res.status}: ${detail.slice(0, 200)}`
       }
     } catch (e) {
       failed += chunk.length
       lastError = e instanceof Error ? e.message : 'error de red'
     }
   }
-  return { sent, failed, error: lastError }
+  return { sent, failed, error: lastError, usedFallbackFrom }
 }
 
 function footer(email: string): string {
@@ -147,18 +160,23 @@ export function welcomeMail(email: string, nextDrop?: { name: string; whenText?:
   return { subject, html, text }
 }
 
-/** Acceso anticipado: 24 h antes del drop. */
-export function dropEarlyAccessMail(email: string, drop: { name: string; teaser?: string; url: string; whenText: string }): ListaMail {
-  const subject = `«${drop.name}»: la ves antes que nadie`
+/** Acceso anticipado: 24 h antes del drop. Asunto, título y cuerpo vienen ya
+ *  armados del texto que Anush edita en /admin/suscriptores (lista-drop.ts). */
+export function dropEarlyAccessMail(
+  email: string,
+  drop: { subject: string; heading: string; body: string; url: string; whenText: string },
+): ListaMail {
   const link = `${drop.url}${drop.url.includes('?') ? '&' : '?'}utm_source=lista&utm_medium=email&utm_campaign=acceso-anticipado`
+  // Línea en blanco = párrafo nuevo; salto simple = salto de línea. Todo escapado.
+  const paragraphs = drop.body.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
+  const bodyHtml = paragraphs.map((p) => paragraph(p).replace(/\n/g, '<br>')).join('')
   const html = renderEmail({
     preheader: `Llega a la tienda ${drop.whenText}. Para la lista, ya está.`,
-    heading: `«${drop.name}» ya está, para vos`,
-    intro: escapeHtml(`La tienda la ve ${drop.whenText}. Vos, desde ahora: son pocas piezas, y quien entra primero elige.`),
-    bodyHtml: drop.teaser ? paragraph(drop.teaser) : '',
+    heading: drop.heading,
+    bodyHtml,
     button: { label: 'Ver la tanda', url: link },
     footerNote: footer(email),
   })
-  const text = `«${drop.name}» ya está, para vos.\n\nLa tienda la ve ${drop.whenText}. Vos, desde ahora: son pocas piezas, y quien entra primero elige.\n${drop.teaser ? `\n${drop.teaser}\n` : ''}\nVer la tanda: ${link}${textFooter(email)}`
-  return { subject, html, text }
+  const text = `${drop.heading}\n\n${paragraphs.join('\n\n')}\n\nVer la tanda: ${link}${textFooter(email)}`
+  return { subject: drop.subject, html, text }
 }

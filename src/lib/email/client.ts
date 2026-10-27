@@ -20,6 +20,8 @@ export interface SendEmailResult {
   id?: string
 }
 
+import { VERIFIED_FROM, isUnverifiedDomain } from './from'
+
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
 
 export function emailConfigured(): boolean {
@@ -38,20 +40,30 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
   }
 
   try {
-    const res = await fetch(RESEND_ENDPOINT, {
+    const post = (sender: string) => fetch(RESEND_ENDPOINT, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from,
+        from: sender,
         to: input.to,
         subject: input.subject,
         html: input.html,
         ...(input.replyTo ? { reply_to: input.replyTo } : {}),
       }),
     })
+
+    let res = await post(from)
+    // Remitente con dominio sin verificar en Resend → reintento desde dahila.uy (ver from.ts).
+    if (!res.ok && from !== VERIFIED_FROM) {
+      const detail = await res.clone().text().catch(() => '')
+      if (isUnverifiedDomain(res.status, detail)) {
+        console.error('[email] remitente sin verificar, uso el de respaldo:', from)
+        res = await post(VERIFIED_FROM)
+      }
+    }
 
     if (!res.ok) {
       const detail = await res.text().catch(() => '')
