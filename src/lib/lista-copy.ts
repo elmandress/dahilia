@@ -5,9 +5,10 @@
 //
 // 27/10/2026: reescrito como un mail personal de Anush (la prueba con el texto
 // de promoción cayó dos veces en Spam). Asunto corto y de persona a persona,
-// sin "gratis", "limitadas", "antes que nadie", mayúsculas ni signos de más; y
-// pide respuesta, que es lo que más le enseña a Gmail que el remitente es
-// conocido. {adelanto} ya no va por defecto: el texto de expectativa de
+// sin "gratis", "limitadas", "antes que nadie", mayúsculas ni signos de más.
+// El contacto es WhatsApp (número sin link): hola@dahila.uy todavía no recibe
+// mails, y el Reply-To a Gmail era el mayor castigo de spam (ver lista.ts).
+// {adelanto} ya no va por defecto: el texto de expectativa de
 // Configuración está escrito para gente que todavía no se anotó.
 export const DROP_COPY_DEFAULTS = {
   lista_drop_asunto: 'Te abrí {nombre} un día antes',
@@ -15,7 +16,7 @@ export const DROP_COPY_DEFAULTS = {
   lista_drop_texto:
     'Como estás en la lista, te escribo antes de abrirla para todos: {nombre} llega a la tienda {cuando}, y vos ya la podés ver desde hoy.\n\n' +
     'Son pocas piezas y cada una está tejida a mano.\n\n' +
-    'Si tenés alguna duda de talle o de color, respondé este mail y te contesto yo.',
+    'Si tenés alguna duda de talle o de color, escribime por WhatsApp al 099 850 073 y te contesto yo.',
 }
 
 export type DropCopyKey = keyof typeof DROP_COPY_DEFAULTS

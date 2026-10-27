@@ -90,31 +90,37 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;c
  * del aviso del drop cayó dos veces en Spam. Esta se parece a un mail escrito a
  * mano: párrafos, UN link en el texto (al mismo dominio que el remitente),
  * firma y la baja. Párrafos en texto plano: se escapan acá.
+ *
+ * Liviana a propósito: los estilos van una vez en el contenedor (no repetidos
+ * en cada párrafo) para que el HTML sea casi todo texto, y sin texto oculto de
+ * vista previa (mail-tester midió 28% de texto en la versión anterior).
  */
 export function renderLetter(opts: {
-  preheader?: string
   paragraphs: string[]
   link?: { label: string; url: string }
+  /** Primera línea = nombre (va destacado); el resto, debajo en gris. */
   signature: string
   footerHtml: string
 }): string {
-  const p = (html: string) =>
-    `<p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#222222;">${html}</p>`
-  const body = opts.paragraphs.map((t) => p(escapeHtml(t).replace(/\n/g, '<br>'))).join('')
+  const lines = (t: string) => escapeHtml(t).replace(/\n/g, '<br>')
+  const body = opts.paragraphs.map((t) => `<p style="margin:0 0 16px;">${lines(t)}</p>`).join('\n')
   const link = opts.link
-    ? p(`<a href="${escapeHtml(opts.link.url)}" style="color:#8F3B53;">${escapeHtml(opts.link.label)}</a>`)
+    ? `<p style="margin:0 0 16px;"><a href="${escapeHtml(opts.link.url)}" style="color:#8F3B53;">${escapeHtml(opts.link.label)}</a></p>`
     : ''
+  const [signer, ...rest] = opts.signature.split('\n')
   return `<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
-<body style="margin:0;padding:24px 16px;background:#ffffff;">
-${opts.preheader ? `<div style="display:none;max-height:0;overflow:hidden;">${escapeHtml(opts.preheader)}</div>` : ''}
-<div style="max-width:560px;">
-${body}${link}${p(escapeHtml(opts.signature).replace(/\n/g, '<br>'))}
-<p style="margin:28px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#777777;">${opts.footerHtml}</p>
+<body style="margin:0;padding:0;background:#ffffff;">
+<div style="max-width:540px;margin:0 auto;padding:28px 20px;font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.6;color:#2a2526;">
+<p style="margin:0 0 24px;font-size:13px;letter-spacing:4px;color:#8F3B53;">DAHILA</p>
+${body}
+${link}
+<p style="margin:24px 0 0;">${escapeHtml(signer)}${rest.length ? `<br><span style="font-size:15px;color:#8a8082;">${lines(rest.join('\n'))}</span>` : ''}</p>
+<p style="margin:32px 0 0;padding-top:14px;border-top:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#888888;">${opts.footerHtml}</p>
 </div>
 </body>
 </html>`

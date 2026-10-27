@@ -74,7 +74,16 @@ export async function sendToList(
   const apiKey = process.env.RESEND_API_KEY
   let from = process.env.EMAIL_FROM_LISTA || process.env.EMAIL_FROM
   if (!apiKey || !from || !secret()) return { sent: 0, failed: emails.length, error: 'Faltan RESEND_API_KEY, EMAIL_FROM o CRON_SECRET.' }
-  const replyTo = process.env.OWNER_NOTIFICATION_EMAIL
+  // Reply-To solo si es del mismo dominio que el remitente. Un Gmail como
+  // Reply-To de un mail de dahila.uy es la regla FREEMAIL_FORGED_REPLYTO de
+  // SpamAssassin (+2,5 puntos, el mayor castigo que tenía el aviso en
+  // mail-tester, 27/10/2026: 7,3/10). Sin Reply-To, la respuesta va al
+  // remitente (hola@dahila.uy), que necesita MX para recibirla.
+  const domainOf = (addr: string) => (/@([^>\s]+)>?\s*$/.exec(addr)?.[1] ?? '').toLowerCase()
+  const replyToFor = (sender: string) => {
+    const r = process.env.LISTA_REPLY_TO || process.env.OWNER_NOTIFICATION_EMAIL || ''
+    return r && domainOf(r) === domainOf(sender) ? r : undefined
+  }
 
   let sent = 0
   let failed = 0
@@ -85,6 +94,7 @@ export async function sendToList(
     const payload = () => chunk.map((to) => {
       const mail = build(to)
       const oneClick = oneClickUrl(to)!
+      const replyTo = replyToFor(from!)
       return {
         from,
         to,
@@ -135,8 +145,8 @@ export async function sendToList(
 // Los dos mails de la lista tienen forma de carta de Anush (renderLetter, 27/10/2026):
 // la plantilla con logo, botón y footer cargado de links cayó dos veces en Spam.
 // Además: sin "gratis", "limitadas", "antes que nadie" ni mayúsculas, que son
-// palabras de promoción; y piden respuesta, que es la señal que más le enseña a
-// Gmail que el remitente es alguien conocido.
+// palabras de promoción. Invitan a escribir por WhatsApp (número sin link) en
+// vez de responder: hola@dahila.uy todavía no recibe mails.
 const SIGNATURE = 'Anush\nDahila Crochet, Montevideo'
 
 function footer(email: string): string {
@@ -157,11 +167,10 @@ export function welcomeMail(email: string, nextDrop?: { name: string; whenText?:
     nextDrop?.name
       ? `La próxima tanda es «${nextDrop.name}»${nextDrop.whenText ? ` y sale ${nextDrop.whenText}` : ''}. Te escribo un día antes de que llegue a la tienda, para que la veas primero.`
       : 'Cuando haya una tanda nueva, te escribo un día antes de que llegue a la tienda, para que la veas primero.',
-    'Solo te escribo cuando hay algo nuevo. Y si tenés una duda o querés algo a medida, respondé este mail: lo leo yo.',
+    'Solo te escribo cuando hay algo nuevo. Y si tenés una duda o querés algo a medida, escribime por WhatsApp al 099 850 073.',
   ]
   const url = `${SITE_URL}/tienda?utm_source=lista&utm_medium=email&utm_campaign=bienvenida`
   const html = renderLetter({
-    preheader: 'Te escribo un día antes de cada tanda nueva.',
     paragraphs,
     link: { label: 'Mirar lo que ya está tejido', url },
     signature: SIGNATURE,
@@ -181,7 +190,6 @@ export function dropEarlyAccessMail(
   // Línea en blanco = párrafo nuevo; salto simple = salto de línea. Todo escapado.
   const paragraphs = [drop.heading, ...drop.body.split(/\n\s*\n/)].map((p) => p.trim()).filter(Boolean)
   const html = renderLetter({
-    preheader: `Llega a la tienda ${drop.whenText}.`,
     paragraphs,
     link: { label: 'Ver la colección', url: link },
     signature: SIGNATURE,
