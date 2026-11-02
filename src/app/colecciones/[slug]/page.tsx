@@ -8,12 +8,20 @@ import type { Collection, Product, Discount, Color } from '@/lib/types'
 import { getListingPrice, isReadyToShip } from '@/lib/types'
 import { botImageUrl } from '@/lib/media'
 import { ProductCard } from '@/components/ProductCard'
-import { Eyebrow, Breadcrumb } from '@/components/ui/Primitives'
+import { TestimonialsStrip } from '@/components/TestimonialsStrip'
+import { getTestimonials } from '@/lib/catalog'
+import { Eyebrow, Breadcrumb, Icon } from '@/components/ui/Primitives'
 import { dahila } from '@/components/ui/tokens'
 import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 300
+
+const HOW_TO_BUY = [
+  { icon: 'hand-pointing', label: 'Elegís tu pieza', body: 'y la sumás al carrito.' },
+  { icon: 'whatsapp-logo', label: 'La pedís por WhatsApp', body: 'con un toque: el pedido va armado.' },
+  { icon: 'package', label: 'Pagás cuando confirmamos', body: 'y te la enviamos a todo Uruguay.' },
+]
 
 // Mismo motivo que tienda/[slug]: sin esto, `params` fuerza dinámico en toda
 // la ruta. Colecciones "unlisted" (acceso anticipado VIP) quedan afuera a
@@ -68,7 +76,7 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
   if (!col) notFound()
   const collection = col as Collection
 
-  const [{ data: prodData }, { data: discountData }] = await Promise.all([
+  const [{ data: prodData }, { data: discountData }, testimonials] = await Promise.all([
     supabase
       .from('products')
       .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*))')
@@ -76,6 +84,7 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
       .in('status', ['active', 'soldout'])
       .order('sort_order', { ascending: true }),
     supabase.from('discounts').select('*').eq('active', true),
+    getTestimonials(),
   ])
 
   const products = (prodData ?? []).map((p) => {
@@ -145,10 +154,13 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
         {collection.cover_url ? (
           <div className="hero-frame" style={{ position: 'relative', height: 'clamp(260px, 42vh, 420px)' }}>
             <Image src={collection.cover_url} alt={collection.name} fill fetchPriority="high" loading="eager" quality={90} sizes="100vw" style={{ objectFit: 'cover' }} />
-            <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(31,26,27,0.55), rgba(31,26,27,0) 60%)' }} />
-            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 'clamp(20px, 4vw, 40px)', color: '#fff' }}>
-              <Eyebrow style={{ color: 'rgba(255,255,255,0.85)' }}>Colección</Eyebrow>
-              <h1 style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(30px, 5vw, 48px)', margin: '6px 0 0', lineHeight: 1.05 }}>{collection.name}</h1>
+            {/* 02/11/2026: con 0,55 y la letra fina, "Sunset '26" no se leía
+                sobre la portada clara (captura en celular) — y es lo primero
+                que ve quien llega del anuncio. */}
+            <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(31,26,27,0.78), rgba(31,26,27,0.25) 45%, rgba(31,26,27,0) 70%)' }} />
+            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 'clamp(20px, 4vw, 40px)', color: '#fff', textShadow: '0 1px 12px rgba(31,26,27,0.45)' }}>
+              <Eyebrow style={{ color: 'rgba(255,255,255,0.92)' }}>Colección</Eyebrow>
+              <h1 style={{ fontFamily: dahila.fontDisplay, fontWeight: 400, fontSize: 'clamp(34px, 5vw, 52px)', margin: '6px 0 0', lineHeight: 1.05 }}>{collection.name}</h1>
             </div>
           </div>
         ) : (
@@ -160,9 +172,29 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
       </div>
 
       {collection.description && (
-        <p style={{ fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(16px, 2.4vw, 20px)', lineHeight: 1.6, color: dahila.ink700, maxWidth: 640, margin: '0 0 44px' }}>
+        <p style={{ fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(16px, 2.4vw, 20px)', lineHeight: 1.6, color: dahila.ink700, maxWidth: 640, margin: '0 0 28px' }}>
           {collection.description}
         </p>
+      )}
+
+      {/* Cómo se compra, antes de las prendas (02/11/2026). La colección es
+          donde aterriza el anuncio del drop: 243 vistas en 6 días, solo 56
+          pasaron a una ficha y 2 agregaron al carrito. Quien llega de
+          Instagram no sabe que se paga recién al confirmar por WhatsApp — la
+          misma promesa que hace el anuncio, repetida donde se decide. */}
+      {products.length > 0 && (
+        <ol aria-label="Cómo se compra" style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 10 }}>
+          {HOW_TO_BUY.map((step, i) => (
+            <li key={step.label} style={{ display: 'flex', gap: 12, alignItems: 'center', background: dahila.cream50, border: `1px solid ${dahila.border}`, borderRadius: 12, padding: '12px 14px' }}>
+              <span aria-hidden style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 999, background: dahila.cream200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name={step.icon} size={15} color={dahila.wine600} />
+              </span>
+              <span style={{ fontFamily: dahila.fontSans, fontSize: 13, lineHeight: 1.4, color: dahila.ink700 }}>
+                <strong style={{ fontWeight: 500, color: dahila.ink900 }}>{i + 1}. {step.label}</strong> {step.body}
+              </span>
+            </li>
+          ))}
+        </ol>
       )}
 
       {products.length === 0 ? (
@@ -177,6 +209,9 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
         </div>
       )}
     </div>
+    {/* Reseñas reales debajo de las prendas: antes, después de la grilla
+        no había nada más que el pie de página. */}
+    {products.length > 0 && testimonials.length > 0 && <TestimonialsStrip items={testimonials} />}
     </>
   )
 }
