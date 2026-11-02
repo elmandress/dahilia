@@ -86,7 +86,19 @@ export async function POST(req: NextRequest) {
     // carrito y va en el mensaje de WhatsApp. Solo el formato válido.
     const rawCode = typeof body.tracking_code === 'string' ? body.tracking_code.trim().toUpperCase() : ''
     const trackingCols = ORDER_CODE_RE.test(rawCode) ? { tracking_code: rawCode } : {}
+    // Con qué clic de anuncio y qué navegador se hizo el pedido
+    // (meta-pedidos-2026-11.sql). Se guarda para el día que Anush lo marque
+    // "vendido": ahí la compra se le avisa a Meta atada a ESTE clic (ver
+    // api/admin/meta-compra), porque la venta cierra en WhatsApp y el píxel no
+    // la ve nunca.
+    const metaCols = {
+      meta_fbp: store.get('_fbp')?.value?.slice(0, 200) ?? null,
+      meta_fbc: store.get('_fbc')?.value?.slice(0, 500) ?? null,
+      client_ip: ip === 'unknown' ? null : ip.slice(0, 64),
+      client_user_agent: h.get('user-agent')?.slice(0, 500) ?? null,
+    }
     const attempts = [
+      { ...baseRow, ...attributionCols, cart_id: cartId, ...trackingCols, ...metaCols },
       { ...baseRow, ...attributionCols, cart_id: cartId, ...trackingCols },
       { ...baseRow, ...attributionCols, cart_id: cartId },
       { ...baseRow, ...attributionCols },
@@ -97,7 +109,7 @@ export async function POST(req: NextRequest) {
       ;({ error } = await supabase.from('orders').insert(row))
       // 23505: el código de seguimiento chocó con otro (rarísimo): se guarda sin él.
       const missingColumn = error?.code === '42703' || error?.code === 'PGRST204' || error?.code === '23505'
-        || /cart_id|utm_source|utm_medium|utm_campaign|referrer_host|tracking_code/.test(error?.message || '')
+        || /cart_id|utm_source|utm_medium|utm_campaign|referrer_host|tracking_code|meta_fbp|meta_fbc|client_ip|client_user_agent/.test(error?.message || '')
       if (!error || !missingColumn) break
     }
     // La tabla `orders` es opcional (migración no corrida todavía) — no

@@ -8,6 +8,8 @@
 //   se pueden marcar como "eventos clave": hasta el 14/09/2026, GA4 mostraba 0.
 // - No se mide nada en /admin ni en un navegador que alguna vez entró al admin
 //   (Anush, Mati): "Admin | Dahila Crochet" tenía 66 vistas en GA4.
+import { trackMeta } from './meta-pixel'
+
 const WEBSITE_ID = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID
 const SCRIPT_URL = process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
@@ -119,4 +121,11 @@ export function track(
     else if (umamiQueue.length < 50) umamiQueue.push([event, props])
   }
   if (ensureGtag()) window.gtag!('event', ga?.name ?? event, ga ? { ...props, ...ga.params } : props)
+  if (allowsMeta()) trackMeta(ga?.name ?? event, ga ? { ...props, ...ga.params } : props)
+}
+
+// El píxel no se carga en /admin (use-analytics-allowed.ts); un evento que se
+// dispare ahí tampoco tiene que salir por la API de conversiones.
+function allowsMeta(): boolean {
+  return !window.location.pathname.startsWith('/admin')
 }

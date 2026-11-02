@@ -12,6 +12,7 @@ import { VipCallout } from '@/components/VipCallout'
 import { AnalyticsScript } from '@/components/AnalyticsScript'
 import { ClarityScript } from '@/components/ClarityScript'
 import { GoogleAnalyticsScript } from '@/components/GoogleAnalyticsScript'
+import { MetaPixelScript } from '@/components/MetaPixelScript'
 import { AttributionCapture } from '@/components/AttributionCapture'
 import { SITE_URL, SUPABASE_STORAGE_ORIGIN } from '@/lib/env'
 import { OG_BASE, OG_DEFAULT_IMAGE } from '@/lib/og'
@@ -313,6 +314,7 @@ export default async function RootLayout({
         <AnalyticsScript />
         <ClarityScript />
         <GoogleAnalyticsScript />
+        <MetaPixelScript />
       </body>
     </html>
   );

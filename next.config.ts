@@ -25,6 +25,9 @@ const umamiOrigin = (() => {
 })()
 const clarityEnabled = Boolean(process.env.NEXT_PUBLIC_CLARITY_ID)
 const gaEnabled = Boolean(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID)
+// Píxel de Meta: la librería viene de connect.facebook.net y los eventos salen
+// a www.facebook.com (como fetch o como imagen, según el navegador).
+const metaEnabled = Boolean(process.env.NEXT_PUBLIC_META_PIXEL_ID)
 // Fotos de perfil de quienes dejaron la reseña en Google (lh3.googleusercontent.com).
 // Mostrarlas es obligatorio para atribuir la reseña a su autor, y solo entran a
 // la CSP cuando la sección está configurada (ver src/lib/google-reviews.ts).
@@ -37,14 +40,17 @@ const googleReviewsEnabled = Boolean(process.env.GOOGLE_PLACES_API_KEY)
 const analyticsScriptSrc = [
   clarityEnabled ? 'https://*.clarity.ms https://c.bing.com' : '',
   gaEnabled ? 'https://www.googletagmanager.com' : '',
+  metaEnabled ? 'https://connect.facebook.net' : '',
 ].filter(Boolean).join(' ')
 const analyticsConnectSrc = [
   clarityEnabled ? 'https://*.clarity.ms https://c.bing.com' : '',
   gaEnabled ? 'https://www.googletagmanager.com https://www.google-analytics.com https://*.analytics.google.com' : '',
+  metaEnabled ? 'https://www.facebook.com https://connect.facebook.net' : '',
 ].filter(Boolean).join(' ')
 const analyticsImgSrc = [
   clarityEnabled ? 'https://*.clarity.ms https://c.bing.com' : '',
   gaEnabled ? 'https://www.googletagmanager.com https://*.google-analytics.com' : '',
+  metaEnabled ? 'https://www.facebook.com' : '',
 ].filter(Boolean).join(' ')
 // frame-src: el único iframe del sitio es el reproductor de reels de Instagram
 // (components/ReelsSection.tsx), que se carga recién al tocar play.

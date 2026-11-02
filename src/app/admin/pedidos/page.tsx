@@ -127,6 +127,11 @@ export default function PedidosAdminPage() {
     if (err || !data || data.length === 0) {
       setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: previous } : o)))
       setStatusError('No se pudo guardar el estado. Revisá que se haya corrido database/embudo-pedidos-2026-09.sql en Supabase.')
+      return
+    }
+    // La venta, a Meta (api/admin/meta-compra): sin esperar, no traba el panel.
+    if (status === 'vendido') {
+      fetch('/api/admin/meta-compra', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }).catch(() => {})
     }
   }
 
