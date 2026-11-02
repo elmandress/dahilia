@@ -8,7 +8,7 @@ import { SITE_URL } from '@/lib/env'
 // por el píxel (mismo event_id: Meta cuenta uno solo). Llega por sendBeacon
 // desde src/lib/meta-pixel.ts. Solo eventos estándar conocidos y solo URLs del
 // sitio: nadie puede usar este endpoint para inventarle ventas a la cuenta.
-const ALLOWED = new Set(['ViewContent', 'AddToCart', 'InitiateCheckout', 'Lead', 'CompleteRegistration', 'Search', 'Contact'])
+const ALLOWED = new Set(['ViewContent', 'AddToCart', 'AddToWishlist','InitiateCheckout', 'Lead', 'CompleteRegistration', 'Search', 'Contact'])
 
 export async function POST(req: NextRequest) {
   if (!META_CAPI_ENABLED) return new NextResponse(null, { status: 204 })

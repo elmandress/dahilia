@@ -31,6 +31,7 @@ declare global {
 const GA_TO_META: Record<string, string> = {
   view_item: 'ViewContent',
   add_to_cart: 'AddToCart',
+  add_to_wishlist: 'AddToWishlist', // corazón de favoritos
   begin_checkout: 'InitiateCheckout', // el pedido por WhatsApp
   generate_lead: 'Lead', // encargo a medida
   sign_up: 'CompleteRegistration', // lista privada (VIP)

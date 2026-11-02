@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useFavorites } from './FavoritesProvider'
+import { track } from '@/lib/analytics'
 import { dahila, Icon } from './ui/Primitives'
 
 /**
@@ -31,6 +32,9 @@ export function FavoriteButton({
     e.stopPropagation()
     e.preventDefault()
     setTouched(true)
+    // Guardar (no quitar) es una señal de interés: GA4 y Meta la reciben con
+    // su nombre estándar (add_to_wishlist → AddToWishlist).
+    if (!active) track('wishlist_add', { product: productId }, { name: 'add_to_wishlist' })
     void toggle(productId)
   }
 
