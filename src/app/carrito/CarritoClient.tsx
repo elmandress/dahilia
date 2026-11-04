@@ -967,8 +967,11 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
         )}
 
         {/* Lista de espera — la expectativa de plazo se fija acá, pegada al
-            botón: nadie descubre en WhatsApp que su pedido empieza en un mes. */}
-        {queueNote && (
+            botón: nadie descubre en WhatsApp que su pedido empieza en un mes.
+            Solo si hay algo que espera: con todo en stock, el aviso contradecía
+            el "En stock: sale sin la espera" de cada prenda justo arriba del
+            botón (drop Sunset '26, 04/11/2026). */}
+        {queueNote && items.some((i) => i.product && !isReadyToShip(i.product)) && (
           <div style={{
             display: 'flex', alignItems: 'flex-start', gap: 8,
             background: '#fff', border: `1px solid ${dahila.border}`,

@@ -69,6 +69,11 @@ export function ensureFbq(): boolean {
     n.version = '2.0'
     n.queue = []
     window.fbq = n
+    // Sin "eventos automáticos": fbevents bajaba signals/config y escaneaba la
+    // página buscando botones (Lighthouse 03/11/2026: ~0,9 s de bloqueo en el
+    // celular, de los 1,35 s que sumaba Meta). Los eventos que importan ya
+    // salen a mano desde track(). Tiene que ir antes del init.
+    window.fbq('set', 'autoConfig', false, META_PIXEL_ID)
     window.fbq('init', META_PIXEL_ID)
   }
   return true
