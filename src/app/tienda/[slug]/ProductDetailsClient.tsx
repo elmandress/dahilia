@@ -17,7 +17,7 @@ import { FavoriteButton } from '@/components/FavoriteButton'
 import type { Product, Discount } from '@/lib/types'
 import {
   getEffectivePrice, getFinalPrice, getPrimaryPhoto, getScarcity, formatPrice, BLUR_DATA_URL, productPhotoAlt, productKindLabel, getPrimaryPhotoAlt,
-  isReadyToShip, sortSizes, getListingPrice, formatListingPrice, leadTimeMessage,
+  isReadyToShip, sortSizes, isTalleUnico, getListingPrice, formatListingPrice, leadTimeMessage,
 } from '@/lib/types'
 import { useSizeSelection, getRestockWhatsAppUrl } from '@/lib/product-selection'
 import { PriceBlock } from '@/components/ui/PriceBlock'
@@ -103,20 +103,23 @@ export function ProductDetailsClient({
   const { addToCart } = useCart()
   // Factorizado en un hook compartido con QuickViewModal (auditoría
   // 03/09/2026: antes duplicado letra por letra en los dos archivos).
-  const { talle, setTalle, sizeAvailable } = useSizeSelection(product)
+  const { talle, setTalle, sizeAvailable, talleConfirmed } = useSizeSelection(product)
   // Color con la foto del ovillo abierta (solo colores con image_url).
   const [lanaAbierta, setLanaAbierta] = useState<string | null>(null)
 
-  // Barra fija de "Agregar" (mobile): solo cuando el botón principal ya quedó
-  // arriba, fuera de pantalla. La marca va justo antes del botón; con
-  // rootMargin negativo arriba, cuenta como "pasada" apenas el botón se va.
+  // Barra fija de "Agregar" (mobile): cuando el botón principal no está en
+  // pantalla, esté arriba o abajo. Antes solo aparecía después de pasarlo, y
+  // en un iPhone el botón queda a ~1,5 pantallas de la foto: quien llegaba del
+  // anuncio no veía precio ni botón hasta scrollear (auditoría 04/11/2026).
+  // La marca va justo antes del botón; con rootMargin negativo arriba, cuenta
+  // como "fuera" apenas el botón se va.
   const buyAnchorRef = useRef<HTMLSpanElement>(null)
   const [showSticky, setShowSticky] = useState(false)
   useEffect(() => {
     const el = buyAnchorRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
     const io = new IntersectionObserver(([entry]) => {
-      setShowSticky(!entry.isIntersecting && entry.boundingClientRect.top < 0)
+      setShowSticky(!entry.isIntersecting)
     }, { rootMargin: '-80px 0px 0px 0px' })
     io.observe(el)
     return () => io.disconnect()
@@ -153,6 +156,7 @@ export function ProductDetailsClient({
   const canBuy = !isSoldOut && !product.is_custom_only
   const scarcity = getScarcity(product)
   const sizes = sortSizes(product.sizes)
+  const talleUnico = isTalleUnico(sizes)
   const readyNow = isReadyToShip(product)
   // numeric de Postgres puede llegar como string; 0, vacío o basura = no se muestra.
   const knitHoursRaw = Number(product.knit_hours)
@@ -365,7 +369,9 @@ export function ProductDetailsClient({
                   fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
                   textTransform: 'uppercase', color: dahila.ink500, fontWeight: 400,
                 }}>Talle</span>
-                <SizeGuide
+                {/* Con un único talle ("Talle único") no hay nada que elegir:
+                    "¿Qué talle soy?" sumaba una duda donde no la hay. */}
+                {!talleUnico && <SizeGuide
                   note={sizeGuideNote}
                   productSizes={sizes.map((s) => s.size)}
                   encargoHref={encargoHref}
@@ -373,7 +379,7 @@ export function ProductDetailsClient({
                     const match = sizes.find((s) => s.size.trim().toUpperCase() === sz && s.available)
                     if (match) setTalle(match.size)
                   }}
-                />
+                />}
               </div>
               {/* pdp-sizes: WhatsAppFloat lee de acá el talle elegido. */}
               <div className="pdp-sizes" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -546,7 +552,7 @@ export function ProductDetailsClient({
               rel="noopener noreferrer"
               onClick={(e) => {
                 const base = whatsappUrl.replace(/\/+$/, '')
-                const texto = `Hola! Estoy mirando ${product.name}${talle ? ` (talle ${talle})` : ''} en la web: ${window.location.origin}/tienda/${product.slug}\nTengo una consulta 🧶`
+                const texto = `Hola! Estoy mirando ${product.name}${talle && !talleUnico ? ` (talle ${talle})` : ''} en la web: ${window.location.origin}/tienda/${product.slug}\nTengo una consulta 🧶`
                 e.currentTarget.href = `${base}?text=${encodeURIComponent(texto)}`
                 track('whatsapp_click', { source: 'pdp_pregunta', product: product.slug })
               }}
@@ -557,13 +563,13 @@ export function ProductDetailsClient({
               }}
             >
               <Icon name="whatsapp-logo" weight="fill" size={15} color={dahila.whatsapp} />
-              ¿Dudas con el talle? Preguntame por WhatsApp
+              {talleUnico ? '¿Querés ver más fotos o medidas? Preguntame por WhatsApp' : '¿Dudas con el talle? Preguntame por WhatsApp'}
             </a>
           )}
           {/* Para quien regala (12/10/2026): la tarjeta de regalo no se
               encontraba desde ningún lado. Solo en piezas con talle, que es
               donde regalar es difícil. */}
-          {giftEnabled && sizes.length > 0 && (
+          {giftEnabled && !talleUnico && (
             <Link
               href="/regalo"
               onClick={() => track('gift_link_click', { source: 'pdp', product: product.slug })}
@@ -812,7 +818,7 @@ export function ProductDetailsClient({
             {/* Qué talle va a agregar este botón. En mobile la barra queda fija
                 mientras el selector de talle ya quedó muy arriba: sin esto se
                 toca "Agregar" a ciegas, sin poder confirmar qué se eligió. */}
-            {(product.sizes?.length ?? 0) > 1 && (
+            {(product.sizes?.length ?? 0) > 1 && talleConfirmed && (
               <span style={{
                 fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500,
                 lineHeight: 1.2, marginTop: 1,
@@ -845,6 +851,25 @@ export function ProductDetailsClient({
             >
               <Icon name="whatsapp-logo" weight="fill" size={16} /> Pedir
             </a>
+          ) : sizes.length > 1 && !talleConfirmed ? (
+          // Nadie eligió talle todavía: la barra lleva al selector en vez de
+          // agregar el primero de la lista sin que ella lo haya visto.
+          <button
+            onClick={() => {
+              const box = document.querySelector<HTMLElement>('.pdp-sizes')
+              box?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              box?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus({ preventScroll: true })
+            }}
+            style={{
+              flex: 1, marginLeft: 16,
+              background: dahila.ink900, color: '#fff', border: 'none',
+              borderRadius: 10, padding: '14px 18px', cursor: 'pointer',
+              fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
+              letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}
+          >
+            Elegir talle
+          </button>
           ) : (
           <button
             onClick={handleAdd}

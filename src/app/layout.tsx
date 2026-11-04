@@ -216,7 +216,8 @@ export default async function RootLayout({
   const shippingEstimate = settings.shipping_estimate ?? ''
   // Umbral de envío gratis (UYU). Vacío o no numérico = apagado. Lo fija la
   // dueña en Configuración; carrito y drawer muestran cuánto falta para llegar.
-  const freeShippingThreshold = Math.max(0, parseInt(settings.free_shipping_threshold ?? '', 10) || 0)
+  // Sin puntos ni comas: "1.600" se leía como 1 (envío gratis en todo pedido).
+  const freeShippingThreshold = Math.max(0, parseInt((settings.free_shipping_threshold ?? '').replace(/[.,\s]/g, ''), 10) || 0)
   // Aviso de lista de espera: visible salvo que la dueña lo apague, y solo si
   // escribió el texto (misma semántica default-ON que los demás toggles del CMS).
   const queueNote = settings.queue_note_enabled !== 'false' ? (settings.queue_note_text ?? '').trim() : ''
@@ -306,7 +307,10 @@ export default async function RootLayout({
             <BackToTop />
             <WhatsAppFloat enabled={waEnabled} waUrl={waUrl} />
             {catalog.source !== 'snapshot' && (
-              <VipCallout dropName={catalog.settings.drop_enabled !== 'false' ? (catalog.settings.drop_name ?? '').trim() : ''} />
+              <VipCallout
+                dropName={catalog.settings.drop_enabled !== 'false' ? (catalog.settings.drop_name ?? '').trim() : ''}
+                dropDate={catalog.settings.drop_date ?? ''}
+              />
             )}
           </FavoritesProvider>
         </CartProvider>

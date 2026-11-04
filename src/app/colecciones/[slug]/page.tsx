@@ -18,9 +18,9 @@ import { OG_BASE } from '@/lib/og'
 export const revalidate = 300
 
 const HOW_TO_BUY = [
-  { icon: 'hand-pointing', label: 'Elegís tu pieza', body: 'y la sumás al carrito.' },
-  { icon: 'whatsapp-logo', label: 'La pedís por WhatsApp', body: 'con un toque: el pedido va armado.' },
-  { icon: 'package', label: 'Pagás cuando confirmamos', body: 'y te la enviamos a todo Uruguay.' },
+  { icon: 'heart', label: 'Elegís tu pieza' },
+  { icon: 'whatsapp-logo', label: 'La pedís por WhatsApp' },
+  { icon: 'package', label: 'Pagás cuando confirmamos' },
 ]
 
 // Mismo motivo que tienda/[slug]: sin esto, `params` fuerza dinámico en toda
@@ -54,7 +54,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: `${data.name}, colección tejida a mano`,
       description: desc,
       url: `${SITE_URL}/colecciones/${slug}`,
-      ...(data.cover_url ? { images: [{ url: data.cover_url, alt: data.name }] } : {}),
+      // Vía botImageUrl: el original de Supabase pesaba 420 KB (WhatsApp suele
+      // dejar la vista previa sin foto) y cada link compartido gastaba egress.
+      ...(data.cover_url ? { images: [{ url: botImageUrl(SITE_URL, data.cover_url, 1200), width: 1200, alt: data.name }] } : {}),
     },
   }
 }
@@ -150,9 +152,12 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
       ]} />
 
       {/* Cover / hero band */}
-      <div style={{ position: 'relative', borderRadius: 18, overflow: 'hidden', background: dahila.cream100, marginBottom: 40 }}>
+      <div style={{ position: 'relative', borderRadius: 18, overflow: 'hidden', background: dahila.cream100, marginBottom: 28 }}>
         {collection.cover_url ? (
-          <div className="hero-frame" style={{ position: 'relative', height: 'clamp(260px, 42vh, 420px)' }}>
+          // 30vh (antes 42vh): con la portada, la descripción y los pasos, la
+          // primera prenda quedaba a 1,28 pantallas en un iPhone (auditoría
+          // 04/11/2026) y quien llega del anuncio veía texto, no prendas.
+          <div className="hero-frame" style={{ position: 'relative', height: 'clamp(200px, 30vh, 400px)' }}>
             <Image src={collection.cover_url} alt={collection.name} fill fetchPriority="high" loading="eager" quality={90} sizes="100vw" style={{ objectFit: 'cover' }} />
             {/* 02/11/2026: con 0,55 y la letra fina, "Sunset '26" no se leía
                 sobre la portada clara (captura en celular) — y es lo primero
@@ -160,7 +165,9 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
             <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(31,26,27,0.78), rgba(31,26,27,0.25) 45%, rgba(31,26,27,0) 70%)' }} />
             <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 'clamp(20px, 4vw, 40px)', color: '#fff', textShadow: '0 1px 12px rgba(31,26,27,0.45)' }}>
               <Eyebrow style={{ color: 'rgba(255,255,255,0.92)' }}>Colección</Eyebrow>
-              <h1 style={{ fontFamily: dahila.fontDisplay, fontWeight: 400, fontSize: 'clamp(34px, 5vw, 52px)', margin: '6px 0 0', lineHeight: 1.05 }}>{collection.name}</h1>
+              {/* color explícito: el estilo global de h1 pisaba el blanco
+                  heredado y el título salía oscuro sobre la foto. */}
+              <h1 style={{ fontFamily: dahila.fontDisplay, fontWeight: 400, fontSize: 'clamp(34px, 5vw, 52px)', margin: '6px 0 0', lineHeight: 1.05, color: '#fff' }}>{collection.name}</h1>
             </div>
           </div>
         ) : (
@@ -183,15 +190,13 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
           Instagram no sabe que se paga recién al confirmar por WhatsApp — la
           misma promesa que hace el anuncio, repetida donde se decide. */}
       {products.length > 0 && (
-        <ol aria-label="Cómo se compra" style={{ listStyle: 'none', padding: 0, margin: '0 0 40px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 10 }}>
+        // Franja corta y no tarjetas: en tarjetas apiladas ocupaba ~180 px del
+        // primer pantallazo del celular, justo antes de las prendas.
+        <ol aria-label="Cómo se compra" style={{ listStyle: 'none', padding: '10px 14px', margin: '0 0 28px', display: 'flex', flexWrap: 'wrap', gap: '6px 18px', background: dahila.cream50, border: `1px solid ${dahila.border}`, borderRadius: 12 }}>
           {HOW_TO_BUY.map((step, i) => (
-            <li key={step.label} style={{ display: 'flex', gap: 12, alignItems: 'center', background: dahila.cream50, border: `1px solid ${dahila.border}`, borderRadius: 12, padding: '12px 14px' }}>
-              <span aria-hidden style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 999, background: dahila.cream200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name={step.icon} size={15} color={dahila.wine600} />
-              </span>
-              <span style={{ fontFamily: dahila.fontSans, fontSize: 13, lineHeight: 1.4, color: dahila.ink700 }}>
-                <strong style={{ fontWeight: 500, color: dahila.ink900 }}>{i + 1}. {step.label}</strong> {step.body}
-              </span>
+            <li key={step.label} style={{ display: 'flex', gap: 6, alignItems: 'center', fontFamily: dahila.fontSans, fontSize: 12.5, lineHeight: 1.4, color: dahila.ink700 }}>
+              <Icon name={step.icon} size={14} color={dahila.wine600} />
+              <span><strong style={{ fontWeight: 500, color: dahila.ink900 }}>{i + 1}.</strong> {step.label}</span>
             </li>
           ))}
         </ol>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { dahila, Eyebrow, Icon } from '@/components/ui/Primitives'
 import { formatPrice } from '@/lib/types'
@@ -29,7 +29,12 @@ const labelText: React.CSSProperties = {
   textTransform: 'uppercase', color: dahila.ink500,
 }
 
-export function RegaloClient({ whatsappUrl, suggestions }: { whatsappUrl: string; suggestions: GiftSuggestion[] }) {
+export function RegaloClient({ whatsappUrl, suggestions, sinTalle }: {
+  whatsappUrl: string
+  suggestions: GiftSuggestion[]
+  /** Grilla de piezas sin talle y en stock (la arma el servidor). */
+  sinTalle?: ReactNode
+}) {
   const [amount, setAmount] = useState<number | null>(suggestions[1]?.amount ?? suggestions[0]?.amount ?? null)
   const [custom, setCustom] = useState('')
   const [para, setPara] = useState('')
@@ -65,6 +70,14 @@ export function RegaloClient({ whatsappUrl, suggestions }: { whatsappUrl: string
       <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: '0 0 16px', maxWidth: 620 }}>
         Sin adivinar el talle ni el color: elegís el monto, le escribís unas palabras y quien la recibe elige
         su prenda. Si es a medida, la tejo con sus medidas exactas.
+        {sinTalle && (
+          <>
+            {' '}
+            <a href="#regalo-sin-talle" style={{ color: dahila.wine600, whiteSpace: 'nowrap' }}>
+              ¿Preferís regalar una pieza ya tejida? ↓
+            </a>
+          </>
+        )}
       </p>
       {/* Lo esencial antes de bajar (12/10/2026): qué es, dónde sirve y cómo
           se paga — Baymard: la mayoría de los sitios no explica sus opciones
@@ -216,6 +229,8 @@ export function RegaloClient({ whatsappUrl, suggestions }: { whatsappUrl: string
           </ol>
         </div>
       </div>
+
+      {sinTalle}
 
       {/* Preguntas frecuentes: condiciones claras, sin letra chica. */}
       <section aria-labelledby="regalo-faq" style={{ maxWidth: 720, marginTop: 64 }}>

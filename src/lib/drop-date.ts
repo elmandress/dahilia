@@ -32,6 +32,12 @@ export function parseDropDateUY(raw: string | undefined | null): Date | null {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
+/** El drop ya abrió (la fecha cargada quedó atrás). false sin fecha válida. */
+export function dropHasLaunched(raw: string | undefined | null): boolean {
+  const launch = parseDropDateUY(raw)
+  return launch !== null && launch.getTime() <= Date.now()
+}
+
 /** Fecha y hora de Montevideo por separado, para los inputs del admin
  *  (date: "2026-10-28", time: "18:00"). null si no se entiende. */
 export function dropDateInputs(raw: string | undefined | null): { date: string; time: string } | null {

@@ -85,7 +85,7 @@ function EmptyCollectionState() {
 
 // Site settings shape — only the keys this page reads from.
 export type HomeSettings = Partial<Record<
-  | 'hero_subtitle' | 'hero_title' | 'hero_cta' | 'hero_image_url' | 'hero_image_position'
+  | 'hero_subtitle' | 'hero_title' | 'hero_cta' | 'hero_cta_href' | 'hero_image_url' | 'hero_image_position'
   | 'process_1_title' | 'process_1_body'
   | 'process_2_title' | 'process_2_body'
   | 'process_3_title' | 'process_3_body'
@@ -102,6 +102,12 @@ export type HomeSettings = Partial<Record<
   | 'navidad_enabled' | 'navidad_encargo_hasta' | 'navidad_stock_hasta' | 'regalo_enabled',
   string
 >>
+
+/** Destino del botón de la portada: solo rutas del propio sitio ("/…"). */
+function heroHref(raw: string | undefined): string {
+  const v = (raw ?? '').trim()
+  return v.startsWith('/') && !v.startsWith('//') ? v : '/tienda'
+}
 
 function val<K extends keyof HomeSettings>(s: HomeSettings, key: K, fallback: string): string {
   const v = s?.[key]
@@ -224,7 +230,9 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
               }}>
                 {val(settings, 'hero_title', 'Tejido con tiempo.')}
               </h1>
-              <Button variant="primary" size="lg" href="/tienda">
+              {/* El destino se elige en Configuración (hero_cta_href): con el
+                  drop abierto, "Ver colección" llevaba a /tienda y no al drop. */}
+              <Button variant="primary" size="lg" href={heroHref(settings.hero_cta_href)}>
                 {val(settings, 'hero_cta', 'Ver tienda')}
               </Button>
             </div>

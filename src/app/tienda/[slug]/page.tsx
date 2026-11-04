@@ -535,8 +535,11 @@ async function ProductPage({ slug }: { slug: string }) {
               '@type': 'ShippingDeliveryTime',
               handlingTime: {
                 '@type': 'QuantitativeValue',
-                minValue: Math.min(product.lead_time_weeks_min, product.lead_time_weeks_max) * 7,
-                maxValue: Math.max(product.lead_time_weeks_min, product.lead_time_weeks_max) * 7,
+                // En stock sale ya (armar el paquete): el máximo viejo de la
+                // ficha (p. ej. 3 semanas) le hacía decir a Google "llega en
+                // 3 semanas" de una pieza ya tejida (auditoría 04/11/2026).
+                minValue: isReadyToShip(product) ? 0 : Math.min(product.lead_time_weeks_min, product.lead_time_weeks_max) * 7,
+                maxValue: isReadyToShip(product) ? 2 : Math.max(product.lead_time_weeks_min, product.lead_time_weeks_max) * 7,
                 unitCode: 'DAY',
               },
               transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' },
@@ -696,8 +699,13 @@ function pickTestimonial(list: Testimonial[], product: Product): Testimonial | n
   const kind = new Set(words(`${product.category?.slug ?? ''} ${product.name}`))
   const match = usable.find((t) => words(t.text).some((w) => kind.has(w)))
   if (match) return match
+  // Sin coincidencia, uno que no nombre otra prenda: "las bikinis" en la ficha
+  // de un bolso restaba más de lo que sumaba (recorridos 04/11/2026).
+  const PRENDAS = /sweater|buzo|bikini|falda|pollera|bufanda|calentador|chaleco|cortina|cardigan|top|bolso|cartera|gorro|manta|poncho|manguita|vestido/i
+  const neutral = usable.filter((t) => !PRENDAS.test(t.text.normalize('NFD').replace(/\p{Diacritic}/gu, '')))
+  const pool = neutral.length > 0 ? neutral : usable
   const seed = [...product.slug].reduce((n, c) => n + c.charCodeAt(0), 0)
-  return usable[seed % usable.length]
+  return pool[seed % pool.length]
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────

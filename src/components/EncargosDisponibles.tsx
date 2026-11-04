@@ -72,8 +72,9 @@ export function EncargosDisponibles({ state }: { state: EncargosCuposState }) {
 export function getEncargosCuposState(settings: Record<string, string>): EncargosCuposState {
   return {
     enabled: settings.encargos_cupos_enabled === 'true',
-    total: parseInt(settings.encargos_cupos_total || '0', 10),
-    taken: parseInt(settings.encargos_cupos_taken || '0', 10),
+    // Solo los dígitos: "1.000" o "10 cupos" no se leen como 1 o NaN.
+    total: parseInt((settings.encargos_cupos_total || '0').replace(/\D/g, ''), 10) || 0,
+    taken: parseInt((settings.encargos_cupos_taken || '0').replace(/\D/g, ''), 10) || 0,
     label: settings.encargos_cupos_label || '',
   }
 }

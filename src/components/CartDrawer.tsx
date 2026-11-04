@@ -12,7 +12,7 @@ import { PriceBlock } from './ui/PriceBlock'
 import type { Product } from '@/lib/types'
 import {
   getPrimaryPhoto, getEffectivePrice, getFinalPrice, formatPrice, BLUR_DATA_URL,
-  getListingPrice, getListingSize, getPrimaryPhotoAlt,
+  getListingPrice, getListingSize, getPrimaryPhotoAlt, isUnicoLabel,
 } from '@/lib/types'
 import { pickAddonSuggestions } from '@/lib/addons'
 import { track } from '@/lib/analytics'
@@ -184,7 +184,7 @@ export function CartDrawer({ products }: { products: Product[] }) {
                       <div style={{ fontFamily: dahila.fontDisplay, fontSize: 15, color: dahila.ink900, lineHeight: 1.2 }}>
                         {item.product.name}
                       </div>
-                      <div style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500 }}>Talle: {item.size}</div>
+                      <div style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500 }}>{isUnicoLabel(item.size) ? 'Talle único' : `Talle: ${item.size}`}</div>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                         <PriceBlock list={list} final={price} size="sm" />
                       </div>
@@ -316,7 +316,7 @@ export function CartDrawer({ products }: { products: Product[] }) {
                   letterSpacing: '0.06em', textTransform: 'uppercase',
                 }}
               >
-                Ver carrito y coordinar
+                Ver carrito y pedir
               </button>
             </div>
           </>

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { dahila, Icon } from './ui/Primitives'
 import { VipForm, VIP_STORAGE_KEY, markVipSeen } from './VipForm'
+import { dropHasLaunched } from '@/lib/drop-date'
 
 /**
  * Invitación a la lista privada — el ÚNICO popup del sitio (12/10/2026).
@@ -39,21 +40,32 @@ function snoozed(): boolean {
   }
 }
 
-export function VipCallout({ dropName = '' }: { dropName?: string }) {
+export function VipCallout({ dropName = '', dropDate = '' }: { dropName?: string; dropDate?: string }) {
   const pathname = usePathname()
   const [show, setShow] = useState(false)
+  // Drop ya abierto: se decide con el reloj del navegador al mostrarse (el
+  // HTML del layout se cachea, así que no puede saber la hora).
+  const [live, setLive] = useState(false)
 
   useEffect(() => {
     if (snoozed()) return
-    const timer = setTimeout(() => setShow(true), DELAY_MS)
+    const timer = setTimeout(() => { setLive(dropHasLaunched(dropDate)); setShow(true) }, DELAY_MS)
     return () => clearTimeout(timer)
-  }, [])
+  }, [dropDate])
 
   if (
     pathname.startsWith('/admin') ||
     pathname.startsWith('/carrito') ||
     pathname.startsWith('/encargo') ||
     pathname.startsWith('/vip') ||
+    // Páginas que terminan en un botón: el popup salía encima de "Pedir la
+    // tarjeta por WhatsApp" (recorridos 04/11/2026).
+    pathname.startsWith('/regalo') ||
+    pathname.startsWith('/pedido') ||
+    // Con el drop abierto, en la ficha y la colección el popup decía "ya se
+    // está tejiendo" al lado de "En stock" y tapaba media pantalla justo
+    // donde llega el anuncio (auditoría 04/11/2026).
+    (live && (pathname.startsWith('/tienda/') || pathname.startsWith('/colecciones/'))) ||
     pathname === '/ig'
   ) return null
 
@@ -91,7 +103,7 @@ export function VipCallout({ dropName = '' }: { dropName?: string }) {
         Lista privada
       </div>
       <p style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 22, lineHeight: 1.15, margin: '0 0 8px', paddingRight: 18, color: '#F5EDE6' }}>
-        {dropName ? <>«{dropName}» ya se está tejiendo.</> : 'Lo próximo ya se está tejiendo.'}
+        {dropName && !live ? <>«{dropName}» ya se está tejiendo.</> : 'Lo próximo ya se está tejiendo.'}
       </p>
       <p style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, lineHeight: 1.55, margin: '0 0 14px', color: 'rgba(245,237,230,0.82)' }}>
         Son pocas piezas por tanda. La lista las ve 24 horas antes que nadie y elige primero.

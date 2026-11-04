@@ -30,15 +30,18 @@ const QUERY_SYNONYMS: Record<string, string[]> = {
   cartera: ['bolso'], carteras: ['bolso'], mochila: ['bolso'], bolsa: ['bolso'],
   conjunto: ['set'], conjuntos: ['set'],
   panuelo: ['bandana'], panuelos: ['bandana'],
+  mangas: ['manguitas'], manga: ['manguitas'],
 }
 
-/** Texto en el que se busca: nombre, descripción, categoría y colores. */
+/** Texto en el que se busca: nombre, descripción, categoría, colores y
+ *  colección (quien viene de un anuncio busca "sunset": antes no encontraba
+ *  nada y terminaba en "pedilo a medida"). */
 function haystack(p: Product): { name: string; rest: string } {
   const colors = (p.colors ?? []).map((c) => c?.name ?? '').join(' ')
   const local = p.category?.slug ? CATEGORY_LOCAL_TERM[p.category.slug] ?? '' : ''
   return {
     name: normalizeText(p.name ?? ''),
-    rest: normalizeText(`${p.description ?? ''} ${p.category?.name ?? ''} ${local} ${colors}`),
+    rest: normalizeText(`${p.description ?? ''} ${p.category?.name ?? ''} ${local} ${colors} ${p.collection?.name ?? p.collection_name ?? ''}`),
   }
 }
 

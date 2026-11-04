@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getCatalog } from '@/lib/catalog'
-import { getListingPrice } from '@/lib/types'
+import { getListingPrice, isReadyToShip, isTalleUnico } from '@/lib/types'
+import { ProductCard } from '@/components/ProductCard'
+import { dahila } from '@/components/ui/tokens'
 import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
 import { RegaloClient, type GiftSuggestion } from './RegaloClient'
@@ -49,6 +51,13 @@ export default async function RegaloPage() {
     .filter((p, i, arr) => arr.findIndex((q) => q.price === p.price) === i)
     .map((p) => ({ amount: p.price, label: p.name }))
 
+  // El menú dice "Regalos" y esta página era solo la tarjeta: quien quería
+  // regalar algo físico no encontraba las piezas sin talle que ya están
+  // tejidas (recorridos 04/11/2026).
+  const sinTalle = products
+    .filter((p) => p.status === 'active' && !p.is_custom_only && isReadyToShip(p) && isTalleUnico(p.sizes))
+    .slice(0, 4)
+
   // Las mismas preguntas que se ven en la página, como FAQPage para Google.
   const faqJsonLd = {
     '@context': 'https://schema.org',
@@ -59,7 +68,23 @@ export default async function RegaloPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(faqJsonLd) }} />
-      <RegaloClient whatsappUrl={whatsappUrl} suggestions={suggestions} />
+      <RegaloClient
+        whatsappUrl={whatsappUrl}
+        suggestions={suggestions}
+        sinTalle={sinTalle.length > 0 && (
+          <section aria-labelledby="regalo-sin-talle" style={{ marginTop: 64 }}>
+            <h2 id="regalo-sin-talle" style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 28, color: dahila.ink900, margin: '0 0 6px' }}>
+              O regalá algo que no tiene talle
+            </h2>
+            <p style={{ fontFamily: dahila.fontSans, fontSize: 14, color: dahila.ink500, margin: '0 0 20px' }}>
+              Ya están tejidas: salen apenas coordinamos.
+            </p>
+            <div className="tienda-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22, rowGap: 44 }}>
+              {sinTalle.map((p) => <ProductCard key={p.id} product={p} discounts={discounts} />)}
+            </div>
+          </section>
+        )}
+      />
     </>
   )
 }

@@ -33,6 +33,9 @@ import { article as cuidarVerano } from './articles/cuidar-crochet-en-verano-pla
 import { article as looksFiestas } from './articles/looks-tejidos-fiestas-fin-de-ano'
 import { article as cuantoDura } from './articles/cuanto-dura-una-prenda-tejida-a-mano'
 import { article as bandanaUsos } from './articles/bandana-tejida-como-usarla'
+import { article as manguitasCombinar } from './articles/manguitas-tejidas-como-combinarlas'
+import { article as ponchoVerano } from './articles/poncho-de-crochet-verano-playa-y-ciudad'
+import { article as bolsosTrapillo } from './articles/bolsos-de-trapillo-como-elegir-y-cuidar'
 
 /**
  * Registro de artículos. Agregar una nota = crear el archivo en `articles/` e
@@ -50,6 +53,10 @@ const ARTICLES: Article[] = [
   looksFiestas,
   regalosNavidad,
   comprarUruguay,
+  // Drop Sunset '26 (nov 2026): notas de producto de la colección.
+  ponchoVerano,
+  manguitasCombinar,
+  bolsosTrapillo,
   crochetAMaquina,
   queTalle,
   holgura,

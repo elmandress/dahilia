@@ -170,7 +170,10 @@ const fetchCatalogCached = unstable_cache(
     // Un error en la query de productos (la que sostiene la tienda) dispara el
     // fallback. Lanzar (en vez de devolver el snapshot acá adentro) es lo que
     // evita que una caída transitoria de la DB quede cacheada 5 minutos.
-    if (productsRes.error || categoriesRes.error) {
+    // Descuentos y configuración también: devolverlos vacíos dejaba cacheada
+    // una hora la tienda sin el −15% o con la barra de promo y el WhatsApp
+    // apagados (auditoría 04/11/2026).
+    if (productsRes.error || categoriesRes.error || discountsRes.error || settingsRes.error) {
       throw new Error('catalog: consulta principal con error')
     }
 
@@ -182,7 +185,8 @@ const fetchCatalogCached = unstable_cache(
     // join se descarta después: no hace falta que viaje en cada tarjeta.
     const products = normalizeProducts(productsRes.data ?? [])
       .filter((p) => dropVisibility(p) === 'public')
-      .map((p) => ({ ...p, collection: undefined }))
+      // Del join queda solo el nombre: el buscador lo usa ("sunset").
+      .map((p) => ({ ...p, collection: undefined, collection_name: p.collection?.name ?? undefined }))
 
     return {
       products,

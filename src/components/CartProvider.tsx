@@ -143,9 +143,15 @@ export function CartProvider({
   // doesn't compete with a request the visitor probably won't use yet.
   useEffect(() => {
     if (hasFetchedRef.current) return
-    hasFetchedRef.current = true
 
-    const run = () => { void fetchCart() }
+    // La marca se pone al correr, no al programar: en desarrollo (StrictMode)
+    // el efecto se monta dos veces, el cleanup cancela el primer pedido y el
+    // segundo montaje no lo volvía a programar: /carrito quedaba en "Cargando…".
+    const run = () => {
+      if (hasFetchedRef.current) return
+      hasFetchedRef.current = true
+      void fetchCart()
+    }
     const ric = (window as Window & {
       requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
       cancelIdleCallback?: (id: number) => void

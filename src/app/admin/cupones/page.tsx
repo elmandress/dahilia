@@ -44,7 +44,9 @@ function randomCode(): string {
 }
 
 function toDateInput(ts: string | null): string {
-  return ts ? ts.slice(0, 10) : ''
+  // Fecha en Montevideo, no en UTC: "hasta 7/11 23:59" se guarda como 8/11
+  // 02:59 UTC y cada edición corría el cupón un día más (auditoría 04/11/2026).
+  return ts ? new Date(ts).toLocaleDateString('en-CA', { timeZone: 'America/Montevideo' }) : ''
 }
 
 function couponSummary(c: Coupon): string {

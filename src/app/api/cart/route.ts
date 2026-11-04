@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { CART_COOKIE } from '@/lib/cart-cookie'
 import { isUuid } from '@/lib/uuid'
+import { dropVisibility } from '@/lib/types'
 
 /**
  * El carrito de un visitante anónimo NO se puede scopear con RLS: no hay
@@ -104,11 +105,14 @@ export async function POST(req: NextRequest) {
     // Confirm product exists and is purchasable
     const { data: product, error: prodErr } = await supabase
       .from('products')
-      .select('id, status, is_custom_only')
+      .select('id, status, is_custom_only, collection_id, collection:collections(published, unlisted)')
       .eq('id', productId)
       .maybeSingle()
     if (prodErr) throw prodErr
-    if (!product || product.status !== 'active' || product.is_custom_only) {
+    // Una prenda de un drop sin lanzar (colección en borrador) tampoco se
+    // agrega, aunque esté activa: así la deja lista Anush de antemano.
+    const collection = Array.isArray(product?.collection) ? product.collection[0] : product?.collection
+    if (!product || product.status !== 'active' || product.is_custom_only || dropVisibility({ collection_id: product.collection_id, collection }) === 'hidden') {
       return NextResponse.json({ error: 'El producto no está disponible.' }, { status: 409 })
     }
 

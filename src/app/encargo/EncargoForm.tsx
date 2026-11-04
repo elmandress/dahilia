@@ -191,7 +191,7 @@ export default function EncargoForm({
     e.preventDefault()
     setError(null)
 
-    if (!name.trim()) { setError('Contanos cómo te llamás.'); return }
+    if (!name.trim()) { setError('Contame cómo te llamás.'); return }
     if (!whatsapp.trim() && !email.trim()) { setError('Dejá tu WhatsApp o email para poder responderte.'); return }
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('El email no parece válido.'); return }
 
@@ -251,6 +251,22 @@ export default function EncargoForm({
         }}>
           ¿Ya hiciste un encargo? Seguí su estado con tu código →
         </Link>
+        {/* Quien ya compró no necesita el formulario: va directo al chat, con
+            la prenda de referencia si llegó desde una ficha (recorridos 04/11/2026). */}
+        {!porWhatsApp && (
+          <a
+            href={`${whatsappUrl.replace(/\/+$/, '')}?text=${encodeURIComponent(`Hola Anush! Ya te compré antes y quiero encargar${referencia ? ` algo como ${referencia.name}` : ''}: `)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => track('whatsapp_click', { source: 'encargo_clienta' })}
+            style={{
+              alignSelf: 'flex-start', padding: '4px 0', marginTop: -8,
+              fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600, textDecoration: 'underline',
+            }}
+          >
+            ¿Ya me compraste? Escribime directo por WhatsApp →
+          </a>
+        )}
         <EncargosDisponibles state={encargosCupos} />
       </div>
 

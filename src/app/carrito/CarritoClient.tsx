@@ -6,7 +6,7 @@ import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Button, Icon } from '@/components/ui/Primitives'
 import {
   getPrimaryPhoto, formatPrice, getEffectivePrice, getFinalPrice, readyDateEstimate, BLUR_DATA_URL,
-  getListingPrice, getListingSize, hasPriceRange, formatListingPrice, isReadyToShip, getPrimaryPhotoAlt,
+  getListingPrice, getListingSize, hasPriceRange, formatListingPrice, isReadyToShip, getPrimaryPhotoAlt, isUnicoLabel,
 } from '@/lib/types'
 import type { Product, Discount } from '@/lib/types'
 import { computeCouponEffect, type PublicCoupon } from '@/lib/coupons'
@@ -63,6 +63,19 @@ function leadTimeLabel(min: number, max: number): string {
   return estimate ? `Se teje al encargar: lista ${estimate}` : ''
 }
 
+/** El ítem ya no se puede pedir: la prenda dejó de estar activa (agotada o en
+ *  borrador), es solo a medida, o su talle ya no existe o no tiene stock —
+ *  cambios del admin después de que la clienta la agregó. La ruta del carrito
+ *  lee con service role, así que la RLS no los esconde (auditoría 04/11/2026). */
+function itemUnavailable(item: { size: string; product?: Product | null }): boolean {
+  const p = item.product
+  if (!p || p.status !== 'active' || p.is_custom_only) return true
+  const sizes = p.sizes ?? []
+  if (sizes.length === 0) return false
+  const row = sizes.find((s) => s.size === item.size)
+  return !row || row.available === false
+}
+
 /** Build a clean, multi-line WhatsApp message from the cart contents. */
 function buildWhatsAppMessage(
   items: ReturnType<typeof useCart>['items'],
@@ -88,7 +101,7 @@ function buildWhatsAppMessage(
       const slug = item.product.slug
       const discounted = unit < list
       lines.push(`${idx + 1}. ${item.product.name}`)
-      lines.push(`   • Talle: ${item.size}`)
+      if (!isUnicoLabel(item.size)) lines.push(`   • Talle: ${item.size}`)
       lines.push(`   • Cantidad: ${item.qty}`)
       // Anush sabe de entrada que no hay que tejerla.
       if (isReadyToShip(item.product)) lines.push('   • En stock')
@@ -108,7 +121,10 @@ function buildWhatsAppMessage(
   } else if (freeShippingOver) {
     lines.push(`Envío gratis (pedido arriba de ${formatPrice(freeShippingOver)})`)
   }
-  lines.push(`Total: ${formatPrice(total)}`)
+  // Sin envío gratis, el total es de las prendas: que el envío no aparezca
+  // como sorpresa recién en el chat (recorridos 04/11/2026).
+  const envioGratis = !!coupon?.freeShipping || !!freeShippingOver
+  lines.push(envioGratis ? `Total: ${formatPrice(total)}` : `Total de las prendas: ${formatPrice(total)} (+ envío según zona)`)
   if (giftNote) {
     lines.push('')
     lines.push(`🎁 Nota de regalo: "${giftNote}"`)
@@ -116,7 +132,11 @@ function buildWhatsAppMessage(
   lines.push('')
   // El envío va en la pregunta (auditoría 12/09/2026): es la duda que más
   // frena, y así la primera respuesta ya puede traer el costo.
-  lines.push('¿Me confirmás el plazo, el costo de envío a mi zona y la forma de pago? ¡Gracias!')
+  // Si todo está tejido, preguntar el plazo era una vuelta de chat de más.
+  const todoEnStock = items.every((i) => !i.product || isReadyToShip(i.product))
+  lines.push(todoEnStock
+    ? '¿Me pasás el costo de envío a mi zona y cómo te pago? ¡Gracias!'
+    : '¿Me confirmás el plazo, el costo de envío a mi zona y cómo te pago? ¡Gracias!')
   if (trackingCode) {
     // Al final, para no tapar el pedido. Le sirve a Anush para ubicarlo en
     // el admin y a la clienta para seguirlo (12/10/2026).
@@ -136,7 +156,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
   const [coupon, setCoupon] = useState<PublicCoupon | null>(null)
   const [couponError, setCouponError] = useState<string | null>(null)
   const [couponPending, startCouponTransition] = useTransition()
-  // Guarda contra doble-submit: un doble tap en "Coordinar por WhatsApp" antes
+  // Guarda contra doble-submit: un doble tap en "Pedir por WhatsApp" antes
   // de que responda el canje del cupón podía disparar dos redenciones en
   // carrera (una se rechaza, pero limpia el cupón igual) y dos filas en el
   // log de /api/orders para el mismo pedido.
@@ -168,19 +188,22 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
       .catch(() => { /* sin red: el cupón simplemente no se restaura */ })
   }, [])
 
-  // Filtrado por !!item.product: un ítem puede quedar sin producto embebido si
-  // el admin lo pasó a "draft" (RLS de products deja de exponerlo) mientras
-  // seguía en el carrito de alguien — mismo guard que en CartProvider,
-  // CartDrawer y el resto de este archivo (checkout, mensaje de WhatsApp).
-  const subtotal = items
-    .filter((item) => !!item.product)
+  // Solo lo que todavía se puede pedir (ver itemUnavailable): una prenda que
+  // se agotó, pasó a borrador o cambió de talle después de agregarla se veía
+  // con precio, sumaba al total y salía en el mensaje de WhatsApp.
+  const buyable = items.filter((item) => !!item.product && !itemUnavailable(item))
+  // Textos que no prometen coordinar lo que no hace falta: talle en piezas
+  // de talle único, fecha en piezas ya tejidas.
+  const todoEnStock = buyable.length > 0 && buyable.every((i) => isReadyToShip(i.product))
+  const sinTalles = buyable.every((i) => isUnicoLabel(i.size))
+  const subtotal = buyable
     .reduce(
       (acc, item) => acc + (getFinalPrice(item.product, item.size, discounts) * item.qty),
       0
     )
   // Efecto del cupón calculado en vivo sobre el carrito actual (si cambian
   // cantidades, el descuento se recalcula solo).
-  const couponEffect = coupon ? computeCouponEffect(coupon, items, discounts) : null
+  const couponEffect = coupon ? computeCouponEffect(coupon, buyable, discounts) : null
   const couponDiscount = couponEffect && !couponEffect.blocked ? couponEffect.discount : 0
   const freeShipping = !!(couponEffect && !couponEffect.blocked && couponEffect.freeShipping)
   const total = Math.max(0, subtotal - couponDiscount)
@@ -264,6 +287,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
 
   const handleCheckout = async () => {
     if (typeof window === 'undefined') return
+    if (buyable.length === 0) return
     if (checkoutLock.current) return
     checkoutLock.current = true
     setCheckingOut(true)
@@ -298,7 +322,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
     }
     const trackingCode = makeOrderCode()
     const message = buildWhatsAppMessage(
-      items, discounts, total, giftNote.trim(),
+      buyable, discounts, total, giftNote.trim(),
       coupon ? { code: coupon.code, discount: couponDiscount, freeShipping } : null,
       overThreshold ? freeShippingThreshold : null,
       trackingCode
@@ -311,7 +335,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
     setCopied(false)
     // GA4: begin_checkout con productos y total. Es el "pedido" del sitio: el
     // pago se arregla después por WhatsApp.
-    const gaItems = items.filter((i) => !!i.product).map((i) => ({
+    const gaItems = buyable.map((i) => ({
       item_id: i.product.slug, item_name: i.product.name, item_variant: i.size,
       quantity: i.qty, price: getFinalPrice(i.product, i.size, discounts),
     }))
@@ -329,7 +353,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
       headers: { 'Content-Type': 'application/json' },
       keepalive: true,
       body: JSON.stringify({
-        items: items.filter((i) => !!i.product).map((i) => ({
+        items: buyable.map((i) => ({
           name: i.product.name,
           slug: i.product.slug,
           size: i.size,
@@ -514,7 +538,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                   {item.product.name}
                 </div>
                 <div style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700 }}>
-                  Talle: {item.size}
+                  {isUnicoLabel(item.size) ? 'Talle único' : `Talle: ${item.size}`}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
                   <PriceBlock list={listPrice} final={price} size="md" />
@@ -522,7 +546,11 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                 {/* Lead time — solo cuando hay dato real Y no hay lista de espera
                     activa (el aviso global manda; prometer "lista en 3 semanas"
                     con cola hasta agosto sería mentir). */}
-                {isReadyToShip(item.product) ? (
+                {itemUnavailable(item) ? (
+                  <div role="status" style={{ marginTop: 2, fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 500, color: '#B6314A' }}>
+                    Ya no está disponible: no se incluye en el pedido. Podés quitarla.
+                  </div>
+                ) : isReadyToShip(item.product) ? (
                   // Pieza ya tejida: no le aplica ni la cola ni el "se teje al
                   // encargar" (mismo criterio que la ficha).
                   <div style={{ marginTop: 2, fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 500, color: dahila.wine600 }}>
@@ -807,13 +835,15 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           ) : missingForFree > 0 ? (
             <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700 }}>
               Te faltan {formatPrice(missingForFree)} para el envío gratis.{' '}
-              {shippingHasCost ? `Envío: ${shipping}.` : 'El costo exacto te lo paso por WhatsApp.'}
+              {shippingHasCost ? `Envío: ${shipping}.` : 'El envío lo coordinamos por WhatsApp según tu zona.'}
             </span>
           ) : (
             <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700 }}>
+              {/* El envío se coordina por WhatsApp según la zona (04/11/2026):
+                  "Se suma al total" afirmaba algo que no siempre es así. */}
               {shippingHasCost
-                ? `Envío: ${shipping}. Se suma al total.`
-                : 'El envío va aparte: te paso el costo exacto por WhatsApp según tu zona.'}
+                ? `Envío: ${shipping}. Lo coordinamos por WhatsApp.`
+                : 'El envío lo coordinamos por WhatsApp según tu zona.'}
             </span>
           )}
         </div>
@@ -899,7 +929,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           }}
         >
           <Icon name="whatsapp-logo" weight="fill" size={20} color="#fff" />
-          {checkingOut ? 'Abriendo WhatsApp…' : 'Coordinar por WhatsApp'}
+          {checkingOut ? 'Abriendo WhatsApp…' : 'Pedir por WhatsApp'}
         </button>
 
         {/* Qué pasa al tocar el botón, dicho antes de tocarlo (12/09/2026):
@@ -912,7 +942,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           margin: 0, textAlign: 'center',
           fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700, lineHeight: 1.5,
         }}>
-          No pagás nada ahora: se abre WhatsApp con tu pedido ya escrito y coordinamos talle, envío y pago.
+          No pagás nada ahora: se abre WhatsApp con tu pedido ya escrito y coordinamos {sinTalles ? 'envío y pago' : 'talle, envío y pago'}.
         </p>
 
         {/* Después del clic, una salida visible por si WhatsApp no se abrió: el
@@ -993,7 +1023,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           display: 'flex', flexDirection: 'column', gap: 5,
           fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, lineHeight: 1.5,
         }}>
-          <li>1 · Anush te confirma disponibilidad y fecha estimada.</li>
+          <li>1 · {todoEnStock ? 'Anush te confirma y te pasa el envío a tu zona.' : 'Anush te confirma disponibilidad y fecha estimada.'}</li>
           <li>2 · Elegís cómo pagar (transferencia o Mercado Pago) y cómo recibirlo.</li>
           <li style={{ marginTop: 4 }}>
             <Link href="/info" style={{ color: dahila.ink500 }}>¿Dudas? Mirá envíos, pagos y cuidados →</Link>
@@ -1012,6 +1042,11 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 20, color: dahila.ink900 }}>
             {formatPrice(total)}
           </span>
+          {/* La duda que frena el botón, pegada al botón: el "no pagás nada
+              ahora" del resumen queda ~2 pantallas más abajo en el celular. */}
+          <span style={{ fontFamily: dahila.fontSans, fontSize: 10.5, color: dahila.ink500, marginTop: 2 }}>
+            sin pagar ahora
+          </span>
         </div>
         <button
           onClick={handleCheckout}
@@ -1028,7 +1063,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
           }}
         >
           <Icon name="whatsapp-logo" weight="fill" size={18} color="#fff" />
-          {checkingOut ? '...' : 'Coordinar'}
+          {checkingOut ? '...' : 'Pedir por WhatsApp'}
         </button>
       </div>
     </div>

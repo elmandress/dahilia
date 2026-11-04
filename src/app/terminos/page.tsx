@@ -55,7 +55,7 @@ export default async function TerminosPage() {
         {/* Fecha fija y real: antes decía "enero {año actual}", que se
             actualizaba solo cada año aunque el texto no hubiera cambiado. */}
         <p style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink500, margin: 0 }}>
-          Última actualización: septiembre de 2026
+          Última actualización: noviembre de 2026
         </p>
       </div>
 
@@ -149,16 +149,21 @@ export default async function TerminosPage() {
             <li>Enviarte novedades de la marca, solo si te anotaste en la lista (podés pedir la baja cuando quieras).</li>
           </ul>
           <p style={{ marginTop: 12 }}>
-            Los datos no son cedidos ni vendidos a terceros. El titular de los datos tiene derecho de acceso,
+            Los datos que escribís (nombre, teléfono, dirección, medidas) no se venden ni se ceden a terceros,
+            salvo a la empresa de envíos para entregarte el pedido. El titular de los datos tiene derecho de acceso,
             rectificación, actualización, inclusión o supresión de sus datos personales. Para ejercer estos derechos
             puede contactarnos por{' '}
             <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ color: dahila.wine600 }}>WhatsApp</a>.
           </p>
           <p style={{ marginTop: 12 }}>
-            Este sitio usa cookies técnicas, necesarias para el carrito de compras y tus preferencias. Además, para
-            entender cómo se usa el sitio y mejorarlo, usa herramientas de medición (Google Analytics, Microsoft
-            Clarity y Umami) que registran cómo se navega —qué páginas se visitan, clics y desplazamiento— sin
-            pedirte datos personales. Esa información no se usa para publicidad ni se vende.
+            Este sitio usa cookies técnicas, necesarias para el carrito de compras y tus preferencias. Para
+            entender cómo se usa el sitio usa herramientas de medición (Google Analytics, Microsoft Clarity y
+            Umami), que registran qué páginas se visitan, los clics y el desplazamiento. Además usa el píxel de
+            Meta (Facebook e Instagram) y su API de conversiones para medir y mostrar nuestros anuncios: le envían
+            a Meta datos técnicos de tu visita (dirección IP, navegador, páginas y prendas vistas, lo que agregás
+            al carrito y un identificador de cookie). Nunca le enviamos lo que escribís en formularios ni en
+            WhatsApp. Podés limitar los anuncios personalizados desde la configuración de anuncios de tu cuenta de
+            Meta o bloquear las cookies de terceros en tu navegador.
           </p>
         </Block>
 

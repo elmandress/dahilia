@@ -239,8 +239,10 @@ export default function ProductosPage() {
     const supabase = createClient()
     // Optimistic update.
     setProducts((curr) => curr.map((x) => (x.id === p.id ? { ...x, status: next } : x)))
-    const { error } = await supabase.from('products').update({ status: next }).eq('id', p.id)
-    if (error) {
+    // .select: con la sesión vencida el UPDATE toca 0 filas sin dar error y el
+    // cambio se veía hecho (auditoría 04/11/2026).
+    const { data: upd, error } = await supabase.from('products').update({ status: next }).eq('id', p.id).select('id')
+    if (error || !upd?.length) {
       // Revert on failure.
       setProducts((curr) => curr.map((x) => (x.id === p.id ? { ...x, status: p.status } : x)))
     } else {
@@ -409,15 +411,16 @@ export default function ProductosPage() {
     await Promise.all(list.map(async (p) => {
       // updated_at también cuando solo cambia un talle: es el lastmod del
       // sitemap, y Google tiene que ver que la ficha cambió.
-      const { error } = await supabase
+      const { data: upd, error } = await supabase
         .from('products')
         .update({ base_price_uyu: toInt(baseIn(drafts, p)), updated_at: now })
         .eq('id', p.id)
-      if (error) { failed.push(p.id); return }
+        .select('id')
+      if (error || !upd?.length) { failed.push(p.id); return }
       const changed = (p.sizes ?? []).filter((s) => sizeIn(drafts, p, s) !== origSize(s))
       const results = await Promise.all(changed.map((s) =>
-        supabase.from('product_sizes').update({ price_uyu: toInt(sizeIn(drafts, p, s)) }).eq('id', s.id)))
-      if (results.some((r) => r.error)) failed.push(p.id)
+        supabase.from('product_sizes').update({ price_uyu: toInt(sizeIn(drafts, p, s)) }).eq('id', s.id).select('id')))
+      if (results.some((r) => r.error || !r.data?.length)) failed.push(p.id)
     }))
     const saved = list.filter((p) => !failed.includes(p.id))
     if (saved.length > 0) notifyReindex([...saved.map((p) => `/tienda/${p.slug}`), '/tienda', '/'])

@@ -62,7 +62,12 @@ export function useSizeSelection(product: Product) {
   const selectedSizeRow = sizes.find((s) => s.size === talle)
   const sizeAvailable = !selectedSizeRow || selectedSizeRow.available
 
-  return { talle, setTalle, sizeAvailable }
+  // ¿El talle lo eligió alguien (ella ahora, el link o una visita anterior) o es
+  // solo el primero disponible? La barra fija del celular no agrega un talle que
+  // nadie eligió: sin devoluciones, un XS por defecto es un pedido equivocado.
+  const talleConfirmed = chosen !== null || urlFits !== null || rememberedFits !== null
+
+  return { talle, setTalle, sizeAvailable, talleConfirmed }
 }
 
 /**

@@ -327,7 +327,7 @@ export function Header({
             marginLeft: 'auto',
           }}>
             {showSearch ? (
-              <div style={{ position: 'relative' }}>
+              <div className="header-search-wrap" style={{ position: 'relative' }}>
                 <form onSubmit={submitSearch} className="header-search" style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   borderBottom: `1px solid ${dahila.borderStrong}`,

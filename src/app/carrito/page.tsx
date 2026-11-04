@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/public'
+import { getCatalog } from '@/lib/catalog'
 import CarritoClient from './CarritoClient'
-import type { Product, Color, Discount } from '@/lib/types'
 
 export const revalidate = 3600
 
@@ -13,30 +12,14 @@ export const metadata: Metadata = {
 }
 
 export default async function CarritoPage() {
-  const supabase = await createClient()
-  const [settingsRes, featuredRes, discountsRes] = await Promise.all([
-    supabase.from('site_settings').select('key, value').in('key', ['contact_whatsapp_url', 'contact_whatsapp']),
-    // Pool amplio: el estado vacío muestra los primeros 4; con carrito lleno,
-    // el módulo "Sumale un detalle" filtra de acá piezas chicas (≤ $800) de
-    // categorías que no están todavía en el pedido.
-    supabase
-      .from('products')
-      .select('*, category:categories(*), media:product_media(*), sizes:product_sizes(*), colors:product_colors(color:colors(*))')
-      .eq('status', 'active')
-      .order('sort_order', { ascending: true })
-      .limit(24),
-    supabase.from('discounts').select('*').eq('active', true),
-  ])
-
-  const settings = (settingsRes.data ?? []).reduce<Record<string, string>>(
-    (acc, curr) => ({ ...acc, [curr.key]: String(curr.value ?? '') }),
-    {}
-  )
-  const discounts = (discountsRes.data ?? []) as Discount[]
-  const featured = (featuredRes.data ?? []).map((p) => {
-    const joined = (p.colors ?? []) as Array<{ color: Color | null }>
-    return { ...p, colors: joined.map((c) => c.color).filter((c): c is Color => !!c) }
-  }) as Product[]
+  // Del catálogo, no de una consulta propia: ese ya saca las prendas de un drop
+  // que no se lanzó (antes salían en el carrito vacío y se podían agregar) y
+  // tiene el respaldo del snapshot si la base se cae (auditoría 04/11/2026).
+  const { settings, products, discounts } = await getCatalog()
+  // Pool amplio: el estado vacío muestra los primeros 4; con carrito lleno,
+  // el módulo "Sumale un detalle" filtra de acá piezas chicas (≤ $800) de
+  // categorías que no están todavía en el pedido.
+  const featured = products.filter((p) => p.status === 'active').slice(0, 24)
 
   return (
     <CarritoClient

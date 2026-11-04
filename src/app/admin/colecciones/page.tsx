@@ -198,7 +198,10 @@ export default function ColeccionesAdminPage() {
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div className="admin-field">
               <label>Nombre</label>
-              <input type="text" value={name} onChange={(e) => { setName(e.target.value); setSlug(slugify(e.target.value)) }} placeholder="Ej. Invierno 2026" required />
+              {/* El slug solo se arma solo al CREAR: al editar, corregir el
+                  nombre cambiaba la URL y dejaba en 404 los anuncios, la barra
+                  de promo y el botón del hero que apuntan a la colección. */}
+              <input type="text" value={name} onChange={(e) => { setName(e.target.value); if (!editingId) setSlug(slugify(e.target.value)) }} placeholder="Ej. Invierno 2026" required />
             </div>
             <div className="admin-field">
               <label>Slug (automático)</label>

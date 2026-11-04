@@ -47,6 +47,9 @@ export interface Product {
   sizes?: ProductSize[];
   colors?: Color[];
   collection?: Collection;
+  /** Nombre de la colección, para el buscador: el catálogo descarta el join
+   *  `collection` (peso) y deja solo esto. */
+  collection_name?: string;
 }
 
 export interface Collection {
@@ -275,6 +278,17 @@ export function sortSizes<T extends { sort_order?: number | null }>(sizes: T[] |
   return [...(sizes ?? [])].sort(
     (a, b) => (a.sort_order ?? Number.MAX_SAFE_INTEGER) - (b.sort_order ?? Number.MAX_SAFE_INTEGER)
   );
+}
+
+/** "Único" / "Talle único": el rótulo que se pone cuando no hay talle que elegir. */
+export function isUnicoLabel(size: string | null | undefined): boolean {
+  return /^(talle\s+)?[uú]nico$/i.test((size ?? '').trim());
+}
+
+/** Pieza sin talle que elegir: sin filas de talle, o una sola que dice "Único". */
+export function isTalleUnico(sizes: { size: string }[] | null | undefined): boolean {
+  const list = sizes ?? [];
+  return list.length === 0 || (list.length === 1 && isUnicoLabel(list[0].size));
 }
 
 /** El talle disponible más barato (define el precio "desde"). Sin talles disponibles → undefined. */

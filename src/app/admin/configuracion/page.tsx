@@ -17,6 +17,7 @@ const SECTIONS = [
       { key: 'hero_subtitle', label: 'Antetítulo (eyebrow)', type: 'text' },
       { key: 'hero_title',    label: 'Título principal',     type: 'text' },
       { key: 'hero_cta',      label: 'Texto del botón',      type: 'text' },
+      { key: 'hero_cta_href', label: 'A dónde lleva el botón (ej. /colecciones/sunset-26; vacío = /tienda)', type: 'text' },
       { key: 'hero_image_url', label: 'Foto del hero',       type: 'hero' },
     ],
   },
@@ -587,8 +588,15 @@ export default function ConfiguracionAdminPage() {
 
     try {
       const supabase = createClient()
+      // Solo las claves que cambiaron desde que se abrió la pantalla. Antes se
+      // reescribían TODAS con el valor de ese momento: una pestaña abierta de
+      // ayer pisaba lo guardado después desde otras pantallas o por el reloj
+      // (lista_email_enviado volvía atrás → el aviso del drop podía salir de
+      // nuevo a toda la lista; la prenda fijada en la bio, los reels y las
+      // portadas del blog se revertían). Auditoría 04/11/2026.
+      const before = (() => { try { return JSON.parse(savedSnapshot || '{}') as Record<string, string> } catch { return {} } })()
       const updates = Object.entries(settings)
-        .filter(([, v]) => v !== undefined && v !== null)
+        .filter(([key, v]) => v !== undefined && v !== null && before[key] !== v)
         .map(([key, value]) => ({
           key,
           value: value ?? '',

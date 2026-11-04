@@ -27,6 +27,8 @@ interface SizeEntry {
   price_uyu: string
   available: boolean
   sort_order: number
+  /** Se conserva al guardar: el insert sin él lo volvía a NULL. */
+  stock_qty?: number | null
 }
 
 interface MediaEntry {
@@ -120,6 +122,11 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
     colors: [...selectedColors].sort(),
   })
   const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null)
+  // Cuándo se modificó la prenda por última vez al abrirla: si cambió después
+  // (otra pestaña, el lote de precios, un arreglo por SQL), guardar esta ficha
+  // pisaba esos cambios con lo viejo (auditoría 04/11/2026).
+  const [loadedUpdatedAt, setLoadedUpdatedAt] = useState<string | null>(null)
+  const [loadedSlug, setLoadedSlug] = useState('')
   useEffect(() => {
     if (loading) return
     // Solo la primera vez, apenas termina de cargar: ese es el punto de
@@ -138,6 +145,8 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
   }
 
   const fillProductForm = useCallback((p: LoadedProduct) => {
+    setLoadedUpdatedAt(p.updated_at ?? null)
+    setLoadedSlug(p.slug || '')
     setName(p.name || '')
     setSlug(p.slug || '')
     setDescription(p.description || '')
@@ -167,6 +176,10 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
     if (knitOk) setHoursInput((prev) => prev || String(knit))
 
     if (p.media && p.media.length > 0) {
+      // La foto "Principal" elegida se respeta: con `m.is_primary || idx === 0`
+      // la primera por posición quedaba TAMBIÉN como principal y, al guardar,
+      // la tarjeta, el feed y la vista previa podían mostrar otra foto.
+      const anyPrimary = p.media.some((m) => m.is_primary)
       const mappedMedia: MediaEntry[] = [...p.media]
         .sort((a, b) => a.position - b.position)
         .map((m, idx) => ({
@@ -175,8 +188,8 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           url: m.url,
           type: (m.type as 'image' | 'video') || 'image',
           alt: m.alt || '',
-          position: m.position || idx,
-          is_primary: m.is_primary || idx === 0,
+          position: m.position ?? idx,
+          is_primary: anyPrimary ? !!m.is_primary : idx === 0,
         }))
       setMediaEntries(mappedMedia)
     }
@@ -191,6 +204,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           price_uyu: s.price_uyu ? String(s.price_uyu) : '',
           available: s.available ?? true,
           sort_order: s.sort_order ?? idx,
+          stock_qty: s.stock_qty ?? null,
         }))
       setSizes(mappedSizes)
     }
@@ -491,6 +505,11 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       return
     }
 
+    // El link viejo deja de andar: está en anuncios, Google, la bio y el reel
+    // (no hay redirección de slugs viejos). Que sea una decisión, no un
+    // efecto de tocar "Auto" (auditoría 04/11/2026).
+    if (loadedSlug && slug.trim() !== loadedSlug && !confirm(`Vas a cambiar el link de la prenda de /tienda/${loadedSlug} a /tienda/${slug.trim()}. El link viejo va a dar error en anuncios, Google e Instagram. ¿Seguir?`)) return
+
     setSaving(true)
     setError('')
 
@@ -508,7 +527,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       const resolvedDiscountActive = discountActive && resolvedDiscountPercent > 0
 
       // Update product entry
-      const { error: productError } = await supabase
+      let productUpdate = supabase
         .from('products')
         .update({
           name: name.trim(),
@@ -531,8 +550,15 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           updated_at: new Date().toISOString()
         })
         .eq('id', productId)
+      if (loadedUpdatedAt) productUpdate = productUpdate.eq('updated_at', loadedUpdatedAt)
+      const { data: updatedRows, error: productError } = await productUpdate.select('id')
 
       if (productError) throw productError
+      // 0 filas no es error para Postgres: la prenda cambió desde que se abrió
+      // o la sesión venció. Se corta ANTES de tocar fotos y talles.
+      if (!updatedRows || updatedRows.length === 0) {
+        throw new Error('No se guardó: esta prenda cambió desde que la abriste (otra pestaña o el cambio de precios en lote) o tu sesión venció. Recargá la página y volvé a guardar.')
+      }
 
       // Replace product media
       // Delete old media links first. Si el borrado falla (RLS, red), NO se
@@ -574,6 +600,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
             price_uyu: s.price_uyu ? parseInt(s.price_uyu) : null,
             available: s.available,
             sort_order: i,
+            stock_qty: s.stock_qty ?? null,
           }))
 
         if (sizeInserts.length > 0) {
@@ -623,6 +650,11 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       // Ya está guardado: nuevo punto de referencia, así el aviso de "cambios
       // sin guardar" no salta al salir de la página.
       setSavedSnapshot(snapshot)
+      // El trigger de la base mueve updated_at con cada escritura: el próximo
+      // guardado desde esta misma pantalla compara contra el valor nuevo.
+      const { data: fresh } = await supabase.from('products').select('updated_at').eq('id', productId).maybeSingle()
+      if (fresh?.updated_at) setLoadedUpdatedAt(fresh.updated_at)
+      setLoadedSlug(slug.trim())
       if (warnings.length > 0) {
         // Se queda en la página para que el aviso se lea.
         setError(`El producto se guardó, pero: ${warnings.join(' ')}`)

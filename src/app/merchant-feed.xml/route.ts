@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/public'
 import { getSnapshotData } from '@/lib/catalog'
 import { SITE_URL } from '@/lib/env'
-import { getFinalPrice, getPrimaryPhoto, isReadyToShip } from '@/lib/types'
+import { getEffectivePrice, getFinalPrice, getPrimaryPhoto, isReadyToShip, isUnicoLabel } from '@/lib/types'
 import { botImageUrl } from '@/lib/media'
 import { dropVisibility, type Product, type Discount } from '@/lib/types'
 import { localTermFor } from '@/lib/vocabulario'
@@ -30,6 +30,14 @@ export const revalidate = 3600
 
 /** Uruguay es UTC-3 todo el año (no tiene horario de verano desde 2015). */
 const UY_OFFSET = '-03:00'
+
+/** Con descuento, precio de lista + sale_price: Google muestra el tachado igual
+ *  que la ficha. Antes iba solo el final como precio, y el −15 % no se veía. */
+function priceTags(list: number, final: number): string {
+  return final < list
+    ? `      <g:price>${list}.00 UYU</g:price>\n      <g:sale_price>${final}.00 UYU</g:sale_price>`
+    : `      <g:price>${final}.00 UYU</g:price>`
+}
 
 function xmlEscape(v: string): string {
   return v
@@ -143,8 +151,9 @@ export async function GET() {
         )
 
         // Plazo de producción en días hábiles, desde las semanas de la ficha.
-        const minDays = Math.min(p.lead_time_weeks_min, p.lead_time_weeks_max) * 5
-        const maxDays = weeksMax * 5
+        // En stock: sale ya, aunque la ficha conserve un máximo de semanas viejo.
+        const minDays = enStock ? 0 : Math.min(p.lead_time_weeks_min, p.lead_time_weeks_max) * 5
+        const maxDays = enStock ? 2 : weeksMax * 5
 
         // Atributos comunes a todas las variantes de la prenda.
         const comunes = `      <g:description>${xmlEscape(desc)}</g:description>
@@ -171,12 +180,13 @@ ${productType ? `      <g:product_type>${xmlEscape(productType)}</g:product_type
             .map((s) => {
               const price = getFinalPrice(p, s.size, discounts)
               if (!(price > 0)) return ''
+              const list = getEffectivePrice(p, s.size)
               return `    <item>
       <g:id>${xmlEscape(`${p.slug}-${s.size}`)}</g:id>
       <g:item_group_id>${xmlEscape(p.slug)}</g:item_group_id>
-      <g:title>${xmlEscape(`${baseTitle} — talle ${s.size}`.slice(0, 150))}</g:title>
+      <g:title>${xmlEscape((isUnicoLabel(s.size) ? baseTitle : `${baseTitle} — talle ${s.size}`).slice(0, 150))}</g:title>
       <g:size>${xmlEscape(s.size)}</g:size>
-      <g:price>${price}.00 UYU</g:price>
+${priceTags(list, price)}
 ${comunes}
     </item>`
             })
@@ -187,10 +197,11 @@ ${comunes}
         // Sin talles (accesorios, bolsos): una sola ficha, talle único.
         const price = getFinalPrice(p, undefined, discounts)
         if (!(price > 0)) return '' // sin precio no es publicable
+        const list = getEffectivePrice(p, undefined)
         return `    <item>
       <g:id>${xmlEscape(p.slug)}</g:id>
       <g:title>${xmlEscape(baseTitle.slice(0, 150))}</g:title>
-      <g:price>${price}.00 UYU</g:price>
+${priceTags(list, price)}
 ${comunes}
     </item>`
       })

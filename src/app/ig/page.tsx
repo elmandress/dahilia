@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { getCatalog } from '@/lib/catalog'
 import { getPrimaryPhoto, formatListingPrice, BLUR_DATA_URL, getPrimaryPhotoAlt, isReadyToShip } from '@/lib/types'
 import { Icon } from '@/components/ui/Primitives'
+import { dropHasLaunched } from '@/lib/drop-date'
 import { dahila } from '@/components/ui/tokens'
 
 export const revalidate = 300
@@ -55,6 +56,11 @@ export default async function IgLandingPage() {
   const dropSlug = (settings.drop_collection_slug ?? '').trim()
   const dropCol = dropSlug ? collections.find((c) => c.slug === dropSlug && c.published) : undefined
   const dropHref: string | null = dropCol ? `/colecciones/${dropCol.slug}` : null
+  // Con el drop ya abierto, "Próximo drop" frenaba a quien venía a comprarlo
+  // (Sunset '26 abrió el 28/10 y el link de la bio seguía anunciándolo como
+  // futuro). Misma fecha que el teaser de la home y /vip. La página se
+  // regenera cada 5 minutos, así que el cambio llega solo a la hora del drop.
+  const dropIsLive = dropHasLaunched(settings.drop_date)
 
   const bigLink: React.CSSProperties = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
@@ -126,7 +132,7 @@ export default async function IgLandingPage() {
           }}
         >
           <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', opacity: 0.75 }}>Próximo drop</span>
+            <span style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', opacity: 0.9 }}>{dropIsLive ? 'Ya está online' : 'Próximo drop'}</span>
             <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17 }}>{dropName}</span>
           </span>
           <Icon name="caret-right" size={16} color="#fff" />
