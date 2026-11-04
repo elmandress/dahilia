@@ -148,8 +148,14 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
     setBasePriceUyu(p.base_price_uyu ? String(p.base_price_uyu) : '')
     setDiscountPercent(p.discount_percent ? String(p.discount_percent) : '')
     setDiscountActive(!!p.discount_active)
-    setLeadTimeMin(p.lead_time_weeks_min ? String(p.lead_time_weeks_min) : '2')
-    setLeadTimeMax(p.lead_time_weeks_max ? String(p.lead_time_weeks_max) : '3')
+    // != null y no un chequeo de verdad: 0 semanas es "en stock", no "vacío".
+    // Con `p.lead_time_weeks_min ? … : '2'` el 0 se leía como falta de dato y
+    // cada vez que se guardaba una prenda en stock (p. ej. para ponerle un
+    // descuento) quedaba "se teje al encargar, 2 semanas" sin que nadie lo
+    // pidiera: les pasó a las 4 del drop Sunset el 03/11/2026, con anuncios
+    // diciendo "en stock".
+    setLeadTimeMin(p.lead_time_weeks_min != null ? String(p.lead_time_weeks_min) : '2')
+    setLeadTimeMax(p.lead_time_weeks_max != null ? String(p.lead_time_weeks_max) : '3')
     setMaterial(p.material || '')
     setCareInstructions(p.care_instructions || '')
     setIsCustomOnly(p.is_custom_only || false)
