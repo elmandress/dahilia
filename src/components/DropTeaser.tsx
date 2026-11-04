@@ -136,7 +136,7 @@ function CountdownUnit({ value, label }: { value: number; label: string }) {
         lineHeight: 1.1, color: dahila.ink900, fontVariantNumeric: 'tabular-nums',
       }}>{value}</span>
       <span style={{
-        fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.16em',
+        fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.16em',
         textTransform: 'uppercase', color: dahila.ink500,
       }}>{label}</span>
     </div>

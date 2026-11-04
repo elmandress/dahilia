@@ -6,7 +6,7 @@ import { useCart } from '@/components/CartProvider'
 import { dahila, Eyebrow, Button, Icon } from '@/components/ui/Primitives'
 import {
   getPrimaryPhoto, formatPrice, getEffectivePrice, getFinalPrice, BLUR_DATA_URL,
-  formatListingPrice, isReadyToShip, getPrimaryPhotoAlt, isUnicoLabel,
+  formatListingPrice, isReadyToShip, getPrimaryPhotoAlt, isUnicoLabel, variantLabel,
 } from '@/lib/types'
 import type { Product, Discount } from '@/lib/types'
 import { computeCouponEffect, type PublicCoupon } from '@/lib/coupons'
@@ -179,7 +179,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
     const text = buyable.map((i) => {
       const unico = isUnicoLabel(i.size)
       const url = `${SITE_URL}/tienda/${i.product.slug}${unico ? '' : `?talle=${encodeURIComponent(i.size)}`}`
-      return unico ? `${i.product.name}: ${url}` : `${i.product.name} (Talle ${i.size}): ${url}`
+      return unico ? `${i.product.name}: ${url}` : `${i.product.name} (${variantLabel(i.product.sizes)} ${i.size}): ${url}`
     }).join('\n')
     if (typeof navigator.share === 'function') {
       try {
@@ -346,7 +346,8 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                   {item.product.name}
                 </div>
                 <div style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700 }}>
-                  {isUnicoLabel(item.size) ? 'Talle único' : `Talle: ${item.size}`}
+                  {/* "Modelo: Lisas" cuando las variantes no son talles (VIS-M4). */}
+                  {isUnicoLabel(item.size) ? 'Talle único' : `${variantLabel(item.product.sizes)}: ${item.size}`}
                 </div>
                 {/* Lo que ya no se puede pedir va sin precio ni +/−, con el
                     motivo: no suma al total ni sale en el mensaje (QA-01). */}
@@ -378,7 +379,8 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
                 ) : plazo && (
                   <div style={{
                     display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 2,
-                    fontFamily: 'var(--font-sans)', fontSize: 11, color: '#8C8285',
+                    // ink500 y no el gris viejo, que daba 3,7:1 sobre blanco (VIS-20).
+                    fontFamily: 'var(--font-sans)', fontSize: 11, color: dahila.ink500,
                   }}>
                     <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                       <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.4"/>
@@ -445,7 +447,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
       {addonSuggestions.length > 0 && (
         <section aria-label="Piezas chicas para sumar" style={{ marginTop: 22 }}>
           <p style={{
-            fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.2em',
+            fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.2em',
             textTransform: 'uppercase', color: dahila.ink500, margin: '0 0 12px',
           }}>
             Sumale un detalle · viaja en el mismo envío
@@ -898,7 +900,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
         ) : (
           <>
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15, minWidth: 0 }}>
-              <span style={{ fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: dahila.ink500 }}>
+              <span style={{ fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: dahila.ink500 }}>
                 Total
               </span>
               <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 20, color: dahila.ink900 }}>
@@ -906,7 +908,7 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
               </span>
               {/* La duda que frena el botón, pegada al botón: el "no pagás nada
                   ahora" del resumen queda ~2 pantallas más abajo en el celular. */}
-              <span style={{ fontFamily: dahila.fontSans, fontSize: 10.5, color: dahila.ink500, marginTop: 2 }}>
+              <span style={{ fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500, marginTop: 2 }}>
                 sin pagar ahora
               </span>
             </div>

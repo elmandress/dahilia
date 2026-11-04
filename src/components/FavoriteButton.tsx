@@ -14,10 +14,11 @@ import { dahila, Icon } from './ui/Primitives'
 export function FavoriteButton({
   productId,
   variant = 'overlay',
-  size = 18,
+  size,
 }: {
   productId: string
   variant?: 'overlay' | 'inline'
+  /** Tamaño del ícono: 18 en la ficha, 16 sobre la foto de la tarjeta. */
   size?: number
 }) {
   const { isFavorite, toggle, hasMounted } = useFavorites()
@@ -52,7 +53,7 @@ export function FavoriteButton({
           transition: `color 140ms ${dahila.ease}`,
         }}
       >
-        <span key={active ? 'on' : 'off'} className={active && touched ? 'fav-pop' : undefined} style={{ display: 'inline-flex' }}><Icon name="heart" size={size} weight={active ? 'fill' : 'light'} color={active ? '#B6314A' : dahila.ink700} /></span>
+        <span key={active ? 'on' : 'off'} className={active && touched ? 'fav-pop' : undefined} style={{ display: 'inline-flex' }}><Icon name="heart" size={size ?? 18} weight={active ? 'fill' : 'light'} color={active ? '#B6314A' : dahila.ink700} /></span>
         {active ? 'Guardado en favoritos' : 'Guardar en favoritos'}
       </button>
     )
@@ -66,17 +67,24 @@ export function FavoriteButton({
       className="card-fav"
       style={{
         // 44px: mínimo de touch target táctil (WCAG/Apple/Google) — antes 34px,
-        // el mismo problema que ya se arregló en el stepper del carrito.
+        // el mismo problema que ya se arregló en el stepper del carrito. El
+        // área es transparente y lo que se ve es un círculo de 32 (VIS-07): el
+        // de 44 blanco tapaba demasiada foto en una tarjeta de 164 px.
         width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 999,
-        background: 'rgba(255,255,255,0.94)',
+        background: 'transparent', padding: 0,
         border: 'none', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         color: active ? '#B6314A' : dahila.ink700,
-        boxShadow: dahila.shadowSm,
         transition: `color 140ms ${dahila.ease}, transform 140ms ${dahila.ease}`,
       }}
     >
-      <span key={active ? 'on' : 'off'} className={active && touched ? 'fav-pop' : undefined} style={{ display: 'inline-flex' }}><Icon name="heart" size={size} weight={active ? 'fill' : 'light'} color={active ? '#B6314A' : dahila.ink700} /></span>
+      <span aria-hidden="true" style={{
+        width: 32, height: 32, borderRadius: 999,
+        background: 'rgba(255,255,255,0.85)', boxShadow: dahila.shadowSm,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <span key={active ? 'on' : 'off'} className={active && touched ? 'fav-pop' : undefined} style={{ display: 'inline-flex' }}><Icon name="heart" size={size ?? 16} weight={active ? 'fill' : 'light'} color={active ? '#B6314A' : dahila.ink700} /></span>
+      </span>
     </button>
   )
 }

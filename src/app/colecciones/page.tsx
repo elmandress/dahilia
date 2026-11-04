@@ -83,7 +83,7 @@ export default async function ColeccionesPage() {
                 <span style={{
                   position: 'absolute', top: 12, left: 12,
                   background: 'rgba(255,255,255,0.94)', color: dahila.wine700,
-                  fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 500,
+                  fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 500,
                   letterSpacing: '0.16em', textTransform: 'uppercase',
                   padding: '6px 12px', borderRadius: 999,
                 }}>Próximamente</span>

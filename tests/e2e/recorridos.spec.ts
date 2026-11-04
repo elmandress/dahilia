@@ -25,6 +25,8 @@ test('explora la tienda y abre una ficha con precio', async ({ page }) => {
 
 test('agrega al carrito y coordina por WhatsApp con el pedido completo', async ({ page, guard }) => {
   await page.goto('/tienda/spring-cardigan')
+  // Ningún talle viene elegido (04/11/2026, VIS-01): primero se elige uno.
+  await page.locator('.pdp-sizes button:not([disabled])').first().click()
   await page.getByRole('button', { name: /agregar al carrito/i }).first().click()
   // El carrito lateral confirma lo que se agregó.
   await expect(page.getByText(/tu carrito/i).first()).toBeVisible()

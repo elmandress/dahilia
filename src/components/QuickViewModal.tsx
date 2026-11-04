@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import type { Product, Discount } from '@/lib/types'
 import {
   getEffectivePrice, getFinalPrice, resolveDiscountPercent,
   getPrimaryPhoto, BLUR_DATA_URL, getPrimaryPhotoAlt, leadTimeMessage, sortSizes,
+  variantLabel, hasPriceRange, getListingSize,
 } from '@/lib/types'
 import { useSizeSelection, getRestockWhatsAppUrl } from '@/lib/product-selection'
 import { useCart } from './CartProvider'
@@ -38,12 +39,24 @@ export function QuickViewModal({
   // cuánto tarda y "avisame cuando vuelva" usaba un número fijo en el código.
   const { addToCart, queueNote, whatsappUrl: siteWhatsappUrl } = useCart()
   // Mismo criterio que el PDP, factorizado en un hook compartido (auditoría
-  // 03/09/2026: antes duplicado letra por letra en los dos archivos).
-  const { talle, setTalle, sizeAvailable } = useSizeSelection(product)
+  // 03/09/2026: antes duplicado letra por letra en los dos archivos). Ningún
+  // talle aparece elegido hasta que alguien lo elige (VIS-01).
+  const { talle, setTalle, sizeAvailable, elegido, necesitaElegir } = useSizeSelection(product)
+  const etiqueta = variantLabel(product.sizes)
+  const esModelo = etiqueta === 'Modelo'
+  // El aviso "Elegí un talle…", después de tocar el botón sin haber elegido.
+  const [avisoTalle, setAvisoTalle] = useState(false)
+  // "Agregando…" mientras se guarda (CRO-21); la traba va en un ref.
+  const [adding, setAdding] = useState(false)
+  const addingRef = useRef(false)
+  const sizesRef = useRef<HTMLDivElement>(null)
 
   const photo = getPrimaryPhoto(product)
-  const listPrice = getEffectivePrice(product, talle)
-  const finalPrice = getFinalPrice(product, talle, discounts)
+  // Sin talle elegido y con precio por talle: "desde" el más bajo, como la ficha.
+  const precioDesde = !elegido && hasPriceRange(product)
+  const tallePrecio = precioDesde ? getListingSize(product) : talle
+  const listPrice = getEffectivePrice(product, tallePrecio)
+  const finalPrice = getFinalPrice(product, tallePrecio, discounts)
   const discountPct = resolveDiscountPercent(product, discounts)
   const hasDiscount = discountPct > 0 && listPrice > 0
   const isSoldOut = product.status === 'soldout'
@@ -70,12 +83,27 @@ export function QuickViewModal({
   useFocusTrap(cardRef, true)
 
   const handleAdd = async () => {
-    if (!sizeAvailable) return
-    const ok = await addToCart(product, talle, 1)
-    // addToCart opens the mini-cart drawer; close this modal so we don't stack
-    // two dialogs on top of each other. Si falló, la vista rápida se queda
-    // abierta: cerrarla escondería el aviso y la salida por WhatsApp.
-    if (ok) onClose()
+    if (!sizeAvailable || addingRef.current) return
+    addingRef.current = true
+    setAdding(true)
+    try {
+      const ok = await addToCart(product, talle, 1, { source: 'vista_rapida' })
+      // addToCart opens the mini-cart drawer; close this modal so we don't stack
+      // two dialogs on top of each other. Si falló, la vista rápida se queda
+      // abierta: cerrarla escondería el aviso y la salida por WhatsApp.
+      if (ok) onClose()
+    } finally {
+      addingRef.current = false
+      setAdding(false)
+    }
+  }
+
+  // Con dos o más talles y ninguno elegido, el botón no agrega: avisa debajo
+  // de los talles y deja el foco en el primero disponible (mismo gesto que la
+  // ficha).
+  const pedirTalle = () => {
+    setAvisoTalle(true)
+    sizesRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()
   }
 
   return (
@@ -151,7 +179,7 @@ export function QuickViewModal({
               color: dahila.ink900, margin: '0 0 8px', lineHeight: 1.15,
             }}>{product.name}</h2>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-              <PriceBlock list={listPrice} final={finalPrice} size="md" soldOut={isSoldOut} />
+              <PriceBlock list={listPrice} final={finalPrice} size="md" soldOut={isSoldOut} from={precioDesde} />
             </div>
             {leadTime && (
               <p style={{
@@ -180,40 +208,59 @@ export function QuickViewModal({
           {canBuy && product.sizes && product.sizes.length > 0 && (
             <div>
               <div style={{ fontFamily: dahila.fontSans, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: dahila.ink500, marginBottom: 8 }}>
-                Talle
+                {etiqueta}
               </div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {sortSizes(product.sizes).map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => setTalle(s.size)}
-                    disabled={!s.available}
-                    aria-pressed={talle === s.size}
-                    style={{
-                      minWidth: 44, height: 44, padding: '0 12px', borderRadius: 8,
-                      fontFamily: dahila.fontSans, fontSize: 13,
-                      border: `1px solid ${talle === s.size ? dahila.ink900 : dahila.borderStrong}`,
-                      background: talle === s.size ? dahila.ink900 : '#fff',
-                      color: talle === s.size ? '#fff' : dahila.ink900,
-                      cursor: s.available ? 'pointer' : 'not-allowed',
-                      opacity: s.available ? 1 : 0.5,
-                      textDecoration: s.available ? 'none' : 'line-through',
-                    }}
-                  >{s.size}</button>
-                ))}
+              <div ref={sizesRef} style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {sortSizes(product.sizes).map((s) => {
+                  const on = elegido === s.size
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setTalle(s.size)}
+                      disabled={!s.available}
+                      aria-pressed={on}
+                      style={{
+                        minWidth: 44, height: 44, padding: '0 12px', borderRadius: 8,
+                        fontFamily: dahila.fontSans, fontSize: 13,
+                        border: `1px solid ${on ? dahila.ink900 : dahila.borderStrong}`,
+                        background: on ? dahila.ink900 : '#fff',
+                        color: on ? '#fff' : dahila.ink900,
+                        cursor: s.available ? 'pointer' : 'not-allowed',
+                        opacity: s.available ? 1 : 0.5,
+                        textDecoration: s.available ? 'none' : 'line-through',
+                      }}
+                    >{s.size}</button>
+                  )
+                })}
               </div>
+              {necesitaElegir && avisoTalle && (
+                <p role="alert" style={{ margin: '8px 0 0', fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600 }}>
+                  {esModelo ? 'Elegí un modelo para agregarla' : 'Elegí un talle para agregarla'}
+                </p>
+              )}
             </div>
           )}
 
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
             {canBuy ? (
               sizeAvailable ? (
-                <Button variant="primary" size="lg" full onClick={handleAdd}>
-                  Agregar al carrito
+                // Ocupado = aria-disabled y no disabled: un botón enfocado que
+                // pasa a disabled pierde el foco (Chromium lo manda al body).
+                <Button
+                  variant="primary"
+                  size="lg"
+                  full
+                  onClick={necesitaElegir ? pedirTalle : handleAdd}
+                  aria-busy={adding}
+                  aria-disabled={adding || undefined}
+                  style={adding ? { opacity: 0.7, cursor: 'progress' } : undefined}
+                >
+                  {necesitaElegir ? (esModelo ? 'Elegí el modelo' : 'Elegí tu talle') : adding ? 'Agregando…' : 'Agregar al carrito'}
                 </Button>
               ) : (
                 <Button variant="secondary" size="lg" full disabled>
-                  Sin stock en el talle {talle}
+                  {esModelo ? 'Sin stock en ese modelo' : `Sin stock en el talle ${talle}`}
                 </Button>
               )
             ) : product.is_custom_only ? (

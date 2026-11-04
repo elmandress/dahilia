@@ -41,6 +41,11 @@ Run this mentally (or literally) over any UI you add or touch.
   the project easing), not bouncy or everywhere.
 - Optical alignment over mathematical: prices right-aligned, baselines aligned,
   hairline borders (rgba ink at 0.08) instead of solid #ccc.
+  Exception (VIS-07, 11/2026): on product cards at ≤ 720 px the price goes
+  below the name, left-aligned, with the struck price on the same line
+  (`.card-info` + PriceBlock `align="responsive"`). In a 164 px card the
+  right-aligned price zigzagged and the info took 130 px under the photo.
+  Desktop cards and everything else keep prices right-aligned.
 - No em-dash confetti or "In today's world…" openers — these are the single
   most-cited AI tell in 2026 write-ups. Read new copy out loud; if it doesn't
   sound like Anush talking, rewrite it.

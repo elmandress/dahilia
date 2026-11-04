@@ -34,7 +34,10 @@ export function Button({ variant = 'primary', size = 'md', children, onClick, fu
     textTransform: 'uppercase',
     border: '1px solid transparent',
     cursor: disabled ? 'not-allowed' : 'pointer',
-    transition: `all 160ms ${dahila.ease}`,
+    // Por propiedad y no 'all' (VIS-19): 'all' animaba sin querer ancho y
+    // sombra, y como va en línea le ganaba a la compresión del toque de
+    // globals.css, que ahora dura 90 ms (transform).
+    transition: `background-color 160ms ${dahila.ease}, color 160ms ${dahila.ease}, border-color 160ms ${dahila.ease}, box-shadow 160ms ${dahila.ease}, transform 90ms ${dahila.ease}`,
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
     width: full ? '100%' : 'auto',
     opacity: disabled ? 0.7 : 1,
@@ -113,7 +116,8 @@ export function Chip({ children, on, onClick }: { children: React.ReactNode, on:
         color: on ? '#fff' : dahila.ink700,
         border: `1px solid ${on ? dahila.ink900 : dahila.borderStrong}`,
         boxShadow: on ? dahila.shadowSm : 'none',
-        cursor: 'pointer', transition: `all 140ms ${dahila.ease}`,
+        cursor: 'pointer',
+        transition: `background-color 140ms ${dahila.ease}, color 140ms ${dahila.ease}, border-color 140ms ${dahila.ease}, box-shadow 140ms ${dahila.ease}, transform 90ms ${dahila.ease}`,
       }}>{children}</button>
   )
 }
@@ -154,12 +158,15 @@ export function Badge({ tone = 'white', children }: { tone?: 'white'|'cream'|'in
     sold:  { background: dahila.ink100, color: dahila.ink500 },
     pink:  { background: dahila.rose100, color: dahila.wine700 },
   }
+  // 11 px de piso (VIS-09, 04/11/2026): a 10 px en mayúsculas espaciadas era
+  // lo primero que dejaba de leerse en el celular. Menos espaciado para que
+  // el rótulo no crezca de ancho.
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
-      fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 400,
+      fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 400,
       padding: '5px 10px', borderRadius: 999,
-      letterSpacing: '0.18em', textTransform: 'uppercase',
+      letterSpacing: '0.1em', textTransform: 'uppercase',
       ...tones[tone],
     }}>{children}</span>
   )
@@ -168,8 +175,8 @@ export function Badge({ tone = 'white', children }: { tone?: 'white'|'cream'|'in
 // --- Eyebrow --------------------------------------------------
 export function Eyebrow({ children, style }: { children: React.ReactNode, style?: React.CSSProperties }) {
   return <span style={{
-    fontFamily: dahila.fontSans, fontSize: 10,
-    letterSpacing: '0.22em', textTransform: 'uppercase',
+    fontFamily: dahila.fontSans, fontSize: 11,
+    letterSpacing: '0.16em', textTransform: 'uppercase',
     color: dahila.ink500, fontWeight: 400, ...style,
   }}>{children}</span>
 }
@@ -179,7 +186,7 @@ export function Field({ label, helper, children }: { label: string, helper?: str
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <span style={{
-        fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
+        fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.14em',
         textTransform: 'uppercase', color: dahila.ink500, fontWeight: 400,
       }}>{label}</span>
       {children}
@@ -218,7 +225,7 @@ export function TextInput({ placeholder, value, onChange, type = 'text', autoCom
         border: 'none',
         borderBottom: `1px solid ${focus ? dahila.ink900 : dahila.borderStrong}`,
         padding: '10px 0 8px',
-        transition: `all 160ms ${dahila.ease}`,
+        transition: `background-color 160ms ${dahila.ease}, color 160ms ${dahila.ease}, border-color 160ms ${dahila.ease}, box-shadow 160ms ${dahila.ease}`,
       }}
     />
   )

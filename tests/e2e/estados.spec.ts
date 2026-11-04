@@ -30,7 +30,8 @@ test('si las fotos no cargan, la tienda sigue usable', async ({ page, guard }) =
   await expect(primera).toBeVisible()
   await primera.click()
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  await expect(page.getByRole('button', { name: /agregar al carrito/i }).first()).toBeVisible()
+  // La primera tarjeta puede tener talles: entonces el botón pide elegir.
+  await expect(page.getByRole('button', { name: /agregar al carrito|elegí tu talle|elegí el modelo/i }).first()).toBeVisible()
   expect(guard.pageErrors).toEqual([])
 })
 

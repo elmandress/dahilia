@@ -6,7 +6,7 @@ import { ImagenConRespaldo } from './ui/ImagenConRespaldo'
 import type { Product, Discount } from '@/lib/types'
 import {
   getEffectivePrice, getFinalPrice, resolveDiscountPercent, getPrimaryPhoto, getScarcity, BLUR_DATA_URL,
-  getPrimaryPhotoAlt, getListingSize, hasPriceRange, isReadyToShip,
+  getPrimaryPhotoAlt, getListingSize, hasPriceRange, isReadyToShip, variantLabel,
 } from '@/lib/types'
 import { useCart } from './CartProvider'
 import { FavoriteButton } from './FavoriteButton'
@@ -30,7 +30,7 @@ export function ProductCard({
 }) {
   const { addToCart, queueNote } = useCart()
   const [hover, setHover] = useState(false)
-  const [isAdding, setIsAdding] = useState(false)
+  const [added, setAdded] = useState(false)
 
   const photo = getPrimaryPhoto(product)
   // Precio "desde": el del talle disponible más barato. Es el mismo número que
@@ -71,9 +71,12 @@ export function ProductCard({
     e.stopPropagation()
     e.preventDefault()
     if (!purchasable || allSizesOut) return
-    setIsAdding(true)
-    await addToCart(product, listingSize ?? 'Único', 1)
-    setTimeout(() => setIsAdding(false), 500)
+    // '✓ Agregado' solo si se guardó (CRO-21): antes salía al tocar, antes de
+    // saber si la base había respondido.
+    const ok = await addToCart(product, listingSize ?? 'Único', 1, { source: 'tarjeta' })
+    if (!ok) return
+    setAdded(true)
+    setTimeout(() => setAdded(false), 2000)
   }
 
   return (
@@ -122,13 +125,15 @@ export function ProductCard({
           <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.45)' }} />
         )}
 
-        {/* Badge stack — discount wins, then soldout/badge/custom */}
+        {/* Badge stack — discount wins, then soldout/badge/custom. En el
+            celular el −N% va más compacto (card-sale-badge, globals.css):
+            con el corazón y la barra de acción tapaban un cuarto de la foto. */}
         {hasDiscount && product.status !== 'soldout' ? (
           <span style={{ position: 'absolute', top: 10, left: 10 }}>
-            <span style={{
+            <span className="card-sale-badge" style={{
               display: 'inline-flex', alignItems: 'center',
               background: '#B6314A', color: '#fff',
-              fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 600,
+              fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 600,
               letterSpacing: '0.06em', padding: '5px 10px', borderRadius: 999,
             }}>−{discountPct}%</span>
           </span>
@@ -142,17 +147,19 @@ export function ProductCard({
 
         {/* Top-right stack: heart (always) + honest scarcity tag below it, so
             neither collides with the discount/soldout badge (top-left) nor the
-            hover action (bottom). Only the "last one" level shows on the card. */}
+            hover action (bottom). Only the "last one" level shows on the card.
+            A 4 px del borde: el círculo visible (32 px) queda a 10, como antes,
+            y el resto de los 44 de área táctil es transparente. */}
         <div style={{
-          position: 'absolute', top: 10, right: 10,
-          display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6,
+          position: 'absolute', top: 4, right: 4,
+          display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2,
         }}>
           <FavoriteButton productId={product.id} />
           {scarcity?.level === 'last' && product.status !== 'soldout' && (
             <span style={{
-              display: 'inline-flex', alignItems: 'center',
+              display: 'inline-flex', alignItems: 'center', marginRight: 6,
               background: 'rgba(255,255,255,0.94)', color: '#B6314A',
-              fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 600,
+              fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 600,
               letterSpacing: '0.04em', padding: '4px 9px', borderRadius: 999,
               boxShadow: dahila.shadowSm,
             }}>{scarcity.short}</span>
@@ -179,12 +186,16 @@ export function ProductCard({
               transition: `all 220ms ${dahila.ease}`,
               pointerEvents: hover ? 'auto' : 'none',
             }}>
-            {isAdding ? '✓ Agregado' : onQuickView ? 'Vista rápida' : needsSize ? 'Elegir talle' : 'Agregar al carrito'}
+            {added ? '✓ Agregado' : onQuickView ? 'Vista rápida' : needsSize ? (variantLabel(product.sizes) === 'Modelo' ? 'Elegir modelo' : 'Elegir talle') : 'Agregar al carrito'}
           </div>
         )}
       </div>
 
-      <div style={{
+      {/* Nombre y precio. En escritorio, precio a la derecha; en el celular
+          (card-info, globals.css) va debajo del nombre, a la izquierda y en un
+          solo renglón con el tachado: antes la info medía 130 px en zigzag
+          (VIS-07, 04/11/2026). */}
+      <div className="card-info" style={{
         display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline',
         gap: '4px 12px', padding: '0 2px',
       }}>
@@ -194,11 +205,11 @@ export function ProductCard({
           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
           overflow: 'hidden', minWidth: 0, flex: '1 1 140px',
         }}>{product.name}</span>
-        <PriceBlock list={listPrice} final={finalPrice} size="sm" align="end" from={priceFrom} />
+        <PriceBlock list={listPrice} final={finalPrice} size="sm" align="responsive" from={priceFrom} />
       </div>
 
       {/* Colour swatches + lead time in one row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px', marginTop: -2, gap: 8 }}>
+      <div className="card-meta" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px', marginTop: -2, gap: 8 }}>
         {swatches.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             {swatches.map((c) => (
@@ -214,7 +225,7 @@ export function ProductCard({
               />
             ))}
             {(product.colors?.length ?? 0) > swatches.length && (
-              <span style={{ fontFamily: dahila.fontSans, fontSize: 10, color: dahila.ink500 }}>
+              <span style={{ fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500 }}>
                 +{(product.colors!.length) - swatches.length}
               </span>
             )}
@@ -229,14 +240,14 @@ export function ProductCard({
             igual que una que tarda semanas. */}
         {readyNow ? (
           <span style={{
-            fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 500, color: dahila.wine600,
+            fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 500, color: dahila.wine600,
             letterSpacing: '0.02em', whiteSpace: 'nowrap', marginLeft: 'auto',
           }}>
             En stock
           </span>
         ) : !queueNote.trim() && product.lead_time_weeks_min > 0 && product.status !== 'soldout' && (
           <span style={{
-            fontFamily: dahila.fontSans, fontSize: 10, color: dahila.ink500,
+            fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500,
             letterSpacing: '0.02em', whiteSpace: 'nowrap', marginLeft: 'auto',
           }}>
             {product.lead_time_weeks_min === product.lead_time_weeks_max
@@ -246,16 +257,18 @@ export function ProductCard({
         )}
       </div>
 
-      {/* Material tag — tiny pill, solo si el producto lo tiene cargado */}
+      {/* Material tag — tiny pill, solo si el producto lo tiene cargado. En el
+          celular no va (card-material, globals.css): el material está en la
+          ficha y la tarjeta tapaba menos foto sin él. */}
       {product.material && (
-        <div style={{ padding: '0 2px', marginTop: 2 }}>
+        <div className="card-material" style={{ padding: '0 2px', marginTop: 2 }}>
           {/* Un solo renglón (12/10/2026): "Lana 50% natural y 50% acrílica"
               ocupaba dos y desalineaba la fila de tarjetas en el celular. El
               texto completo queda en title y en la ficha. */}
           <span title={product.material} style={{
             display: 'inline-block', maxWidth: '100%',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'top',
-            fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 400,
+            fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 400,
             color: dahila.ink500, letterSpacing: '0.04em',
             background: dahila.cream100,
             borderRadius: 999, padding: '3px 8px',

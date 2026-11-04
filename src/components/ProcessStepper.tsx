@@ -21,7 +21,7 @@ export function ProcessStepper({ steps, title = 'Cómo funciona' }: { steps: Pro
       padding: '18px 20px', border: `1px solid ${dahila.border}`,
     }}>
       <div style={{
-        fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.18em',
+        fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.18em',
         textTransform: 'uppercase', color: dahila.ink500, marginBottom: 14,
       }}>
         {title}

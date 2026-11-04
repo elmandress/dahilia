@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { track } from '@/lib/analytics'
+import { waLink } from '@/lib/whatsapp'
+import { dahila } from './ui/tokens'
 
 /**
  * Floating WhatsApp button — visible on all public pages except /admin and /carrito.
@@ -13,6 +15,11 @@ import { track } from '@/lib/analytics'
 export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: string }) {
   const pathname = usePathname()
   const [visible, setVisible] = useState(true)
+  // ¿Bajó más de 0,8 pantallas? En la tienda y las colecciones la burbuja
+  // aparece recién ahí (VIS-08, 04/11/2026): al cargar tapaba el corazón de la
+  // primera tarjeta de la derecha en /colecciones/sunset-26, donde aterriza el
+  // anuncio.
+  const [lejos, setLejos] = useState(false)
   const lastYRef = useRef(0)
 
   // Use a ref for lastY so the scroll handler is stable (registered once, not
@@ -20,6 +27,7 @@ export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: str
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY
+      setLejos(y > window.innerHeight * 0.8)
       if (y < 200 || y < lastYRef.current) {
         setVisible(true)
       } else if (y > lastYRef.current + 8) {
@@ -31,25 +39,30 @@ export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: str
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Hide on admin, cart (has its own CTA), order form, and /ig (ya tiene su
+  // Hide on admin, cart (has its own CTA), order form, /ig (ya tiene su
   // propio link grande de WhatsApp inline — la burbuja flotante sería un
-  // segundo camino redundante en una página pensada para tener solo uno).
+  // segundo camino redundante en una página pensada para tener solo uno) y
+  // /regalo (tiene su botón verde, y la burbuja tapaba el borde de los montos).
   if (
     pathname.startsWith('/admin') ||
     pathname.startsWith('/carrito') ||
     pathname.startsWith('/encargo') ||
+    pathname.startsWith('/regalo') ||
     pathname === '/ig'
   ) return null
 
   if (!enabled) return null
 
-  // Only allow known-safe WhatsApp domains to prevent open redirect if the
-  // admin accidentally pastes a non-WA URL into site_settings.
-  const safeWa = waUrl.startsWith('https://wa.me/') || waUrl.startsWith('https://api.whatsapp.com/')
+  // Solo links de WhatsApp (QA-15): waLink normaliza 'wa.me/…' sin https y
+  // 'api.whatsapp.com/send?phone=…', y devuelve null para cualquier otra cosa
+  // que se haya pegado en Configuración (sin redirecciones abiertas).
+  const safeWa = waLink(waUrl) !== null
   if (!safeWa) return null
 
-  const message = encodeURIComponent('Hola! Estoy en el sitio de Dahila Crochet y tengo una consulta 🧶')
-  const href = `${waUrl.replace(/\/$/, '')}?text=${message}`
+  const href = waLink(waUrl, 'Hola! Estoy en el sitio de Dahila Crochet y tengo una consulta 🧶')!
+
+  const demorada = pathname.startsWith('/tienda') || pathname.startsWith('/colecciones/')
+  const mostrar = visible && (!demorada || lejos)
 
   // Dentro de un <aside> con nombre: queda como región propia y no suelto
   // fuera de todo landmark (axe "region", 19/09/2026). El link es fijo, así que
@@ -57,14 +70,18 @@ export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: str
   return (
     <aside aria-label="Consulta por WhatsApp">
     <a
-      // La clase existe para la regla de globals.css que la sube por encima de
-      // la barra fija de la ficha en mobile (con z-index 40 < 45 quedaba
-      // tapada del todo justo en la página de más intención de compra).
+      // La clase existe para la regla de globals.css que la esconde en la
+      // ficha del celular: ahí el WhatsApp va dentro de la barra fija.
       className="whatsapp-float"
       href={href}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Consultar por WhatsApp"
+      // Escondida no se puede tocar ni enfocar (VIS-M1): con solo opacidad 0
+      // seguía ahí, y en la ficha del celular se robaba el toque del borde
+      // derecho de "Agregar al carrito" (se abría WhatsApp y no se agregaba).
+      aria-hidden={!mostrar}
+      tabIndex={mostrar ? undefined : -1}
       onClick={(e) => {
         // En la ficha, el mensaje ya dice qué prenda está mirando (y en qué
         // talle, si eligió uno): quien escribe no tiene que explicar "cuál" y
@@ -72,10 +89,13 @@ export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: str
         // navegador siga el link.
         const product = document.querySelector('.producto-detail h1')?.textContent?.trim()
         if (product) {
-          // Solo el grupo de talles: el corazón de favoritos también usa aria-pressed.
-          const size = document.querySelector('.pdp-sizes button[aria-pressed="true"]')?.textContent?.trim()
-          const text = `Hola! Estoy mirando ${product}${size ? ` (talle ${size})` : ''} en la web: ${window.location.origin}${window.location.pathname}\nTengo una consulta 🧶`
-          e.currentTarget.href = `${waUrl.replace(/\/$/, '')}?text=${encodeURIComponent(text)}`
+          // Solo el grupo de talles: el corazón de favoritos también usa
+          // aria-pressed. Ninguno marcado = nadie eligió talle, y no se manda.
+          const sizes = document.querySelector('.pdp-sizes')
+          const size = sizes?.querySelector('button[aria-pressed="true"]')?.textContent?.trim()
+          const rotulo = sizes?.getAttribute('data-rotulo') || 'talle'
+          const text = `Hola! Estoy mirando ${product}${size ? ` (${rotulo} ${size})` : ''} en la web: ${window.location.origin}${window.location.pathname}\nTengo una consulta 🧶`
+          e.currentTarget.href = waLink(waUrl, text) ?? href
         }
         track('whatsapp_click', { source: product ? 'float_ficha' : 'float' })
       }}
@@ -85,8 +105,7 @@ export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: str
         right: 24,
         // Mismo escalón que los otros botones flotantes de esquina
         // (BackToTop/WeaverCallout=40-45) — no arriba de drawers/modales
-        // (90-200) ni de la barra sticky del PDP en mobile (45), que si no
-        // queda tapada por esta burbuja justo donde está "Agregar".
+        // (90-200) ni de la barra sticky del PDP en mobile (45).
         zIndex: 40,
         width: 52,
         height: 52,
@@ -98,9 +117,14 @@ export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: str
         justifyContent: 'center',
         boxShadow: '0 4px 20px rgba(30,132,73,0.38)',
         textDecoration: 'none',
-        transform: visible ? 'translateY(0) scale(1)' : 'translateY(80px) scale(0.9)',
-        opacity: visible ? 1 : 0,
-        transition: 'transform 260ms cubic-bezier(0.34,1.56,0.64,1), opacity 220ms ease',
+        transform: mostrar ? 'translateY(0) scale(1)' : 'translateY(80px) scale(0.9)',
+        opacity: mostrar ? 1 : 0,
+        pointerEvents: mostrar ? 'auto' : 'none',
+        visibility: mostrar ? 'visible' : 'hidden',
+        // La curva del sitio, sin el rebote de antes (VIS-19). visibility
+        // espera a que termine el fundido al esconderse y cambia al instante
+        // al aparecer.
+        transition: `transform 260ms ${dahila.ease}, opacity 220ms ease, visibility 0s linear ${mostrar ? '0s' : '220ms'}`,
         willChange: 'transform',
       }}
     >

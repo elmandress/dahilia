@@ -6,7 +6,7 @@
 //
 // Puro a propósito (sin JSX ni next/*): lo prueban las unitarias con node:test.
 import type { CartItem, Discount, Product } from './types'
-import { formatPrice, getEffectivePrice, getFinalPrice, isReadyToShip, isUnicoLabel } from './types'
+import { formatPrice, getEffectivePrice, getFinalPrice, isReadyToShip, isUnicoLabel, variantLabel } from './types'
 import { cartItemIssue } from './cart-summary'
 
 type BuyableItem = Pick<CartItem, 'size' | 'qty'> & { product: Product }
@@ -46,7 +46,9 @@ export function buildWhatsAppMessage(
     const slug = item.product.slug
     const discounted = unit < list
     lines.push(`${idx + 1}. ${item.product.name}`)
-    if (!isUnicoLabel(item.size)) lines.push(`   • Talle: ${item.size}`)
+    // "Modelo: Lisas" en Pulseras Terra (VIS-M4); los talles siguen diciendo
+    // "Talle: M".
+    if (!isUnicoLabel(item.size)) lines.push(`   • ${variantLabel(item.product.sizes)}: ${item.size}`)
     lines.push(`   • Cantidad: ${item.qty}`)
     // Anush sabe de entrada que no hay que tejerla.
     if (isReadyToShip(item.product)) lines.push('   • En stock')

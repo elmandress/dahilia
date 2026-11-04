@@ -1,5 +1,7 @@
 import Image from 'next/image'
 import { Icon } from '@/components/ui/Primitives'
+// Componente de servidor: los tokens de ./tokens, nunca de Primitives.
+import { dahila } from '@/components/ui/tokens'
 
 /**
  * Cartel de mantenimiento a pantalla completa, renderizado por las páginas del
@@ -106,7 +108,7 @@ const MNT_CSS = `
     letter-spacing:-.02em; font-size:clamp(30px,6.2vw,44px); line-height:1.08;
     color:#1F1A1B; margin-bottom:20px}
   .mnt-p{color:#4A4143; font-size:16.5px; line-height:1.6; margin:0 auto 12px; max-width:42ch}
-  .mnt-small{color:#8C8285; font-size:13px; margin-top:4px}
+  .mnt-small{color:${dahila.ink500}; font-size:13px; margin-top:4px}
   .mnt-actions{display:flex; flex-direction:column; gap:12px; margin:30px 0 6px}
   .mnt-btn{display:inline-flex; align-items:center; justify-content:center; gap:10px;
     min-height:54px; padding:15px 24px; border-radius:999px; font-size:16px; font-weight:400;

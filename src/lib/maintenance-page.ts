@@ -42,7 +42,7 @@ export const MAINTENANCE_HTML = `<!doctype html>
   }
   :root{
     --bone:#FCFAF6; --white:#FFFFFF; --cream-50:#FFFBF2; --cream-100:#FAF1DF; --cream-200:#F1E3C8;
-    --ink-900:#1F1A1B; --ink-700:#4A4143; --ink-500:#8C8285;
+    --ink-900:#1F1A1B; --ink-700:#4A4143; --ink-500:#756B6E;
     --wine-600:#8F3B53; --wine-700:#6E2B40;
     --border:rgba(31,26,27,.10);
     --serif:'Fraunces','Cormorant Garamond',Georgia,serif;

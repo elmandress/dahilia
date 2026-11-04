@@ -258,7 +258,11 @@ export default async function RootLayout({
     }))
 
   return (
-    <html lang="es-UY" className={`${fraunces.variable} ${inter.variable}`}>
+    // data-scroll-behavior (VIS-M2, 04/11/2026): desde Next 16 el router ya no
+    // apaga el scroll suave de globals.css al navegar, y cada cambio de página
+    // desde abajo subía animado hasta arriba. Con el atributo, Next lo apaga
+    // mientras navega; los anclas internos siguen suaves.
+    <html lang="es-UY" data-scroll-behavior="smooth" className={`${fraunces.variable} ${inter.variable}`}>
       <head>
         <script
           type="application/ld+json"
@@ -298,6 +302,7 @@ export default async function RootLayout({
               showRegalo={catalog.settings.regalo_enabled !== 'false'}
               categories={catalog.categories.map((c) => ({ slug: c.slug, label: c.name }))}
               readyToShipCount={catalog.products.filter(isReadyToShip).length}
+              waUrl={waUrl}
             />
             {/* Sin loading.tsx en la raíz, a propósito (13/09/2026): envolvía
                 todas las páginas en un Suspense, y en las estáticas la página

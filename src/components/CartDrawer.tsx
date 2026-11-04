@@ -12,7 +12,7 @@ import { PriceBlock } from './ui/PriceBlock'
 import type { Product } from '@/lib/types'
 import {
   getPrimaryPhoto, getEffectivePrice, getFinalPrice, formatPrice, BLUR_DATA_URL,
-  getPrimaryPhotoAlt, isUnicoLabel, isReadyToShip,
+  getPrimaryPhotoAlt, isUnicoLabel, isReadyToShip, variantLabel,
 } from '@/lib/types'
 import { pickAddonSuggestions, addonAction } from '@/lib/addons'
 import { cartItemIssue, plazoLinea } from '@/lib/cart-summary'
@@ -190,7 +190,8 @@ export function CartDrawer() {
               {visibleItems.map((item) => {
                 const photo = getPrimaryPhoto(item.product)
                 const issue = cartItemIssue(item)
-                const talle = isUnicoLabel(item.size) ? 'Talle único' : `Talle: ${item.size}`
+                // "Modelo: Lisas" cuando las variantes no son talles (VIS-M4).
+                const talle = isUnicoLabel(item.size) ? 'Talle único' : `${variantLabel(item.product.sizes)}: ${item.size}`
                 if (issue) {
                   // No se puede pedir: en gris, sin precio ni +/−, y solo
                   // "Quitar". Si lo que cambió es el talle y la prenda sigue a
@@ -304,7 +305,7 @@ export function CartDrawer() {
               {addonSuggestions.length > 0 && (
                 <section aria-label="Sumale un detalle" style={{ padding: '16px 0 12px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <span aria-hidden="true" style={{
-                    fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
+                    fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.22em',
                     textTransform: 'uppercase', color: dahila.ink500,
                   }}>
                     Sumale un detalle

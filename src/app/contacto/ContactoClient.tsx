@@ -78,7 +78,7 @@ export default function ContactoClient({ settings }: Props) {
             }}
           >
             <Icon name={c.icon} size={22} color={dahila.ink900}/>
-            <div style={{ fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: dahila.ink500 }}>{c.label}</div>
+            <div style={{ fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: dahila.ink500 }}>{c.label}</div>
             <div style={{ fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 400, color: dahila.ink900 }}>{c.value}</div>
           </a>
         ))}

@@ -415,7 +415,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
             gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', alignItems: 'center',
           }}>
             <div>
-              <div style={{ fontFamily: dahila.fontSans, fontSize: 10.5, letterSpacing: '0.26em', textTransform: 'uppercase', color: '#E9B8C4', marginBottom: 10 }}>
+              <div style={{ fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.26em', textTransform: 'uppercase', color: '#E9B8C4', marginBottom: 10 }}>
                 Lista privada
               </div>
               <h2 style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 'clamp(28px, 4vw, 40px)', lineHeight: 1.08, margin: 0, color: '#F5EDE6' }}>

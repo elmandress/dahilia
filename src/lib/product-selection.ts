@@ -2,7 +2,7 @@
 
 import { useState, useSyncExternalStore } from 'react'
 import { sortSizes } from './types'
-import type { Product } from './types'
+import type { Product, ProductSize } from './types'
 import { waLink, WHATSAPP_DEFAULT } from './whatsapp'
 
 // El último talle que eligió la clienta: la próxima prenda arranca en ese talle
@@ -24,34 +24,67 @@ function readUrlSize(): string | null {
   try { return new URLSearchParams(window.location.search).get('talle') } catch { return null }
 }
 
+type TalleFila = Pick<ProductSize, 'size' | 'available'> & { sort_order?: number | null }
+
 /**
- * Selección de talle compartida entre la ficha completa (ProductDetailsClient)
- * y la vista rápida (QuickViewModal) — antes duplicada letra por letra en los
- * dos archivos (auditoría 03/09/2026). Arranca en el talle recordado si esta
- * prenda lo tiene disponible; si no, en el primer talle DISPONIBLE, no en el
- * primero de la lista (que puede estar agotado y dejaría el botón "Agregar"
- * apuntando a un talle sin stock).
+ * Qué talle queda elegido, a partir de lo que se sabe (puro: lo prueban las
+ * unitarias). Arranca en el talle recordado si esta prenda lo tiene
+ * disponible; si no, en el primer talle DISPONIBLE, no en el primero de la
+ * lista (que puede estar agotado y dejaría el botón "Agregar" apuntando a un
+ * talle sin stock). "Primero" en el orden que eligió la dueña (sort_order): los
+ * productos que no pasan por el catálogo normalizado (colecciones, ofertas,
+ * favoritos) pueden traer los talles desordenados (auditoría 12/09/2026).
  *
- * "Primero" en el orden que eligió la dueña (sort_order): los productos que no
- * pasan por el catálogo normalizado (colecciones, ofertas, favoritos) pueden
- * traer los talles desordenados, y el talle por defecto no puede depender de
- * eso (auditoría 12/09/2026).
+ * `talle` es el talle con el que se trabaja; `elegido`, el que se muestra como
+ * elegido (VIS-01, 04/11/2026). Con dos o más disponibles y nadie que eligiera,
+ * `elegido` es null y `necesitaElegir` es true: ningún talle aparece marcado y
+ * el botón pide elegir. Antes la ficha pintaba de negro el primero (un XS/S que
+ * nadie eligió) y "Agregar" lo sumaba; sin devoluciones, eso es un pedido
+ * equivocado o una charla para corregirlo. Con una sola variante disponible no
+ * hay nada que elegir: esa cuenta como elegida.
  */
-export function useSizeSelection(product: Product) {
-  const sizes = sortSizes(product.sizes)
-  const firstAvailable = sizes.find((s) => s.available)?.size
-  // En el servidor y al hidratar no hay talle recordado (null): el HTML sale
-  // igual que siempre y el recordado aparece recién en el cliente, sin error de
-  // hidratación (leerlo en el valor inicial de un useState sí la rompería).
-  const remembered = useSyncExternalStore(noSubscribe, readRememberedSize, () => null)
-  const rememberedFits = remembered && sizes.some((s) => s.size === remembered && s.available) ? remembered : null
+export function resolverSeleccion<T extends TalleFila>({ sizes, chosen, urlSize, remembered }: {
+  sizes: T[] | null | undefined
+  /** El que tocó la clienta en esta visita. */
+  chosen: string | null
+  /** ?talle= de la URL. */
+  urlSize: string | null
+  /** El último que eligió en otra ficha (localStorage). */
+  remembered: string | null
+}) {
+  const filas = sortSizes(sizes)
+  const disponibles = filas.filter((s) => s.available)
+  const rememberedFits = remembered && disponibles.some((s) => s.size === remembered) ? remembered : null
   // El de la URL manda sobre el recordado: es el que pidió el link. Se acepta
   // aunque esté agotado, porque la ficha tiene que mostrar ESA variante (con su
   // aviso de agotado), no saltar a otra. Un talle que la prenda no tiene se ignora.
+  const urlFits = urlSize && filas.some((s) => s.size === urlSize) ? urlSize : null
+  const talle = chosen ?? urlFits ?? rememberedFits ?? (disponibles[0]?.size || filas[0]?.size || 'Único')
+  // ¿El talle lo eligió alguien (ella ahora, el link o una visita anterior) o
+  // es solo el primero disponible?
+  const talleConfirmed = chosen !== null || urlFits !== null || rememberedFits !== null
+  const elegido = talleConfirmed || disponibles.length === 1 ? talle : null
+  const necesitaElegir = disponibles.length > 1 && !talleConfirmed
+  return { talle, talleConfirmed, disponibles, elegido, necesitaElegir }
+}
+
+/**
+ * Selección de talle compartida entre la ficha completa (ProductDetailsClient)
+ * y la vista rápida (QuickViewModal) — antes duplicada letra por letra en los
+ * dos archivos (auditoría 03/09/2026). La regla vive en resolverSeleccion.
+ */
+export function useSizeSelection(product: Product) {
+  const sizes = sortSizes(product.sizes)
+  // En el servidor y al hidratar no hay talle recordado ni de la URL (null): el
+  // HTML sale sin talle elegido y el recordado aparece recién en el cliente,
+  // sin error de hidratación (leerlo en el valor inicial de un useState sí la
+  // rompería).
+  const remembered = useSyncExternalStore(noSubscribe, readRememberedSize, () => null)
   const fromUrl = useSyncExternalStore(noSubscribe, readUrlSize, () => null)
-  const urlFits = fromUrl && sizes.some((s) => s.size === fromUrl) ? fromUrl : null
   const [chosen, setChosen] = useState<string | null>(null)
-  const talle = chosen ?? urlFits ?? rememberedFits ?? (firstAvailable || sizes[0]?.size || 'Único')
+  const { talle, talleConfirmed, disponibles, elegido, necesitaElegir } = resolverSeleccion({
+    sizes, chosen, urlSize: fromUrl, remembered,
+  })
 
   const setTalle = (size: string) => {
     setChosen(size)
@@ -63,12 +96,7 @@ export function useSizeSelection(product: Product) {
   const selectedSizeRow = sizes.find((s) => s.size === talle)
   const sizeAvailable = !selectedSizeRow || selectedSizeRow.available
 
-  // ¿El talle lo eligió alguien (ella ahora, el link o una visita anterior) o es
-  // solo el primero disponible? La barra fija del celular no agrega un talle que
-  // nadie eligió: sin devoluciones, un XS por defecto es un pedido equivocado.
-  const talleConfirmed = chosen !== null || urlFits !== null || rememberedFits !== null
-
-  return { talle, setTalle, sizeAvailable, talleConfirmed }
+  return { talle, setTalle, sizeAvailable, talleConfirmed, elegido, necesitaElegir, disponibles }
 }
 
 /**

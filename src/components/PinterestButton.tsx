@@ -15,6 +15,9 @@ export function PinterestButton({ imageUrl, description }: { imageUrl: string; d
     window.open(pinUrl, '_blank', 'noopener,noreferrer,width=750,height=650')
   }
 
+  // Dice "Pinterest" y no "Guardar" (VIS-18): al lado de "Guardar en
+  // favoritos" quedaban dos "Guardar" seguidos. El nombre accesible sigue
+  // diciendo qué hace, y contiene el texto visible (WCAG 2.5.3).
   return (
     <button
       type="button"
@@ -29,7 +32,7 @@ export function PinterestButton({ imageUrl, description }: { imageUrl: string; d
       }}
     >
       <Icon name="pinterest-logo" weight="fill" size={15} color="#E60023" />
-      Guardar
+      Pinterest
     </button>
   )
 }

@@ -131,7 +131,9 @@ test('barra fija de la ficha: escondida arriba, visible al pasar el botón', asy
   const bar = page.locator('.pdp-sticky-bar')
   await expect(bar).not.toHaveClass(/is-visible/)
   await expect(page.getByRole('heading', { level: 1 })).toBeInViewport()
-  await page.getByRole('button', { name: /agregar al carrito/i }).first().scrollIntoViewIfNeeded()
+  // Sin talle elegido el botón dice "Elegí tu talle" (04/11/2026): se baja
+  // hasta los talles, que están justo arriba del botón.
+  await page.locator('.pdp-sizes').scrollIntoViewIfNeeded()
   await page.mouse.wheel(0, 1600)
   await expect(bar).toHaveClass(/is-visible/)
 })

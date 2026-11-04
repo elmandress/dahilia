@@ -291,6 +291,30 @@ export function isTalleUnico(sizes: { size: string }[] | null | undefined): bool
   return list.length === 0 || (list.length === 1 && isUnicoLabel(list[0].size));
 }
 
+// Un talle con letras: XXS a XXXL.
+const LETRA_TALLE = '(?:X{0,2}S|M|X{0,3}L)';
+const TALLE_LETRAS = new RegExp(`^${LETRA_TALLE}(?:\\s*/\\s*${LETRA_TALLE})*$`, 'i');
+
+/**
+ * ¿El rótulo de la variante es un talle? "Único", XXS a XXXL, combinaciones
+ * con barra (XS/S, M/L) o un número de 1 o 2 cifras (36, 2). Pulseras Terra
+ * tiene "Lisas", "Con lurex" y "Con caracolas": eso no es un talle, y la
+ * ficha le ponía "Talle" y una guía de talles (VIS-M4, 04/11/2026).
+ */
+export function isSizeLike(label: string | null | undefined): boolean {
+  const s = (label ?? '').trim();
+  return isUnicoLabel(s) || TALLE_LETRAS.test(s) || /^\d{1,2}$/.test(s);
+}
+
+/**
+ * Cómo se llaman las variantes de una pieza: "Talle" si todas son talles (o
+ * no hay filas) y "Modelo" si alguna no lo es. Cambia solo el rótulo: el valor
+ * de la variante (lo que se guarda en el carrito y va al feed) sigue igual.
+ */
+export function variantLabel(sizes: { size: string }[] | null | undefined): 'Talle' | 'Modelo' {
+  return (sizes ?? []).every((s) => isSizeLike(s.size)) ? 'Talle' : 'Modelo';
+}
+
 /** El talle disponible más barato (define el precio "desde"). Sin talles disponibles → undefined. */
 export function getListingSize(product: Product): string | undefined {
   let best: string | undefined;

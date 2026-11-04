@@ -99,7 +99,7 @@ export function VipCallout({ dropName = '', dropDate = '' }: { dropName?: string
         <Icon name="x" size={14} />
       </button>
 
-      <div style={{ fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.24em', textTransform: 'uppercase', color: '#E9B8C4', marginBottom: 8 }}>
+      <div style={{ fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.24em', textTransform: 'uppercase', color: '#E9B8C4', marginBottom: 8 }}>
         Lista privada
       </div>
       <p style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 22, lineHeight: 1.15, margin: '0 0 8px', paddingRight: 18, color: '#F5EDE6' }}>

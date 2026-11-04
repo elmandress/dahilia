@@ -318,7 +318,8 @@ a {
   .brand-wordmark     { font-size: 18px !important; letter-spacing: 0.16em !important; }
   .brand-mark         { width: 30px !important; height: 30px !important; }
   .header-actions     { gap: 14px !important; }
-  .announce-bar       { font-size: 10px !important; letter-spacing: 0.06em !important; padding: 7px 12px !important; }
+  /* 11 px de piso (VIS-09, 04/11/2026): a 10 px en mayúsculas no se leía. */
+  .announce-bar       { font-size: 11px !important; letter-spacing: 0.06em !important; padding: 7px 12px !important; }
   /* Inline search input: ancho mínimo legible (110px con texto de 16px
      apenas mostraba ~9 caracteres — no alcanzaba para ver lo que se escribe,
      ej. "cardigan celeste"). Crece con flex en vez de un ancho fijo chico. */
@@ -348,6 +349,10 @@ a {
   /* El aviso de arriba ocupa dos líneas a este ancho: que queden parejas en
      vez de dejar "· A MEDIDA" sola en la segunda. */
   .announce-bar       { text-wrap: balance; }
+  /* Barra fija de la ficha: el botón tiene 96 px a este ancho (ver stickyCta
+     en ProductDetailsClient); un punto menos para que "Agregar" y "Sin stock"
+     entren en un renglón. */
+  .pdp-sticky-cta     { font-size: 12px !important; letter-spacing: 0.04em !important; }
 }
 
 /* Header navigation: full horizontal nav stays visible on laptops and up.
@@ -443,6 +448,49 @@ a {
     pointer-events: auto !important;
   }
 }
+
+/* Precio de la tarjeta (PriceBlock align="responsive"): con descuento, final
+   y tachado apilados a la derecha en escritorio, y en un renglón en el
+   celular (abajo). La dirección vive acá y no en línea, para que el media
+   query la pueda cambiar. */
+.price-block--responsive {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+}
+
+/* Tarjeta de producto en el celular (VIS-07, 04/11/2026). En una tarjeta de
+   164 px, nombre a la izquierda, precio en zigzag a la derecha, "En stock"
+   suelto y la pastilla de material sumaban 130 px debajo de la foto. Ahora:
+   nombre, y debajo precio y tachado en un renglón, todo a la izquierda (la
+   excepción a "precios a la derecha" está anotada en ui-review). El material
+   ya está en la ficha. Escritorio sin cambios. */
+@media (max-width: 720px) {
+  .card-info {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 2px !important;
+  }
+  /* El nombre tiene flex 1 1 140px para la fila de escritorio; en columna esa
+     base sería un alto de 140 px. */
+  .card-info > :first-child { flex: 0 0 auto !important; }
+  /* Si no entran en un renglón (tarjetas de menos de ~140 px, a 320), el
+     tachado baja abajo en vez de salirse de la tarjeta. */
+  .price-block--responsive {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 6px;
+  }
+  .card-meta { justify-content: flex-start !important; }
+  .card-meta > span { margin-left: 0 !important; }
+  .card-meta:empty,
+  .card-material { display: none !important; }
+  .card-sale-badge {
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+  }
+}
 /* Quick-view modal stacks on small screens */
 @media (max-width: 640px) {
   .quickview-card { grid-template-columns: 1fr !important; max-height: 92vh; }
@@ -495,15 +543,16 @@ a {
   .pdp-sticky-bar {
     display: flex;
     align-items: center;
+    gap: 8px;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 45;
-    padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 12px);
-    background: rgba(255,255,255,0.97);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    padding: 12px 12px calc(env(safe-area-inset-bottom, 0px) + 12px);
+    /* Opaca (VIS-01, 04/11/2026): con 0,97 y blur se transparentaba el título
+       de atrás y el talle se leía mal. */
+    background: #fff;
     border-top: 1px solid var(--border);
     box-shadow: 0 -8px 22px -14px rgba(31,26,27,0.22);
     /* Escondida hasta que el botón principal sale de pantalla (12/10/2026):
@@ -852,15 +901,13 @@ a {
   body:has(.pdp-sticky-bar) .weaver-callout {
     bottom: 100px !important;
   }
-  /* Lo mismo para la burbuja de WhatsApp (bottom 28, z-index 40 < 45 de la
-     barra): quedaba tapada del todo en la ficha. Sube a 100px, y "volver
-     arriba" (que se apila encima de ella) sube a 164px para no pisarla.
-     !important porque ambos fijan su posición con estilo en línea. */
-  body:has(.pdp-sticky-bar) .whatsapp-float {
-    bottom: 100px !important;
-  }
+  /* En la ficha del celular queda un solo fijo tocable: la barra, que ya trae
+     WhatsApp adentro (04/11/2026, VIS-08). La burbuja y "volver arriba" se
+     apilaban encima de ella y tapaban el "+" de Cuidados y los corazones de
+     la columna derecha. !important porque los dos fijan display en línea. */
+  body:has(.pdp-sticky-bar) .whatsapp-float,
   body:has(.pdp-sticky-bar) .back-to-top {
-    bottom: 164px !important;
+    display: none !important;
   }
 }
 
@@ -872,6 +919,11 @@ a {
    "rápido" a un botón. El guard de prefers-reduced-motion deja el cambio
    instantáneo. Solo en botones del sistema (.dh-btn) y talles: otros usan
    transform para posicionarse y no deben moverse.
+   La compresión dura 90 ms. Button, Chip y los talles la declaran en su
+   transición en línea (transform 90ms, por propiedad): con 'all 160ms' en
+   línea le ganaban a esta regla y el toque tardaba 160 ms (VIS-19,
+   04/11/2026). Los botones de la barra fija no tienen transición propia y
+   la toman de acá.
    ============================================================ */
 .dh-btn, .pdp-sizes button, .pdp-sticky-bar button {
   -webkit-tap-highlight-color: transparent;
@@ -881,6 +933,11 @@ a {
 .pdp-sticky-bar button:not(:disabled):active {
   transform: scale(0.97);
   transition-duration: 90ms;
+}
+/* Ocupado (aria-disabled, "Agregando…"): sin compresión, no responde. */
+.dh-btn[aria-disabled="true"]:active,
+.pdp-sticky-bar button[aria-disabled="true"]:active {
+  transform: none;
 }
 
 /* Entrada del popup de la lista privada (12/10/2026): sube y aparece en

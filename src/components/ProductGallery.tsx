@@ -137,7 +137,9 @@ export function ProductGallery({ images, productName, slug }: { images: GalleryI
               aria-current={i === active}
               style={{
                 position: 'relative',
-                aspectRatio: '1/1',
+                // 4:5 como la foto grande (VIS-17): en 1:1 la miniatura
+                // recortaba otra parte de la prenda.
+                aspectRatio: '4/5',
                 borderRadius: 8,
                 overflow: 'hidden',
                 background: dahila.cream50,

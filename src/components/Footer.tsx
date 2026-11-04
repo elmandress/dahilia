@@ -17,7 +17,7 @@ function FooterCol({ title, items }: { title: string; items: NavItem[] }) {
   return (
     <div>
       <div style={{
-        fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
+        fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.22em',
         textTransform: 'uppercase', color: dahila.ink500, marginBottom: 14,
       }}>{title}</div>
       <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9 }}>
@@ -84,7 +84,7 @@ function VipSignup() {
     }}>
       <div style={{ maxWidth: 420 }}>
         <div style={{
-          fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
+          fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.22em',
           textTransform: 'uppercase', color: dahila.ink500, marginBottom: 8,
         }}>Lista privada</div>
         <p style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, lineHeight: 1.6, color: dahila.ink700, margin: 0 }}>

@@ -628,7 +628,7 @@ export function TiendaClient({
             {activeFilterCount > 0 && (
               <span style={{
                 background: dahila.ink900, color: '#fff', borderRadius: 999,
-                fontSize: 10, minWidth: 16, height: 16, display: 'inline-flex',
+                fontSize: 11, minWidth: 16, height: 16, display: 'inline-flex',
                 alignItems: 'center', justifyContent: 'center', padding: '0 4px',
               }}>{activeFilterCount}</span>
             )}

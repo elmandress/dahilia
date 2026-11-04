@@ -102,7 +102,7 @@ export default async function IgLandingPage() {
             />
             <span style={{
               position: 'absolute', top: 12, left: 12, padding: '6px 11px', borderRadius: 999,
-              background: 'rgba(255,255,255,0.94)', fontFamily: dahila.fontSans, fontSize: 10.5,
+              background: 'rgba(255,255,255,0.94)', fontFamily: dahila.fontSans, fontSize: 11,
               letterSpacing: '0.16em', textTransform: 'uppercase', color: dahila.ink900,
             }}>La del último reel</span>
           </span>
@@ -132,7 +132,7 @@ export default async function IgLandingPage() {
           }}
         >
           <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', opacity: 0.9 }}>{dropIsLive ? 'Ya está online' : 'Próximo drop'}</span>
+            <span style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', opacity: 0.9 }}>{dropIsLive ? 'Ya está online' : 'Próximo drop'}</span>
             <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17 }}>{dropName}</span>
           </span>
           <Icon name="caret-right" size={16} color="#fff" />
@@ -212,7 +212,7 @@ export default async function IgLandingPage() {
         </Link>
         <Link href="/vip" style={{ ...bigLink, background: dahila.ink900, color: '#F5EDE6', border: 'none' }}>
           <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#E9B8C4' }}>Lista privada</span>
+            <span style={{ fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#E9B8C4' }}>Lista privada</span>
             <span>Ver cada tanda 24 h antes</span>
           </span>
           <Icon name="caret-right" size={15} color="#F5EDE6" />

@@ -7,7 +7,9 @@ const SALE = '#B6314A'
 // struck-through list price when discounted, consistent colour + weight. Sizes
 // map to where it's used so the visual rhythm stays identical card→PDP→cart.
 const SIZES = {
-  sm: { final: 13, list: 11 }, // product card / cart drawer line
+  // product card / cart drawer line / barra fija. 14/12 y no 13/11: el
+  // tachado de 11 px en gris no se leía en el celular (VIS-09, 04/11/2026).
+  sm: { final: 14, list: 12 },
   md: { final: 16, list: 14 }, // PDP / quick-view
   lg: { final: 18, list: 14 }, // emphasis
 } as const
@@ -25,7 +27,9 @@ export function PriceBlock({
   /** Final price the customer pays. */
   final: number
   size?: keyof typeof SIZES
-  align?: 'start' | 'end'
+  /** 'responsive': apilado a la derecha en escritorio y en fila en el celular
+   *  (.price-block--responsive en globals.css; la tarjeta de producto). */
+  align?: 'start' | 'end' | 'responsive'
   /** When true, show "Agotado" instead of a price. */
   soldOut?: boolean
   /** El precio cambia según el talle y se muestra el más bajo: antepone
@@ -56,15 +60,20 @@ export function PriceBlock({
     )
   }
 
-  // Discounted: final in sale red + struck list price. Inline when end-aligned
-  // (PDP/cart), stacked when start-aligned compact (card).
+  // Discounted: final in sale red + struck list price. Stacked when
+  // end-aligned, inline when start-aligned (PDP/cart). 'responsive' leaves the
+  // direction to the CSS class, so the media query can switch it (an inline
+  // flexDirection would always win).
   const stacked = align === 'end'
+  const responsive = align === 'responsive'
   return (
-    <span style={{
+    <span className={responsive ? 'price-block--responsive' : undefined} style={{
       display: 'inline-flex',
-      flexDirection: stacked ? 'column' : 'row',
-      alignItems: stacked ? 'flex-end' : 'baseline',
-      gap: stacked ? 0 : 8,
+      ...(responsive ? {} : {
+        flexDirection: stacked ? 'column' : 'row',
+        alignItems: stacked ? 'flex-end' : 'baseline',
+        gap: stacked ? 0 : 8,
+      }),
       whiteSpace: 'nowrap',
     }}>
       <span style={{ whiteSpace: 'nowrap' }}>

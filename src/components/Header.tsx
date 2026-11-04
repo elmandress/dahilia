@@ -12,6 +12,7 @@ import { useScrollLock } from '@/lib/scroll-lock'
 import { useFocusTrap } from '@/lib/focus-trap'
 import { dahila, Icon } from './ui/Primitives'
 import { formatPrice } from '@/lib/types'
+import { waLink, WHATSAPP_DEFAULT } from '@/lib/whatsapp'
 
 // `from`: el precio cambia según el talle y `price` es el más bajo (mismo
 // criterio que la tarjeta de la tienda, ver getListingPrice).
@@ -58,6 +59,13 @@ export interface PromoBar {
   fg: string
 }
 
+/** Instagram y WhatsApp al pie del menú del celular: 44 px de alto o más. */
+const socialLink: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 44, minWidth: 44,
+  color: dahila.ink700, textDecoration: 'none',
+  fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 400, letterSpacing: '0.02em',
+}
+
 export function Header({
   promo,
   showOfertas = true,
@@ -65,6 +73,7 @@ export function Header({
   showRegalo = true,
   categories,
   readyToShipCount = 0,
+  waUrl,
 }: {
   promo?: PromoBar
   showOfertas?: boolean
@@ -76,6 +85,9 @@ export function Header({
   /** Piezas ya tejidas, listas para despachar (isReadyToShip). En 0 el enlace
    *  "En stock" del menú no se muestra: nunca se linkea una página vacía. */
   readyToShipCount?: number
+  /** WhatsApp de Configuración (contact_whatsapp_url): antes el menú tenía el
+   *  número escrito a mano (VIS-12). */
+  waUrl?: string
 }) {
   const megaCategories = categories && categories.length > 0 ? categories : MEGA_CATEGORIES_FALLBACK
   // "Ofertas" y "Colecciones" son ítems estacionales: el layout los prende
@@ -437,7 +449,7 @@ export function Header({
                     position: 'absolute', top: -1, right: -3,
                     minWidth: 17, height: 17, borderRadius: 999,
                     background: dahila.ink900, color: '#fff',
-                    fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 500,
+                    fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 500,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     padding: '0 5px', lineHeight: 1,
                     boxShadow: '0 0 0 2px #fff',
@@ -461,7 +473,7 @@ export function Header({
                     position: 'absolute', top: -1, right: -3,
                     minWidth: 17, height: 17, borderRadius: 999,
                     background: '#B6314A', color: '#fff',
-                    fontFamily: dahila.fontSans, fontSize: 10, fontWeight: 500,
+                    fontFamily: dahila.fontSans, fontSize: 11, fontWeight: 500,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     padding: '0 5px', lineHeight: 1,
                     boxShadow: '0 0 0 2px #fff',
@@ -497,7 +509,7 @@ export function Header({
           }}>
             {/* Categories */}
             <div>
-              <div style={{ fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: dahila.ink500, marginBottom: 14 }}>
+              <div style={{ fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: dahila.ink500, marginBottom: 14 }}>
                 Categorías
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -530,7 +542,7 @@ export function Header({
 
             {/* Quick links */}
             <div>
-              <div style={{ fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: dahila.ink500, marginBottom: 14 }}>
+              <div style={{ fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: dahila.ink500, marginBottom: 14 }}>
                 Descubrir
               </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -562,7 +574,7 @@ export function Header({
                 <Image src="/photos/top-lace-parque.jpg" alt="" fill quality={82} sizes="420px" style={{ objectFit: 'cover' }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(31,26,27,0.55), rgba(31,26,27,0))' }} />
                 <div style={{ position: 'absolute', left: 16, bottom: 14, color: '#fff' }}>
-                  <div style={{ fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', opacity: 0.9 }}>Temporada</div>
+                  <div style={{ fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', opacity: 0.9 }}>Temporada</div>
                   <div style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 22 }}>{showOfertas ? 'Ver ofertas →' : 'Ver la colección →'}</div>
                 </div>
               </div>
@@ -636,12 +648,14 @@ export function Header({
                     2 taps en vez de obligar a scrollear la tienda entera. */}
                 {it.mega && (
                   <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 10 }}>
-                    {/* Paridad con el mega-menú de desktop. */}
+                    {/* Paridad con el mega-menú de desktop. 12 px arriba y
+                        abajo: con 7 medían 35 px, debajo de los 44 del
+                        dedo (VIS-12, 04/11/2026). */}
                     {readyToShipCount > 0 && (
                       <Link href="/tienda?ya=1" onClick={() => setOpen(false)} style={{
                         textDecoration: 'none',
                         fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 400,
-                        color: dahila.ink900, padding: '7px 0 7px 14px',
+                        color: dahila.ink900, padding: '12px 0 12px 14px',
                         letterSpacing: '0.03em', display: 'inline-flex', alignItems: 'center', gap: 8,
                       }}>
                         <span aria-hidden style={{ width: 7, height: 7, borderRadius: 999, background: '#1E8449' }} />
@@ -652,7 +666,7 @@ export function Header({
                       <Link key={c.slug} href={`/tienda/${c.slug}`} onClick={() => setOpen(false)} style={{
                         textDecoration: 'none',
                         fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300,
-                        color: dahila.ink700, padding: '7px 0 7px 14px',
+                        color: dahila.ink700, padding: '12px 0 12px 14px',
                         letterSpacing: '0.03em',
                       }}>
                         {c.label}
@@ -674,9 +688,16 @@ export function Header({
             <span>Favoritos{showFavBadge ? ` (${favCount})` : ''}</span>
           </Link>
         </nav>
-        <div style={{ padding: '16px 20px calc(env(safe-area-inset-bottom, 0px) + 16px)', borderTop: `1px solid ${dahila.border}`, display: 'flex', gap: 16 }}>
-          <a href="https://www.instagram.com/dahila.crochet/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{ color: dahila.ink700 }}><Icon name="instagram-logo" size={20} /></a>
-          <a href="https://wa.me/59899850073" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" style={{ color: dahila.ink700 }}><Icon name="whatsapp-logo" size={20} /></a>
+        {/* Íconos de 44 px con el nombre al lado (VIS-12): eran de 20×23 y no
+            entraban en la regla táctil (son <a>, no <button>). El WhatsApp sale
+            de Configuración, no del número escrito a mano. */}
+        <div style={{ padding: '10px 20px calc(env(safe-area-inset-bottom, 0px) + 10px)', borderTop: `1px solid ${dahila.border}`, display: 'flex', gap: 20 }}>
+          <a href="https://www.instagram.com/dahila.crochet/" target="_blank" rel="noopener noreferrer" style={socialLink}>
+            <Icon name="instagram-logo" size={20} /> Instagram
+          </a>
+          <a href={waLink(waUrl) ?? WHATSAPP_DEFAULT} target="_blank" rel="noopener noreferrer" style={socialLink}>
+            <Icon name="whatsapp-logo" size={20} /> WhatsApp
+          </a>
         </div>
       </aside>
     </>

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ImagenConRespaldo } from '@/components/ui/ImagenConRespaldo'
-import { useCart } from '@/components/CartProvider'
+import { useCart, type AddSource } from '@/components/CartProvider'
 import { EncargosDisponibles, type EncargosCuposState } from '@/components/EncargosDisponibles'
 import { ProductGallery } from '@/components/ProductGallery'
 import { ProductCard } from '@/components/ProductCard'
@@ -17,9 +17,11 @@ import { FavoriteButton } from '@/components/FavoriteButton'
 import type { Product, Discount } from '@/lib/types'
 import {
   getEffectivePrice, getFinalPrice, getPrimaryPhoto, getScarcity, formatPrice, BLUR_DATA_URL, productPhotoAlt, productKindLabel, getPrimaryPhotoAlt,
-  isReadyToShip, sortSizes, isTalleUnico, getListingPrice, formatListingPrice, leadTimeMessage,
+  isReadyToShip, sortSizes, isTalleUnico, getListingPrice, formatListingPrice, leadTimeMessage, variantLabel,
+  getListingSize, hasPriceRange,
 } from '@/lib/types'
 import { useSizeSelection, getRestockWhatsAppUrl } from '@/lib/product-selection'
+import { waLink, WHATSAPP_DEFAULT } from '@/lib/whatsapp'
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import { dahila, Button, Eyebrow, Icon, Breadcrumb } from '@/components/ui/Primitives'
 import { track, gaCommerce } from '@/lib/analytics'
@@ -103,7 +105,9 @@ export function ProductDetailsClient({
   const { addToCart } = useCart()
   // Factorizado en un hook compartido con QuickViewModal (auditoría
   // 03/09/2026: antes duplicado letra por letra en los dos archivos).
-  const { talle, setTalle, sizeAvailable, talleConfirmed } = useSizeSelection(product)
+  // `elegido` es el talle que se muestra elegido: null mientras haya dos o más
+  // disponibles y nadie haya elegido (VIS-01, ver resolverSeleccion).
+  const { talle, setTalle, sizeAvailable, elegido, necesitaElegir } = useSizeSelection(product)
   // Color con la foto del ovillo abierta (solo colores con image_url).
   const [lanaAbierta, setLanaAbierta] = useState<string | null>(null)
 
@@ -125,6 +129,16 @@ export function ProductDetailsClient({
     return () => io.disconnect()
   }, [])
   const [added, setAdded] = useState(false)
+  // "Agregando…" mientras se guarda (CRO-21, 04/11/2026): en el navegador de
+  // Instagram con datos móviles el POST tarda más de un segundo, y sin señal
+  // la gente vuelve a tocar. La traba va en un ref porque el estado llega un
+  // render tarde.
+  const [adding, setAdding] = useState(false)
+  const addingRef = useRef(false)
+  // El aviso "Elegí un talle…" debajo del selector, después de tocar el botón
+  // sin haber elegido.
+  const [avisoTalle, setAvisoTalle] = useState(false)
+  const sizesRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     // GA4: view_item con precio y producto (informes de e-commerce).
@@ -144,19 +158,30 @@ export function ProductDetailsClient({
         .map((m, i) => ({ url: m.url, alt: m.alt?.trim() || productPhotoAlt(product.name, i, productKindLabel(product)) }))
     : [])
 
-  const listPrice = getEffectivePrice(product, talle)
+  // Sin talle elegido y con precio distinto por talle, el precio es "desde" (el
+  // más bajo, como en la tarjeta): la ficha no muestra el precio de un talle
+  // que nadie eligió ni lo "sube" por sorpresa al elegir.
+  const precioDesde = !elegido && hasPriceRange(product)
+  const tallePrecio = precioDesde ? getListingSize(product) : talle
+  const listPrice = getEffectivePrice(product, tallePrecio)
   const hasDiscount = discountPercent > 0 && listPrice > 0
   // Antes recalculaba el descuento a mano en vez de usar getFinalPrice (ya
   // centralizada y usada más abajo en este mismo archivo, línea 349) — dan el
   // mismo resultado hoy porque la página padre calcula discountPercent con la
   // misma fórmula, pero quedaba frágil ante cualquier cambio futuro de regla
   // de redondeo. Auditoría 03/09/2026.
-  const finalPrice = getFinalPrice(product, talle, discounts)
+  const finalPrice = getFinalPrice(product, tallePrecio, discounts)
   const isSoldOut = product.status === 'soldout'
   const canBuy = !isSoldOut && !product.is_custom_only
   const scarcity = getScarcity(product)
   const sizes = sortSizes(product.sizes)
   const talleUnico = isTalleUnico(sizes)
+  // "Talle" o "Modelo" (VIS-M4): las variantes de Pulseras Terra (Lisas, Con
+  // lurex, Con caracolas) no son talles; sin guía de talles ni "¿Dudas con el
+  // talle?" para una pulsera.
+  const etiqueta = variantLabel(sizes)
+  const esModelo = etiqueta === 'Modelo'
+  const pedirLabel = esModelo ? 'Elegí el modelo' : 'Elegí tu talle'
   const readyNow = isReadyToShip(product)
   // numeric de Postgres puede llegar como string; 0, vacío o basura = no se muestra.
   const knitHoursRaw = Number(product.knit_hours)
@@ -170,22 +195,52 @@ export function ProductDetailsClient({
   const plazo = leadTimeMessage(product, queueNote)?.text ?? null
 
   // El encargo arranca con esta prenda como referencia y el talle marcado
-  // (EncargoForm lee ?desde y ?talle), no con un formulario en blanco.
-  const encargoHref = `/encargo?desde=${encodeURIComponent(product.slug)}${sizes.length > 0 ? `&talle=${encodeURIComponent(talle)}` : ''}`
+  // (EncargoForm lee ?desde y ?talle), no con un formulario en blanco. Solo el
+  // talle que alguien eligió: el primero de la lista no viaja a ningún lado.
+  const encargoHref = `/encargo?desde=${encodeURIComponent(product.slug)}${elegido ? `&talle=${encodeURIComponent(elegido)}` : ''}`
 
   // Sold-out demand capture: a pre-filled WhatsApp message asking for a heads-up
   // when the piece is back. No backend/email — just opens the chat.
   const restockUrl = getRestockWhatsAppUrl(product, whatsappUrl)
 
-  const handleAdd = async () => {
-    if (!sizeAvailable) return
-    // El '✓ Agregado' sale SOLO si de verdad se guardó: con la base caída el
-    // botón decía 'Agregado' mientras el aviso decía que había fallado
-    // (20/09/2026).
-    const ok = await addToCart(product, talle, 1)
-    if (!ok) return
-    setAdded(true)
-    setTimeout(() => setAdded(false), 2200)
+  // Links de WhatsApp de la ficha, armados con waLink (QA-15). El texto se
+  // arma al tocar (usa window.location), con el talle solo si está elegido.
+  const waHref = waLink(whatsappUrl) ?? WHATSAPP_DEFAULT
+  const waConTexto = (texto: string) => waLink(whatsappUrl, texto) ?? waLink(WHATSAPP_DEFAULT, texto)!
+  const conTalle = elegido && !talleUnico ? ` (${etiqueta.toLowerCase()} ${elegido})` : ''
+  const textoConsulta = () => `Hola! Estoy mirando ${product.name}${conTalle} en la web: ${window.location.origin}/tienda/${product.slug}\nTengo una consulta 🧶`
+  // Con el precio adentro: durante una caída el panel tampoco anda, así que el
+  // chat tiene que bastarse solo.
+  const textoPedido = () => `Hola! Quiero pedir ${product.name}${conTalle}, ${precioDesde ? 'desde ' : ''}${formatPrice(finalPrice)}: ${window.location.origin}/tienda/${product.slug}`
+
+  const handleAdd = async (source: AddSource) => {
+    if (!sizeAvailable || addingRef.current) return
+    addingRef.current = true
+    setAdding(true)
+    try {
+      // El '✓ Agregado' sale SOLO si de verdad se guardó: con la base caída el
+      // botón decía 'Agregado' mientras el aviso decía que había fallado
+      // (20/09/2026).
+      const ok = await addToCart(product, talle, 1, { source })
+      if (!ok) return
+      setAdded(true)
+      setTimeout(() => setAdded(false), 2200)
+    } finally {
+      addingRef.current = false
+      setAdding(false)
+    }
+  }
+
+  // Nadie eligió talle todavía (VIS-01): el botón no agrega. Lleva al
+  // selector, avisa debajo y deja el foco en el primer talle disponible. El
+  // scroll mira "reducir movimiento": un behavior explícito pisa el CSS (VIS-19).
+  const pedirTalle = () => {
+    setAvisoTalle(true)
+    const box = sizesRef.current
+    if (!box) return
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    box.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' })
+    box.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus({ preventScroll: true })
   }
 
   // "Completá el look" con un toque (solo piezas de talle único). No abre el
@@ -194,7 +249,7 @@ export function ProductDetailsClient({
   const handleLookAdd = async (p: Product) => {
     const avail = (p.sizes ?? []).filter((s) => s.available)
     const size = avail.length > 0 ? avail[0].size : 'Único'
-    const ok = await addToCart(p, size, 1, { openDrawer: false })
+    const ok = await addToCart(p, size, 1, { openDrawer: false, source: 'look' })
     if (!ok) return
     setAddedLookId(p.id)
     track('look_add', { from: product.slug, to: p.slug })
@@ -234,13 +289,15 @@ export function ProductDetailsClient({
           position: 'sticky', top: 90, display: 'flex', flexDirection: 'column', gap: 20,
         }}>
           <div>
-            <Eyebrow>{product.badge || 'Hecho a mano'}</Eyebrow>
+            {/* Un dato útil arriba del nombre (VIS-17): antes decía "Hecho a
+                mano" en todas las prendas. */}
+            <Eyebrow>{product.badge || product.collection?.name || product.category?.name || 'Hecho a mano'}</Eyebrow>
             <h1 style={{
               fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 38,
               color: dahila.ink900, margin: '10px 0 4px', letterSpacing: '-0.02em', lineHeight: 1.1,
             }}>{product.name}</h1>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-              <PriceBlock list={listPrice} final={finalPrice} size="md" soldOut={isSoldOut} />
+              <PriceBlock list={listPrice} final={finalPrice} size="md" soldOut={isSoldOut} from={precioDesde} />
             </div>
 
             {/* Honest scarcity — only shown when there's something true to say. */}
@@ -287,7 +344,7 @@ export function ProductDetailsClient({
             <div>
               <span style={{
                 display: 'block', marginBottom: 8,
-                fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
+                fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.22em',
                 textTransform: 'uppercase', color: dahila.ink500,
               }}>
                 Colores
@@ -366,12 +423,13 @@ export function ProductDetailsClient({
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={{
-                  fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
+                  fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.22em',
                   textTransform: 'uppercase', color: dahila.ink500, fontWeight: 400,
-                }}>Talle</span>
+                }}>{etiqueta}</span>
                 {/* Con un único talle ("Talle único") no hay nada que elegir:
-                    "¿Qué talle soy?" sumaba una duda donde no la hay. */}
-                {!talleUnico && <SizeGuide
+                    "¿Qué talle soy?" sumaba una duda donde no la hay. Tampoco
+                    cuando las variantes son modelos y no talles. */}
+                {!talleUnico && !esModelo && <SizeGuide
                   note={sizeGuideNote}
                   productSizes={sizes.map((s) => s.size)}
                   encargoHref={encargoHref}
@@ -381,20 +439,28 @@ export function ProductDetailsClient({
                   }}
                 />}
               </div>
-              {/* pdp-sizes: WhatsAppFloat lee de acá el talle elegido. */}
-              <div className="pdp-sizes" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {sizes.map((s) => (
-                  <button key={s.id} onClick={() => setTalle(s.size)} disabled={!s.available} aria-pressed={talle === s.size} style={{
-                    minWidth: 44, height: 44, padding: '0 12px', borderRadius: 8,
-                    fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
-                    border: `1px solid ${talle === s.size ? dahila.ink900 : dahila.borderStrong}`,
-                    background: talle === s.size ? dahila.ink900 : '#fff',
-                    color: talle === s.size ? '#fff' : dahila.ink900,
-                    cursor: s.available ? 'pointer' : 'not-allowed', transition: `all 140ms ${dahila.ease}`,
-                    opacity: s.available ? 1 : 0.5,
-                    textDecoration: s.available ? 'none' : 'line-through',
-                  }}>{s.size}</button>
-                ))}
+              {/* pdp-sizes: WhatsAppFloat lee de acá el talle elegido (el
+                  botón con aria-pressed) y cómo se llama (data-rotulo). Solo
+                  `elegido` va en negro: hasta que alguien elige, ninguno. */}
+              <div ref={sizesRef} className="pdp-sizes" data-rotulo={etiqueta.toLowerCase()} style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {sizes.map((s) => {
+                  const on = elegido === s.size
+                  return (
+                    <button key={s.id} type="button" onClick={() => setTalle(s.size)} disabled={!s.available} aria-pressed={on} style={{
+                      minWidth: 44, height: 44, padding: '0 12px', borderRadius: 8,
+                      fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
+                      border: `1px solid ${on ? dahila.ink900 : dahila.borderStrong}`,
+                      background: on ? dahila.ink900 : '#fff',
+                      color: on ? '#fff' : dahila.ink900,
+                      cursor: s.available ? 'pointer' : 'not-allowed',
+                      // Por propiedad y no 'all': el estilo en línea le ganaba a
+                      // la compresión de 90 ms del toque (globals.css, VIS-19).
+                      transition: `background-color 140ms ${dahila.ease}, color 140ms ${dahila.ease}, border-color 140ms ${dahila.ease}, transform 90ms ${dahila.ease}`,
+                      opacity: s.available ? 1 : 0.5,
+                      textDecoration: s.available ? 'none' : 'line-through',
+                    }}>{s.size}</button>
+                  )
+                })}
 
                 <Link href={encargoHref} onClick={() => track('encargo_click', { source: 'pdp_talles', product: product.slug })} style={{
                   padding: '0 14px', height: 44, borderRadius: 8, textDecoration: 'none',
@@ -405,6 +471,13 @@ export function ProductDetailsClient({
                   <Icon name="ruler" size={14}/> A medida
                 </Link>
               </div>
+              {necesitaElegir && avisoTalle && (
+                <p role="alert" style={{
+                  margin: '8px 0 0', fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600,
+                }}>
+                  {esModelo ? 'Elegí un modelo para agregarla' : 'Elegí un talle para agregarla'}
+                </p>
+              )}
             </div>
           )}
 
@@ -432,15 +505,11 @@ export function ProductDetailsClient({
           {canBuy && soloConsulta && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <a
-                href={whatsappUrl}
+                href={waHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => {
-                  const base = whatsappUrl.replace(/\/+$/, '')
-                  // Con el precio adentro: durante una caída el panel tampoco
-                  // anda, así que el chat tiene que bastarse solo.
-                  const texto = `Hola! Quiero pedir ${product.name}${talle ? ` (talle ${talle})` : ''}, ${formatPrice(finalPrice)}: ${window.location.origin}/tienda/${product.slug}`
-                  e.currentTarget.href = `${base}?text=${encodeURIComponent(texto)}`
+                  e.currentTarget.href = waConTexto(textoPedido())
                   track('whatsapp_click', { source: 'pdp_solo_consulta', product: product.slug })
                 }}
                 style={{
@@ -465,8 +534,20 @@ export function ProductDetailsClient({
           {canBuy && !soloConsulta && (
             sizeAvailable ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <Button variant="primary" size="lg" full onClick={handleAdd}>
-                  {added ? '✓ Agregado' : 'Agregar al carrito'}
+                {/* Ocupado = aria-disabled y no disabled: un botón enfocado que
+                    pasa a disabled pierde el foco (Chromium lo manda al body) y
+                    al cerrar el cajón el foco no tenía adónde volver. */}
+                <Button
+                  variant="primary"
+                  size="lg"
+                  full
+                  data-pdp-cta
+                  onClick={necesitaElegir ? pedirTalle : () => handleAdd('ficha_boton')}
+                  aria-busy={adding}
+                  aria-disabled={adding || undefined}
+                  style={adding ? { opacity: 0.7, cursor: 'progress' } : undefined}
+                >
+                  {necesitaElegir ? pedirLabel : adding ? 'Agregando…' : added ? '✓ Agregado' : 'Agregar al carrito'}
                 </Button>
                 {/* Prendas de $2.800 o más (21/10/2026): en 60 días juntaron 18
                     de los 28 toques a "a medida" y la mayor intención cada 100
@@ -486,13 +567,15 @@ export function ProductDetailsClient({
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <Button variant="secondary" size="lg" full disabled>Sin stock en el talle {talle}</Button>
+                <Button variant="secondary" size="lg" full disabled>
+                  {esModelo ? 'Sin stock en ese modelo' : `Sin stock en el talle ${talle}`}
+                </Button>
                 <button onClick={() => { track('encargo_click', { source: 'pdp_sin_talle', product: product.slug }); router.push(encargoHref) }} style={{
                   background: 'transparent', border: 'none', cursor: 'pointer',
                   fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600,
                   textDecoration: 'underline', padding: 0,
                 }}>
-                  ¿Lo querés en este talle? Pedilo a medida →
+                  {esModelo ? '¿Lo querés en este modelo? Pedilo a medida →' : '¿Lo querés en este talle? Pedilo a medida →'}
                 </button>
               </div>
             )
@@ -547,13 +630,11 @@ export function ProductDetailsClient({
               texto secundario para no competir con el botón principal. */}
           {canBuy && (
             <a
-              href={whatsappUrl}
+              href={waHref}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => {
-                const base = whatsappUrl.replace(/\/+$/, '')
-                const texto = `Hola! Estoy mirando ${product.name}${talle && !talleUnico ? ` (talle ${talle})` : ''} en la web: ${window.location.origin}/tienda/${product.slug}\nTengo una consulta 🧶`
-                e.currentTarget.href = `${base}?text=${encodeURIComponent(texto)}`
+                e.currentTarget.href = waConTexto(textoConsulta())
                 track('whatsapp_click', { source: 'pdp_pregunta', product: product.slug })
               }}
               style={{
@@ -563,13 +644,15 @@ export function ProductDetailsClient({
               }}
             >
               <Icon name="whatsapp-logo" weight="fill" size={15} color={dahila.whatsapp} />
-              {talleUnico ? '¿Querés ver más fotos o medidas? Preguntame por WhatsApp' : '¿Dudas con el talle? Preguntame por WhatsApp'}
+              {talleUnico
+                ? '¿Querés ver más fotos o medidas? Preguntame por WhatsApp'
+                : esModelo ? '¿Dudas con el modelo? Preguntame por WhatsApp' : '¿Dudas con el talle? Preguntame por WhatsApp'}
             </a>
           )}
           {/* Para quien regala (12/10/2026): la tarjeta de regalo no se
               encontraba desde ningún lado. Solo en piezas con talle, que es
               donde regalar es difícil. */}
-          {giftEnabled && !talleUnico && (
+          {giftEnabled && !talleUnico && !esModelo && (
             <Link
               href="/regalo"
               onClick={() => track('gift_link_click', { source: 'pdp', product: product.slug })}
@@ -594,7 +677,7 @@ export function ProductDetailsClient({
               borderLeft: `2px solid ${dahila.rose200}`,
             }}>
               <div style={{
-                fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
+                fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.22em',
                 textTransform: 'uppercase', color: dahila.ink500, marginBottom: 4,
               }}>
                 Lo que dicen de Dahila
@@ -644,7 +727,7 @@ export function ProductDetailsClient({
               display: 'flex', flexDirection: 'column', gap: 10,
             }}>
               <span style={{
-                fontFamily: dahila.fontSans, fontSize: 10, letterSpacing: '0.22em',
+                fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.22em',
                 textTransform: 'uppercase', color: dahila.ink500,
               }}>
                 Completá el look · viaja en el mismo envío
@@ -706,7 +789,7 @@ export function ProductDetailsClient({
                             textDecoration: 'underline', textUnderlineOffset: 3, alignSelf: 'flex-start', padding: '5px 0',
                           }}
                         >
-                          {`Elegir talle · ${formatListingPrice(p, discounts)}`}
+                          {`${variantLabel(p.sizes) === 'Modelo' ? 'Elegir modelo' : 'Elegir talle'} · ${formatListingPrice(p, discounts)}`}
                         </Link>
                       )}
                     </span>
@@ -781,8 +864,9 @@ export function ProductDetailsClient({
             </li>
             {/* El plazo (o la cola, o "en stock") ya se dice arriba, junto al
                 precio. "A tu medida" no aplica a una pieza ya tejida ni a una
-                de talle único (un bolso no se ajusta al cuerpo). */}
-            {!readyNow && sizes.length > 0 && (
+                de talle único (un bolso no se ajusta al cuerpo), ni cuando las
+                variantes son modelos. */}
+            {!readyNow && sizes.length > 0 && !esModelo && (
               <li style={liStyle}>
                 <Icon name="check" size={16} color={dahila.ink500}/>
                 Hecho a tu medida: te acompaño en todo el proceso para que quede perfecta.
@@ -800,48 +884,46 @@ export function ProductDetailsClient({
         </div>
       </div>
 
-      {/* Sticky mobile add-to-cart — visible only on small screens */}
+      {/* Barra fija del celular (04/11/2026: VIS-01, VIS-08 y CRO-14). Opaca,
+          con "sin pagar ahora" (la duda de quien llega de Instagram es si
+          "Agregar" ya cobra) y WhatsApp adentro: en la ficha queda un solo
+          elemento fijo tocable, y la burbuja y "volver arriba" se esconden
+          (globals.css). El botón tiene el ancho justo para que precio y
+          tachado entren siempre (~140 px) a la izquierda. */}
       {canBuy && (
         <div
           className={`pdp-sticky-bar${showSticky ? ' is-visible' : ''}`}
           // Escondida = fuera del orden de tabulación y del lector de pantalla.
           inert={!showSticky}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, minWidth: 0, flex: '0 1 auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2, minWidth: 0, flex: '1 1 0', overflow: 'hidden' }}>
             <span style={{
-              fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 14,
-              color: dahila.ink900, lineHeight: 1.2,
+              fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 14, color: dahila.ink900,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              maxWidth: '40vw',
             }}>{product.name}</span>
-            <PriceBlock list={listPrice} final={finalPrice} size="sm" align="start" />
-            {/* Qué talle va a agregar este botón. En mobile la barra queda fija
-                mientras el selector de talle ya quedó muy arriba: sin esto se
-                toca "Agregar" a ciegas, sin poder confirmar qué se eligió. */}
-            {(product.sizes?.length ?? 0) > 1 && talleConfirmed && (
-              <span style={{
-                fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500,
-                lineHeight: 1.2, marginTop: 1,
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                maxWidth: '40vw',
-              }}>Talle {talle}</span>
-            )}
+            <PriceBlock list={listPrice} final={finalPrice} size="sm" align="start" from={precioDesde} />
+            {/* Qué talle va a agregar este botón (solo si alguien lo eligió:
+                con la barra fija el selector quedó muy arriba) y que agregar
+                no cobra nada. Un modelo va sin la palabra ("Lisas · …"): con
+                ella, "sin pagar ahora" no entraba. */}
+            <span style={{
+              fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink700, marginTop: 1,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>{elegido && !talleUnico ? `${esModelo ? '' : 'Talle '}${elegido} · ` : ''}sin pagar ahora</span>
           </div>
           {/* Con la base caída la barra fija también toma el pedido por
               WhatsApp: si no, decía "Agregar" y fallaba al tocarla. */}
           {soloConsulta ? (
             <a
-              href={whatsappUrl}
+              href={waHref}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => {
-                const base = whatsappUrl.replace(/\/+$/, '')
-                const texto = `Hola! Quiero pedir ${product.name}${talle ? ` (talle ${talle})` : ''}, ${formatPrice(finalPrice)}: ${window.location.origin}/tienda/${product.slug}`
-                e.currentTarget.href = `${base}?text=${encodeURIComponent(texto)}`
+                e.currentTarget.href = waConTexto(textoPedido())
                 track('whatsapp_click', { source: 'pdp_barra_solo_consulta', product: product.slug })
               }}
               style={{
-                flex: 1, marginLeft: 16,
+                flex: 1,
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 background: dahila.whatsapp, color: '#fff', textDecoration: 'none',
                 borderRadius: 10, padding: '14px 18px',
@@ -851,41 +933,54 @@ export function ProductDetailsClient({
             >
               <Icon name="whatsapp-logo" weight="fill" size={16} /> Pedir
             </a>
-          ) : sizes.length > 1 && !talleConfirmed ? (
-          // Nadie eligió talle todavía: la barra lleva al selector en vez de
-          // agregar el primero de la lista sin que ella lo haya visto.
-          <button
-            onClick={() => {
-              const box = document.querySelector<HTMLElement>('.pdp-sizes')
-              box?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-              box?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus({ preventScroll: true })
-            }}
-            style={{
-              flex: 1, marginLeft: 16,
-              background: dahila.ink900, color: '#fff', border: 'none',
-              borderRadius: 10, padding: '14px 18px', cursor: 'pointer',
-              fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
-              letterSpacing: '0.06em', textTransform: 'uppercase',
-            }}
-          >
-            Elegir talle
-          </button>
           ) : (
-          <button
-            onClick={handleAdd}
-            disabled={!sizeAvailable}
-            style={{
-              flex: 1, marginLeft: 16,
-              background: sizeAvailable ? dahila.ink900 : dahila.ink300,
-              color: '#fff', border: 'none',
-              borderRadius: 10, padding: '14px 18px',
-              cursor: sizeAvailable ? 'pointer' : 'not-allowed',
-              fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
-              letterSpacing: '0.06em', textTransform: 'uppercase',
-            }}
-          >
-            {!sizeAvailable ? 'Sin stock' : added ? '✓ Agregado' : 'Agregar'}
-          </button>
+            <>
+              {/* La consulta, con el mismo texto que "¿Dudas…?". Antes era la
+                  burbuja suelta, que en la ficha se apilaba con la barra y
+                  "volver arriba". Se mide aparte (pdp_barra) para compararla
+                  con la burbuja (float_ficha). */}
+              <a
+                href={waHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Preguntar por WhatsApp"
+                onClick={(e) => {
+                  e.currentTarget.href = waConTexto(textoConsulta())
+                  track('whatsapp_click', { source: 'pdp_barra', product: product.slug })
+                }}
+                style={{
+                  flex: '0 0 auto', width: 44, height: 44, boxSizing: 'border-box',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  background: '#fff', borderRadius: 10, border: `1px solid ${dahila.borderStrong}`,
+                }}
+              >
+                <Icon name="whatsapp-logo" weight="fill" size={22} color={dahila.whatsapp} />
+              </a>
+              {necesitaElegir ? (
+                // Nadie eligió talle todavía: la barra lleva al selector en vez
+                // de agregar el primero de la lista sin que ella lo haya visto.
+                <button type="button" className="pdp-sticky-cta" onClick={pedirTalle} style={stickyCta}>
+                  {pedirLabel}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="pdp-sticky-cta"
+                  onClick={() => handleAdd('barra_fija')}
+                  disabled={!sizeAvailable}
+                  aria-busy={adding}
+                  aria-disabled={adding || undefined}
+                  style={{
+                    ...stickyCta,
+                    background: sizeAvailable ? dahila.ink900 : dahila.ink300,
+                    cursor: !sizeAvailable ? 'not-allowed' : adding ? 'progress' : 'pointer',
+                    opacity: adding ? 0.7 : 1,
+                  }}
+                >
+                  {!sizeAvailable ? 'Sin stock' : adding ? 'Agregando…' : added ? '✓ Agregado' : 'Agregar'}
+                </button>
+              )}
+            </>
           )}
         </div>
       )}
@@ -901,13 +996,16 @@ export function ProductDetailsClient({
           : 'También tejemos'
         return (
         <section style={{ marginTop: 88 }}>
+          {/* Título en oración (VIS-10): en mayúsculas espaciadas "De la
+              colección Sunset ’26" ocupaba 3 renglones en el celular. Si no
+              entra al lado del título, el link baja abajo. */}
           <div style={{
-            display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16,
+            display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: '6px 16px',
             margin: '0 0 28px', paddingBottom: 12, borderBottom: `1px solid ${dahila.border}`,
           }}>
             <h2 style={{
               fontFamily: dahila.fontDisplay, fontWeight: 300,
-              fontSize: 22, letterSpacing: '0.08em', textTransform: 'uppercase',
+              fontSize: 22, letterSpacing: '-0.01em', lineHeight: 1.2,
               color: dahila.ink900, margin: 0,
             }}>
               {sectionTitle}
@@ -948,6 +1046,19 @@ export function ProductDetailsClient({
 const liStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 10,
   fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink700,
+}
+
+// Botón de la barra fija. El ancho deja siempre ~140 px a la izquierda para
+// precio y tachado: 100% es el ancho útil de la barra y 200 = 140 + el
+// WhatsApp de 44 + dos espacios de 8. Si el texto no entra en un renglón
+// ("Elegí tu talle" a 360 px) baja a dos, dentro de los 48 px de alto.
+const stickyCta: React.CSSProperties = {
+  flex: '0 0 auto', width: 'clamp(96px, calc(100% - 200px), 180px)', minHeight: 48,
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+  background: dahila.ink900, color: '#fff', border: 'none', borderRadius: 10,
+  padding: '6px 10px', cursor: 'pointer', lineHeight: 1.15, textWrap: 'balance',
+  fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 500,
+  letterSpacing: '0.06em', textTransform: 'uppercase',
 }
 
 function CareInstructions({ text }: { text: string }) {
