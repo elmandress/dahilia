@@ -16,10 +16,11 @@ export default async function CarritoPage() {
   // que no se lanzó (antes salían en el carrito vacío y se podían agregar) y
   // tiene el respaldo del snapshot si la base se cae (auditoría 04/11/2026).
   const { settings, products, discounts } = await getCatalog()
-  // Pool amplio: el estado vacío muestra los primeros 4; con carrito lleno,
-  // el módulo "Sumale un detalle" filtra de acá piezas chicas (≤ $800) de
-  // categorías que no están todavía en el pedido.
-  const featured = products.filter((p) => p.status === 'active').slice(0, 24)
+  // Solo para el carrito vacío (las primeras 4). "Sumale un detalle" ya no sale
+  // de acá: usa el mismo pool que el cajón (addonCandidates del layout, vía el
+  // CartProvider). Antes eran las primeras 24 activas y el cajón y /carrito
+  // sugerían piezas distintas (QA-06).
+  const featured = products.filter((p) => p.status === 'active').slice(0, 4)
 
   return (
     <CarritoClient

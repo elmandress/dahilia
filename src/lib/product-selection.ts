@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from 'react'
 import { sortSizes } from './types'
 import type { Product } from './types'
+import { waLink, WHATSAPP_DEFAULT } from './whatsapp'
 
 // El último talle que eligió la clienta: la próxima prenda arranca en ese talle
 // si lo tiene disponible, en vez de volver a pedírselo en cada ficha
@@ -72,11 +73,11 @@ export function useSizeSelection(product: Product) {
 
 /**
  * Mensaje de WhatsApp prellenado para "avisame cuando vuelva" en un producto
- * agotado — mismo texto en la ficha completa y en la vista rápida.
+ * agotado — mismo texto en la ficha completa, la vista rápida y el aviso del
+ * carrito cuando la pieza se agota al agregarla. El link lo arma waLink: un
+ * link de Configuración sin https o con '?phone=' ya no lo rompe (QA-15).
  */
-export function getRestockWhatsAppUrl(product: Product, whatsappUrl: string): string {
-  const text = encodeURIComponent(
-    `Hola! Vi "${product.name}" en la web pero está agotado. ¿Me avisás cuando vuelva? 🧶`
-  )
-  return `${whatsappUrl}${whatsappUrl.includes('?') ? '&' : '?'}text=${text}`
+export function getRestockWhatsAppUrl(product: Pick<Product, 'name'>, whatsappUrl: string): string {
+  const text = `Hola! Vi "${product.name}" en la web pero está agotado. ¿Me avisás cuando vuelva? 🧶`
+  return waLink(whatsappUrl, text) ?? waLink(WHATSAPP_DEFAULT, text)!
 }

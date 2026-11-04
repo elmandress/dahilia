@@ -35,7 +35,8 @@ test('agrega al carrito y coordina por WhatsApp con el pedido completo', async (
   const text = new URL(guard.whatsappUrl()!).searchParams.get('text') ?? ''
   expect(text).toMatch(/Spring cardigan/)
   expect(text).toMatch(/Talle: \w+/)
-  expect(text).toMatch(/Total: UYU/)
+  // Sin envío gratis el mensaje dice "Total de las prendas: … (+ envío según zona)" (04/11/2026).
+  expect(text).toMatch(/Total( de las prendas)?: UYU/)
   expect(text).toMatch(/dahila\.uy\/tienda\/spring-cardigan/)
   // El pedido quedó registrado (en la prueba, capturado sin escribir en la base).
   await expect.poll(() => guard.orders.length).toBe(1)

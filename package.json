@@ -15,7 +15,8 @@
     "respaldo-fotos": "node scripts/respaldo-fotos.mjs",
     "test:e2e": "playwright test",
     "test:e2e:setup": "playwright install chromium",
-    "test:types": "tsc -p tests/tsconfig.json"
+    "test:types": "tsc -p tests/tsconfig.json",
+    "test:unit": "node --import ./tests/unit/ts-hooks.mjs --test \"tests/unit/**/*.test.mjs\""
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

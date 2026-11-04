@@ -4,6 +4,8 @@ import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { dahila, Eyebrow, Icon } from '@/components/ui/Primitives'
 import { formatPrice } from '@/lib/types'
+import { parseMoneyUYU } from '@/lib/parse-money'
+import { waLink, WHATSAPP_DEFAULT } from '@/lib/whatsapp'
 import { track } from '@/lib/analytics'
 import { REGALO_FAQ } from './faq'
 
@@ -41,8 +43,13 @@ export function RegaloClient({ whatsappUrl, suggestions, sinTalle }: {
   const [de, setDe] = useState('')
   const [mensaje, setMensaje] = useState('')
 
-  const customNum = parseInt(custom)
-  const finalAmount = custom.trim() ? (Number.isFinite(customNum) && customNum > 0 ? customNum : null) : amount
+  // "Otro monto" como lo escribe una persona (QA-03): con parseInt, "2.000"
+  // llegaba a Anush como "Monto: UYU 2". Si hay texto y no se entiende (o es
+  // 0), no hay monto: el botón no se habilita y se explica cómo escribirlo.
+  const customNum = parseMoneyUYU(custom)
+  const customTyped = custom.trim() !== ''
+  const customOk = customNum != null && customNum > 0
+  const finalAmount = customTyped ? (customOk ? customNum : null) : amount
   const ready = finalAmount != null && para.trim() !== '' && de.trim() !== ''
 
   const waHref = (() => {
@@ -56,8 +63,8 @@ export function RegaloClient({ whatsappUrl, suggestions, sinTalle }: {
       '',
       '¿Cómo seguimos con el pago?',
     ]
-    const base = whatsappUrl.replace(/\/+$/, '')
-    return `${base}${base.includes('?') ? '&' : '?'}text=${encodeURIComponent(lines.join('\n'))}`
+    const text = lines.join('\n')
+    return waLink(whatsappUrl, text) ?? waLink(WHATSAPP_DEFAULT, text)!
   })()
 
   return (
@@ -123,16 +130,31 @@ export function RegaloClient({ whatsappUrl, suggestions, sinTalle }: {
               })}
               <label style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
                 <span style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700 }}>Otro monto</span>
+                {/* Texto y no number: el teclado numérico de Android trae "."
+                    y ",", y un input number en es-UY tira lo que no entiende. */}
                 <input
-                  type="number"
+                  type="text"
                   inputMode="numeric"
-                  min={1}
+                  autoComplete="off"
                   value={custom}
                   onChange={(e) => setCustom(e.target.value)}
                   placeholder="$"
-                  style={field}
+                  aria-describedby="regalo-monto"
+                  aria-invalid={customTyped && !customOk ? true : undefined}
+                  style={{ ...field, ...(customTyped && !customOk ? { borderColor: '#B6314A' } : {}) }}
                 />
               </label>
+              {/* Lo que se va a pedir, mientras se escribe: así "2.000" se ve
+                  como UYU 2.000 antes de mandarlo. Siempre en el DOM (vacío si
+                  no hay nada escrito): una región aria-live que aparece junto
+                  con su texto no siempre se anuncia. */}
+              <span
+                id="regalo-monto"
+                aria-live="polite"
+                style={{ fontFamily: dahila.fontSans, fontSize: 12.5, color: customOk ? dahila.ink700 : '#B6314A' }}
+              >
+                {!customTyped ? '' : customOk ? `Monto: ${formatPrice(customNum)}` : 'Escribí el monto en pesos, sin centavos (ej. 2000 o 2.000)'}
+              </span>
             </div>
           </fieldset>
 

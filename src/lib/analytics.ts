@@ -13,6 +13,7 @@ import { trackMeta } from './meta-pixel'
 const WEBSITE_ID = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID
 const SCRIPT_URL = process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID
 
 export const ANALYTICS_ENABLED = Boolean(WEBSITE_ID && SCRIPT_URL)
 export const ANALYTICS_SCRIPT_URL = SCRIPT_URL
@@ -24,6 +25,7 @@ declare global {
     umami?: { track: (event: string, data?: Record<string, unknown>) => void }
     gtag?: (...args: unknown[]) => void
     dataLayer?: unknown[]
+    clarity?: ((...args: unknown[]) => void) & { q?: unknown[] }
   }
 }
 
@@ -103,6 +105,33 @@ export function flushUmamiQueue(): void {
   for (const [event, props] of umamiQueue.splice(0)) window.umami.track(event, props)
 }
 
+// ── Clarity ────────────────────────────────────────────────────────────────
+
+// Las etapas del embudo del carrito, como eventos de Clarity (CRO-04,
+// 04/11/2026): así se filtran las grabaciones de quien agregó, abrió el
+// carrito, mandó el pedido o se quedó con "¿No se abrió WhatsApp?". Solo
+// estas cuatro: el resto no se lee con el tráfico que hay.
+const CLARITY_EVENTS = new Set(['add_to_cart', 'view_cart', 'order_sent', 'checkout_fallback_shown'])
+
+/**
+ * Clarity carga con lazyOnload (ClarityScript.tsx): un evento de los primeros
+ * segundos se perdía. Sin adelantar la carga, se deja el stub oficial (la
+ * cola en `.q`) y el snippet, que hace `c[a]=c[a]||…`, lo conserva y procesa
+ * la cola cuando llega el script.
+ */
+function clarityEvent(event: string): void {
+  if (!CLARITY_ID || !CLARITY_EVENTS.has(event) || window.location.pathname.startsWith('/admin')) return
+  if (!window.clarity) {
+    // El snippet oficial guarda el objeto `arguments`: igual que gtag más arriba.
+    const stub: NonNullable<Window['clarity']> = function clarity() {
+      // eslint-disable-next-line prefer-rest-params
+      ;(stub.q = stub.q || []).push(arguments)
+    }
+    window.clarity = stub
+  }
+  window.clarity('event', event)
+}
+
 // ── La puerta única ────────────────────────────────────────────────────────
 
 /**
@@ -122,6 +151,7 @@ export function track(
   }
   if (ensureGtag()) window.gtag!('event', ga?.name ?? event, ga ? { ...props, ...ga.params } : props)
   if (allowsMeta()) trackMeta(ga?.name ?? event, ga ? { ...props, ...ga.params } : props)
+  clarityEvent(event)
 }
 
 // El píxel no se carga en /admin (use-analytics-allowed.ts); un evento que se

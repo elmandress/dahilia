@@ -7,6 +7,7 @@ import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { CART_COOKIE } from '@/lib/cart-cookie'
 import { isUuid } from '@/lib/uuid'
 import { dropVisibility } from '@/lib/types'
+import { resolverTalle, TALLE_MAX } from '@/lib/cart-summary'
 
 /**
  * El carrito de un visitante anónimo NO se puede scopear con RLS: no hay
@@ -51,11 +52,14 @@ function applyCartCookie(res: NextResponse, cartId: string, setCookie: boolean) 
   return res
 }
 
+// La colección viaja con cada prenda (QA-01, 04/11/2026): sin ella el carrito
+// no puede saber que un drop volvió a "Próximamente" y la seguía contando como
+// pedible (ver cartItemIssue en lib/cart-summary.ts).
 async function loadItems(cartId: string) {
   const supabase = await getDb()
   const { data, error } = await supabase
     .from('cart_items')
-    .select('*, product:products(*, media:product_media(*), sizes:product_sizes(*))')
+    .select('*, product:products(*, media:product_media(*), sizes:product_sizes(*), collection:collections(published, unlisted))')
     .eq('cart_id', cartId)
     .order('added_at', { ascending: true })
 
@@ -90,13 +94,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Solicitud inválida.' }, { status: 400 })
     }
     const productId = String(body.productId || '')
-    const size = String(body.size || '').slice(0, 16)
+    // Sin cortar: antes se truncaba a 16 caracteres, y un talle descriptivo
+    // ("M/L (hasta 100 cm)") se guardaba cortado y quedaba "no disponible"
+    // apenas se agregaba (QA-07). Un talle de más de 40 es un error.
+    const size = String(body.size || '')
     const qty = Math.max(1, Math.min(MAX_QTY_PER_ITEM, parseInt(String(body.qty)) || 1))
     if (!productId || !size) {
       return NextResponse.json({ error: 'Faltan campos.' }, { status: 400 })
     }
     if (!isUuid(productId)) {
       return NextResponse.json({ error: 'Solicitud inválida.' }, { status: 400 })
+    }
+    if (size.length > TALLE_MAX) {
+      return NextResponse.json({ error: 'Talle inválido.' }, { status: 400 })
     }
 
     const { cartId, setCookie } = await getOrCreateCartId()
@@ -116,17 +126,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'El producto no está disponible.' }, { status: 409 })
     }
 
-    // Reject explicitly-unavailable sizes. Single-size products have no size rows,
-    // so a missing row means "no size constraint" and is allowed (unchanged behaviour).
-    const { data: sizeRow } = await supabase
+    // El talle se valida contra TODAS las filas de la prenda (QA-07). Antes solo
+    // se rechazaba una fila que existía sin stock: un talle inexistente pasaba
+    // como si la prenda no tuviera talles. Sin filas es una pieza de talle
+    // único y se guarda 'Único'; con fila 'Talle único', un 'Único' la encuentra.
+    const { data: sizeRows, error: sizesErr } = await supabase
       .from('product_sizes')
-      .select('available')
+      .select('size, available')
       .eq('product_id', productId)
-      .eq('size', size)
-      .maybeSingle()
-    if (sizeRow && sizeRow.available === false) {
-      return NextResponse.json({ error: 'Ese talle no está disponible.' }, { status: 409 })
+    if (sizesErr) throw sizesErr
+    const resolved = resolverTalle(sizeRows, size)
+    if (!resolved.ok) {
+      return NextResponse.json({ error: resolved.error }, { status: resolved.status })
     }
+    const talle = resolved.talle
 
     // Upsert: increment qty if existing
     const { data: existing } = await supabase
@@ -134,7 +147,7 @@ export async function POST(req: NextRequest) {
       .select('id, qty')
       .eq('cart_id', cartId)
       .eq('product_id', productId)
-      .eq('size', size)
+      .eq('size', talle)
       .maybeSingle()
 
     if (existing) {
@@ -151,7 +164,7 @@ export async function POST(req: NextRequest) {
     } else {
       const { error } = await supabase
         .from('cart_items')
-        .insert({ cart_id: cartId, product_id: productId, size, qty })
+        .insert({ cart_id: cartId, product_id: productId, size: talle, qty })
       if (error) throw error
     }
 

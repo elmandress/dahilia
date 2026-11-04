@@ -238,6 +238,8 @@ export default async function RootLayout({
   // de JSON en el HTML de CADA página, y CPU para deserializarlo antes de
   // pintar el LCP) solo para elegir 3 piezas baratas (auditoría 12/09/2026).
   // Ahora van solo las que pueden salir sugeridas, con su foto principal.
+  // Viajan por el CartProvider: el cajón y /carrito sugieren del mismo pool
+  // (QA-06, 04/11/2026).
   const addonCandidates = catalog.products
     .filter((p) => p.status === 'active' && !p.is_custom_only && getListingPrice(p, discounts) <= ADDON_MAX_UYU)
     .map((p) => ({
@@ -285,7 +287,7 @@ export default async function RootLayout({
       </head>
       <body>
         <a href="#contenido" className="skip-link">Saltar al contenido</a>
-        <CartProvider initialDiscounts={discounts} shippingEstimate={shippingEstimate} freeShippingThreshold={freeShippingThreshold} queueNote={queueNote} whatsappUrl={waUrl}>
+        <CartProvider initialDiscounts={discounts} shippingEstimate={shippingEstimate} freeShippingThreshold={freeShippingThreshold} queueNote={queueNote} whatsappUrl={waUrl} addonCandidates={addonCandidates}>
           <FavoritesProvider>
             <Header
               promo={promo}
@@ -303,7 +305,7 @@ export default async function RootLayout({
               {children}
             </main>
             <Footer tagline={tagline} showOfertas={showOfertas} showColecciones={showColecciones} showRegalo={catalog.settings.regalo_enabled !== 'false'} sinBase={catalog.source === 'snapshot'} />
-            <CartDrawer products={addonCandidates} />
+            <CartDrawer />
             <BackToTop />
             <WhatsAppFloat enabled={waEnabled} waUrl={waUrl} />
             {catalog.source !== 'snapshot' && (

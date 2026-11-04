@@ -2,10 +2,15 @@ import { ORDER_CODE_RE } from '@/lib/order-tracking'
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies, headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { CART_COOKIE } from '@/lib/cart-cookie'
+import { isUuid } from '@/lib/uuid'
 
 interface OrderItemInput {
+  /** Va dentro del JSON de items, sin columna nueva (CRO-07): el slug cambia
+   *  si Anush edita el link; descontar stock más adelante va por id. */
+  product_id?: string
   name: string
   slug: string
   size: string
@@ -35,6 +40,7 @@ export async function POST(req: NextRequest) {
     const items: OrderItemInput[] = rawItems
       .filter((i: unknown): i is Record<string, unknown> => !!i && typeof i === 'object')
       .map((i: Record<string, unknown>) => ({
+        ...(isUuid(i.product_id) ? { product_id: i.product_id } : {}),
         name: String(i.name ?? '').slice(0, 200),
         slug: String(i.slug ?? '').slice(0, 200),
         size: String(i.size ?? '').slice(0, 32),
@@ -81,7 +87,12 @@ export async function POST(req: NextRequest) {
     // pedido, que es lo esencial. PostgREST devuelve PGRST204 para una columna
     // inexistente (no el 42703 crudo de Postgres): por eso también se mira el
     // mensaje, mismo criterio que usan las páginas del admin.
-    const supabase = await createClient()
+    //
+    // Con la clave de servicio, igual que /api/cart (CRO-08, QA-M2): así la
+    // policy de INSERT público de `orders` se puede cerrar sin que esta ruta
+    // deje de registrar (database/pedidos-insert-seguro-2026-11.sql). Si la
+    // clave falta, sigue con el cliente público y la policy de hoy.
+    const supabase = createAdminClient() ?? await createClient()
     // Código de seguimiento (seguimiento-pedidos-2026-10.sql): lo genera el
     // carrito y va en el mensaje de WhatsApp. Solo el formato válido.
     const rawCode = typeof body.tracking_code === 'string' ? body.tracking_code.trim().toUpperCase() : ''
@@ -104,10 +115,20 @@ export async function POST(req: NextRequest) {
       { ...baseRow, ...attributionCols },
       baseRow,
     ]
-    let error: { code?: string; message?: string } | null = null
+    let error: { code?: string; message?: string; details?: string | null } | null = null
     for (const row of attempts) {
       ;({ error } = await supabase.from('orders').insert(row))
-      // 23505: el código de seguimiento chocó con otro (rarísimo): se guarda sin él.
+      // El mismo código ya está registrado (CRO-10): el carrito reusa el código
+      // del mismo contenido durante 24 h, así que es el mismo pedido mandado
+      // otra vez (otro toque, o el cajón y después /carrito). Se responde ok
+      // sin reintentar: antes se tomaba por "columna faltante" y el reintento
+      // sin código duplicaba la fila. Con la clave pública Postgres no muestra
+      // el detalle de la clave, pero el nombre del índice
+      // (orders_tracking_code_key) viene en el mensaje.
+      if (error?.code === '23505' && /tracking_code/.test(`${error.message ?? ''} ${error.details ?? ''}`)) {
+        return NextResponse.json({ ok: true, duplicate: true })
+      }
+      // 23505 de otra restricción: se guarda sin las columnas opcionales.
       const missingColumn = error?.code === '42703' || error?.code === 'PGRST204' || error?.code === '23505'
         || /cart_id|utm_source|utm_medium|utm_campaign|referrer_host|tracking_code|meta_fbp|meta_fbc|client_ip|client_user_agent/.test(error?.message || '')
       if (!error || !missingColumn) break
