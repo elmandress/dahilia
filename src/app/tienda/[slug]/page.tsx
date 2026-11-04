@@ -385,8 +385,6 @@ async function ProductPage({ slug }: { slug: string }) {
     notFound()
   }
 
-  const isSnapshot = source === 'snapshot'
-
   // Descuentos, settings y relacionados salen del MISMO payload cacheado que
   // usa el resto del sitio (lib/catalog.ts), que además ya trae su propio
   // fallback al snapshot si la DB está caída. Antes esta ficha hacía 3
@@ -396,6 +394,10 @@ async function ProductPage({ slug }: { slug: string }) {
   // ciclo de revalidación. De paso desaparece la rama duplicada
   // snapshot/en-vivo: ahora hay un solo camino.
   const catalog = await getCatalog()
+  // La ficha puede venir en vivo (su propio caché) con el catálogo en respaldo:
+  // entonces descuentos y settings son los del snapshot, y la ficha va en modo
+  // consulta con el banner, como el resto del sitio (QA-08, 04/11/2026).
+  const isSnapshot = source === 'snapshot' || catalog.source === 'snapshot'
   const discounts: Discount[] = catalog.discounts
   const settings: Record<string, string> = catalog.settings
   const relatedAll: Product[] = catalog.products

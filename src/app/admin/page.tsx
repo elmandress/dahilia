@@ -4,6 +4,12 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Product, CustomOrder } from '@/lib/types'
+// Solo la fecha del respaldo del catálogo: el snapshot entero no tiene nada
+// que hacer en el panel.
+import snapshotMeta from '@/lib/catalog-snapshot-meta.json'
+
+/** Con más días, el respaldo del catálogo ya no es el de hoy (scripts/snapshot-edad.mjs). */
+const SNAPSHOT_MAX_DIAS = 14
 
 /** Un problema concreto detectado en el catálogo, con dónde arreglarlo. */
 interface CatalogIssue {
@@ -137,7 +143,7 @@ async function findSetupIssues(supabase: SupabaseBrowser): Promise<SetupIssue[]>
     label: `Falta correr ${file}`,
     detail: `En el SQL Editor de Supabase. Sin esto, ${what}`,
   })
-  const [knit, colorPhoto, margin, sample, cardigans, navidad, tracking] = await Promise.all([
+  const [knit, colorPhoto, margin, sample, cardigans, navidad, tracking, saleReason] = await Promise.all([
     supabase.from('products').select('knit_hours').limit(1),
     supabase.from('colors').select('image_url').limit(1),
     supabase.from('product_costs').select('margin_pct').limit(1),
@@ -145,6 +151,7 @@ async function findSetupIssues(supabase: SupabaseBrowser): Promise<SetupIssue[]>
     supabase.from('categories').select('description').eq('slug', 'cardigans').maybeSingle(),
     supabase.from('site_settings').select('key, value').in('key', ['navidad_enabled', 'navidad_encargo_hasta', 'qr_thanks_enabled', 'qr_discount_code']),
     supabase.from('orders').select('tracking_code').limit(1),
+    supabase.from('orders').select('no_concreto_motivo').limit(1),
   ])
   const out: SetupIssue[] = []
   if (knit.error) out.push(sql('horas-de-tejido-2026-10.sql', 'las horas de tejido no se pueden mostrar en las fichas.'))
@@ -152,12 +159,23 @@ async function findSetupIssues(supabase: SupabaseBrowser): Promise<SetupIssue[]>
   if (margin.error) out.push(sql('margen-por-prenda-2026-10.sql', 'el margen de la calculadora vuelve a 15% en cada prenda.'))
   if (sample.error) out.push(sql('pruebas-tejedoras-2026-10.sql', 'no se guardan las muestras de las tejedoras ni el ranking.'))
   if (tracking.error) out.push(sql('seguimiento-pedidos-2026-10.sql', 'los pedidos no tienen código de seguimiento, ni etapas, ni el tablero de Producción.'))
+  if (saleReason.error) out.push(sql('admin-pedidos-y-ajustes-2026-11.sql', 'no se guardan el motivo de «no se concretó» ni el monto cobrado, y Meta podría recibir dos veces la misma venta.'))
   const desc = (cardigans.data as { description: string | null } | null)?.description ?? ''
   if (!cardigans.error && desc && !/sacos/i.test(desc)) {
     out.push(sql('vocabulario-uruguayo-2026-10.sql', 'las categorías no usan "sacos", "buzos" ni "musculosas", que es como se busca en Uruguay.'))
   }
   // Navidad: avisar de octubre a mediados de diciembre si no hay fecha.
   const now = new Date()
+  // El respaldo del catálogo viaja con cada deploy: con la base caída, la
+  // tienda muestra sus precios y prendas. Si envejeció, hay que regenerarlo.
+  const snapshotDias = Math.floor((now.getTime() - Date.parse(snapshotMeta.generatedAt)) / 86_400_000)
+  if (snapshotDias > SNAPSHOT_MAX_DIAS) {
+    out.push({
+      id: 'snapshot-viejo',
+      label: `El respaldo del catálogo tiene ${snapshotDias} días`,
+      detail: 'Pedile a Mati que lo regenere. Si la base se cae, la tienda muestra ese respaldo, con los precios y las prendas del día en que se hizo.',
+    })
+  }
   const inSeason = now.getMonth() === 9 || now.getMonth() === 10 || (now.getMonth() === 11 && now.getDate() <= 15)
   const settings = Object.fromEntries(((navidad.data ?? []) as Array<{ key: string; value: string }>).map((r) => [r.key, r.value]))
   if (inSeason && settings.navidad_enabled !== 'false' && !(settings.navidad_encargo_hasta ?? '').trim()) {

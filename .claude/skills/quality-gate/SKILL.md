@@ -30,6 +30,8 @@ Before saying a change is finished, run these in order and stop at the first fai
    done. Use a browser tool (Playwright MCP or equivalent) to screenshot the
    affected page at ~390px width if one is available; if not, say explicitly
    that the change is unverified visually rather than claiming it's checked.
+6. Before a deploy: `node scripts/snapshot-edad.mjs` must exit 0. If it fails,
+   regenerate the catalog snapshot (see "Antes de cada deploy" below).
 
 Rules:
 - Never patch over a failing check (no `// @ts-ignore`, no skipping lint).
@@ -56,3 +58,22 @@ Reglas:
   `await ctx.route(/\/_next\/image|supabase\.co\/storage\//, (r) => r.fulfill({ status: 200, contentType: 'image/gif', body: PIXEL }))`
 - No encadenar builds "por las dudas": cada build tira a la basura el caché de
   imágenes. Compilar una vez al final.
+
+## Antes de cada deploy: el respaldo del catálogo
+
+Con la base caída (la cuota de Supabase, un error), la tienda muestra
+`src/lib/catalog-snapshot.json`: precios, prendas y textos del día en que se
+generó. El del 05/10/2026 seguía desplegado en noviembre, con 32 precios viejos
+y sin el drop Sunset ’26.
+
+1. `node scripts/snapshot-edad.mjs` — sale con 1 si el respaldo tiene más de
+   14 días.
+2. Si falla: `node --env-file=.env.local scripts/snapshot-catalog.mjs` (solo
+   lectura con la clave pública; no baja fotos) y commitear
+   `src/lib/catalog-snapshot.json` y `src/lib/catalog-snapshot-meta.json` con
+   el deploy.
+
+Va acá y no en una GitHub Action: las Actions fallaban siempre (los relojes se
+mudaron a Netlify el 27/10/2026) y un PR automático igual dependía de que
+alguien lo mergeara. /admin muestra el mismo aviso en "Falta terminar de
+configurar".

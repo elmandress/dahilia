@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatPrice } from '@/lib/types'
+import { formatPrice, isUnicoLabel } from '@/lib/types'
 import { channelLabel } from '@/lib/attribution'
+import { parseMoneyUYU, saltoDePrecio } from '@/lib/parse-money'
+import { MoneyInput } from '@/components/admin/MoneyInput'
 import { ProduccionControls, type ProductionFields, type WeaverOption } from './Produccion'
 
 interface OrderItem {
@@ -22,6 +24,20 @@ const STATUS_OPTIONS: Array<{ value: OrderStatus; label: string; color: string }
   { value: 'nuevo', label: 'Sin marcar', color: '#5B5356' },
   { value: 'vendido', label: 'Vendido', color: '#1E8449' },
   { value: 'no_concreto', label: 'No se concretó', color: '#B6314A' },
+]
+
+// Por qué no se concretó (admin-pedidos-y-ajustes-2026-11.sql), con las mismas
+// categorías que la planilla de research/decision-anuncios-2026-11.md para
+// poder sumar las dos. Es opcional: nunca frena el cambio de estado.
+type NoConcretoMotivo = 'precio' | 'envio' | 'talle' | 'pago' | 'no_contesto' | 'otro'
+
+const MOTIVOS: Array<{ value: NoConcretoMotivo; label: string }> = [
+  { value: 'precio', label: 'Precio' },
+  { value: 'envio', label: 'Envío' },
+  { value: 'talle', label: 'Talle o medidas' },
+  { value: 'pago', label: 'Forma de pago' },
+  { value: 'no_contesto', label: 'No contestó' },
+  { value: 'otro', label: 'Otro' },
 ]
 
 interface OrderRow {
@@ -43,9 +59,54 @@ interface OrderRow {
   weaver_id?: ProductionFields['weaver_id']
   weaver_pay_uyu?: ProductionFields['weaver_pay_uyu']
   weaver_paid?: ProductionFields['weaver_paid']
+  // Venta confirmada y motivo (admin-pedidos-y-ajustes-2026-11.sql)
+  purchase_value_uyu?: number | null
+  no_concreto_motivo?: NoConcretoMotivo | null
 }
 
 const DAY = 86_400_000
+// Un pedido sin marcar a las 48 h pide seguimiento: es el plazo que recomienda
+// research/decision-anuncios-2026-11.md. El menú del admin cuenta los mismos.
+const SEGUIMIENTO_MS = 48 * 3_600_000
+
+/** Lo vendido de verdad: el monto que Anush confirmó al marcarlo, o el total del pedido. */
+const montoVendido = (o: OrderRow) => Number(o.purchase_value_uyu ?? o.total_uyu) || 0
+
+/** PostgREST responde PGRST204 (o 42703) por una columna que no existe: el SQL sin correr. */
+function faltaColumna(error: { code?: string; message?: string } | null): boolean {
+  return !!error && (error.code === 'PGRST204' || error.code === '42703' || /purchase_value_uyu|no_concreto_motivo/.test(error.message ?? ''))
+}
+
+/** Que el menú del admin recuente los pedidos sin respuesta (AdminChrome). */
+const avisarAlMenu = () => window.dispatchEvent(new Event('admin:pendientes'))
+
+function sinClave<T>(map: Record<string, T>, key: string): Record<string, T> {
+  const next = { ...map }
+  delete next[key]
+  return next
+}
+
+/** El mensaje para retomar la charla. Lleva el código PED, que en WhatsApp
+ *  sirve para encontrar el chat: el primer mensaje de la clienta lo trae. */
+function mensajeSeguimiento(o: OrderRow): string {
+  const prendas = (Array.isArray(o.items) ? o.items : [])
+    .filter((it) => it?.name)
+    .map((it) => `${it.name}${it.size && !isUnicoLabel(it.size) ? ` talle ${it.size}` : ''}${(it.qty ?? 1) > 1 ? ` x${it.qty}` : ''}`)
+    .join(', ')
+  const pedido = [o.tracking_code, prendas ? `(${prendas})` : ''].filter(Boolean).join(' ')
+  return `Hola! ¿Cómo estás? Te escribo por tu pedido${pedido ? ` ${pedido}` : ''}. ¿Pudiste verlo? Si te quedó alguna duda con el envío o el pago, te ayudo 🧶`
+}
+
+interface MetaEstado { texto: string; reintentar?: boolean }
+
+/** Lo que contestó /api/admin/meta-compra, en palabras del panel. */
+function estadoMeta(r: { sent?: boolean; motivo?: string } | null): MetaEstado {
+  if (r?.sent) return { texto: 'Meta: compra avisada ✓' }
+  if (r?.motivo === 'ya avisado') return { texto: 'Meta: ya estaba avisada' }
+  if (r?.motivo === 'sin token de Meta') return { texto: 'Meta: sin token, no se manda' }
+  if (r?.motivo === 'no está vendido') return { texto: 'Meta: no se mandó, el pedido ya no figura como vendido' }
+  return { texto: 'Meta: no respondió', reintentar: true }
+}
 
 export default function PedidosAdminPage() {
   const [orders, setOrders] = useState<OrderRow[]>([])
@@ -65,6 +126,12 @@ export default function PedidosAdminPage() {
   const [loadedAt, setLoadedAt] = useState(0)
   // Tejedoras a las que se les puede asignar un pedido (aprobadas o a prueba).
   const [weavers, setWeavers] = useState<WeaverOption[]>([])
+  // "Vendido" elegido y todavía sin confirmar: el monto que se está escribiendo.
+  const [venta, setVenta] = useState<Record<string, string>>({})
+  const [guardandoVenta, setGuardandoVenta] = useState<string | null>(null)
+  // Lo que contestó el aviso a Meta en esta visita, por pedido.
+  const [meta, setMeta] = useState<Record<string, MetaEstado>>({})
+  const [copiado, setCopiado] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setError(null)
@@ -117,21 +184,112 @@ export default function PedidosAdminPage() {
   // alcanza para saberlo.
   const hasStatus = orders.some((o) => o.status !== undefined)
   const hasTracking = orders.some((o) => o.stage !== undefined)
+  const hasVenta = orders.some((o) => o.purchase_value_uyu !== undefined)
+  const hasMotivo = orders.some((o) => o.no_concreto_motivo !== undefined)
 
+  // "Sin marcar" y "No se concretó" se guardan al elegirlos; "Vendido" pide
+  // antes el monto (confirmarVenta).
   const updateStatus = async (id: string, status: OrderStatus) => {
     setStatusError(null)
-    const previous = orders.find((o) => o.id === id)?.status ?? 'nuevo'
-    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)))
-    const { data, error: err } = await createClient().from('orders').update({ status }).eq('id', id).select('id')
+    const before = orders.find((o) => o.id === id)
+    if (!before) return
+    // El motivo de "no se concretó" no queda colgado si el pedido cambia de estado.
+    const patch: Partial<OrderRow> = { status, ...(status !== 'no_concreto' && before.no_concreto_motivo ? { no_concreto_motivo: null } : {}) }
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } : o)))
+    const { data, error: err } = await createClient().from('orders').update(patch).eq('id', id).select('id')
     // Sin la policy de UPDATE, la base no da error: devuelve 0 filas.
     if (err || !data || data.length === 0) {
-      setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: previous } : o)))
+      setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: before.status, no_concreto_motivo: before.no_concreto_motivo } : o)))
       setStatusError('No se pudo guardar el estado. Revisá que se haya corrido database/embudo-pedidos-2026-09.sql en Supabase.')
       return
     }
-    // La venta, a Meta (api/admin/meta-compra): sin esperar, no traba el panel.
-    if (status === 'vendido') {
-      fetch('/api/admin/meta-compra', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }).catch(() => {})
+    avisarAlMenu()
+  }
+
+  const elegirEstado = (o: OrderRow, value: OrderStatus) => {
+    const actual = o.status ?? 'nuevo'
+    if (value === 'vendido' && actual !== 'vendido') {
+      // Primero se confirma cuánto se cobró: es lo que le llega a Meta.
+      setVenta((prev) => ({ ...prev, [o.id]: String(o.purchase_value_uyu ?? o.total_uyu ?? '') }))
+      return
+    }
+    setVenta((prev) => sinClave(prev, o.id))
+    if (value !== actual) updateStatus(o.id, value)
+  }
+
+  // La venta, a Meta (lib/purchase.ts), con lo que contestó a la vista. Antes
+  // salía sin esperar y sin mirar la respuesta: "sin token" o un error de Meta
+  // no llegaban nunca al panel.
+  const avisarMeta = async (id: string) => {
+    setMeta((prev) => ({ ...prev, [id]: { texto: 'Meta: avisando…' } }))
+    let r: { sent?: boolean; motivo?: string } | null = null
+    try {
+      const res = await fetch('/api/admin/meta-compra', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (res.ok) r = await res.json()
+    } catch { /* sin red: queda "no respondió", con Reintentar */ }
+    setMeta((prev) => ({ ...prev, [id]: estadoMeta(r) }))
+  }
+
+  const confirmarVenta = async (o: OrderRow) => {
+    const monto = parseMoneyUYU(venta[o.id] ?? '')
+    if (monto == null) return
+    // Un tipeo ("17" por "1700") quedaría para siempre en Meta: se pregunta una
+    // vez. Sin el SQL el monto no se usa, así que no hay nada que preguntar.
+    const salto = hasVenta ? saltoDePrecio(Number(o.total_uyu) || null, monto) : null
+    if (salto && !window.confirm(`¿Seguro? El monto ${salto}. Es lo que le llega a Meta como venta.`)) return
+    setStatusError(null)
+    setGuardandoVenta(o.id)
+    const db = createClient()
+    let guardado: Partial<OrderRow> = {
+      status: 'vendido',
+      ...(hasVenta ? { purchase_value_uyu: monto } : {}),
+      ...(o.no_concreto_motivo ? { no_concreto_motivo: null } : {}),
+    }
+    let res = await db.from('orders').update(guardado).eq('id', o.id).select('id')
+    const sinColumna = faltaColumna(res.error)
+    if (sinColumna) {
+      // Sin admin-pedidos-y-ajustes-2026-11.sql se marca igual, como antes, y a
+      // Meta le llega el total del pedido.
+      guardado = { status: 'vendido' }
+      res = await db.from('orders').update(guardado).eq('id', o.id).select('id')
+    }
+    setGuardandoVenta(null)
+    if (res.error || !res.data || res.data.length === 0) {
+      setStatusError('No se pudo guardar la venta. Probá de nuevo; si sigue, revisá que se haya corrido database/embudo-pedidos-2026-09.sql en Supabase.')
+      return
+    }
+    if (sinColumna) setStatusError('La venta quedó marcada, pero el monto no se guardó: falta correr database/admin-pedidos-y-ajustes-2026-11.sql en Supabase.')
+    setOrders((prev) => prev.map((x) => (x.id === o.id ? { ...x, ...guardado } : x)))
+    setVenta((prev) => sinClave(prev, o.id))
+    avisarAlMenu()
+    await avisarMeta(o.id)
+  }
+
+  const guardarMotivo = async (o: OrderRow, value: string) => {
+    const motivo = (value || null) as NoConcretoMotivo | null
+    const previo = o.no_concreto_motivo ?? null
+    setStatusError(null)
+    setOrders((prev) => prev.map((x) => (x.id === o.id ? { ...x, no_concreto_motivo: motivo } : x)))
+    const { data, error: err } = await createClient().from('orders').update({ no_concreto_motivo: motivo }).eq('id', o.id).select('id')
+    if (err || !data || data.length === 0) {
+      setOrders((prev) => prev.map((x) => (x.id === o.id ? { ...x, no_concreto_motivo: previo } : x)))
+      setStatusError('No se pudo guardar el motivo. Probá de nuevo.')
+    }
+  }
+
+  // Ningún mensaje sale solo: Anush lo copia y lo pega en el chat si quiere.
+  const copiarSeguimiento = async (o: OrderRow) => {
+    const text = mensajeSeguimiento(o)
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiado(o.id)
+    } catch {
+      // Sin portapapeles (permisos, navegador viejo): el texto queda a mano.
+      window.prompt('Copiá este mensaje:', text)
     }
   }
 
@@ -151,7 +309,7 @@ export default function PedidosAdminPage() {
     row.pedidos += 1
     if (o.status === 'vendido') {
       row.vendidos += 1
-      row.monto += Number(o.total_uyu) || 0
+      row.monto += montoVendido(o)
     }
     return m.set(ch, row)
   }, new Map<string, { pedidos: number; vendidos: number; monto: number }>())]
@@ -212,7 +370,7 @@ export default function PedidosAdminPage() {
                 <div className="admin-stat-card">
                   <div className="stat-label">Vendidos</div>
                   <div className="stat-value">{sold.length}</div>
-                  <div className="stat-sub">{formatPrice(sold.reduce((s, o) => s + (Number(o.total_uyu) || 0), 0))} en total</div>
+                  <div className="stat-sub">{formatPrice(sold.reduce((s, o) => s + montoVendido(o), 0))} en total</div>
                 </div>
                 <div className="admin-stat-card">
                   <div className="stat-label">Cierre</div>
@@ -226,6 +384,14 @@ export default function PedidosAdminPage() {
             <div className="admin-card" style={{ marginBottom: 14, fontSize: 13, color: '#4A4143' }}>
               Para marcar qué pedidos se vendieron (y ver el porcentaje de cierre), corré
               {' '}<code>database/embudo-pedidos-2026-09.sql</code> en el SQL Editor de Supabase.
+            </div>
+          )}
+          {hasStatus && !hasVenta && (
+            <div className="admin-card" style={{ marginBottom: 14, fontSize: 13, color: '#4A4143' }}>
+              Para guardar cuánto cobraste en cada venta y por qué no se concretó un pedido, corré
+              {' '}<code>database/admin-pedidos-y-ajustes-2026-11.sql</code> en el SQL Editor de Supabase.
+              Mientras tanto, a Meta le llega el total del pedido, y si volvés a marcar uno como vendido
+              la venta puede contarse dos veces.
             </div>
           )}
           {byChannel.length > 0 && (
@@ -274,8 +440,17 @@ export default function PedidosAdminPage() {
             const items = Array.isArray(o.items) ? o.items : []
             const unitCount = items.reduce((s, it) => s + (it?.qty ?? 0), 0)
             const current = STATUS_OPTIONS.find((s) => s.value === (o.status ?? 'nuevo')) ?? STATUS_OPTIONS[0]
+            // "Vendido" elegido y todavía sin confirmar el monto: el selector ya
+            // lo muestra, pero en la base sigue como estaba.
+            const pendiente = venta[o.id]
+            const shown = pendiente !== undefined ? STATUS_OPTIONS[1] : current
+            const guardando = guardandoVenta === o.id
+            // Sin marcar a las 48 h: se resalta, con el mensaje para retomar la charla.
+            const seguir = hasStatus && current.value === 'nuevo' && pendiente === undefined
+              && loadedAt - new Date(o.created_at).getTime() > SEGUIMIENTO_MS
+            const metaEstado = current.value === 'vendido' ? meta[o.id] : undefined
             return (
-              <article key={o.id} className="admin-card">
+              <article key={o.id} className="admin-card" style={seguir ? { borderColor: 'rgba(143,59,83,0.35)' } : undefined}>
                 <header style={{
                   display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between',
                   alignItems: 'baseline', paddingBottom: 10, borderBottom: '1px solid rgba(31,26,27,0.10)', marginBottom: 12,
@@ -301,11 +476,12 @@ export default function PedidosAdminPage() {
                     {hasStatus && (
                       <select
                         aria-label="Cómo terminó este pedido"
-                        value={current.value}
-                        onChange={(e) => updateStatus(o.id, e.target.value as OrderStatus)}
+                        value={shown.value}
+                        onChange={(e) => elegirEstado(o, e.target.value as OrderStatus)}
+                        disabled={guardando}
                         style={{
                           fontSize: 12, padding: '4px 8px', borderRadius: 6,
-                          border: '1px solid rgba(31,26,27,0.18)', background: '#fff', color: current.color,
+                          border: '1px solid rgba(31,26,27,0.18)', background: '#fff', color: shown.color,
                         }}
                       >
                         {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
@@ -314,6 +490,90 @@ export default function PedidosAdminPage() {
                     <strong style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: '#1F1A1B' }}>{formatPrice(o.total_uyu)}</strong>
                   </div>
                 </header>
+
+                {seguir && (
+                  <div style={{
+                    display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', justifyContent: 'space-between',
+                    background: '#FAF1DF', borderRadius: 10, padding: '10px 12px', marginBottom: 12, fontSize: 13, color: '#4A4143',
+                  }}>
+                    <span>Llegó hace más de 48 h y sigue sin marcar. Si la charla quedó en el aire, escribile.</span>
+                    {/* No "Copiar mensaje de seguimiento": ese botón ya está abajo,
+                        en Producción, y manda el link para seguir el pedido. */}
+                    <button type="button" className="admin-btn admin-btn-secondary admin-btn-sm" onClick={() => copiarSeguimiento(o)}>
+                      Copiar mensaje para retomar la charla
+                    </button>
+                    {copiado === o.id && (
+                      <span role="status" style={{ flexBasis: '100%', fontSize: 12.5, color: '#2e7d32' }}>
+                        Mensaje copiado: pegalo en el chat de la clienta.
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {pendiente !== undefined && (
+                  <div style={{
+                    display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-end',
+                    background: '#FCFAF6', border: '1px solid rgba(31,26,27,0.10)', borderRadius: 10, padding: 12, marginBottom: 12,
+                  }}>
+                    <div className="admin-field" style={{ flex: '1 1 200px', maxWidth: 280 }}>
+                      <MoneyInput
+                        id={`venta-${o.id}`}
+                        label="Monto de las prendas (sin envío)"
+                        value={pendiente}
+                        onChange={(v) => setVenta((prev) => ({ ...prev, [o.id]: v }))}
+                        disabled={guardando}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      <button
+                        type="button"
+                        className="admin-btn admin-btn-primary admin-btn-sm"
+                        disabled={guardando || parseMoneyUYU(pendiente) == null}
+                        onClick={() => confirmarVenta(o)}
+                      >
+                        {guardando ? 'Guardando…' : 'Confirmar venta'}
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-btn admin-btn-secondary admin-btn-sm"
+                        disabled={guardando}
+                        onClick={() => setVenta((prev) => sinClave(prev, o.id))}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                    <p style={{ flexBasis: '100%', margin: 0, fontSize: 12.5, color: '#5B5356' }}>
+                      {hasVenta
+                        ? 'Lo que cobraste por las prendas, sin el envío. Es lo que le llega a Meta como venta, una sola vez.'
+                        : 'Todavía no se guarda: falta correr database/admin-pedidos-y-ajustes-2026-11.sql, y mientras tanto a Meta le llega el total del pedido.'}
+                    </p>
+                  </div>
+                )}
+
+                {metaEstado && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 12, fontSize: 12.5 }}>
+                    <span role="status" style={{ color: metaEstado.reintentar ? '#7a1e2f' : '#4A4143' }}>{metaEstado.texto}</span>
+                    {metaEstado.reintentar && (
+                      <button type="button" className="admin-btn admin-btn-secondary admin-btn-sm" onClick={() => avisarMeta(o.id)}>
+                        Reintentar
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {hasMotivo && current.value === 'no_concreto' && (
+                  <label style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 12, fontSize: 12.5, color: '#4A4143' }}>
+                    ¿Por qué no se concretó? (opcional)
+                    <select
+                      value={o.no_concreto_motivo ?? ''}
+                      onChange={(e) => guardarMotivo(o, e.target.value)}
+                      style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, border: '1px solid rgba(31,26,27,0.18)', background: '#fff' }}
+                    >
+                      <option value="">Sin anotar</option>
+                      {MOTIVOS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                    </select>
+                  </label>
+                )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {items.map((it, idx) => (

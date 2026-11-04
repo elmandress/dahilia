@@ -179,6 +179,14 @@ const NAV_ITEMS = [
   },
 ]
 
+// Qué dice el contador al lado del número, si dice algo: en Pedidos son los
+// que llevan más de 48 h sin marcar, y un número solo parecería "pedidos nuevos".
+const BADGE_SUFFIX: Record<string, string> = { '/admin/pedidos': 'sin respuesta' }
+
+// Un pedido "nuevo" pasa a contar como sin respuesta a las 48 h (CRO-02): el
+// seguimiento recomendado en research/decision-anuncios-2026-11.md.
+const SIN_RESPUESTA_MS = 48 * 3_600_000
+
 // El menú tenía 15 ítems en una lista plana — más del doble de lo que se
 // puede escanear de un vistazo, así que encontrar algo era leer los 15. Se
 // agrupan por para-qué-entrás, no por tipo de dato: primero lo que se mira
@@ -216,17 +224,27 @@ export default function AdminChrome({ children }: { children: React.ReactNode })
     })
 
     const loadPending = async () => {
-      const [ordersRes, weaversRes] = await Promise.all([
+      const [ordersRes, weaversRes, sinRespuestaRes] = await Promise.all([
         supabase.from('custom_orders').select('id', { count: 'exact', head: true }).eq('status', 'new'),
         // La tabla de tejedoras puede no existir todavía — el error se ignora.
         supabase.from('weaver_applications').select('id', { count: 'exact', head: true }).eq('status', 'new'),
+        // Pedidos de WhatsApp sin marcar hace más de 48 h. Sin la columna
+        // status (embudo-pedidos-2026-09.sql) da error y no se muestra.
+        supabase.from('orders').select('id', { count: 'exact', head: true })
+          .or('status.is.null,status.eq.nuevo')
+          .lt('created_at', new Date(Date.now() - SIN_RESPUESTA_MS).toISOString()),
       ])
       setPending({
         '/admin/encargos': ordersRes.count ?? 0,
         '/admin/tejedoras': weaversRes.error ? 0 : (weaversRes.count ?? 0),
+        '/admin/pedidos': sinRespuestaRes.error ? 0 : (sinRespuestaRes.count ?? 0),
       })
     }
     loadPending()
+    // /admin/pedidos avisa cuando marca un pedido: sin esto, el contador seguía
+    // diciendo "3 sin respuesta" hasta recargar, con los tres ya marcados.
+    window.addEventListener('admin:pendientes', loadPending)
+    return () => window.removeEventListener('admin:pendientes', loadPending)
   }, [isLoginPage])
 
   const handleLogout = async () => {
@@ -300,6 +318,7 @@ export default function AdminChrome({ children }: { children: React.ReactNode })
               const item = byHref.get(href)
               if (!item) return null
               const badge = pending[item.href] ?? 0
+              const suffix = BADGE_SUFFIX[item.href]
               return (
                 <Link
                   key={item.href}
@@ -317,7 +336,7 @@ export default function AdminChrome({ children }: { children: React.ReactNode })
                 >
                   {item.icon}
                   {item.label}
-                  {badge > 0 && <span className="admin-nav-badge">{badge}</span>}
+                  {badge > 0 && <span className="admin-nav-badge">{suffix ? `${badge} ${suffix}` : badge}</span>}
                 </Link>
               )
             }
