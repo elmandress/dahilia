@@ -3,6 +3,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Coupon, Product, Category } from '@/lib/types'
+import { parseMoneyUYU, parsePercent } from '@/lib/parse-money'
+import { inicioDiaUY, finDiaUY } from '@/lib/drop-date'
+import { MoneyInput, MONTO_ILEGIBLE } from '@/components/admin/MoneyInput'
 
 type Scope = 'all' | 'categories' | 'products'
 
@@ -137,12 +140,20 @@ export default function AdminCuponesPage() {
     if (!draft) return
     const code = draft.code.trim().toUpperCase()
     if (code.length < 3) { showToast('El código necesita al menos 3 caracteres.'); return }
-    const value = draft.kind === 'free_shipping' ? null : parseInt(draft.value, 10)
-    if (draft.kind === 'percent' && (value == null || isNaN(value) || value < 1 || value > 90)) {
+    // Montos y porcentajes con los parsers de todo el admin (QA-02): una
+    // tarjeta de regalo de "1.600" con parseInt quedaba en UYU 1.
+    const value = draft.kind === 'free_shipping' ? null
+      : draft.kind === 'percent' ? parsePercent(draft.value)
+        : parseMoneyUYU(draft.value)
+    if (draft.kind === 'percent' && (value == null || value < 1)) {
       showToast('El porcentaje va de 1 a 90.'); return
     }
-    if (draft.kind === 'fixed' && (value == null || isNaN(value) || value <= 0)) {
-      showToast('Ingresá el monto del descuento.'); return
+    if (draft.kind === 'fixed' && (value == null || value <= 0)) {
+      showToast(draft.value.trim() ? `${MONTO_ILEGIBLE}.` : 'Ingresá el monto del descuento.'); return
+    }
+    const minSubtotal = parseMoneyUYU(draft.min_subtotal_uyu)
+    if (draft.min_subtotal_uyu.trim() && minSubtotal == null) {
+      showToast(`Compra mínima: ${MONTO_ILEGIBLE}.`); return
     }
     if (draft.scope === 'products' && draft.product_ids.length === 0) {
       showToast('Elegí al menos un producto (o cambiá el alcance a todo el catálogo).'); return
@@ -160,9 +171,12 @@ export default function AdminCuponesPage() {
       label: draft.label.trim() || null,
       kind: draft.kind,
       value,
-      min_subtotal_uyu: num(draft.min_subtotal_uyu),
-      starts_at: draft.starts_at ? new Date(`${draft.starts_at}T00:00:00`).toISOString() : null,
-      ends_at: draft.ends_at ? new Date(`${draft.ends_at}T23:59:59`).toISOString() : null,
+      // 0 = sin mínimo, como siempre.
+      min_subtotal_uyu: minSubtotal ? minSubtotal : null,
+      // Días enteros en hora de Montevideo, no en la del navegador: desde una
+      // compu en otra zona, cada guardado corría la vigencia un día (QA-16).
+      starts_at: draft.starts_at ? inicioDiaUY(draft.starts_at) : null,
+      ends_at: draft.ends_at ? finDiaUY(draft.ends_at) : null,
       max_uses: num(draft.max_uses),
       max_uses_per_customer: num(draft.max_uses_per_customer),
       product_ids: draft.scope === 'products' ? draft.product_ids : [],
@@ -308,27 +322,38 @@ export default function AdminCuponesPage() {
               </div>
 
               <div className="admin-form-grid">
-                {draft.kind !== 'free_shipping' && (
+                {draft.kind === 'percent' && (
                   <div className="admin-field">
-                    <label htmlFor="cup-value">{draft.kind === 'percent' ? 'Porcentaje (1–90)' : 'Monto (UYU)'}</label>
+                    <label htmlFor="cup-value">Porcentaje (1–90)</label>
                     <input
                       id="cup-value"
                       type="number"
                       min={1}
-                      max={draft.kind === 'percent' ? 90 : undefined}
+                      max={90}
                       value={draft.value}
                       onChange={(e) => setDraft({ ...draft, value: e.target.value })}
                     />
                   </div>
                 )}
+                {/* Montos con la lectura a la vista ("Se guarda: UYU 1.600"):
+                    acá no hay otra vista previa antes de que el cupón ande. */}
+                {draft.kind === 'fixed' && (
+                  <div className="admin-field">
+                    <MoneyInput
+                      id="cup-value"
+                      label="Monto (UYU)"
+                      value={draft.value}
+                      onChange={(v) => setDraft({ ...draft, value: v })}
+                      placeholder="Ej. 1600"
+                    />
+                  </div>
+                )}
                 <div className="admin-field">
-                  <label htmlFor="cup-min">Compra mínima UYU (opcional)</label>
-                  <input
+                  <MoneyInput
                     id="cup-min"
-                    type="number"
-                    min={0}
+                    label="Compra mínima UYU (opcional)"
                     value={draft.min_subtotal_uyu}
-                    onChange={(e) => setDraft({ ...draft, min_subtotal_uyu: e.target.value })}
+                    onChange={(v) => setDraft({ ...draft, min_subtotal_uyu: v })}
                     placeholder="Sin mínimo"
                   />
                 </div>

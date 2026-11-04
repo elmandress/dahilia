@@ -5,7 +5,7 @@
 // El contenido vive en ./data.ts; lo vivo (precios, postulaciones, lista VIP,
 // checklist) se lee de Supabase al montar.
 
-import { Fragment, useEffect, useState, useCallback } from 'react'
+import { Fragment, useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -35,6 +35,17 @@ import Calculadora from './Calculadora'
 import './estrategia.css'
 
 const PROGRESS_KEY = 'estrategia_progress'
+
+/** El JSON del progreso tal como está en la base. Corrupto o vacío → nada marcado. */
+function parseProgress(raw: unknown): Record<string, boolean> {
+  if (typeof raw !== 'string' || !raw.trim()) return {}
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, boolean>) : {}
+  } catch {
+    return {}
+  }
+}
 
 type TabId = 'resumen' | 'precios' | 'calculadora' | 'tejedoras' | 'clases' | 'clientas' | 'drops' | 'canales' | 'novedades' | 'riesgos'
 
@@ -125,6 +136,9 @@ export default function EstrategiaPage() {
   const [weaverCount, setWeaverCount] = useState<number | null>(null)
   const [vipCount, setVipCount] = useState<number | null>(null)
   const [checked, setChecked] = useState<Record<string, boolean>>({})
+  // Si no se pudo leer el progreso, la lista arrancaba vacía y el primer
+  // tilde borraba todo lo marcado (QA-09). Sin lectura, los tildes no andan.
+  const [progressError, setProgressError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
   // Qué filas de la tabla de precios tienen abierto el panel de "comparables
@@ -154,10 +168,12 @@ export default function EstrategiaPage() {
     setWeaverCount(weaversRes.error ? null : (weaversRes.count ?? 0))
     setVipCount(vipRes.error ? null : (vipRes.count ?? 0))
 
-    try {
-      const parsed = progressRes.data?.value ? JSON.parse(String(progressRes.data.value)) : {}
-      if (parsed && typeof parsed === 'object') setChecked(parsed as Record<string, boolean>)
-    } catch { /* valor corrupto → arrancar de cero */ }
+    if (progressRes.error) {
+      setProgressError('No se pudo leer lo que ya marcaste: recargá la página antes de tildar algo.')
+    } else {
+      setProgressError(null)
+      setChecked(parseProgress(progressRes.data?.value))
+    }
 
     setLoading(false)
   }, [])
@@ -172,17 +188,43 @@ export default function EstrategiaPage() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  const toggle = async (id: string) => {
-    const next = { ...checked, [id]: !checked[id] }
-    setChecked(next)
-    const supabase = createClient()
-    const { error } = await supabase
-      .from('site_settings')
-      .upsert({ key: PROGRESS_KEY, value: JSON.stringify(next) }, { onConflict: 'key' })
-    if (error) {
-      setChecked(checked)
-      showToast('No se pudo guardar. Probá de nuevo.')
-    }
+  // El progreso es un solo JSON: escribir el de esta pantalla pisaba lo que se
+  // marcó desde otra (QA-09). Cada tilde relee la base justo antes y cambia
+  // solo su tarea. Los de esta pantalla van en fila: con dos seguidos, el
+  // segundo podía releer antes de que el primero llegara y borrarlo.
+  const writes = useRef<Promise<void>>(Promise.resolve())
+  const queued = useRef(0)
+
+  const toggle = (id: string) => {
+    if (progressError) return
+    const value = !checked[id]
+    setChecked((prev) => ({ ...prev, [id]: value }))
+    queued.current += 1
+    writes.current = writes.current.then(async () => {
+      let next: Record<string, boolean> | null = null
+      try {
+        const supabase = createClient()
+        const { data, error: readErr } = await supabase.from('site_settings').select('value').eq('key', PROGRESS_KEY).maybeSingle()
+        if (!readErr) {
+          const merged = { ...parseProgress(data?.value), [id]: value }
+          const { error } = await supabase
+            .from('site_settings')
+            .upsert({ key: PROGRESS_KEY, value: JSON.stringify(merged), updated_at: new Date().toISOString() }, { onConflict: 'key' })
+          if (!error) next = merged
+        }
+      } catch {
+        // Sin red: se deshace abajo, y la fila sigue andando para el próximo tilde.
+      }
+      queued.current -= 1
+      if (!next) {
+        setChecked((prev) => ({ ...prev, [id]: !value }))
+        showToast('No se pudo guardar. Probá de nuevo.')
+      } else if (queued.current === 0) {
+        // Sin tildes en camino, manda la base: aparece también lo que se
+        // marcó desde otra pantalla.
+        setChecked(next)
+      }
+    })
   }
 
   // Estado vivo de los precios. Cuenta como hecho tanto el que coincide con el
@@ -207,6 +249,7 @@ export default function EstrategiaPage() {
         type="checkbox"
         checked={!!checked[a.id]}
         onChange={() => toggle(a.id)}
+        disabled={!!progressError}
         aria-label={a.label}
       />
       <span className="txt">
@@ -273,6 +316,13 @@ export default function EstrategiaPage() {
           background: '#1F1A1B', color: '#fff', borderRadius: 10,
           padding: '12px 18px', fontSize: '0.85rem', boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
         }}>{toast}</div>
+      )}
+
+      {progressError && (
+        <div role="alert" style={{
+          background: 'rgba(182,49,74,0.06)', border: '1px solid rgba(182,49,74,0.24)',
+          color: '#7a1e2f', padding: '12px 14px', borderRadius: 8, marginBottom: 18, fontSize: 13,
+        }}>{progressError}</div>
       )}
 
       {/* Pestañas */}

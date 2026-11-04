@@ -1,7 +1,8 @@
 // Fecha del drop (Configuración → Próximo drop, "2026-11-15 10:00") leída en
 // hora de Uruguay (UTC-3, sin horario de verano). Se usa igual en el servidor
 // (cron del mail, /vip, panel de la lista) y en el navegador (DropTeaser), así
-// la cuenta regresiva y el aviso nunca discrepan.
+// la cuenta regresiva y el aviso nunca discrepan. También los días enteros de
+// los cupones y la clave con la que el aviso a la lista sale una sola vez.
 //
 // Tolerante a cómo se escribe a mano (27/10/2026: estaba cargada "2026/10/28 "
 // y el servidor no la entendía → "no hay drop" en el panel y el aviso a la
@@ -68,4 +69,71 @@ export function dropWhenText(d: Date): string {
 /** "28 de octubre", para textos cortos (/vip). */
 export function dropDayText(d: Date): string {
   return new Intl.DateTimeFormat('es-UY', { timeZone: 'America/Montevideo', day: 'numeric', month: 'long' }).format(d).toLowerCase()
+}
+
+// ── Días enteros en hora de Uruguay (QA-16, 04/11/2026) ─────────────────────
+// Los cupones se guardaban con new Date(`${d}T00:00:00`), que usa la zona del
+// navegador: desde una compu en otra zona, cada guardado corría la vigencia un
+// día. El offset va fijo porque Uruguay no tiene horario de verano desde 2015.
+// null si no es una fecha "aaaa-mm-dd" (lo que da un <input type="date">).
+
+function diaUY(d: string, hora: string): string | null {
+  const s = (d ?? '').trim()
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null
+  const date = new Date(`${s}T${hora}-03:00`)
+  return Number.isNaN(date.getTime()) ? null : date.toISOString()
+}
+
+/** "2026-11-07" → "2026-11-07T03:00:00.000Z": el 7 arranca a las 00:00 de Montevideo. */
+export function inicioDiaUY(d: string): string | null {
+  return diaUY(d, '00:00:00')
+}
+
+/** "2026-11-07" → "2026-11-08T02:59:59.000Z": el 7 termina a las 23:59:59 de Montevideo. */
+export function finDiaUY(d: string): string | null {
+  return diaUY(d, '23:59:59')
+}
+
+// ── El aviso del drop a la lista, una sola vez (QA-13, 04/11/2026) ─────────
+// La clave era `${nombre}|${fecha tal como se escribió}`: corregir «Sunset ‘26»
+// por «Sunset '26» a horas del lanzamiento armaba un envío nuevo y la lista
+// entera recibía el mismo mail dos veces. Ahora la clave es la colección y el
+// instante del lanzamiento, que es lo que define un drop.
+
+/** Clave del aviso: "sunset-26|2026-10-28T22:00:00.000Z" (sin colección, "tienda|…"). */
+export function dropSentKey(slug: string, launch: Date): string {
+  return `${slug || 'tienda'}|${launch.toISOString()}`
+}
+
+/** Un aviso a la lista que salió hace menos de esto bloquea otro, aunque la clave cambie. */
+export const AVISO_PAUSA_MS = 12 * 3_600_000
+
+/**
+ * El aviso de este drop ya salió. Cuenta como enviado si lo anotado coincide
+ * con la clave nueva, o con la vieja (`${nombre}|${fecha}`) para que el drop
+ * en curso no se reenvíe al desplegar este cambio, o si cualquier aviso salió
+ * hace menos de 12 h. La vieja se compara solo por la fecha: lleva el nombre
+ * adentro, y corregirlo tampoco tiene que reenviar ese drop.
+ */
+export function avisoYaEnviado(p: {
+  /** site_settings.lista_email_enviado */
+  enviado: string | null | undefined
+  /** site_settings.lista_email_enviado_at (ISO) */
+  enviadoAt: string | null | undefined
+  name: string
+  rawDate: string
+  slug: string
+  launch: Date | null
+  now?: number
+}): boolean {
+  if (!p.name) return false
+  const anotado = (p.enviado ?? '').trim()
+  if (anotado) {
+    // Una fecha escrita a mano nunca termina como un ISO ("…:00.000Z"): la
+    // clave nueva no puede confundirse con una vieja.
+    if (p.rawDate && anotado.endsWith(`|${p.rawDate}`)) return true
+    if (p.launch && anotado === dropSentKey(p.slug, p.launch)) return true
+  }
+  const at = p.enviadoAt ? Date.parse(p.enviadoAt) : NaN
+  return Number.isFinite(at) && (p.now ?? Date.now()) - at < AVISO_PAUSA_MS
 }

@@ -9,6 +9,7 @@
 import { useState } from 'react'
 import { PRICE_TABLE, contribPerHour } from './data'
 import { calcPrice } from '@/lib/pricing'
+import { parseDecimal, parseMoneyUYU } from '@/lib/parse-money'
 
 interface Props {
   /** Precios vivos de la tienda, por slug (para comparar contra el actual). */
@@ -17,9 +18,18 @@ interface Props {
 
 const money = (n: number) => `$${n.toLocaleString('es-UY')}`
 
-function num(s: string): number {
-  const n = parseFloat(s.replace(',', '.'))
-  return isNaN(n) || n < 0 ? 0 : n
+// Los mismos parsers que el editor de cada prenda (lib/parse-money.ts, QA-02):
+// con parseFloat, "1.600" de materiales eran 1,6 pesos. La plata va en pesos
+// enteros; horas, margen y comisión aceptan coma decimal ("12,5").
+type Kind = 'pesos' | 'decimal'
+
+function read(s: string, kind: Kind): number | null {
+  return kind === 'pesos' ? parseMoneyUYU(s) : parseDecimal(s.replace('%', ''))
+}
+
+function num(s: string, kind: Kind): number {
+  const n = read(s, kind)
+  return n == null || n < 0 ? 0 : n
 }
 
 export default function Calculadora({ livePrices }: Props) {
@@ -44,10 +54,10 @@ export default function Calculadora({ livePrices }: Props) {
     }
   }
 
-  const h = num(hours)
+  const h = num(hours, 'decimal')
   const { costs, labour, marginAmount, commissionPct, commissionAmount, recommended, youKeep, perHour } = calcPrice({
-    hours: h, materials: num(materials), packaging: num(packaging), others: num(others),
-    rate: num(rate), margin: num(margin), commission: num(commission),
+    hours: h, materials: num(materials, 'pesos'), packaging: num(packaging, 'pesos'), others: num(others, 'pesos'),
+    rate: num(rate, 'pesos'), margin: num(margin, 'decimal'), commission: num(commission, 'decimal'),
   })
 
   const currentPerHour = product && currentPrice != null && product.hours && product.materials != null
@@ -57,24 +67,32 @@ export default function Calculadora({ livePrices }: Props) {
   const diff = currentPrice != null ? recommended - currentPrice : null
 
   const inputRow = (
-    id: string, label: string, value: string, set: (v: string) => void, suffix: string, hint?: string
-  ) => (
-    <div className="est-calc-field">
-      <label htmlFor={id}>{label}</label>
-      <div className="wrap">
-        <input
-          id={id}
-          type="number"
-          inputMode="decimal"
-          min={0}
-          value={value}
-          onChange={(e) => set(e.target.value)}
-        />
-        <span className="suffix">{suffix}</span>
+    id: string, label: string, value: string, set: (v: string) => void, suffix: string, kind: Kind, hint?: string
+  ) => {
+    // Se marca en vez de contar 0 en silencio y dar un precio que parece bien.
+    const bad = value.trim() !== '' && read(value, kind) == null
+    return (
+      <div className="est-calc-field">
+        <label htmlFor={id}>{label}</label>
+        <div className="wrap">
+          <input
+            id={id}
+            type="text"
+            inputMode={kind === 'pesos' ? 'numeric' : 'decimal'}
+            autoComplete="off"
+            value={value}
+            onChange={(e) => set(e.target.value)}
+            aria-invalid={bad || undefined}
+            style={bad ? { borderColor: '#c62828' } : undefined}
+          />
+          <span className="suffix">{suffix}</span>
+        </div>
+        {bad
+          ? <span className="hint" style={{ color: '#c62828' }}>{kind === 'pesos' ? 'Escribilo en pesos, sin centavos (ej. 1600 o 1.600).' : 'No se entiende el número (ej. 12 o 12,5).'}</span>
+          : hint && <span className="hint">{hint}</span>}
       </div>
-      {hint && <span className="hint">{hint}</span>}
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="est-calc">
@@ -92,13 +110,13 @@ export default function Calculadora({ livePrices }: Props) {
           <span className="hint">Trae las horas y materiales estimados de la tabla, y compara con el precio actual de la tienda.</span>
         </div>
 
-        {inputRow('calc-hours', 'Horas de tejido', hours, setHours, 'h')}
-        {inputRow('calc-materials', 'Materiales (lana, botones…)', materials, setMaterials, '$')}
-        {inputRow('calc-packaging', 'Packaging', packaging, setPackaging, '$', 'Bolsa, papel de seda, tarjeta.')}
-        {inputRow('calc-others', 'Otros costos', others, setOthers, '$', 'Envío que absorbés, feria, etc.')}
-        {inputRow('calc-rate', 'Tu tarifa por hora', rate, setRate, '$/h', 'Referencia: $150–250. El mínimo nacional es ~$127 (jul 2026).')}
-        {inputRow('calc-margin', 'Margen de marca', margin, setMargin, '%', 'Para reinvertir: fotos, lana de muestra, packaging mejor.')}
-        {inputRow('calc-commission', 'Comisión de cobro', commission, setCommission, '%', 'Mercado Pago ~6%. Transferencia o efectivo: 0.')}
+        {inputRow('calc-hours', 'Horas de tejido', hours, setHours, 'h', 'decimal')}
+        {inputRow('calc-materials', 'Materiales (lana, botones…)', materials, setMaterials, '$', 'pesos')}
+        {inputRow('calc-packaging', 'Packaging', packaging, setPackaging, '$', 'pesos', 'Bolsa, papel de seda, tarjeta.')}
+        {inputRow('calc-others', 'Otros costos', others, setOthers, '$', 'pesos', 'Envío que absorbés, feria, etc.')}
+        {inputRow('calc-rate', 'Tu tarifa por hora', rate, setRate, '$/h', 'pesos', 'Referencia: $150–250. El mínimo nacional es ~$127 (jul 2026).')}
+        {inputRow('calc-margin', 'Margen de marca', margin, setMargin, '%', 'decimal', 'Para reinvertir: fotos, lana de muestra, packaging mejor.')}
+        {inputRow('calc-commission', 'Comisión de cobro', commission, setCommission, '%', 'decimal', 'Mercado Pago ~6%. Transferencia o efectivo: 0.')}
       </div>
 
       <div className="est-calc-result">
@@ -111,8 +129,8 @@ export default function Calculadora({ livePrices }: Props) {
           <>
             <ul className="breakdown">
               <li><span>Materiales y costos</span><span>{money(Math.round(costs))}</span></li>
-              <li><span>Tu trabajo ({h} h × {money(num(rate))})</span><span>{money(Math.round(labour))}</span></li>
-              <li><span>Margen de marca ({num(margin)}%)</span><span>{money(Math.round(marginAmount))}</span></li>
+              <li><span>Tu trabajo ({h.toLocaleString('es-UY')} h × {money(num(rate, 'pesos'))})</span><span>{money(Math.round(labour))}</span></li>
+              <li><span>Margen de marca ({num(margin, 'decimal').toLocaleString('es-UY')}%)</span><span>{money(Math.round(marginAmount))}</span></li>
               {commissionPct > 0 && <li><span>Comisión ({commissionPct}%)</span><span>{money(commissionAmount)}</span></li>}
             </ul>
             <p className="keep">

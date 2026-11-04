@@ -11,11 +11,24 @@
 
 import { useState } from 'react'
 import { calcPrice, formatUyu } from '@/lib/pricing'
+import { parseDecimal, parseMoneyUYU } from '@/lib/parse-money'
 
-function num(s: string): number {
-  const n = parseFloat(s.replace(',', '.'))
-  return Number.isNaN(n) || n < 0 ? 0 : n
+// Los mismos parsers que el resto del admin (lib/parse-money.ts, QA-02): con
+// parseFloat, "1.600" de materiales eran 1,6 pesos y "1.600" en "Mismo precio
+// para todos los talles" ponía UYU 2 en cada talle. La plata va en pesos
+// enteros; horas, margen y comisión aceptan coma decimal ("12,5").
+function pesos(s: string): number {
+  return parseMoneyUYU(s) ?? 0
 }
+
+function decimal(s: string): number {
+  const n = parseDecimal(s.replace('%', ''))
+  return n == null || n < 0 ? 0 : n
+}
+
+/** Campo escrito que no se puede leer con su parser: se marca en vez de contar 0 en silencio. */
+const unreadable = (s: string, kind: 'pesos' | 'decimal') =>
+  s.trim() !== '' && (kind === 'pesos' ? parseMoneyUYU(s) : parseDecimal(s.replace('%', ''))) == null
 
 const boxStyle: React.CSSProperties = {
   display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 8,
@@ -36,26 +49,29 @@ export function SameSizePrice({
   onUseBase: () => void
 }) {
   const [value, setValue] = useState('')
-  const price = value.trim() || basePrice.trim()
+  const price = parseMoneyUYU(value.trim() || basePrice.trim())
+  const typedUnreadable = unreadable(value, 'pesos')
   return (
     <div style={boxStyle}>
       <div className="admin-field" style={{ flex: '1 1 160px', margin: 0 }}>
         <label htmlFor="same-size-price">Mismo precio para todos los talles</label>
         <input
           id="same-size-price"
-          type="number"
+          type="text"
           inputMode="numeric"
-          min={0}
+          autoComplete="off"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={basePrice ? `Ej. ${basePrice}` : 'Ej. 3450'}
+          aria-invalid={typedUnreadable || undefined}
         />
+        {typedUnreadable && <span className="field-error">Escribilo en pesos, sin centavos (ej. 1600 o 1.600).</span>}
       </div>
       <button
         type="button"
         className="admin-btn admin-btn-secondary admin-btn-sm"
-        disabled={!price || num(price) <= 0}
-        onClick={() => { onApply(String(Math.round(num(price)))); setValue('') }}
+        disabled={typedUnreadable || price == null || price <= 0}
+        onClick={() => { if (price) { onApply(String(price)); setValue('') } }}
       >
         Poner en todos
       </button>
@@ -92,7 +108,7 @@ export function MarginPicker({
       </label>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
         {['0', '15', '30', '50'].map((m) => {
-          const on = num(margin) === num(m)
+          const on = decimal(margin) === decimal(m)
           return (
             <button
               key={m}
@@ -112,14 +128,14 @@ export function MarginPicker({
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
           <input
             id={id}
-            type="number"
+            type="text"
             inputMode="decimal"
-            min={0}
-            max={300}
+            autoComplete="off"
             value={margin}
             onChange={(e) => setMargin(e.target.value)}
             aria-label="Margen de ganancia en porcentaje"
-            style={{ width: 72, minHeight: 36, padding: '4px 8px', borderRadius: 8, border: '1px solid rgba(31,26,27,0.18)', fontSize: 14 }}
+            aria-invalid={unreadable(margin, 'decimal') || undefined}
+            style={{ width: 72, minHeight: 36, padding: '4px 8px', borderRadius: 8, border: `1px solid ${unreadable(margin, 'decimal') ? '#c62828' : 'rgba(31,26,27,0.18)'}`, fontSize: 14 }}
           />
           <span style={{ fontSize: 13, color: '#8C8285' }}>%</span>
         </span>
@@ -167,26 +183,39 @@ export function CalculadoraPrecio({
   const [rate, setRate] = useState('150')
   const [commission, setCommission] = useState('0')
 
-  const h = num(hours)
+  const h = decimal(hours)
   const r = calcPrice({
-    hours: h, materials: num(materials), packaging: num(packaging), others: num(others),
-    rate: num(rate), margin: num(margin), commission: num(commission),
+    hours: h, materials: pesos(materials), packaging: pesos(packaging), others: pesos(others),
+    rate: pesos(rate), margin: decimal(margin), commission: decimal(commission),
   })
   const diff = currentPrice != null && currentPrice > 0 && h > 0 ? r.recommended - currentPrice : null
 
-  const field = (id: string, label: string, value: string, set: (v: string) => void, hint?: string) => (
-    <div className="admin-field" style={{ margin: 0 }}>
-      <label htmlFor={id}>{label}</label>
-      <input id={id} type="number" inputMode="decimal" min={0} value={value} onChange={(e) => set(e.target.value)} />
-      {hint && <span className="field-hint">{hint}</span>}
-    </div>
-  )
+  const field = (id: string, label: string, value: string, set: (v: string) => void, kind: 'pesos' | 'decimal', hint?: string) => {
+    const bad = unreadable(value, kind)
+    return (
+      <div className="admin-field" style={{ margin: 0 }}>
+        <label htmlFor={id}>{label}</label>
+        <input
+          id={id}
+          type="text"
+          inputMode={kind === 'pesos' ? 'numeric' : 'decimal'}
+          autoComplete="off"
+          value={value}
+          onChange={(e) => set(e.target.value)}
+          aria-invalid={bad || undefined}
+        />
+        {bad
+          ? <span className="field-error">{kind === 'pesos' ? 'Escribilo en pesos, sin centavos (ej. 1600 o 1.600).' : 'No se entiende el número (ej. 12 o 12,5).'}</span>
+          : hint && <span className="field-hint">{hint}</span>}
+      </div>
+    )
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div className="admin-form-grid">
-        {field('calc-hours', 'Horas de tejido', hours, setHours, 'Lo ideal: cronometrar una pieza real.')}
-        {field('calc-materials', 'Materiales ($)', materials, setMaterials, 'Lana, botones, forro.')}
+        {field('calc-hours', 'Horas de tejido', hours, setHours, 'decimal', 'Lo ideal: cronometrar una pieza real.')}
+        {field('calc-materials', 'Materiales ($)', materials, setMaterials, 'pesos', 'Lana, botones, forro.')}
       </div>
 
       <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
@@ -222,10 +251,10 @@ export function CalculadoraPrecio({
           Supuestos de la cuenta (tarifa, packaging, comisión…)
         </summary>
         <div className="admin-form-grid" style={{ marginTop: 10 }}>
-          {field('calc-rate', 'Tarifa por hora ($)', rate, setRate, 'Mínimo nacional ~$127. Referencia: $150–250.')}
-          {field('calc-packaging', 'Packaging ($)', packaging, setPackaging)}
-          {field('calc-others', 'Otros costos ($)', others, setOthers, 'Envío que absorbés, feria…')}
-          {field('calc-commission', 'Comisión de cobro (%)', commission, setCommission, 'Mercado Pago ~6%. Transferencia: 0.')}
+          {field('calc-rate', 'Tarifa por hora ($)', rate, setRate, 'pesos', 'Mínimo nacional ~$127. Referencia: $150–250.')}
+          {field('calc-packaging', 'Packaging ($)', packaging, setPackaging, 'pesos')}
+          {field('calc-others', 'Otros costos ($)', others, setOthers, 'pesos', 'Envío que absorbés, feria…')}
+          {field('calc-commission', 'Comisión de cobro (%)', commission, setCommission, 'decimal', 'Mercado Pago ~6%. Transferencia: 0.')}
         </div>
       </details>
 
@@ -238,8 +267,8 @@ export function CalculadoraPrecio({
           <>
             <ul style={{ margin: '0 0 8px', paddingLeft: 18, fontSize: 13, lineHeight: 1.6, color: '#4A4043' }}>
               <li>Materiales y costos: {formatUyu(r.costs)}</li>
-              <li>Trabajo: {h.toLocaleString('es-UY')} h × {formatUyu(num(rate))} = {formatUyu(r.labour)}</li>
-              <li>Ganancia ({num(margin)}%): {formatUyu(r.marginAmount)}</li>
+              <li>Trabajo: {h.toLocaleString('es-UY')} h × {formatUyu(pesos(rate))} = {formatUyu(r.labour)}</li>
+              <li>Ganancia ({decimal(margin).toLocaleString('es-UY')}%): {formatUyu(r.marginAmount)}</li>
               {r.commissionPct > 0 && <li>Comisión ({r.commissionPct}%): {formatUyu(r.commissionAmount)}</li>}
             </ul>
             <p style={{ margin: '0 0 10px', fontSize: 13, color: '#4A4043' }}>

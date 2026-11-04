@@ -1,7 +1,7 @@
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SITE_URL } from '@/lib/env'
-import { parseDropDateUY, dropDateHasTime, dropWhenText } from '@/lib/drop-date'
+import { parseDropDateUY, dropDateHasTime, dropWhenText, dropSentKey, avisoYaEnviado } from '@/lib/drop-date'
 import { DROP_COPY_DEFAULTS, type DropCopyKey } from '@/lib/lista-copy'
 import { listaConfigured, dropEarlyAccessMail, type ListaMail } from './lista'
 
@@ -19,7 +19,7 @@ export const TEST_RECIPIENT = 'floralcrochet12@gmail.com'
 
 const KEYS = [
   'drop_enabled', 'drop_name', 'drop_date', 'drop_teaser', 'drop_collection_slug',
-  'lista_email_enviado', 'lista_email_estado', 'lista_envio_auto', 'lista_cron_visto',
+  'lista_email_enviado', 'lista_email_enviado_at', 'lista_email_estado', 'lista_envio_auto', 'lista_cron_visto',
   ...Object.keys(DROP_COPY_DEFAULTS),
 ]
 
@@ -74,7 +74,10 @@ export async function loadDropPlan(db: SupabaseClient): Promise<DropPlan> {
   }
   if (!listaConfigured()) problems.push('Falta configurar el envío de mails en Netlify (RESEND_API_KEY, EMAIL_FROM y CRON_SECRET).')
 
-  const sentKey = `${name}|${rawDate}`
+  // La clave del envío es la colección y el instante del lanzamiento, no el
+  // nombre visible: corregir el nombre ya no vuelve a mandar el mail a toda la
+  // lista (QA-13). Ver avisoYaEnviado en lib/drop-date.ts.
+  const sentKey = launch ? dropSentKey(slug, launch) : ''
   const copy = Object.fromEntries(
     (Object.keys(DROP_COPY_DEFAULTS) as DropCopyKey[]).map((k) => [k, (s[k] ?? '').trim() || DROP_COPY_DEFAULTS[k]]),
   ) as Record<DropCopyKey, string>
@@ -90,7 +93,7 @@ export async function loadDropPlan(db: SupabaseClient): Promise<DropPlan> {
     teaser: (s.drop_teaser ?? '').trim(),
     collection,
     sentKey,
-    alreadySent: !!name && s.lista_email_enviado === sentKey,
+    alreadySent: avisoYaEnviado({ enviado: s.lista_email_enviado, enviadoAt: s.lista_email_enviado_at, name, rawDate, slug, launch }),
     auto: s.lista_envio_auto === 'true',
     copy,
     status: s.lista_email_estado ?? '',

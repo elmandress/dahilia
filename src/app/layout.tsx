@@ -20,6 +20,7 @@ import { brandProfileUrls } from '@/lib/profiles'
 import { getCatalog } from '@/lib/catalog'
 import { isReadyToShip, getListingPrice } from '@/lib/types'
 import { ADDON_MAX_UYU } from '@/lib/addons'
+import { parseMoneyUYU } from '@/lib/parse-money'
 import './globals.css'
 
 export const viewport: Viewport = {
@@ -216,8 +217,9 @@ export default async function RootLayout({
   const shippingEstimate = settings.shipping_estimate ?? ''
   // Umbral de envío gratis (UYU). Vacío o no numérico = apagado. Lo fija la
   // dueña en Configuración; carrito y drawer muestran cuánto falta para llegar.
-  // Sin puntos ni comas: "1.600" se leía como 1 (envío gratis en todo pedido).
-  const freeShippingThreshold = Math.max(0, parseInt((settings.free_shipping_threshold ?? '').replace(/[.,\s]/g, ''), 10) || 0)
+  // Con el parser de los montos (QA-14): "$ 1.600" y "1.600" son 1600; con
+  // sacar puntos y comas, "$ 1.600" apagaba el envío gratis y "1600,5" daba 16005.
+  const freeShippingThreshold = parseMoneyUYU(settings.free_shipping_threshold ?? '') ?? 0
   // Aviso de lista de espera: visible salvo que la dueña lo apague, y solo si
   // escribió el texto (misma semántica default-ON que los demás toggles del CMS).
   const queueNote = settings.queue_note_enabled !== 'false' ? (settings.queue_note_text ?? '').trim() : ''

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Discount, Category, Product } from '@/lib/types'
 import { notifySiteWideChange } from '@/lib/seo-notify'
+import { parsePercent } from '@/lib/parse-money'
 
 type DiscountedProduct = Pick<Product, 'id' | 'name' | 'status' | 'discount_percent' | 'discount_active'>
 
@@ -56,6 +57,10 @@ export default function DescuentosAdminPage() {
     e.preventDefault()
     if (!label.trim()) { setError('Poné un nombre al descuento.'); return }
     if (scope === 'category' && !categoryId) { setError('Elegí una categoría.'); return }
+    // Con el parser de todo el admin (QA-02): "95" o "15 por ciento" ya no se
+    // recortan ni pasan a 0 en silencio, se avisa.
+    const pct = parsePercent(percent)
+    if (pct == null || pct < 1) { setError('El porcentaje va de 1 a 90.'); return }
     setError(null)
     try {
       const supabase = createClient()
@@ -63,7 +68,7 @@ export default function DescuentosAdminPage() {
         label: label.trim(),
         scope,
         category_id: scope === 'category' ? categoryId : null,
-        percent: Math.max(0, Math.min(90, parseInt(percent) || 0)),
+        percent: pct,
         active: true,
       })
       if (err) throw err
@@ -166,7 +171,7 @@ export default function DescuentosAdminPage() {
             )}
             <div className="admin-field">
               <label>Porcentaje (%)</label>
-              <input type="number" min={0} max={90} value={percent} onChange={(e) => setPercent(e.target.value)} required />
+              <input type="number" min={1} max={90} value={percent} onChange={(e) => setPercent(e.target.value)} required />
             </div>
             <button type="submit" className="admin-btn admin-btn-primary" style={{ marginTop: '0.5rem' }}>
               Crear descuento

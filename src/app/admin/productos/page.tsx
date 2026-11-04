@@ -9,22 +9,30 @@ import { notifyReindex } from '@/lib/seo-notify'
 import { recommendPrice, formatUyu, applyBulkOp, type BulkOp, type PricingRecommendation, type PricingPeer } from '@/lib/pricing'
 import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
 import { DEFAULT_MARGIN_PCT } from '@/lib/product-costs'
+import { parseDecimal, parseMoneyUYU, confirmacionDePrecios } from '@/lib/parse-money'
+import { armarCambiosLote, leerCelda, preciosNuevos, textoCelda, type BorradorPrecios } from './lote'
 
 // ---- Edición de precios en lote (08/10/2026) ----
 // Antes cada precio se cambiaba entrando a la prenda, una por una. Acá se
 // editan todos desde la tabla: el borrador vive en memoria (solo los campos
-// tocados) y nada llega a la tienda hasta "Guardar cambios".
-type PriceDraft = { base?: string; sizes?: Record<string, string> }
-type Drafts = Record<string, PriceDraft>
+// tocados) y nada llega a la tienda hasta "Guardar cambios". Qué se manda al
+// guardar lo arma lote.ts (QA-02, QA-10, 04/11/2026).
+// Por prenda y, adentro, por NOMBRE de talle (no por id): si la prenda se
+// guardaba en su ficha, el talle cambiaba de id y el borrador se perdía.
+type Drafts = Record<string, BorradorPrecios>
 
-const origBase = (p: Product) => (p.base_price_uyu ? String(p.base_price_uyu) : '')
-const origSize = (s: ProductSize) => (s.price_uyu ? String(s.price_uyu) : '')
+const origBase = (p: Product) => textoCelda(p.base_price_uyu)
+const origSize = (s: ProductSize) => textoCelda(s.price_uyu)
 const baseIn = (d: Drafts, p: Product) => d[p.id]?.base ?? origBase(p)
-const sizeIn = (d: Drafts, p: Product, s: ProductSize) => d[p.id]?.sizes?.[s.id] ?? origSize(s)
+const sizeIn = (d: Drafts, p: Product, s: ProductSize) => d[p.id]?.sizes?.[s.size] ?? origSize(s)
 const sortedSizes = (p: Product) => [...(p.sizes ?? [])].sort((a, b) => a.sort_order - b.sort_order)
-const toInt = (v: string) => { const n = parseInt(v); return Number.isFinite(n) && n > 0 ? n : null }
+/** Precio de una celda ("1.600" → 1600). Lo que no se entiende cuenta como
+ *  sin precio acá; al guardar se frena aparte, con aviso. */
+const precioCelda = (v: string) => leerCelda(v) ?? null
 const isDraftDirty = (d: Drafts, p: Product) =>
   baseIn(d, p) !== origBase(p) || (p.sizes ?? []).some((s) => sizeIn(d, p, s) !== origSize(s))
+
+const STALE_NOTE = 'Esta prenda cambió desde que abriste la tabla (en su ficha, en otra pestaña) o se venció la sesión. La tabla ya se recargó: revisá el precio y guardá de nuevo.'
 
 const BULK_OPS: Array<[BulkOp, string]> = [
   ['pct-up', 'Subir %'],
@@ -67,6 +75,8 @@ export default function ProductosPage() {
   const [bulkValue, setBulkValue] = useState('')
   const [savingBulk, setSavingBulk] = useState(false)
   const [bulkMsg, setBulkMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  // Aviso en la fila de cada prenda que no se guardó porque cambió en otro lado.
+  const [rowNotes, setRowNotes] = useState<Record<string, string>>({})
   const dirtyProducts = products.filter((p) => isDraftDirty(drafts, p))
   useUnsavedWarning(dirtyProducts.length > 0)
 
@@ -241,11 +251,15 @@ export default function ProductosPage() {
     setProducts((curr) => curr.map((x) => (x.id === p.id ? { ...x, status: next } : x)))
     // .select: con la sesión vencida el UPDATE toca 0 filas sin dar error y el
     // cambio se veía hecho (auditoría 04/11/2026).
-    const { data: upd, error } = await supabase.from('products').update({ status: next }).eq('id', p.id).select('id')
+    const { data: upd, error } = await supabase.from('products').update({ status: next }).eq('id', p.id).select('id, updated_at')
     if (error || !upd?.length) {
       // Revert on failure.
       setProducts((curr) => curr.map((x) => (x.id === p.id ? { ...x, status: p.status } : x)))
     } else {
+      // El trigger movió updated_at: sin anotarlo, la tabla de precios creería
+      // que la prenda cambió en otro lado y no guardaría su precio (QA-10).
+      const fresh = (upd[0] as { updated_at?: string }).updated_at
+      if (fresh) setProducts((curr) => curr.map((x) => (x.id === p.id ? { ...x, updated_at: fresh } : x)))
       // Publicar o despublicar cambia si la URL debería estar indexada, y
       // el HTML cacheado tiene que dejar de mostrar el estado viejo ya.
       notifyReindex([`/tienda/${p.slug}`, '/tienda', '/'])
@@ -306,16 +320,21 @@ export default function ProductosPage() {
 
   const editBase = (id: string, v: string) =>
     setDrafts((d) => ({ ...d, [id]: { ...d[id], base: v } }))
-  const editSize = (id: string, sizeId: string, v: string) =>
-    setDrafts((d) => ({ ...d, [id]: { ...d[id], sizes: { ...d[id]?.sizes, [sizeId]: v } } }))
+  const editSize = (id: string, sizeName: string, v: string) =>
+    setDrafts((d) => ({ ...d, [id]: { ...d[id], sizes: { ...d[id]?.sizes, [sizeName]: v } } }))
 
   const toggleBulkMode = () => {
     if (bulkMode && dirtyProducts.length > 0
       && !confirm(`Tenés ${dirtyProducts.length} producto(s) con precios sin guardar. ¿Salir y descartarlos?`)) return
+    // Al abrir la tabla de precios se relee el catálogo: "cambió desde que
+    // abriste la tabla" se mide desde acá, no desde que se cargó la página
+    // (un reordenamiento previo también mueve updated_at).
+    if (!bulkMode) loadData()
     setBulkMode(!bulkMode)
     setDrafts({})
     setSelected(new Set())
     setBulkMsg(null)
+    setRowNotes({})
   }
 
   const visibleIds = filteredProducts.map((p) => p.id)
@@ -334,9 +353,12 @@ export default function ProductosPage() {
   const bulkTargets = filteredProducts.filter((p) => selected.has(p.id) && !p.is_custom_only)
 
   const applyBulk = () => {
-    const v = parseFloat(bulkValue.replace(',', '.'))
-    if (!Number.isFinite(v) || v <= 0) {
-      setBulkMsg({ ok: false, text: 'Escribí un número mayor que 0.' })
+    // Porcentaje con coma decimal ("7,5"); montos en pesos enteros: con
+    // parseFloat, "Sumar $ 1.000" sumaba 1 peso (QA-02).
+    const pct = bulkOp.startsWith('pct')
+    const v = pct ? parseDecimal(bulkValue.replace('%', '')) : parseMoneyUYU(bulkValue)
+    if (v == null || v <= 0) {
+      setBulkMsg({ ok: false, text: pct ? 'Escribí un porcentaje mayor que 0 (ej. 10).' : 'Escribí un monto mayor que 0, en pesos y sin centavos (ej. 200 o 1.000).' })
       return
     }
     if (bulkTargets.length === 0) {
@@ -348,17 +370,17 @@ export default function ProductosPage() {
       const next = { ...d }
       for (const p of bulkTargets) {
         const sizes: Record<string, string> = { ...next[p.id]?.sizes }
-        const draft: PriceDraft = { ...next[p.id], sizes }
+        const draft: BorradorPrecios = { ...next[p.id], sizes }
         if (bulkOp === 'set') {
           // Un solo precio: el base, y cada talle vacío (= usa el base).
           draft.base = String(value)
-          for (const s of p.sizes ?? []) sizes[s.id] = ''
+          for (const s of p.sizes ?? []) sizes[s.size] = ''
         } else {
-          const b = toInt(baseIn(d, p))
+          const b = precioCelda(baseIn(d, p))
           if (b != null) draft.base = String(applyBulkOp(b, bulkOp, value))
           for (const s of p.sizes ?? []) {
-            const sp = toInt(sizeIn(d, p, s))
-            if (sp != null) sizes[s.id] = String(applyBulkOp(sp, bulkOp, value))
+            const sp = precioCelda(sizeIn(d, p, s))
+            if (sp != null) sizes[s.size] = String(applyBulkOp(sp, bulkOp, value))
           }
         }
         next[p.id] = draft
@@ -372,7 +394,7 @@ export default function ProductosPage() {
   // que todos usen el precio base de la prenda.
   const equalizeSizes = () => {
     const withSizes = bulkTargets.filter((p) => (p.sizes?.length ?? 0) > 0)
-    const ok = withSizes.filter((p) => toInt(baseIn(drafts, p)) != null)
+    const ok = withSizes.filter((p) => precioCelda(baseIn(drafts, p)) != null)
     const skipped = withSizes.length - ok.length
     if (ok.length === 0) {
       setBulkMsg({ ok: false, text: 'Ninguna de las prendas marcadas tiene talles y precio base para igualar.' })
@@ -382,7 +404,7 @@ export default function ProductosPage() {
       const next = { ...d }
       for (const p of ok) {
         const sizes: Record<string, string> = { ...next[p.id]?.sizes }
-        for (const s of p.sizes ?? []) sizes[s.id] = ''
+        for (const s of p.sizes ?? []) sizes[s.size] = ''
         next[p.id] = { ...next[p.id], sizes }
       }
       return next
@@ -396,37 +418,67 @@ export default function ProductosPage() {
   const saveBulk = async () => {
     const list = dirtyProducts
     if (list.length === 0) return
+    // Qué cambia de verdad en cada prenda (lote.ts): el base solo si se tocó y
+    // cada talle con el precio que tenía al abrir la tabla.
+    const planes = list.map((p) => ({ p, cambios: armarCambiosLote(p, drafts[p.id]) }))
+    const unreadable = planes.find(({ cambios }) => cambios.invalidos.length > 0)
+    if (unreadable) {
+      setBulkMsg({ ok: false, text: `En "${unreadable.p.name}" hay precios que no se entienden (${unreadable.cambios.invalidos.join(', ')}): escribilos en pesos, sin centavos (ej. 1600 o 1.600). No se guardó nada.` })
+      return
+    }
     const noPrice = list.find((p) => !p.is_custom_only
-      && toInt(baseIn(drafts, p)) == null
-      && !(p.sizes ?? []).some((s) => toInt(sizeIn(drafts, p, s)) != null))
+      && precioCelda(baseIn(drafts, p)) == null
+      && !(p.sizes ?? []).some((s) => precioCelda(sizeIn(drafts, p, s)) != null))
     if (noPrice) {
       setBulkMsg({ ok: false, text: `"${noPrice.name}" quedaría sin ningún precio. Poné un precio base o en algún talle.` })
       return
     }
+    // Una sola pregunta con todos los precios raros (bajan de UYU 100 o
+    // cambian más de la mitad): acá no hay otra vista previa antes de que
+    // lleguen a la tienda, el feed y el píxel (QA-02).
+    const pregunta = confirmacionDePrecios(planes.flatMap(({ p, cambios }) =>
+      preciosNuevos(p, cambios).map((c) => ({ ...c, etiqueta: `${p.name}, ${c.etiqueta}` }))))
+    if (pregunta && !confirm(pregunta)) return
+
     setSavingBulk(true)
     setBulkMsg(null)
+    setRowNotes({})
     const supabase = createClient()
     const now = new Date().toISOString()
     const failed: string[] = []
-    await Promise.all(list.map(async (p) => {
+    const stale: Record<string, string> = {}
+    const touched: Product[] = []
+    await Promise.all(planes.map(async ({ p, cambios }) => {
+      // "1.600" donde había 1600: misma plata, nada que escribir.
+      if (!cambios.producto && cambios.talles.length === 0) return
       // updated_at también cuando solo cambia un talle: es el lastmod del
-      // sitemap, y Google tiene que ver que la ficha cambió.
-      const { data: upd, error } = await supabase
+      // sitemap, y Google tiene que ver que la ficha cambió. El bloqueo va con
+      // el updated_at tal cual se cargó (normalizado ya no coincide): si la
+      // prenda se guardó en su ficha o en otra pestaña, no se pisa (QA-10).
+      let productUpdate = supabase
         .from('products')
-        .update({ base_price_uyu: toInt(baseIn(drafts, p)), updated_at: now })
+        .update({ ...cambios.producto, updated_at: now })
         .eq('id', p.id)
-        .select('id')
-      if (error || !upd?.length) { failed.push(p.id); return }
-      const changed = (p.sizes ?? []).filter((s) => sizeIn(drafts, p, s) !== origSize(s))
-      const results = await Promise.all(changed.map((s) =>
-        supabase.from('product_sizes').update({ price_uyu: toInt(sizeIn(drafts, p, s)) }).eq('id', s.id).select('id')))
-      if (results.some((r) => r.error || !r.data?.length)) failed.push(p.id)
+      if (p.updated_at) productUpdate = productUpdate.eq('updated_at', p.updated_at)
+      const { data: upd, error } = await productUpdate.select('id')
+      if (error) { failed.push(p.id); return }
+      // 0 filas: cambió desde que se abrió la tabla (o venció la sesión).
+      if (!upd?.length) { failed.push(p.id); stale[p.id] = STALE_NOTE; return }
+      touched.push(p)
+      // Cada talle solo si sigue con el precio que tenía al abrir la tabla.
+      const results = await Promise.all(cambios.talles.map((t) => {
+        const sizeUpdate = supabase.from('product_sizes').update({ price_uyu: t.price_uyu }).eq('product_id', p.id).eq('size', t.size)
+        return (t.esperado == null ? sizeUpdate.is('price_uyu', null) : sizeUpdate.eq('price_uyu', t.esperado)).select('id')
+      }))
+      if (results.some((r) => r.error)) failed.push(p.id)
+      else if (results.some((r) => !r.data?.length)) { failed.push(p.id); stale[p.id] = STALE_NOTE }
     }))
     const saved = list.filter((p) => !failed.includes(p.id))
-    if (saved.length > 0) notifyReindex([...saved.map((p) => `/tienda/${p.slug}`), '/tienda', '/'])
+    if (touched.length > 0) notifyReindex([...touched.map((p) => `/tienda/${p.slug}`), '/tienda', '/'])
     await loadData()
     // Lo que falló queda en borrador para reintentar; lo guardado se limpia.
     setDrafts((d) => Object.fromEntries(Object.entries(d).filter(([id]) => failed.includes(id))))
+    setRowNotes(stale)
     setSavingBulk(false)
     setBulkMsg(failed.length === 0
       ? { ok: true, text: `Guardado: ${saved.length} prenda(s) con precio nuevo en la tienda.` }
@@ -517,9 +569,9 @@ export default function ProductosPage() {
               {BULK_OPS.map(([op, label]) => <option key={op} value={op}>{label}</option>)}
             </select>
             <input
-              type="number"
-              inputMode="decimal"
-              min={0}
+              type="text"
+              inputMode={bulkOp.startsWith('pct') ? 'decimal' : 'numeric'}
+              autoComplete="off"
               value={bulkValue}
               onChange={(e) => setBulkValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') applyBulk() }}
@@ -558,7 +610,7 @@ export default function ProductosPage() {
             <button
               type="button"
               className="admin-btn admin-btn-secondary"
-              onClick={() => { setDrafts({}); setBulkMsg(null) }}
+              onClick={() => { setDrafts({}); setBulkMsg(null); setRowNotes({}) }}
               disabled={savingBulk || dirtyProducts.length === 0}
             >
               Descartar
@@ -720,8 +772,9 @@ export default function ProductosPage() {
                         <BulkPriceCell
                           product={product}
                           drafts={drafts}
+                          note={rowNotes[product.id]}
                           onBase={(v) => editBase(product.id, v)}
-                          onSize={(sid, v) => editSize(product.id, sid, v)}
+                          onSize={(sizeName, v) => editSize(product.id, sizeName, v)}
                         />
                       ) : (
                         <>
@@ -732,7 +785,7 @@ export default function ProductosPage() {
                       <PriceHint
                         rec={recommendPrice({
                           slug: product.slug,
-                          price: bulkMode ? toInt(baseIn(drafts, product)) : product.base_price_uyu,
+                          price: bulkMode ? precioCelda(baseIn(drafts, product)) : product.base_price_uyu,
                           hours: costs[product.id]?.hours,
                           materials: costs[product.id]?.materials,
                           categoryId: product.category?.id ?? null,
@@ -865,12 +918,18 @@ const cellInput: React.CSSProperties = {
   border: '1px solid rgba(31,26,27,0.18)', fontSize: '0.85rem',
 }
 
+/** Borde de la celda: rojo si no se entiende, vino si cambió, gris si no. */
+const cellBorder = (v: string, orig: string) =>
+  leerCelda(v) === undefined ? '#c62828' : v !== orig ? '#8F3B53' : 'rgba(31,26,27,0.18)'
+
 /** Celda de precio en modo edición: el base y, debajo, un campo por talle. */
-function BulkPriceCell({ product, drafts, onBase, onSize }: {
+function BulkPriceCell({ product, drafts, note, onBase, onSize }: {
   product: Product
   drafts: Drafts
+  /** Por qué no se guardó la última vez (cambió en otro lado). */
+  note?: string
   onBase: (v: string) => void
-  onSize: (sizeId: string, v: string) => void
+  onSize: (sizeName: string, v: string) => void
 }) {
   if (product.is_custom_only) {
     return <span style={{ fontSize: '0.8rem', color: '#8C8285' }}>A medida (se cotiza)</span>
@@ -878,18 +937,22 @@ function BulkPriceCell({ product, drafts, onBase, onSize }: {
   const base = baseIn(drafts, product)
   const dirty = isDraftDirty(drafts, product)
   const sizes = sortedSizes(product)
+  // Texto y no type="number": en es-UY el navegador convierte "1.600,50" en
+  // "1.60050" antes de que el código lo vea (QA-02).
+  const unreadable = leerCelda(base) === undefined || sizes.some((s) => leerCelda(sizeIn(drafts, product, s)) === undefined)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 150 }}>
       <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: '#8C8285' }}>
         Base
         <input
-          type="number"
+          type="text"
           inputMode="numeric"
-          min={0}
+          autoComplete="off"
           value={base}
           onChange={(e) => onBase(e.target.value)}
           aria-label={`Precio base de ${product.name}`}
-          style={{ ...cellInput, borderColor: base !== origBase(product) ? '#8F3B53' : 'rgba(31,26,27,0.18)' }}
+          aria-invalid={leerCelda(base) === undefined || undefined}
+          style={{ ...cellInput, borderColor: cellBorder(base, origBase(product)) }}
         />
       </label>
       {sizes.length > 0 && (
@@ -900,20 +963,25 @@ function BulkPriceCell({ product, drafts, onBase, onSize }: {
               <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', color: '#8C8285' }}>
                 {s.size}
                 <input
-                  type="number"
+                  type="text"
                   inputMode="numeric"
-                  min={0}
+                  autoComplete="off"
                   value={v}
-                  onChange={(e) => onSize(s.id, e.target.value)}
+                  onChange={(e) => onSize(s.size, e.target.value)}
                   placeholder={base || '—'}
                   aria-label={`Precio del talle ${s.size} de ${product.name} (vacío = precio base)`}
-                  style={{ ...cellInput, width: 80, borderColor: v !== origSize(s) ? '#8F3B53' : 'rgba(31,26,27,0.18)' }}
+                  aria-invalid={leerCelda(v) === undefined || undefined}
+                  style={{ ...cellInput, width: 80, borderColor: cellBorder(v, origSize(s)) }}
                 />
               </label>
             )
           })}
         </div>
       )}
+      {unreadable && (
+        <span style={{ fontSize: '0.72rem', color: '#c62828' }}>En pesos, sin centavos (ej. 1600 o 1.600)</span>
+      )}
+      {note && <span role="status" style={{ fontSize: '0.72rem', color: '#7a1e2f', lineHeight: 1.35, maxWidth: 260 }}>{note}</span>}
       {dirty && <span style={{ fontSize: '0.72rem', color: '#8F3B53', fontWeight: 500 }}>• sin guardar</span>}
     </div>
   )

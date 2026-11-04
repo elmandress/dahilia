@@ -1,4 +1,5 @@
 import { dahila } from './ui/tokens'
+import { parseCount } from '@/lib/parse-money'
 
 export interface EncargosCuposState {
   enabled: boolean
@@ -70,11 +71,17 @@ export function EncargosDisponibles({ state }: { state: EncargosCuposState }) {
 }
 
 export function getEncargosCuposState(settings: Record<string, string>): EncargosCuposState {
+  // Un número limpio o nada (QA-14): sacar lo que no es dígito leía "2 de 4"
+  // como 24 tomados y mostraba "Encargos cerrados" con lugares libres. Si el
+  // total o los tomados no se entienden, el aviso no sale: la escasez se
+  // muestra solo si es verdad. Vacío = 0, como dice el campo.
+  const count = (raw: string | undefined) => ((raw ?? '').trim() === '' ? 0 : parseCount(raw))
+  const total = count(settings.encargos_cupos_total)
+  const taken = count(settings.encargos_cupos_taken)
   return {
-    enabled: settings.encargos_cupos_enabled === 'true',
-    // Solo los dígitos: "1.000" o "10 cupos" no se leen como 1 o NaN.
-    total: parseInt((settings.encargos_cupos_total || '0').replace(/\D/g, ''), 10) || 0,
-    taken: parseInt((settings.encargos_cupos_taken || '0').replace(/\D/g, ''), 10) || 0,
+    enabled: settings.encargos_cupos_enabled === 'true' && total != null && taken != null,
+    total: total ?? 0,
+    taken: taken ?? 0,
     label: settings.encargos_cupos_label || '',
   }
 }

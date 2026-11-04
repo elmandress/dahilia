@@ -11,6 +11,8 @@ import type { Category, Color, Collection } from '@/lib/types'
 import { DEFAULT_CARE_INSTRUCTIONS } from '@/lib/types'
 import { SameSizePrice, CalculadoraPrecio } from '../PriceTools'
 import { saveProductCosts, parseNum, DEFAULT_MARGIN_PCT } from '@/lib/product-costs'
+import { parseMoneyUYU, confirmacionDePrecios } from '@/lib/parse-money'
+import { MoneyInput, MONTO_ILEGIBLE } from '@/components/admin/MoneyInput'
 
 interface SizeEntry {
   tempId: string
@@ -301,7 +303,20 @@ export default function NuevoProductoPage() {
       setError('El slug es requerido')
       return
     }
-    if (!isCustomOnly && !basePriceUyu && sizes.every((s) => !s.price_uyu)) {
+    // Precios como los escribe una persona en Uruguay (QA-02): "1.600" son mil
+    // seiscientos. Lo que no se entiende frena el alta antes de crear nada.
+    const basePrice = parseMoneyUYU(basePriceUyu)
+    if (basePriceUyu.trim() && basePrice == null) {
+      setError(`Precio base: ${MONTO_ILEGIBLE}.`)
+      return
+    }
+    const namedSizes = sizes.filter((s) => s.size.trim())
+    const unreadableSize = namedSizes.find((s) => s.price_uyu.trim() && parseMoneyUYU(s.price_uyu) == null)
+    if (unreadableSize) {
+      setError(`Talle ${unreadableSize.size.trim()}: ${MONTO_ILEGIBLE}.`)
+      return
+    }
+    if (!isCustomOnly && basePrice == null && namedSizes.every((s) => parseMoneyUYU(s.price_uyu) == null)) {
       setError('Ingresá un precio base o un precio en al menos un talle.')
       return
     }
@@ -325,6 +340,13 @@ export default function NuevoProductoPage() {
       router.push(`/admin/productos/${createdId}`)
       return
     }
+    // Una prenda nueva a menos de UYU 100 casi siempre es un tipeo ("2" por
+    // "2000"): se pregunta una vez antes de crearla.
+    const pregunta = confirmacionDePrecios([
+      { etiqueta: 'precio base', antes: null, despues: basePrice },
+      ...namedSizes.map((s) => ({ etiqueta: `talle ${s.size.trim()}`, antes: null, despues: parseMoneyUYU(s.price_uyu) })),
+    ])
+    if (pregunta && !confirm(pregunta)) return
 
     setSaving(true)
     setError('')
@@ -349,7 +371,7 @@ export default function NuevoProductoPage() {
           collection_id: collectionId || null,
           badge: badge.trim() || null,
           status,
-          base_price_uyu: basePriceUyu ? parseInt(basePriceUyu) : null,
+          base_price_uyu: basePrice,
           discount_percent: resolvedDiscountPercent,
           discount_active: resolvedDiscountActive,
           // parseInt(x) || N pisaba un 0 real (falsy) con el default — un
@@ -390,21 +412,16 @@ export default function NuevoProductoPage() {
       }
 
       // Insert sizes
-      if (sizes.length > 0) {
-        const sizeInserts = sizes
-          .filter(s => s.size.trim())
-          .map((s, i) => ({
-            product_id: product.id,
-            size: s.size.trim(),
-            price_uyu: s.price_uyu ? parseInt(s.price_uyu) : null,
-            available: s.available,
-            sort_order: i,
-          }))
-
-        if (sizeInserts.length > 0) {
-          const { error: sizeError } = await supabase.from('product_sizes').insert(sizeInserts)
-          if (sizeError) throw new Error(`No se guardaron los talles: ${sizeError.message}`)
-        }
+      if (namedSizes.length > 0) {
+        const sizeInserts = namedSizes.map((s, i) => ({
+          product_id: product.id,
+          size: s.size.trim(),
+          price_uyu: parseMoneyUYU(s.price_uyu),
+          available: s.available,
+          sort_order: i,
+        }))
+        const { error: sizeError } = await supabase.from('product_sizes').insert(sizeInserts)
+        if (sizeError) throw new Error(`No se guardaron los talles: ${sizeError.message}`)
       }
 
       // Insert colors
@@ -653,19 +670,23 @@ export default function NuevoProductoPage() {
                 )}
                 {sizes.map((s) => (
                   <div key={s.tempId} className="admin-size-row">
+                    {/* 40: el mismo tope que acepta el carrito (/api/cart). */}
                     <input
                       type="text"
                       placeholder="Talla (ej: S)"
                       value={s.size}
                       onChange={(e) => updateSize(s.tempId, 'size', e.target.value)}
+                      maxLength={40}
+                      aria-label="Nombre del talle"
                       style={{ width: 80 }}
                     />
-                    <input
-                      type="number"
-                      placeholder="Precio (opcional)"
+                    <MoneyInput
+                      id={`size-price-${s.tempId}`}
                       value={s.price_uyu}
-                      onChange={(e) => updateSize(s.tempId, 'price_uyu', e.target.value)}
-                      style={{ width: 130 }}
+                      onChange={(v) => updateSize(s.tempId, 'price_uyu', v)}
+                      placeholder="Precio (opcional)"
+                      ariaLabel={`Precio del talle ${s.size.trim() || 'nuevo'} (vacío = precio base)`}
+                      inputStyle={{ width: 130 }}
                     />
                     <label className="size-available">
                       <input
@@ -701,7 +722,7 @@ export default function NuevoProductoPage() {
               setShowHours={setShowHours}
               margin={marginInput}
               setMargin={setMarginInput}
-              currentPrice={basePriceUyu ? parseInt(basePriceUyu) : null}
+              currentPrice={parseMoneyUYU(basePriceUyu)}
               hasSizes={sizes.length > 0}
               onUseBase={(p) => setBasePriceUyu(String(p))}
               onUseAllSizes={(p) => setSizes((prev) => prev.map((s) => ({ ...s, price_uyu: String(p) })))}
@@ -733,11 +754,11 @@ export default function NuevoProductoPage() {
           <div className="admin-card">
             <h3 style={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 500 }}>Precio</h3>
             <div className="admin-field">
-              <label>Precio base (UYU)</label>
-              <input
-                type="number"
+              <MoneyInput
+                id="nuevo-base-price"
+                label="Precio base (UYU)"
                 value={basePriceUyu}
-                onChange={(e) => setBasePriceUyu(e.target.value)}
+                onChange={setBasePriceUyu}
                 placeholder="2500"
               />
             </div>

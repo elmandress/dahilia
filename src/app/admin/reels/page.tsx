@@ -22,6 +22,9 @@ export default function ReelsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Si no se pudo leer la lista, la pantalla arranca vacía: guardar ahí
+  // borraba todos los reels de la tienda (QA-09). Sin lectura, no se guarda.
+  const [loadFailed, setLoadFailed] = useState(false)
   const [ok, setOk] = useState(false)
   const [url, setUrl] = useState('')
   const [product, setProduct] = useState('')
@@ -33,7 +36,9 @@ export default function ReelsPage() {
       supabase.from('site_settings').select('value').eq('key', REELS_SETTING_KEY).maybeSingle(),
       supabase.from('products').select('slug, name, status').order('name'),
     ])
-    if (settingRes.error || prodRes.error) setError('No se pudo leer la base. Probá recargar la página.')
+    setLoadFailed(!!settingRes.error)
+    if (settingRes.error) setError('No se pudo leer: recargá antes de guardar.')
+    else if (prodRes.error) setError('No se pudo leer la lista de prendas. Probá recargar la página.')
     const list = parseReels((settingRes.data as { value: string } | null)?.value)
     setReels(list)
     setSaved(JSON.stringify(list))
@@ -52,7 +57,8 @@ export default function ReelsPage() {
   const isActive = (slug: string) => products.find((p) => p.slug === slug)?.status === 'active'
 
   const add = () => {
-    setError(null)
+    // El aviso de que no se pudo leer queda a la vista hasta recargar.
+    setError(loadFailed ? 'No se pudo leer: recargá antes de guardar.' : null)
     if (!reelEmbedUrl(url)) { setError('Ese link no parece de un reel. Copialo desde Instagram: ⋯ → Copiar enlace.'); return }
     if (!product) { setError('Elegí la prenda que aparece en el reel.'); return }
     if (reels.length >= REELS_MAX) { setError(`Hasta ${REELS_MAX} reels: sacá uno viejo para sumar este.`); return }
@@ -70,8 +76,20 @@ export default function ReelsPage() {
   }
 
   const save = async () => {
+    if (loadFailed) return
     setSaving(true); setError(null); setOk(false)
     const supabase = createClient()
+    // La lista se guarda entera: si otra pestaña la cambió desde que se abrió
+    // esta, escribir encima borraba sus reels sin aviso (QA-09). Se relee
+    // justo antes y, si no es la que se cargó, no se escribe.
+    const { data: current, error: readErr } = await supabase
+      .from('site_settings').select('value').eq('key', REELS_SETTING_KEY).maybeSingle()
+    if (readErr) { setSaving(false); setError(`No se guardó: no se pudo comprobar la lista (${readErr.message}). Probá de nuevo.`); return }
+    if (JSON.stringify(parseReels((current as { value: string } | null)?.value)) !== saved) {
+      setSaving(false)
+      setError('Otra pantalla cambió los reels: recargá antes de guardar.')
+      return
+    }
     const { error: err } = await supabase
       .from('site_settings')
       .upsert({ key: REELS_SETTING_KEY, value: JSON.stringify(reels), updated_at: new Date().toISOString() }, { onConflict: 'key' })
@@ -94,8 +112,8 @@ export default function ReelsPage() {
           <h2>Reels</h2>
           <p>Los reels salen en el inicio (&quot;Mirala puesta&quot;) y en la ficha de su prenda (&quot;Mirala en movimiento&quot;). Se ven adentro del sitio, con el botón a la prenda debajo: la clienta no se va a Instagram.</p>
         </div>
-        <button className="admin-btn admin-btn-primary" onClick={save} disabled={saving || !dirty}>
-          {saving ? 'Guardando…' : dirty ? 'Guardar cambios' : 'Guardado'}
+        <button className="admin-btn admin-btn-primary" onClick={save} disabled={saving || !dirty || loadFailed}>
+          {saving ? 'Guardando…' : loadFailed ? 'Sin leer: recargá' : dirty ? 'Guardar cambios' : 'Guardado'}
         </button>
       </div>
 

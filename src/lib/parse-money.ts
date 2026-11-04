@@ -14,6 +14,8 @@
 //
 // Puro a propósito (sin JSX ni next/*): lo prueban las unitarias con node:test.
 
+import { formatPrice } from './types'
+
 const DOLLARS = /u\$s|us\$|usd|d[oó]lar/i
 const NOISE = /(?:uyu|\$u|\$|pesos?)/gi
 // \s ya incluye el espacio duro (U+00A0) y el fino (U+202F); van explícitos
@@ -90,4 +92,55 @@ export function parseCount(input: unknown): number | null {
   const s = String(input ?? '').trim()
   if (!/^\d{1,4}$/.test(s)) return null
   return Number(s)
+}
+
+// ── Precio que conviene confirmar (QA-02, 04/11/2026) ──────────────────────
+// El parser ya no lee "1.600" como 1, pero un tipeo sigue pudiendo dejar un
+// precio absurdo ("2" en vez de "2000", un cero de más). Hoy ninguna prenda
+// vale menos de UYU 100 y un ajuste real nunca mueve el precio más de la mitad:
+// cualquiera de las dos cosas se pregunta antes de publicarla.
+const PISO_SOSPECHOSO = 100
+const SALTO_SOSPECHOSO = 0.5
+
+/**
+ * Cómo cambia un precio que conviene confirmar ("pasa de UYU 1.890 a UYU 2"),
+ * o null si el cambio es normal. Sin precio nuevo (talle que vuelve al precio
+ * base, prenda sin precio) no hay nada que confirmar.
+ */
+export function saltoDePrecio(antes: number | null | undefined, despues: number | null | undefined): string | null {
+  if (despues == null || despues === antes) return null
+  const habia = antes != null && antes > 0
+  const bajo = despues < PISO_SOSPECHOSO
+  const salta = habia && Math.abs(despues - antes) / antes > SALTO_SOSPECHOSO
+  if (!bajo && !salta) return null
+  return habia ? `pasa de ${formatPrice(antes)} a ${formatPrice(despues)}` : `queda en ${formatPrice(despues)}`
+}
+
+/** "¿Seguro? Pasa de UYU 1.890 a UYU 2" para un window.confirm, o null si no hace falta preguntar. */
+export function precioSospechoso(antes: number | null | undefined, despues: number | null | undefined): string | null {
+  const salto = saltoDePrecio(antes, despues)
+  return salto ? `¿Seguro? ${salto.charAt(0).toUpperCase()}${salto.slice(1)}` : null
+}
+
+export interface PrecioNuevo {
+  /** "precio base", "talle M", "Top Race, talle M". */
+  etiqueta: string
+  antes: number | null | undefined
+  despues: number | null | undefined
+}
+
+/**
+ * Una sola pregunta para window.confirm con todos los precios que conviene
+ * revisar, o null si no hay ninguno. Con uno, la pregunta corta de
+ * precioSospechoso; con varios, uno por línea. Así "Poner en todos" con un
+ * tipeo pregunta una vez y no una por talle.
+ */
+export function confirmacionDePrecios(cambios: PrecioNuevo[]): string | null {
+  const dudas = cambios.flatMap((c) => {
+    const salto = saltoDePrecio(c.antes, c.despues)
+    return salto ? [{ ...c, salto }] : []
+  })
+  if (dudas.length === 0) return null
+  if (dudas.length === 1) return `${precioSospechoso(dudas[0].antes, dudas[0].despues)} (${dudas[0].etiqueta}).`
+  return `¿Seguro? Revisá estos precios:\n\n${dudas.map((d) => `• ${d.etiqueta}: ${d.salto}`).join('\n')}`
 }

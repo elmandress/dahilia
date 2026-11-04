@@ -6,6 +6,12 @@ import { mediaPath, prepareImageForUpload, STORAGE_CACHE_SECONDS } from '@/lib/m
 import { notifySiteWideChange } from '@/lib/seo-notify'
 import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
 import { parseDropDateUY, dropDateInputs, dropWhenText } from '@/lib/drop-date'
+import { parseMoneyUYU, parseCount } from '@/lib/parse-money'
+import { waLink, WHATSAPP_DEFAULT } from '@/lib/whatsapp'
+import { cambiosPendientes, conflictos } from '@/lib/settings-diff'
+import { formatPrice } from '@/lib/types'
+import { SITE_URL } from '@/lib/env'
+import { MONTO_ILEGIBLE } from '@/components/admin/MoneyInput'
 
 // All keys the CMS surfaces. The DB may contain extras (e.g. legacy)
 // — we preserve them on save by passing through whatever loaded.
@@ -17,7 +23,7 @@ const SECTIONS = [
       { key: 'hero_subtitle', label: 'Antetítulo (eyebrow)', type: 'text' },
       { key: 'hero_title',    label: 'Título principal',     type: 'text' },
       { key: 'hero_cta',      label: 'Texto del botón',      type: 'text' },
-      { key: 'hero_cta_href', label: 'A dónde lleva el botón (ej. /colecciones/sunset-26; vacío = /tienda)', type: 'text' },
+      { key: 'hero_cta_href', label: 'A dónde lleva el botón (ej. /colecciones/sunset-26; vacío = /tienda)', type: 'ruta' },
       { key: 'hero_image_url', label: 'Foto del hero',       type: 'hero' },
     ],
   },
@@ -173,7 +179,7 @@ const SECTIONS = [
     description: 'Cómo te encuentran los clientes. WhatsApp, Instagram y ubicación se ven en el footer y en Contacto. Los perfiles de abajo no se muestran: le dicen a Google y a las IAs cuáles son tus cuentas oficiales, y el link de reseñas activa dahila.uy/resena.',
     fields: [
       { key: 'contact_whatsapp',     label: 'WhatsApp (visible)',         type: 'text', placeholder: '+598 99 850 073' },
-      { key: 'contact_whatsapp_url', label: 'WhatsApp link (wa.me/...)',  type: 'text', placeholder: 'https://wa.me/59899850073' },
+      { key: 'contact_whatsapp_url', label: 'Link de WhatsApp (https://wa.me/598…)', type: 'whatsapp', placeholder: 'https://wa.me/59899850073' },
       { key: 'contact_instagram',    label: 'Instagram (visible)',        type: 'text', placeholder: '@dahila.crochet' },
       { key: 'contact_instagram_url', label: 'Instagram link',            type: 'text', placeholder: 'https://www.instagram.com/dahila.crochet/' },
       { key: 'contact_location',     label: 'Ubicación',                  type: 'text' },
@@ -206,8 +212,8 @@ const SECTIONS = [
     description: 'Mostrá en la página de encargo cuántos lugares quedan. Actualización manual: subí "Tomados" cada vez que confirmás un pedido. Al empezar la semana, reseteá ambos desde acá. Si está apagado o el total es 0, no se muestra nada.',
     fields: [
       { key: 'encargos_cupos_enabled', label: '¿Mostrar cupos disponibles?', type: 'toggle' },
-      { key: 'encargos_cupos_total',   label: 'Total de lugares por semana', type: 'text', placeholder: '4' },
-      { key: 'encargos_cupos_taken',   label: 'Lugares ya tomados esta semana', type: 'text', placeholder: '0' },
+      { key: 'encargos_cupos_total',   label: 'Total de lugares por semana', type: 'count', placeholder: '4' },
+      { key: 'encargos_cupos_taken',   label: 'Lugares ya tomados esta semana', type: 'count', placeholder: '0' },
       { key: 'encargos_cupos_label',   label: 'Texto personalizado (opcional)', type: 'text', placeholder: 'Quedan 2 lugares para esta semana' },
     ],
   },
@@ -217,7 +223,7 @@ const SECTIONS = [
     fields: [
       { key: 'size_guide_note',  label: 'Nota de la tabla de talles', type: 'textarea' },
       { key: 'shipping_estimate', label: 'Envío — línea corta (se muestra en producto y carrito)', type: 'text', placeholder: 'Montevideo $200 · Interior por agencia' },
-      { key: 'free_shipping_threshold', label: 'Envío gratis desde (monto en $, vacío = apagado)', type: 'text', placeholder: '1600' },
+      { key: 'free_shipping_threshold', label: 'Envío gratis desde (monto en $, vacío = apagado)', type: 'money', placeholder: '1600' },
       { key: 'pdp_trust_1', label: 'Garantía 1 (en cada producto)', type: 'text', placeholder: 'Envío a todo Uruguay' },
       { key: 'pdp_trust_2', label: 'Garantía 2 (en cada producto)', type: 'text', placeholder: 'Hecho a mano' },
       { key: 'pdp_trust_3', label: 'Garantía 3 (en cada producto)', type: 'text', placeholder: 'Coordinás por WhatsApp' },
@@ -241,27 +247,219 @@ const SECTIONS = [
   },
 ] as const
 
-type FieldType = 'text' | 'textarea' | 'image' | 'hero' | 'toggle' | 'color' | 'datetime'
+type FieldType = 'text' | 'textarea' | 'image' | 'hero' | 'toggle' | 'color' | 'datetime' | 'money' | 'count' | 'whatsapp' | 'ruta'
+
+// Tipo y etiqueta de cada clave, para validar al guardar y para nombrar la
+// clave si otra pantalla la cambió mientras tanto.
+const FIELD_TYPE: Record<string, FieldType> = Object.fromEntries(
+  SECTIONS.flatMap((s) => s.fields.map((f) => [f.key, f.type as FieldType])),
+)
+const FIELD_LABEL: Record<string, string> = {
+  ...Object.fromEntries(SECTIONS.flatMap((s) => s.fields.map((f) => [f.key, f.label]))),
+  hero_image_position: 'Encuadre de la foto del hero',
+}
+
+/**
+ * "https://dahila.uy/colecciones/sunset-26" → "/colecciones/sunset-26". El
+ * botón del hero solo sigue rutas del sitio: un link completo copiado de la
+ * barra del navegador lo mandaba a /tienda sin avisar (QA-15).
+ */
+function rutaDelSitio(raw: string): string {
+  const v = raw.trim()
+  if (!/^https?:\/\//i.test(v)) return v
+  try {
+    const url = new URL(v)
+    const host = url.hostname.replace(/^www\./, '').toLowerCase()
+    const propio = new URL(SITE_URL).hostname.replace(/^www\./, '').toLowerCase()
+    if (host === 'dahila.uy' || host === propio) return `${url.pathname}${url.search}${url.hash}`
+  } catch {
+    // No es una URL: queda como está y el aviso de abajo lo explica.
+  }
+  return v
+}
+
+/**
+ * Lo que se guarda de cada campo: los números y links se leen con las mismas
+ * reglas que el sitio y se guardan ya limpios ("$ 1.600" → "1600",
+ * "wa.me/598…" → "https://wa.me/598…"). Si no se entienden, no se guarda nada
+ * (QA-14 y QA-15): antes "$ 1.600" apagaba el envío gratis y "2 de 4" cerraba
+ * los encargos, sin aviso.
+ */
+function valorParaGuardar(key: string, raw: string): { value: string } | { error: string } {
+  const label = FIELD_LABEL[key] ?? key
+  const v = raw.trim()
+  switch (FIELD_TYPE[key]) {
+    case 'money': {
+      if (!v) return { value: '' }
+      const n = parseMoneyUYU(v)
+      return n == null ? { error: `En «${label}» no se entiende el monto: escribilo en pesos, sin centavos (ej. 1600 o 1.600).` } : { value: String(n) }
+    }
+    case 'count': {
+      if (!v) return { value: '' }
+      const n = parseCount(v)
+      return n == null ? { error: `En «${label}» va solo el número, sin texto (ej. 4).` } : { value: String(n) }
+    }
+    case 'whatsapp': {
+      if (!v) return { value: '' }
+      const link = waLink(v)
+      return link ? { value: link } : { error: `«${label}» no es un link de WhatsApp. Escribilo así: ${WHATSAPP_DEFAULT}` }
+    }
+    case 'ruta':
+      return { value: rutaDelSitio(raw) }
+    default:
+      return { value: raw }
+  }
+}
+
+/** "Se lee: UYU 1.600" / "Se lee: 4 lugares" debajo de un campo numérico. */
+function NumberField({ id, kind, value, placeholder, onChange }: {
+  id: string
+  kind: 'money' | 'count'
+  value: string
+  placeholder?: string
+  onChange: (v: string) => void
+}) {
+  const typed = value.trim() !== ''
+  const n = !typed ? null : kind === 'money' ? parseMoneyUYU(value) : parseCount(value)
+  const bad = typed && n == null
+  const reading = !typed || n == null
+    ? null
+    : kind === 'money' ? `Se lee: ${formatPrice(n)}` : `Se lee: ${n} ${n === 1 ? 'lugar' : 'lugares'}`
+  return (
+    <>
+      <input
+        id={id}
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        aria-invalid={bad || undefined}
+        aria-describedby={typed ? `${id}-lectura` : undefined}
+        style={bad ? { borderColor: '#c62828' } : undefined}
+      />
+      {typed && (
+        <span id={`${id}-lectura`} className={bad ? 'field-error' : 'field-hint'}>
+          {bad
+            ? kind === 'money' ? `${MONTO_ILEGIBLE}. Así no se guarda.` : 'Escribí solo el número, sin texto (ej. 4). Así no se guarda.'
+            : reading}
+        </span>
+      )}
+    </>
+  )
+}
+
+/** Link de WhatsApp con vista previa y "Probar link" (QA-15). */
+function WhatsAppField({ id, value, placeholder, onChange }: {
+  id: string
+  value: string
+  placeholder?: string
+  onChange: (v: string) => void
+}) {
+  const typed = value.trim() !== ''
+  const link = typed ? waLink(value) : null
+  const bad = typed && !link
+  return (
+    <>
+      <input
+        id={id}
+        type="text"
+        inputMode="url"
+        autoComplete="off"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        aria-invalid={bad || undefined}
+        aria-describedby={`${id}-lectura`}
+        style={bad ? { borderColor: '#c62828' } : undefined}
+      />
+      <span id={`${id}-lectura`} className={bad ? 'field-error' : 'field-hint'}>
+        {bad
+          ? `Ese link no es de WhatsApp y el checkout dejaría de andar, así que no se guarda. Escribilo como ${WHATSAPP_DEFAULT}`
+          : link
+            ? `Se guarda: ${link}`
+            : `Vacío: los botones usan ${WHATSAPP_DEFAULT}.`}
+      </span>
+      {link && (
+        <a
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="admin-btn admin-btn-secondary admin-btn-sm"
+          style={{ alignSelf: 'flex-start' }}
+        >
+          Probar link ↗
+        </a>
+      )}
+    </>
+  )
+}
+
+/** Ruta del botón del hero: muestra la ruta que se guarda y avisa si lleva a /tienda. */
+function RutaField({ id, value, placeholder, onChange }: {
+  id: string
+  value: string
+  placeholder?: string
+  onChange: (v: string) => void
+}) {
+  const ruta = rutaDelSitio(value)
+  const typed = ruta !== ''
+  // La misma regla que la home (HomeClient, heroHref): una ruta del sitio.
+  const ok = ruta.startsWith('/') && !ruta.startsWith('//')
+  return (
+    <>
+      <input
+        id={id}
+        type="text"
+        autoComplete="off"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        aria-describedby={typed ? `${id}-lectura` : undefined}
+      />
+      {typed && (!ok || ruta !== value.trim()) && (
+        <span id={`${id}-lectura`} className={ok ? 'field-hint' : 'field-error'}>
+          {ok
+            ? `Se guarda: ${ruta}`
+            : 'Así el botón lleva a /tienda: tiene que ser una página de dahila.uy, como /colecciones/sunset-26.'}
+        </span>
+      )}
+    </>
+  )
+}
 
 /**
  * Fecha + hora del drop, siempre en hora de Montevideo (27/10/2026). Antes era
  * texto libre: "2026/10/28 " no lo entendía el servidor y, al agregarle la
  * hora, la cuenta regresiva del inicio marcaba cualquier cosa. Guarda
  * "2026-10-28 18:00", el formato que leen el inicio, /vip y el aviso a la lista.
+ *
+ * Se guarda recién con día Y hora (QA-13): antes, borrar la hora guardaba
+ * "00:00", que adelantaba el lanzamiento y podía disparar el aviso a la lista
+ * en el acto. Mientras falte uno de los dos queda lo anterior.
  */
 function DropDateField({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
   // Derivado del valor guardado (los ajustes llegan después del primer
-  // render). Solo la hora elegida antes que el día vive aparte.
+  // render). Lo que se eligió a medias (día sin hora o al revés) vive aparte.
   const parsed = dropDateInputs(value)
-  const [pendingTime, setPendingTime] = useState('')
-  const date = parsed?.date ?? ''
-  const time = parsed?.time ?? pendingTime
+  const [draft, setDraft] = useState<{ date: string; time: string } | null>(null)
+  const date = draft ? draft.date : (parsed?.date ?? '')
+  const time = draft ? draft.time : (parsed?.time ?? '')
   const set = (d: string, t: string) => {
-    setPendingTime(t)
-    onChange(d ? `${d} ${t || '00:00'}` : '')
+    if (d && t) {
+      setDraft(null)
+      onChange(`${d} ${t}`)
+    } else if (!d && !t) {
+      setDraft(null)
+      onChange('')
+    } else {
+      setDraft({ date: d, time: t })
+    }
   }
   const launch = parseDropDateUY(value)
   const unreadable = value.trim() !== '' && !launch
+  const missing = draft ? (draft.date ? 'la hora' : 'el día') : null
   return (
     <div>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -269,18 +467,20 @@ function DropDateField({ id, value, onChange }: { id: string; value: string; onC
           aria-label="Día del lanzamiento" style={{ flex: '1 1 160px', minWidth: 0 }} />
         <input type="time" value={time} step={300} onChange={(e) => set(date, e.target.value)}
           aria-label="Hora del lanzamiento, en hora de Montevideo" style={{ flex: '0 1 130px', minWidth: 0 }} />
-        {value && (
+        {(value || draft) && (
           <button type="button" className="admin-btn admin-btn-secondary admin-btn-sm" onClick={() => set('', '')}>
             Borrar fecha
           </button>
         )}
       </div>
-      <p style={{ margin: '6px 0 0', fontSize: '0.8rem', lineHeight: 1.5, color: unreadable ? '#7a1e2f' : '#8C8285' }}>
-        {unreadable
-          ? `La fecha guardada ("${value}") no se entiende: elegila de nuevo arriba.`
-          : launch
-            ? `Sale ${dropWhenText(launch)}, hora de Montevideo. El aviso a la lista VIP sale 24 h antes: ${dropWhenText(new Date(launch.getTime() - 86_400_000))}.`
-            : 'Elegí el día y la hora. Es siempre hora de Montevideo, aunque abras el admin desde otro país.'}
+      <p role={missing ? 'alert' : undefined} style={{ margin: '6px 0 0', fontSize: '0.8rem', lineHeight: 1.5, color: unreadable || missing ? '#7a1e2f' : '#8C8285' }}>
+        {missing
+          ? `Elegí también ${missing}.${launch ? ` Mientras tanto sigue guardado ${dropWhenText(launch)}.` : ''}`
+          : unreadable
+            ? `La fecha guardada ("${value}") no se entiende: elegila de nuevo arriba.`
+            : launch
+              ? `Sale ${dropWhenText(launch)}, hora de Montevideo. El aviso a la lista VIP sale 24 h antes: ${dropWhenText(new Date(launch.getTime() - 86_400_000))}.`
+              : 'Elegí el día y la hora. Es siempre hora de Montevideo, aunque abras el admin desde otro país.'}
       </p>
     </div>
   )
@@ -542,12 +742,14 @@ export default function ConfiguracionAdminPage() {
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  // Copia de lo último guardado, para saber si hay cambios pendientes. Va en
-  // estado y no en un ref porque se lee durante el render (`isDirty` decide si
-  // se muestra el aviso): leer un ref en render es justo lo que las reglas de
-  // hooks prohíben, y además no re-renderizaría al guardar.
-  const [savedSnapshot, setSavedSnapshot] = useState('')
-  const isDirty = !loading && JSON.stringify(settings) !== savedSnapshot
+  // Lo último guardado (o cargado), para saber qué cambió. Va en estado y no
+  // en un ref porque se lee durante el render (`isDirty` decide si se muestra
+  // el aviso y si "Guardar" está habilitado): leer un ref en render es justo
+  // lo que las reglas de hooks prohíben, y además no re-renderizaría al
+  // guardar. Se compara clave por clave, no el JSON entero: así el orden de
+  // las claves no deja la pantalla "con cambios" para siempre.
+  const [saved, setSaved] = useState<Record<string, string>>({})
+  const isDirty = !loading && cambiosPendientes(saved, settings).length > 0
   useUnsavedWarning(isDirty)
 
   const loadSettings = useCallback(async () => {
@@ -562,7 +764,7 @@ export default function ConfiguracionAdminPage() {
         if (item?.key) loaded[item.key as string] = String(item.value ?? '')
       })
       setSettings(loaded)
-      setSavedSnapshot(JSON.stringify(loaded))
+      setSaved(loaded)
     } catch (e) {
       console.error('Error cargando configuración', e)
       setError('No se pudo cargar la configuración. Ejecutá database/schema-extra.sql en Supabase si todavía no lo hiciste.')
@@ -582,38 +784,89 @@ export default function ConfiguracionAdminPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (saving) return
+    // Solo las claves que cambiaron desde que se abrió la pantalla. Antes se
+    // reescribían TODAS con el valor de ese momento: una pestaña abierta de
+    // ayer pisaba lo guardado después desde otras pantallas o por el reloj
+    // (lista_email_enviado volvía atrás → el aviso del drop podía salir de
+    // nuevo a toda la lista; la prenda fijada en la bio, los reels y las
+    // portadas del blog se revertían). Auditoría 04/11/2026.
+    const before = saved
+    const keys = cambiosPendientes(before, settings)
+    // Sin cambios no se escribe nada ni se purga el caché de todo el sitio,
+    // que obliga a volver a armar cada página contra Supabase (QA-09).
+    if (keys.length === 0) return
+
+    const values: Record<string, string> = {}
+    for (const key of keys) {
+      const r = valorParaGuardar(key, settings[key] ?? '')
+      if ('error' in r) {
+        setSuccess(false)
+        setError(`No se guardó nada. ${r.error}`)
+        return
+      }
+      values[key] = r.value
+    }
+
+    // Con el aviso automático prendido, una fecha nueva cerca del lanzamiento
+    // arma otro envío a la lista entera (QA-13): que sea una decisión.
+    if ('drop_date' in values && settings.lista_envio_auto === 'true') {
+      const nueva = parseDropDateUY(values.drop_date)
+      const falta = nueva ? nueva.getTime() - Date.now() : NaN
+      if (falta >= 0 && falta <= 48 * 3_600_000
+        && !confirm('Cambiar la fecha puede volver a mandar el aviso a toda la lista. ¿Seguís?')) return
+    }
+
     setSaving(true)
     setSuccess(false)
     setError(null)
 
     try {
       const supabase = createClient()
-      // Solo las claves que cambiaron desde que se abrió la pantalla. Antes se
-      // reescribían TODAS con el valor de ese momento: una pestaña abierta de
-      // ayer pisaba lo guardado después desde otras pantallas o por el reloj
-      // (lista_email_enviado volvía atrás → el aviso del drop podía salir de
-      // nuevo a toda la lista; la prenda fijada en la bio, los reels y las
-      // portadas del blog se revertían). Auditoría 04/11/2026.
-      const before = (() => { try { return JSON.parse(savedSnapshot || '{}') as Record<string, string> } catch { return {} } })()
-      const updates = Object.entries(settings)
-        .filter(([key, v]) => v !== undefined && v !== null && before[key] !== v)
-        .map(([key, value]) => ({
-          key,
-          value: value ?? '',
-          updated_at: new Date().toISOString(),
-        }))
+      // Justo antes de escribir se releen esas claves y se comparan por VALOR
+      // con lo que se cargó (QA-09, QA-ARQ-1): si otra pantalla (otra pestaña,
+      // Estrategia, el reloj del drop) las cambió, se pregunta en vez de pisar.
+      const { data: freshRows, error: readErr } = await supabase.from('site_settings').select('key,value').in('key', keys)
+      if (readErr) throw readErr
+      const fresh: Record<string, string> = {}
+      for (const r of (freshRows ?? []) as Array<{ key: string; value: string | null }>) fresh[r.key] = String(r.value ?? '')
+      // Si la otra pantalla dejó justo lo mismo que se va a guardar, no hay nada que preguntar.
+      const stepped = conflictos(before, fresh, keys).filter((k) => fresh[k] !== values[k])
+      if (stepped.length > 0) {
+        const show = (v: string) => (v.length > 80 ? `${v.slice(0, 80)}…` : v || '(vacío)')
+        const lines = stepped.map((k) => fresh[k] === undefined
+          ? `Otra pantalla borró «${FIELD_LABEL[k] ?? k}».`
+          : `Otra pantalla cambió «${FIELD_LABEL[k] ?? k}» a «${show(fresh[k])}».`)
+        if (!confirm(`${lines.join('\n')}\n\n¿Guardamos ${stepped.length === 1 ? 'el tuyo' : 'los tuyos'} igual?`)) {
+          // Queda lo de la otra pantalla en esos campos; lo demás sigue sin
+          // guardar, para que se pueda guardar sin recargar y sin perderlo.
+          const theirs = Object.fromEntries(stepped.map((k) => [k, fresh[k] ?? '']))
+          setSaved((prev) => ({ ...prev, ...theirs }))
+          setSettings((prev) => ({ ...prev, ...theirs }))
+          setError(`No se guardó nada. ${stepped.length === 1 ? 'Ese campo quedó' : 'Esos campos quedaron'} como ${stepped.length === 1 ? 'lo dejó' : 'los dejó'} la otra pantalla; lo demás sigue sin guardar.`)
+          return
+        }
+      }
 
+      const now = new Date().toISOString()
       const { error: err } = await supabase
         .from('site_settings')
-        .upsert(updates, { onConflict: 'key' })
+        .upsert(keys.map((key) => ({ key, value: values[key], updated_at: now })), { onConflict: 'key' })
 
       if (err) throw err
       // Header, footer, banner de promo, contacto — se leen en el layout
       // raíz que ahora comparten TODAS las páginas cacheadas. Sin esto, lo
       // que acabás de guardar tarda hasta 1h en verse en el sitio.
       notifySiteWideChange()
-      // Nuevo punto de referencia: a partir de acá no hay cambios pendientes.
-      setSavedSnapshot(JSON.stringify(settings))
+      // Nuevo punto de referencia: lo que quedó en la base. En pantalla se ve
+      // el valor ya limpio ("1600", el link con https), salvo que se haya
+      // vuelto a tocar mientras se guardaba.
+      setSaved((prev) => ({ ...prev, ...values }))
+      setSettings((prev) => {
+        const next = { ...prev }
+        for (const key of keys) if (prev[key] === settings[key]) next[key] = values[key]
+        return next
+      })
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
     } catch (e) {
@@ -754,6 +1007,31 @@ export default function ConfiguracionAdminPage() {
                     {fieldType === 'datetime' && (
                       <DropDateField id={field.key} value={value} onChange={(v) => update(field.key, v)} />
                     )}
+                    {(fieldType === 'money' || fieldType === 'count') && (
+                      <NumberField
+                        id={field.key}
+                        kind={fieldType}
+                        value={value}
+                        placeholder={'placeholder' in field ? field.placeholder : ''}
+                        onChange={(v) => update(field.key, v)}
+                      />
+                    )}
+                    {fieldType === 'whatsapp' && (
+                      <WhatsAppField
+                        id={field.key}
+                        value={value}
+                        placeholder={'placeholder' in field ? field.placeholder : ''}
+                        onChange={(v) => update(field.key, v)}
+                      />
+                    )}
+                    {fieldType === 'ruta' && (
+                      <RutaField
+                        id={field.key}
+                        value={value}
+                        placeholder={'placeholder' in field ? field.placeholder : ''}
+                        onChange={(v) => update(field.key, v)}
+                      />
+                    )}
                     {fieldType === 'image' && (
                       <ImageUploader value={value} onChange={(v) => update(field.key, v)} hint={field.key.replace(/_(image_)?url$/, '')} />
                     )}
@@ -794,10 +1072,12 @@ export default function ConfiguracionAdminPage() {
               Tenés cambios sin guardar
             </span>
           )}
+          {/* Sin cambios no hay nada que guardar: el botón no escribe ni
+              purga el caché del sitio entero (QA-09). */}
           <button
             type="submit"
             className="admin-btn admin-btn-primary"
-            disabled={saving}
+            disabled={saving || !isDirty}
             style={{ minWidth: 200 }}
           >
             {saving ? 'Guardando...' : 'Guardar cambios'}
@@ -813,7 +1093,7 @@ export default function ConfiguracionAdminPage() {
           type="submit"
           form="config-form"
           className="admin-btn admin-btn-primary"
-          disabled={saving}
+          disabled={saving || !isDirty}
           style={{ flex: 1 }}
         >
           {saving ? 'Guardando...' : 'Guardar cambios'}

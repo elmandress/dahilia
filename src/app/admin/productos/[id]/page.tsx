@@ -9,7 +9,10 @@ import { draftDescription } from '@/lib/description-draft'
 import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
 import { recommendPrice, formatUyu, type PricingRecommendation, type PricingPeer } from '@/lib/pricing'
 import { SameSizePrice, CalculadoraPrecio, MarginPicker } from '../PriceTools'
+import { planTalles } from '../talles-plan'
 import { saveProductCosts, parseNum, DEFAULT_MARGIN_PCT } from '@/lib/product-costs'
+import { parseMoneyUYU, confirmacionDePrecios } from '@/lib/parse-money'
+import { MoneyInput, MONTO_ILEGIBLE } from '@/components/admin/MoneyInput'
 import type { Category, Color, Collection, Product, ProductMedia, ProductSize, ProductColor } from '@/lib/types'
 
 type LoadedProductColor = Partial<ProductColor> & { color_id?: string; color?: { id: string } }
@@ -27,8 +30,11 @@ interface SizeEntry {
   price_uyu: string
   available: boolean
   sort_order: number
-  /** Se conserva al guardar: el insert sin él lo volvía a NULL. */
+  /** El que había en la base al abrir la ficha. Ya no se escribe desde acá:
+   *  los talles se guardan por upsert y el upsert no lo pisa (talles-plan.ts). */
   stock_qty?: number | null
+  /** Precio guardado al abrir, para preguntar si cambia de golpe (QA-02). */
+  loaded_price?: number | null
 }
 
 interface MediaEntry {
@@ -127,6 +133,9 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
   // pisaba esos cambios con lo viejo (auditoría 04/11/2026).
   const [loadedUpdatedAt, setLoadedUpdatedAt] = useState<string | null>(null)
   const [loadedSlug, setLoadedSlug] = useState('')
+  // Precio base guardado, contra el que se compara al guardar: bajar de 1.890
+  // a 2 por un tipeo se pregunta antes de publicarlo (QA-02).
+  const [loadedBase, setLoadedBase] = useState<number | null>(null)
   useEffect(() => {
     if (loading) return
     // Solo la primera vez, apenas termina de cargar: ese es el punto de
@@ -155,6 +164,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
     setBadge(p.badge || '')
     setStatus((p.status as 'draft' | 'active' | 'soldout') || 'draft')
     setBasePriceUyu(p.base_price_uyu ? String(p.base_price_uyu) : '')
+    setLoadedBase(p.base_price_uyu ?? null)
     setDiscountPercent(p.discount_percent ? String(p.discount_percent) : '')
     setDiscountActive(!!p.discount_active)
     // != null y no un chequeo de verdad: 0 semanas es "en stock", no "vacío".
@@ -205,6 +215,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           available: s.available ?? true,
           sort_order: s.sort_order ?? idx,
           stock_qty: s.stock_qty ?? null,
+          loaded_price: s.price_uyu ?? null,
         }))
       setSizes(mappedSizes)
     }
@@ -484,20 +495,33 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       setError('El slug es requerido')
       return
     }
-    if (!isCustomOnly && !basePriceUyu && sizes.every((s) => !s.price_uyu)) {
+    // Los precios se leen como los escribe una persona en Uruguay (QA-02):
+    // "1.600" son mil seiscientos y no 1. Lo que no se entiende frena el
+    // guardado acá, con el campo ya marcado en rojo, sin tocar la base.
+    const basePrice = parseMoneyUYU(basePriceUyu)
+    if (basePriceUyu.trim() && basePrice == null) {
+      setError(`Precio base: ${MONTO_ILEGIBLE}.`)
+      return
+    }
+    const namedSizes = sizes.filter((s) => s.size.trim())
+    const unreadableSize = namedSizes.find((s) => s.price_uyu.trim() && parseMoneyUYU(s.price_uyu) == null)
+    if (unreadableSize) {
+      setError(`Talle ${unreadableSize.size.trim()}: ${MONTO_ILEGIBLE}.`)
+      return
+    }
+    if (!isCustomOnly && basePrice == null && namedSizes.every((s) => parseMoneyUYU(s.price_uyu) == null)) {
       setError('Ingresá un precio base o un precio en al menos un talle.')
       return
     }
     // Todo lo que pueda impedir que se guarde se chequea ANTES de tocar la
-    // base: guardar borra las fotos/talles viejos para volver a insertarlos,
-    // así que cortar en el medio se llevaba puesto lo que ya estaba guardado.
+    // base, para no dejar la prenda a medio guardar.
     const stillUploading = mediaEntries.filter((m) => m.uploading)
     if (stillUploading.length > 0) {
       setError(`Esperá a que terminen de subirse ${stillUploading.length} foto(s) y guardá de nuevo.`)
       return
     }
     // product_sizes tiene UNIQUE(product_id, size): dos talles con el mismo
-    // nombre hacen fallar el insert después del delete y se perdían todos.
+    // nombre hacen fallar el upsert entero.
     const sizeNames = sizes.map((s) => s.size.trim().toLowerCase()).filter(Boolean)
     const duplicated = sizeNames.find((s, i) => sizeNames.indexOf(s) !== i)
     if (duplicated) {
@@ -509,6 +533,20 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
     // (no hay redirección de slugs viejos). Que sea una decisión, no un
     // efecto de tocar "Auto" (auditoría 04/11/2026).
     if (loadedSlug && slug.trim() !== loadedSlug && !confirm(`Vas a cambiar el link de la prenda de /tienda/${loadedSlug} a /tienda/${slug.trim()}. El link viejo va a dar error en anuncios, Google e Instagram. ¿Seguir?`)) return
+
+    // Un precio que queda por debajo de UYU 100 o cambia más de la mitad casi
+    // siempre es un tipeo ("2" por "2000"): una sola pregunta antes de que
+    // llegue a la tienda, el feed y el píxel. Un talle sin precio propio
+    // cobraba el base: ese es su "antes".
+    const pregunta = confirmacionDePrecios([
+      { etiqueta: 'precio base', antes: loadedBase, despues: basePrice },
+      ...namedSizes.map((s) => ({
+        etiqueta: `talle ${s.size.trim()}`,
+        antes: s.id ? (s.loaded_price || loadedBase) : null,
+        despues: parseMoneyUYU(s.price_uyu),
+      })),
+    ])
+    if (pregunta && !confirm(pregunta)) return
 
     setSaving(true)
     setError('')
@@ -537,7 +575,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
           collection_id: collectionId || null,
           badge: badge.trim() || null,
           status,
-          base_price_uyu: basePriceUyu ? parseInt(basePriceUyu) : null,
+          base_price_uyu: basePrice,
           discount_percent: resolvedDiscountPercent,
           discount_active: resolvedDiscountActive,
           // parseInt(x) || N pisaba un 0 real (falsy) con el default — un
@@ -551,7 +589,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
         })
         .eq('id', productId)
       if (loadedUpdatedAt) productUpdate = productUpdate.eq('updated_at', loadedUpdatedAt)
-      const { data: updatedRows, error: productError } = await productUpdate.select('id')
+      const { data: updatedRows, error: productError } = await productUpdate.select('id, updated_at')
 
       if (productError) throw productError
       // 0 filas no es error para Postgres: la prenda cambió desde que se abrió
@@ -559,68 +597,74 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       if (!updatedRows || updatedRows.length === 0) {
         throw new Error('No se guardó: esta prenda cambió desde que la abriste (otra pestaña o el cambio de precios en lote) o tu sesión venció. Recargá la página y volvé a guardar.')
       }
+      // El trigger ya movió updated_at. Se anota AL TOQUE y no al final: si
+      // después falla una foto o un talle (red del celular, sesión vencida),
+      // "Guardar" de nuevo pasa el bloqueo y termina el trabajo desde el mismo
+      // formulario, sin recargar y sin perder lo cargado (QA-M1). Es el valor
+      // tal cual lo devuelve la base: normalizado ya no coincide.
+      const freshUpdatedAt = (updatedRows[0] as { updated_at?: string | null }).updated_at
+      if (freshUpdatedAt) setLoadedUpdatedAt(freshUpdatedAt)
 
-      // Replace product media
-      // Delete old media links first. Si el borrado falla (RLS, red), NO se
-      // sigue: insertar arriba de lo viejo dejaba las fotos duplicadas.
-      const { error: mediaDeleteError } = await supabase.from('product_media').delete().eq('product_id', productId)
-      if (mediaDeleteError) throw new Error(`No se pudieron actualizar las fotos: ${mediaDeleteError.message}`)
-
-      if (mediaEntries.length > 0) {
-        const mediaInserts = mediaEntries
-          .filter((m) => !m.uploading && m.url && !m.url.startsWith('blob:'))
-          .map((m, i) => ({
-            product_id: productId,
-            url: m.url,
-            type: m.type,
-            alt: m.alt || null,
-            position: i,
-            is_primary: m.is_primary,
-          }))
-
-        if (mediaInserts.length > 0) {
-          const { error: mediaError } = await supabase.from('product_media').insert(mediaInserts)
-          if (mediaError) {
-            throw new Error(`No se guardaron las fotos: ${mediaError.message}. Ejecutá database/schema-extra.sql en Supabase.`)
-          }
-        }
-      }
-
-      // Replace sizes
-      // Delete old sizes first
-      const { error: sizeDeleteError } = await supabase.from('product_sizes').delete().eq('product_id', productId)
-      if (sizeDeleteError) throw new Error(`No se pudieron actualizar los talles: ${sizeDeleteError.message}`)
-
-      if (sizes.length > 0) {
-        const sizeInserts = sizes
-          .filter(s => s.size.trim())
-          .map((s, i) => ({
-            product_id: productId,
-            size: s.size.trim(),
-            price_uyu: s.price_uyu ? parseInt(s.price_uyu) : null,
-            available: s.available,
-            sort_order: i,
-            stock_qty: s.stock_qty ?? null,
-          }))
-
-        if (sizeInserts.length > 0) {
-          const { error: sizeError } = await supabase.from('product_sizes').insert(sizeInserts)
-          if (sizeError) throw new Error(`No se guardaron los talles: ${sizeError.message}`)
-        }
-      }
-
-      // Replace colors
-      const { error: colorDeleteError } = await supabase.from('product_colors').delete().eq('product_id', productId)
-      if (colorDeleteError) throw new Error(`No se pudieron actualizar los colores: ${colorDeleteError.message}`)
-
-      if (selectedColors.length > 0) {
-        const colorInserts = selectedColors.map((colorId) => ({
+      // Fotos: primero se anotan las que hay, después se insertan las del
+      // formulario y recién al final se borran las viejas. Si el borrado falla
+      // quedan repetidas un rato, pero nunca la prenda sin fotos, y el
+      // reintento lo deja bien (antes se borraba todo primero).
+      const { data: oldMedia, error: mediaReadError } = await supabase.from('product_media').select('id').eq('product_id', productId)
+      if (mediaReadError) throw new Error(`No se pudieron leer las fotos guardadas: ${mediaReadError.message}`)
+      const mediaInserts = mediaEntries
+        .filter((m) => !m.uploading && m.url && !m.url.startsWith('blob:'))
+        .map((m, i) => ({
           product_id: productId,
-          color_id: colorId,
+          url: m.url,
+          type: m.type,
+          alt: m.alt || null,
+          position: i,
+          is_primary: m.is_primary,
         }))
-        const { error: colorError } = await supabase.from('product_colors').insert(colorInserts)
-        if (colorError) throw new Error(`No se guardaron los colores: ${colorError.message}`)
+      if (mediaInserts.length > 0) {
+        const { error: mediaError } = await supabase.from('product_media').insert(mediaInserts)
+        if (mediaError) {
+          throw new Error(`No se guardaron las fotos: ${mediaError.message}. Tocá Guardar de nuevo; si sigue, ejecutá database/schema-extra.sql en Supabase.`)
+        }
       }
+      const oldMediaIds = ((oldMedia ?? []) as Array<{ id: string }>).map((m) => m.id)
+      if (oldMediaIds.length > 0) {
+        const { error: mediaDeleteError } = await supabase.from('product_media').delete().in('id', oldMediaIds)
+        if (mediaDeleteError) throw new Error(`Las fotos nuevas quedaron guardadas, pero no se pudieron sacar las anteriores (${mediaDeleteError.message}). Tocá Guardar de nuevo.`)
+      }
+
+      // Talles: upsert por (product_id, size) y después se borran solo los
+      // que se quitaron (talles-plan.ts). Nunca quedan en cero a mitad de
+      // camino, los ids de los que siguen no cambian y el stock contado no se
+      // pisa.
+      const { data: currentSizes, error: sizeReadError } = await supabase.from('product_sizes').select('id, size').eq('product_id', productId)
+      if (sizeReadError) throw new Error(`No se pudieron leer los talles guardados: ${sizeReadError.message}`)
+      const sizePlan = planTalles(
+        (currentSizes ?? []) as Array<{ id: string; size: string }>,
+        namedSizes.map((s) => ({ size: s.size, price_uyu: parseMoneyUYU(s.price_uyu), available: s.available })),
+        productId,
+      )
+      if (sizePlan.upserts.length > 0) {
+        const { error: sizeError } = await supabase.from('product_sizes').upsert(sizePlan.upserts, { onConflict: 'product_id,size' })
+        if (sizeError) throw new Error(`No se guardaron los talles: ${sizeError.message}. Tocá Guardar de nuevo.`)
+      }
+      if (sizePlan.deleteIds.length > 0) {
+        const { error: sizeDeleteError } = await supabase.from('product_sizes').delete().in('id', sizePlan.deleteIds)
+        if (sizeDeleteError) throw new Error(`No se pudieron sacar los talles quitados: ${sizeDeleteError.message}. Tocá Guardar de nuevo.`)
+      }
+
+      // Colores: se suman los elegidos (los que ya estaban quedan igual) y
+      // después se sacan los que se destildaron.
+      if (selectedColors.length > 0) {
+        const { error: colorError } = await supabase
+          .from('product_colors')
+          .upsert(selectedColors.map((colorId) => ({ product_id: productId, color_id: colorId })), { onConflict: 'product_id,color_id', ignoreDuplicates: true })
+        if (colorError) throw new Error(`No se guardaron los colores: ${colorError.message}. Tocá Guardar de nuevo.`)
+      }
+      let colorCleanup = supabase.from('product_colors').delete().eq('product_id', productId)
+      if (selectedColors.length > 0) colorCleanup = colorCleanup.not('color_id', 'in', `(${selectedColors.join(',')})`)
+      const { error: colorDeleteError } = await colorCleanup
+      if (colorDeleteError) throw new Error(`No se pudieron sacar los colores destildados: ${colorDeleteError.message}. Tocá Guardar de nuevo.`)
 
       // Horas, materiales y margen de la calculadora. Van después de lo
       // principal y NO cortan el guardado: si falta una tabla o columna, el
@@ -633,7 +677,10 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
         if (costWarning) warnings.push(costWarning)
       }
       const knitVal = showHours ? hoursVal : null
-      if (knitVal !== loadedKnitHours) {
+      // Horas escritas que no se entienden: la calculadora ya avisó, y la
+      // ficha sigue mostrando las de antes en vez de borrarlas.
+      const hoursUnreadable = hoursInput.trim() !== '' && hoursNum == null
+      if (!hoursUnreadable && knitVal !== loadedKnitHours) {
         const { error: knitError } = await supabase.from('products').update({ knit_hours: knitVal }).eq('id', productId)
         if (knitError) {
           warnings.push('Las horas no se pueden mostrar en la ficha todavía: falta correr database/horas-de-tejido-2026-10.sql en Supabase.')
@@ -648,10 +695,14 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
       notifyReindex([`/tienda/${slug.trim()}`, '/tienda', '/'])
 
       // Ya está guardado: nuevo punto de referencia, así el aviso de "cambios
-      // sin guardar" no salta al salir de la página.
+      // sin guardar" no salta al salir de la página, y los precios de ahora
+      // son el "antes" del próximo guardado.
       setSavedSnapshot(snapshot)
-      // El trigger de la base mueve updated_at con cada escritura: el próximo
-      // guardado desde esta misma pantalla compara contra el valor nuevo.
+      setLoadedBase(basePrice)
+      setSizes((prev) => prev.map((s) => ({ ...s, loaded_price: parseMoneyUYU(s.price_uyu) })))
+      // Las horas de la ficha (knit_hours) se escriben después del update
+      // principal y el trigger vuelve a mover updated_at: el próximo guardado
+      // desde esta misma pantalla compara contra el valor final.
       const { data: fresh } = await supabase.from('products').select('updated_at').eq('id', productId).maybeSingle()
       if (fresh?.updated_at) setLoadedUpdatedAt(fresh.updated_at)
       setLoadedSlug(slug.trim())
@@ -898,11 +949,11 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
 
           <div className="admin-form-grid">
             <div className="admin-field">
-              <label>Precio base (UYU)</label>
-              <input
-                type="number"
+              <MoneyInput
+                id="prod-base-price"
+                label="Precio base (UYU)"
                 value={basePriceUyu}
-                onChange={(e) => setBasePriceUyu(e.target.value)}
+                onChange={setBasePriceUyu}
                 placeholder="Ej. 3450"
                 disabled={isCustomOnly}
               />
@@ -930,9 +981,9 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
             <PricingPanel
               rec={recommendPrice({
                 slug: slug.trim(),
-                price: basePriceUyu ? parseInt(basePriceUyu) : null,
-                hours: hoursInput ? parseFloat(hoursInput.replace(',', '.')) : null,
-                materials: materialsInput ? parseInt(materialsInput) : null,
+                price: parseMoneyUYU(basePriceUyu),
+                hours: parseNum(hoursInput),
+                materials: parseMoneyUYU(materialsInput),
                 categoryId: categoryId || null,
                 peers,
                 margin: parseNum(marginInput),
@@ -1154,19 +1205,24 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
                   )}
                   {sizes.map((s) => (
                     <div key={s.tempId} className="admin-size-row" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      {/* 40: el mismo tope que acepta el carrito (/api/cart). */}
                       <input
                         type="text"
                         value={s.size}
                         onChange={(e) => updateSize(s.tempId, 'size', e.target.value)}
                         placeholder="Ej. M"
+                        maxLength={40}
+                        aria-label="Nombre del talle"
                         style={{ width: '80px', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(31,26,27,0.18)' }}
                       />
-                      <input
-                        type="number"
+                      <MoneyInput
+                        id={`size-price-${s.tempId}`}
                         value={s.price_uyu}
-                        onChange={(e) => updateSize(s.tempId, 'price_uyu', e.target.value)}
+                        onChange={(v) => updateSize(s.tempId, 'price_uyu', v)}
                         placeholder="Precio (opcional)"
-                        style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(31,26,27,0.18)' }}
+                        ariaLabel={`Precio del talle ${s.size.trim() || 'nuevo'} (vacío = precio base)`}
+                        style={{ flex: 1 }}
+                        inputStyle={{ width: '100%', padding: '6px 10px', borderRadius: '6px', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(31,26,27,0.18)' }}
                       />
                       <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', cursor: 'pointer' }}>
                         <input
@@ -1204,7 +1260,7 @@ export default function EditarProductoPage({ params }: { params: Promise<{ id: s
               setShowHours={setShowHours}
               margin={marginInput}
               setMargin={setMarginInput}
-              currentPrice={basePriceUyu ? parseInt(basePriceUyu) : null}
+              currentPrice={parseMoneyUYU(basePriceUyu)}
               hasSizes={!isCustomOnly && sizes.length > 0}
               onUseBase={(p) => setBasePriceUyu(String(p))}
               onUseAllSizes={(p) => setSizes((prev) => prev.map((s) => ({ ...s, price_uyu: String(p) })))}

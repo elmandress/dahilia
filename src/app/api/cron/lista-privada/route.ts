@@ -14,9 +14,11 @@ export const dynamic = 'force-dynamic'
  * con el link a la tanda. Es la promesa de la lista ("la ves 24 h antes").
  *
  * Lo llama netlify/functions/reloj-lista-privada.mts cada hora en punto,
- * con el mismo CRON_SECRET que el resumen diario. Se manda UNA vez por drop (nombre +
- * fecha quedan anotados en site_settings.lista_email_enviado); cambiar la
- * fecha o el nombre arma un envío nuevo.
+ * con el mismo CRON_SECRET que el resumen diario. Se manda UNA vez por drop
+ * (colección + instante del lanzamiento quedan anotados en
+ * site_settings.lista_email_enviado, y la hora en lista_email_enviado_at).
+ * Corregir el nombre no arma otro envío; cambiar la fecha sí, pero nunca a
+ * menos de 12 h del anterior (lib/drop-date.ts, avisoYaEnviado).
  *
  * No manda si:
  *  - el envío automático no está activado en /admin/suscriptores (27/10/2026:
@@ -52,8 +54,13 @@ export async function GET(req: NextRequest) {
       { onConflict: 'key' },
     )
   }
+  // Con el envío se anota también la hora, en el mismo upsert: si después
+  // cambia la fecha del drop, no sale un segundo aviso antes de 12 h (QA-13).
   const setStatus = (estado: string, enviado?: string) =>
-    upsert({ lista_email_estado: estado, ...(enviado ? { lista_email_enviado: enviado } : {}) })
+    upsert({
+      lista_email_estado: estado,
+      ...(enviado ? { lista_email_enviado: enviado, lista_email_enviado_at: new Date().toISOString() } : {}),
+    })
 
   await upsert({ lista_cron_visto: new Date().toISOString() })
 
