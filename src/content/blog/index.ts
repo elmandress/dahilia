@@ -107,10 +107,13 @@ export function getArticle(slug: string): Article | undefined {
 // desde la home le da más fuerza justo a la página que Google está probando.
 // 12/10/2026: las dos notas nuevas de regalos (la home es lo que Google
 // rastrea más seguido: así las descubre rápido) + Navidad.
+// 04/11/2026 (VIS-06): sin Navidad en la home (decisión del 21/10; la de mamá
+// y abuela también la nombraba). Entran las notas del drop de verano. Las
+// sacadas siguen en /blog y en su grupo de notas.
 const HOME_ARTICLE_SLUGS = [
   'regalar-ropa-sin-saber-el-talle',
-  'regalos-tejidos-para-mama-y-abuela',
-  'regalos-de-navidad-tejidos-a-mano',
+  'poncho-de-crochet-verano-playa-y-ciudad',
+  'manguitas-tejidas-como-combinarlas',
 ]
 
 export function getHomeArticles(limit = 3): Article[] {

@@ -15,11 +15,8 @@ export interface GiftSuggestion {
   label: string
 }
 
-const field: React.CSSProperties = {
-  width: '100%', minHeight: 44, padding: '10px 12px', borderRadius: 10,
-  border: `1px solid ${dahila.borderStrong}`, background: '#fff',
-  fontFamily: dahila.fontSans, fontSize: 16, color: dahila.ink900,
-}
+// Los campos usan .dh-campo (globals.css): la misma caja que /encargo,
+// /tejedoras y /encargo/estado, con el mismo foco (VIS-14, 04/11/2026).
 const ctaStyle: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
   width: '100%', minHeight: 52, borderRadius: 12, textDecoration: 'none',
@@ -80,7 +77,9 @@ export function RegaloClient({ whatsappUrl, suggestions, sinTalle }: {
         {sinTalle && (
           <>
             {' '}
-            <a href="#regalo-sin-talle" style={{ color: dahila.wine600, whiteSpace: 'nowrap' }}>
+            {/* Subrayado (VIS-16): dentro del párrafo se distinguía solo por el
+                color, con 1,37:1 de diferencia (axe: link-in-text-block). */}
+            <a href="#regalo-sin-talle" style={{ color: dahila.wine600, whiteSpace: 'nowrap', textDecoration: 'underline', textUnderlineOffset: 3 }}>
               ¿Preferís regalar una pieza ya tejida? ↓
             </a>
           </>
@@ -88,15 +87,23 @@ export function RegaloClient({ whatsappUrl, suggestions, sinTalle }: {
       </p>
       {/* Lo esencial antes de bajar (12/10/2026): qué es, dónde sirve y cómo
           se paga — Baymard: la mayoría de los sitios no explica sus opciones
-          de regalo, y la duda frena la compra. */}
-      <ul aria-label="Lo esencial" style={{ listStyle: 'none', padding: 0, margin: '0 0 36px', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          de regalo, y la duda frena la compra. Lista simple y no pastillas
+          (VIS-16, 04/11/2026): con fondo y borde parecían botones que no
+          hacían nada, y en el celular ocupaban tres renglones de chip. */}
+      <ul aria-label="Lo esencial" className="regalo-esencial" style={{
+        listStyle: 'none', padding: 0, margin: '0 0 36px',
+        display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '6px 24px',
+      }}>
         {['Sirve en la tienda o a medida', 'Llega por WhatsApp, lista para reenviar', 'Pagás por transferencia o Mercado Pago'].map((t) => (
           <li key={t} style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 999,
-            background: dahila.cream100, border: `1px solid ${dahila.border}`,
-            fontFamily: dahila.fontSans, fontSize: 12.5, color: dahila.ink700,
+            display: 'flex', alignItems: 'flex-start', gap: 7,
+            fontFamily: dahila.fontSans, fontSize: 13, lineHeight: 1.5, color: dahila.ink700,
           }}>
-            <Icon name="check" size={13} color={dahila.wine600} /> {t}
+            {/* El check centrado en el primer renglón, aunque el texto baje a dos. */}
+            <span style={{ flexShrink: 0, display: 'inline-flex', marginTop: 3 }}>
+              <Icon name="check" size={13} color={dahila.wine600} />
+            </span>
+            <span>{t}</span>
           </li>
         ))}
       </ul>
@@ -141,7 +148,8 @@ export function RegaloClient({ whatsappUrl, suggestions, sinTalle }: {
                   placeholder="$"
                   aria-describedby="regalo-monto"
                   aria-invalid={customTyped && !customOk ? true : undefined}
-                  style={{ ...field, ...(customTyped && !customOk ? { borderColor: '#B6314A' } : {}) }}
+                  className="dh-campo"
+                  style={customTyped && !customOk ? { borderColor: '#B6314A' } : undefined}
                 />
               </label>
               {/* Lo que se va a pedir, mientras se escribe: así "2.000" se ve
@@ -161,11 +169,11 @@ export function RegaloClient({ whatsappUrl, suggestions, sinTalle }: {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
             <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <span style={labelText}>Para</span>
-              <input value={para} onChange={(e) => setPara(e.target.value)} maxLength={60} placeholder="Su nombre" autoComplete="off" style={field} />
+              <input value={para} onChange={(e) => setPara(e.target.value)} maxLength={60} placeholder="Su nombre" autoComplete="off" className="dh-campo" />
             </label>
             <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <span style={labelText}>De parte de</span>
-              <input value={de} onChange={(e) => setDe(e.target.value)} maxLength={60} placeholder="Tu nombre" autoComplete="given-name" style={field} />
+              <input value={de} onChange={(e) => setDe(e.target.value)} maxLength={60} placeholder="Tu nombre" autoComplete="given-name" className="dh-campo" />
             </label>
           </div>
 
@@ -177,7 +185,8 @@ export function RegaloClient({ whatsappUrl, suggestions, sinTalle }: {
               maxLength={200}
               rows={3}
               placeholder="Feliz cumple, para que elijas algo hecho para vos."
-              style={{ ...field, resize: 'vertical', fontFamily: dahila.fontSans }}
+              className="dh-campo"
+              style={{ resize: 'vertical' }}
             />
             <span style={{ fontFamily: dahila.fontSans, fontSize: 11.5, color: dahila.ink500, alignSelf: 'flex-end' }}>{mensaje.length}/200</span>
           </label>
@@ -270,6 +279,9 @@ export function RegaloClient({ whatsappUrl, suggestions, sinTalle }: {
       </section>
 
       <style>{`
+        @media (min-width: 720px) {
+          .regalo-esencial { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+        }
         @media (max-width: 760px) {
           .regalo-grid { grid-template-columns: minmax(0, 1fr) !important; }
           /* En el celular primero el formulario (lo que hay que hacer) y la

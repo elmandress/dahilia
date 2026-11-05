@@ -199,14 +199,18 @@ export function Field({ label, helper, children }: { label: string, helper?: str
 // celular no ofrecía completar nombre, mail ni teléfono (WCAG 1.3.5), el campo
 // de WhatsApp abría el teclado de letras, y el servidor recortaba en silencio
 // lo que pasara de su tope. Cada formulario los pasa según el dato.
+// Con caja (VIS-14, 04/11/2026): borde, radio 12, 48 px de alto y 16 px de
+// letra, el mismo campo que /regalo. Antes era solo una línea abajo, de 14 px
+// y liviana. El estilo (y el foco) vive en .dh-campo, en globals.css: un
+// :focus en línea no se puede escribir.
 export function TextInput({ placeholder, value, onChange, type = 'text', autoComplete, inputMode, maxLength, name, spellCheck, autoCapitalize }: {
   placeholder?: string, value?: string, onChange?: (val: string) => void, type?: string,
   autoComplete?: string, inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'],
   maxLength?: number, name?: string, spellCheck?: boolean, autoCapitalize?: string,
 }) {
-  const [focus, setFocus] = useState(false)
   return (
     <input
+      className="dh-campo"
       type={type}
       name={name}
       autoComplete={autoComplete}
@@ -217,16 +221,25 @@ export function TextInput({ placeholder, value, onChange, type = 'text', autoCom
       placeholder={placeholder}
       value={value || ''}
       onChange={(e) => onChange && onChange(e.target.value)}
-      onFocus={() => setFocus(true)}
-      onBlur={() => setFocus(false)}
-      style={{
-        fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, color: dahila.ink900,
-        background: 'transparent',
-        border: 'none',
-        borderBottom: `1px solid ${focus ? dahila.ink900 : dahila.borderStrong}`,
-        padding: '10px 0 8px',
-        transition: `background-color 160ms ${dahila.ease}, color 160ms ${dahila.ease}, border-color 160ms ${dahila.ease}, box-shadow 160ms ${dahila.ease}`,
-      }}
+    />
+  )
+}
+
+/** Texto largo con la misma caja que TextInput (VIS-14). */
+export function TextArea({ value, onChange, rows = 4, maxLength, placeholder, name }: {
+  value?: string, onChange?: (val: string) => void, rows?: number,
+  maxLength?: number, placeholder?: string, name?: string,
+}) {
+  return (
+    <textarea
+      className="dh-campo"
+      name={name}
+      rows={rows}
+      maxLength={maxLength}
+      placeholder={placeholder}
+      value={value || ''}
+      onChange={(e) => onChange && onChange(e.target.value)}
+      style={{ resize: 'vertical' }}
     />
   )
 }

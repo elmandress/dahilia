@@ -5,9 +5,11 @@ import { dahila } from '@/components/ui/tokens'
 import { VipForm } from '@/components/VipForm'
 import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
-import { parseDropDateUY, dropDayText } from '@/lib/drop-date'
+import { parseDropDateUY, dropDayText, dropHasLaunched } from '@/lib/drop-date'
 
-export const revalidate = 3600
+// 5 minutos, como /ig (VIS-05): el día del drop el título cambia solo a la hora
+// del lanzamiento y no hasta una hora después.
+export const revalidate = 300
 
 const TITLE = 'Lista privada de Dahila'
 const DESCRIPTION = 'Cada tanda de Dahila es chica y tejida a mano. La lista privada la ve 24 horas antes que nadie y elige primero.'
@@ -28,13 +30,23 @@ export const metadata: Metadata = {
  * esperaba a otro popup) y en el footer. Esta página es el destino del link
  * de historias y de /ig. Mismo tono que el popup: privado, sin escasez
  * inventada. Si hay un drop cargado, se nombra (y su fecha si es futura).
+ * Ya lanzado, el título habla de lo que viene y el drop se ofrece como lo que
+ * es: algo que ya está en la tienda (VIS-05). Antes, con el drop abierto desde
+ * el 28/10, seguía diciendo "«Sunset ’26» ya se está tejiendo. Sale el 28 de
+ * octubre."
  */
 export default async function VipPage() {
-  const { settings } = await getCatalog()
+  const { settings, collections } = await getCatalog()
   const dropOn = settings.drop_enabled !== 'false' && (settings.drop_name ?? '').trim() !== ''
   const dropName = dropOn ? settings.drop_name!.trim() : ''
   const launch = parseDropDateUY(settings.drop_date)
-  const dropDate = dropOn && launch ? dropDayText(launch) : ''
+  const lanzado = dropOn && dropHasLaunched(settings.drop_date)
+  // La fecha solo si todavía no pasó.
+  const dropDate = dropOn && launch && !lanzado ? dropDayText(launch) : ''
+  // Misma regla que la home y /ig: se linkea la colección solo si está publicada.
+  const dropSlug = (settings.drop_collection_slug ?? '').trim()
+  const dropCol = dropSlug ? collections.find((c) => c.slug === dropSlug && c.published) : undefined
+  const dropHref = dropCol ? `/colecciones/${dropCol.slug}` : null
 
   const perks: Array<[string, string]> = [
     ['24 horas antes', 'Cada tanda nueva la ve la lista un día antes de que llegue a la tienda.'],
@@ -55,8 +67,16 @@ export default async function VipPage() {
           // heredado del fondo oscuro y el título quedaba negro sobre negro.
           color: '#F5EDE6',
         }}>
-          {dropName ? <>«{dropName}» ya se está tejiendo.</> : <>Lo próximo ya se está tejiendo.</>}
+          {dropName && !lanzado ? <>«{dropName}» ya se está tejiendo.</> : <>Lo próximo ya se está tejiendo.</>}
         </h1>
+        {lanzado && (
+          <p style={{ fontFamily: dahila.fontSans, fontSize: 16, fontWeight: 400, lineHeight: 1.7, color: '#F5EDE6', margin: '0 0 10px', maxWidth: 520 }}>
+            «{dropName}» ya está en la tienda.{' '}
+            <Link href={dropHref ?? '/tienda'} style={{ color: '#F5EDE6', textDecoration: 'underline', textUnderlineOffset: 3, whiteSpace: 'nowrap' }}>
+              {dropHref ? 'Ver la colección' : 'Ver la tienda'}
+            </Link>
+          </p>
+        )}
         <p style={{ fontFamily: dahila.fontSans, fontSize: 16, fontWeight: 300, lineHeight: 1.7, color: 'rgba(245,237,230,0.82)', margin: '0 0 30px', maxWidth: 520 }}>
           {dropDate ? `Sale el ${dropDate}. ` : ''}
           Antes de la tienda, la lista: cada tanda es chica, y quien está adentro la ve primero.

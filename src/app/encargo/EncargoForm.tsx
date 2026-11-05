@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useTransition, useEffect, useRef, useSyncExternalStore } from 'react'
-import { dahila, Eyebrow, Field, TextInput, Button, Icon } from '@/components/ui/Primitives'
+import { dahila, Eyebrow, Field, TextInput, TextArea, Button, Icon } from '@/components/ui/Primitives'
 import { EncargosDisponibles, type EncargosCuposState } from '@/components/EncargosDisponibles'
 import { SizeGuide } from '@/components/SizeGuide'
 import { ProcessStepper, type ProcessStep } from '@/components/ProcessStepper'
@@ -31,6 +31,8 @@ function tipoPorIdea(idea: string): string {
 }
 const noSubscribe = () => () => {}
 const readSearch = () => window.location.search
+/** Los atajos de arriba del formulario: links subrayados dentro de una frase. */
+const encargoAtajo: React.CSSProperties = { color: dahila.wine600, fontWeight: 400, textDecoration: 'underline', textUnderlineOffset: 3 }
 
 export default function EncargoForm({
   whatsappUrl, encargosCupos, processEnabled = false, processSteps = [], referencias = [], porWhatsApp = false,
@@ -245,34 +247,44 @@ export default function EncargoForm({
         <p style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7, color: dahila.ink700, margin: 0 }}>
           Te respondo cuanto antes con un boceto, los materiales que tengo y el presupuesto.
         </p>
-        <Link href="/encargo/estado" style={{
-          alignSelf: 'flex-start', padding: '4px 0',
-          fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600, textDecoration: 'underline',
-        }}>
-          ¿Ya hiciste un encargo? Seguí su estado con tu código →
-        </Link>
-        {/* Quien ya compró no necesita el formulario: va directo al chat, con
-            la prenda de referencia si llegó desde una ficha (recorridos 04/11/2026). */}
-        {!porWhatsApp && (
-          <a
-            href={`${whatsappUrl.replace(/\/+$/, '')}?text=${encodeURIComponent(`Hola Anush! Ya te compré antes y quiero encargar${referencia ? ` algo como ${referencia.name}` : ''}: `)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => track('whatsapp_click', { source: 'encargo_clienta' })}
-            style={{
-              alignSelf: 'flex-start', padding: '4px 0', marginTop: -8,
-              fontFamily: dahila.fontSans, fontSize: 13, color: dahila.wine600, textDecoration: 'underline',
-            }}
-          >
-            ¿Ya me compraste? Escribime directo por WhatsApp →
-          </a>
-        )}
+        {/* Los dos atajos en un renglón de 13 px (VIS-14, 04/11/2026): eran dos
+            links de dos renglones cada uno, con la flecha sola abajo, y el
+            formulario empezaba debajo del corte del celular. Cada frase va
+            entera; si no entran juntas, la segunda baja completa. Quien ya
+            compró no necesita el formulario: va directo al chat, con la prenda
+            de referencia si llegó desde una ficha (recorridos 04/11/2026). */}
+        <p style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, lineHeight: 1.6, color: dahila.ink700, margin: 0 }}>
+          {!porWhatsApp && (
+            <>
+              <span style={{ whiteSpace: 'nowrap' }}>
+                ¿Ya me compraste?{' '}
+                <a
+                  href={`${whatsappUrl.replace(/\/+$/, '')}?text=${encodeURIComponent(`Hola Anush! Ya te compré antes y quiero encargar${referencia ? ` algo como ${referencia.name}` : ''}: `)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Escribime por WhatsApp"
+                  onClick={() => track('whatsapp_click', { source: 'encargo_clienta' })}
+                  style={encargoAtajo}
+                >
+                  Escribime
+                </a>
+              </span>
+              <span aria-hidden="true">&nbsp;· </span>
+            </>
+          )}
+          <span style={{ whiteSpace: 'nowrap' }}>
+            ¿Ya encargaste?{' '}
+            <Link href="/encargo/estado" style={encargoAtajo}>Seguí tu encargo&nbsp;→</Link>
+          </span>
+        </p>
         <EncargosDisponibles state={encargosCupos} />
       </div>
 
+      {/* En el celular, una fila numerada sin íconos (VIS-14): el formulario
+          tiene que asomar en la primera pantalla. */}
       {processEnabled && (
-        <div style={{ marginBottom: 32 }}>
-          <ProcessStepper steps={processSteps} />
+        <div className="encargo-como-funciona" style={{ marginBottom: 32 }}>
+          <ProcessStepper steps={processSteps} compact />
         </div>
       )}
 
@@ -396,20 +408,14 @@ export default function EncargoForm({
         </Field>
 
         <Field label="Contame de tu prenda" helper="Para qué la querés, qué colores te gustan, en qué lana — cuanto más detalles, mejor.">
-          <textarea
+          {/* Con la misma caja que los otros campos (VIS-14). */}
+          <TextArea
             rows={5}
             // La línea de referencia sale del mismo tope: sin restarla, el
             // servidor recortaba el final de lo que escribió la clienta.
             maxLength={referenciaLinea ? MESSAGE_MAX - referenciaLinea.length - 2 : MESSAGE_MAX}
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            style={{
-              fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, color: dahila.ink900,
-              background: 'transparent', border: 'none',
-              borderBottom: `1px solid ${dahila.borderStrong}`,
-              padding: '10px 0 8px', resize: 'vertical',
-              width: '100%', boxSizing: 'border-box',
-            }}
+            onChange={setMessage}
           />
         </Field>
 

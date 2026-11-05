@@ -9,6 +9,7 @@ import { subscribeToVipList } from '@/lib/subscribe'
 import { markVipSeen } from './VipForm'
 import { safeAction } from '@/lib/safe-action'
 import { parseDropDateUY } from '@/lib/drop-date'
+import type { DropArriba } from '@/lib/home-sections'
 
 /**
  * Bloque "Próximo drop" del home — la mecánica de expectativa del playbook de
@@ -35,6 +36,13 @@ export interface DropTeaserProps {
   hasReadyToShip?: boolean
   /** 'top' = pegado debajo del hero, con menos aire arriba. */
   placement?: 'top' | 'inline'
+  /** El drop ya abrió según el servidor (dropHasLaunched). Es lo que se dibuja
+   *  hasta que el componente monta y lee el reloj: el HTML del servidor decía
+   *  "Muy pronto" y "Verlo 24 h antes" con el drop abierto, y al hidratar
+   *  cambiaba (VIS-05). Así el servidor y la hidratación dicen lo mismo. */
+  initialLive?: boolean
+  /** Con placement 'top', cómo va en el celular (VIS-02, ver lib/home-sections). */
+  variante?: DropArriba
 }
 
 // Hora de Uruguay y el mismo parser tolerante que el aviso a la lista (lib/drop-date).
@@ -143,7 +151,7 @@ function CountdownUnit({ value, label }: { value: number; label: string }) {
   )
 }
 
-export function DropTeaser({ name, dateIso, teaser, imageUrl, collectionHref, hasReadyToShip = false, placement = 'inline' }: DropTeaserProps) {
+export function DropTeaser({ name, dateIso, teaser, imageUrl, collectionHref, hasReadyToShip = false, placement = 'inline', initialLive = false, variante = 'compacto-movil' }: DropTeaserProps) {
   const target = parseDropDate(dateIso)
   // El countdown solo existe en el cliente (el HTML del server mostraría una
   // cuenta congelada y distinta → mismatch). Hasta montar: guiones.
@@ -157,10 +165,16 @@ export function DropTeaser({ name, dateIso, teaser, imageUrl, collectionHref, ha
   }, [])
 
   const left = target && now ? remaining(target, now) : null
-  const isLive = target !== null && now !== null && now >= target
+  // Hasta montar manda lo que calculó el servidor; después, el reloj (que
+  // abre el drop en el momento justo aunque el HTML cacheado sea de antes).
+  const isLive = now !== null ? target !== null && now >= target : initialLive
+
+  // Arriba (debajo de la portada) no se anima la entrada: arranca en el primer
+  // pantallazo y en reposo quedaba al 90 % de opacidad, lavado (VIS-04).
+  const className = placement === 'top' ? `home-section sin-entrada drop-top drop-top--${variante}` : 'home-section'
 
   return (
-    <section className="home-section" aria-label={`Próximo drop: ${name}`} style={{ maxWidth: 1280, margin: placement === 'top' ? '32px auto 0' : '88px auto 0', padding: '0 24px' }}>
+    <section className={className} aria-label={`${isLive ? 'Ya está online' : 'Próximo drop'}: ${name}`} style={{ maxWidth: 1280, margin: placement === 'top' ? '32px auto 0' : '88px auto 0', padding: '0 24px' }}>
       <div className="home-banner" style={{
         display: 'grid', gridTemplateColumns: imageUrl ? '1fr 1.1fr' : '1fr',
         background: dahila.cream100, borderRadius: 20, overflow: 'hidden',
@@ -179,7 +193,7 @@ export function DropTeaser({ name, dateIso, teaser, imageUrl, collectionHref, ha
             />
           </div>
         )}
-        <div style={{
+        <div className="drop-teaser-cuerpo" style={{
           padding: 'clamp(32px, 5vw, 56px)',
           display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16,
         }}>
@@ -204,8 +218,11 @@ export function DropTeaser({ name, dateIso, teaser, imageUrl, collectionHref, ha
             )
           )}
 
-          {teaser && (
-            <p style={{
+          {/* El texto del drop es de antes del lanzamiento ("Anotate en la
+              Lista VIP para entrar 24 hs antes"): con el drop abierto quedaba
+              diciendo algo vencido. */}
+          {teaser && !isLive && (
+            <p className="drop-teaser-texto" style={{
               fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 300, lineHeight: 1.7,
               color: dahila.ink700, margin: 0, maxWidth: 460,
             }}>{teaser}</p>

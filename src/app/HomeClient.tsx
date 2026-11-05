@@ -10,14 +10,15 @@ import { GoogleReviews } from '@/components/GoogleReviews'
 import { NavidadHome } from '@/components/NavidadAviso'
 import { ClientasGallery } from '@/components/ClientasGallery'
 import { VipForm } from '@/components/VipForm'
-import type { Product, Discount } from '@/lib/types'
+import type { Discount } from '@/lib/types'
 import type { Testimonial } from '@/components/TestimonialsStrip'
-import { BLUR_DATA_URL, isReadyToShip } from '@/lib/types'
+import { BLUR_DATA_URL } from '@/lib/types'
 import { dahila, Button, Eyebrow, Icon } from '@/components/ui/Primitives'
 import { useCart } from '@/components/CartProvider'
 import Link from 'next/link'
 import { ReelsSection } from '@/components/ReelsSection'
 import type { ReelCard } from '@/lib/reels'
+import { destinoPortada, type DropArriba, type SeccionesHome } from '@/lib/home-sections'
 
 function FAQ({ items }: { items: [string, string][] }) {
   const [open, setOpen] = useState<number>(-1)
@@ -103,12 +104,6 @@ export type HomeSettings = Partial<Record<
   string
 >>
 
-/** Destino del botón de la portada: solo rutas del propio sitio ("/…"). */
-function heroHref(raw: string | undefined): string {
-  const v = (raw ?? '').trim()
-  return v.startsWith('/') && !v.startsWith('//') ? v : '/tienda'
-}
-
 function val<K extends keyof HomeSettings>(s: HomeSettings, key: K, fallback: string): string {
   const v = s?.[key]
   return v && v.trim() !== '' ? v : fallback
@@ -117,15 +112,23 @@ function val<K extends keyof HomeSettings>(s: HomeSettings, key: K, fallback: st
 /** Nota del blog para la franja de la home (solo lo que la tarjeta muestra). */
 export type HomeNote = { slug: string; title: string; excerpt: string; hero?: { src: string; alt: string; position?: string } }
 
-export function HomeClient({ products, newest = [], settings, discounts = [], testimonials = [], dropCollectionHref = null, notes = [], categorias = [], productLinks = {}, reels = [] }: { reels?: ReelCard[]; productLinks?: Record<string, { name: string; slug: string }>; products: Product[]; newest?: Product[]; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[]; dropCollectionHref?: string | null; notes?: HomeNote[]; categorias?: { name: string; slug: string }[] }) {
+export function HomeClient({ secciones, hayEnStock = false, dropLive = false, dropArriba = 'compacto-movil', settings, discounts = [], testimonials = [], dropCollectionHref = null, notes = [], categorias = [], productLinks = {}, reels = [] }: {
+  /** "Nuevo", "Disponible ahora" y "Accesorios", armadas en el servidor sin
+   *  repetir prendas (lib/home-sections, VIS-06). Una sección vacía no se dibuja. */
+  secciones: SeccionesHome
+  /** Hay alguna pieza en stock en todo el catálogo (no solo en las que viajan). */
+  hayEnStock?: boolean
+  /** El drop ya abrió, calculado en el servidor (VIS-05). */
+  dropLive?: boolean
+  /** Cómo va el bloque del drop en el celular (VIS-02). */
+  dropArriba?: DropArriba
+  reels?: ReelCard[]; productLinks?: Record<string, { name: string; slug: string }>; settings: HomeSettings; discounts?: Discount[]; testimonials?: Testimonial[]; dropCollectionHref?: string | null; notes?: HomeNote[]; categorias?: { name: string; slug: string }[]
+}) {
   const { queueNote } = useCart()
-  // "Nuevo" = últimos publicados por fecha real de alta (con fallback al orden
-  // manual si la consulta dedicada no trajo nada).
-  const featured = newest.length > 0 ? newest : products.slice(0, 4)
-  const accesorios = products.filter((p) => p.category?.slug === 'accesorios').slice(0, 4)
-  // Disponible ahora: piezas ya tejidas, sin la espera habitual — la sección
-  // se oculta sola si hoy no hay ninguna (nunca prometer algo que no hay).
-  const readyToShip = products.filter(isReadyToShip).slice(0, 4)
+  // "Nuevo" = últimas publicadas por fecha real de alta. "Disponible ahora":
+  // ya tejidas, sin la espera habitual; se oculta sola si no hay (nunca
+  // prometer algo que no hay). Cada prenda sale en una sola sección.
+  const { nuevo, enStock, accesorios } = secciones
 
   const heroImage = val(settings, 'hero_image_url', '/photos/top-lace-parque.jpg')
   // Banner-style focal point (like LinkedIn/YouTube). Stored as "x% y%" so the
@@ -231,8 +234,9 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
                 {val(settings, 'hero_title', 'Tejido con tiempo.')}
               </h1>
               {/* El destino se elige en Configuración (hero_cta_href): con el
-                  drop abierto, "Ver colección" llevaba a /tienda y no al drop. */}
-              <Button variant="primary" size="lg" href={heroHref(settings.hero_cta_href)}>
+                  drop abierto, "Ver colección" llevaba a /tienda y no al drop.
+                  Un link completo de dahila.uy también vale (QA-15). */}
+              <Button variant="primary" size="lg" href={destinoPortada(settings.hero_cta_href)}>
                 {val(settings, 'hero_cta', 'Ver tienda')}
               </Button>
             </div>
@@ -243,7 +247,9 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
       {/* PRÓXIMO DROP — countdown + captura VIP; ver DropTeaser.tsx. Va
           primero, antes de las prendas (pedido 08/10/2026: lo primero que se
           ve al entrar es la colección que viene). Debajo siguen la tienda y
-          "Disponible ahora". Se apaga desde Configuración → "Próximo drop". */}
+          "Disponible ahora". Se apaga desde Configuración → "Próximo drop".
+          En el celular va compacto, u oculto si la portada ya lleva a la
+          misma colección (VIS-02): la primera prenda estaba a 1,96 pantallas. */}
       {showDrop && (
         <DropTeaser
           name={val(settings, 'drop_name', '')}
@@ -251,8 +257,10 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
           teaser={val(settings, 'drop_teaser', '')}
           imageUrl={val(settings, 'drop_image_url', '')}
           collectionHref={dropCollectionHref}
-          hasReadyToShip={readyToShip.length > 0}
+          hasReadyToShip={hayEnStock}
           placement="top"
+          initialLive={dropLive}
+          variante={dropArriba}
         />
       )}
 
@@ -262,7 +270,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
         <NavidadHome
           encargoHasta={settings.navidad_encargo_hasta}
           stockHasta={settings.navidad_stock_hasta}
-          hasReadyToShip={readyToShip.length > 0}
+          hasReadyToShip={hayEnStock}
           giftEnabled={settings.regalo_enabled !== 'false'}
         />
       )}
@@ -294,8 +302,9 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
         </nav>
       )}
 
-      {/* NEW IN */}
-      <section className="seccion-nuevo" style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 24px 0' }}>
+      {/* NEW IN — data-seccion: lo usan las pruebas (tests/e2e/entradas)
+          para comprobar que ninguna prenda se repite entre secciones. */}
+      <section className="seccion-nuevo" data-seccion="nuevo" style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 24px 0' }}>
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
           marginBottom: 32, paddingBottom: 12,
@@ -309,6 +318,7 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
           <Link href="/tienda" style={{
             fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
             letterSpacing: '0.06em', color: dahila.ink700, textDecoration: 'none',
+            whiteSpace: 'nowrap',
           }}>Ver toda la colección →</Link>
         </div>
 
@@ -330,8 +340,8 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
         <div className="product-grid" style={{
           display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22,
         }}>
-          {featured.length > 0
-            ? featured.map((product) => <ProductCard key={product.id} product={product} discounts={discounts} />)
+          {nuevo.length > 0
+            ? nuevo.map((product) => <ProductCard key={product.id} product={product} discounts={discounts} />)
             : <EmptyCollectionState />}
         </div>
       </section>
@@ -370,10 +380,10 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
           su ficha. Se oculta sola si no hay reels cargados (admin → Reels). */}
       <ReelsSection reels={reels} />
 
-      {/* DISPONIBLE AHORA — piezas ya tejidas, sin la espera de a-medida.
-          Se oculta sola cuando no hay ninguna (readyToShip vacío). */}
-      {readyToShip.length > 0 && (
-        <section style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 24px 0' }}>
+      {/* DISPONIBLE AHORA — piezas ya tejidas, sin la espera de a-medida, que
+          no salieron en "Nuevo". Se oculta sola si no queda ninguna. */}
+      {enStock.length > 0 && (
+        <section data-seccion="en-stock" style={{ maxWidth: 1280, margin: '0 auto', padding: '56px 24px 0' }}>
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
             marginBottom: 32, paddingBottom: 12,
@@ -390,16 +400,19 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
                 color: dahila.ink500, margin: '4px 0 0',
               }}>Ya tejidas, listas para enviar — sin la espera habitual.</p>
             </div>
+            {/* nowrap: al lado del subtítulo, en el celular se partía en dos
+                renglones con la flecha sola abajo (VIS-10). */}
             <Link href="/tienda?ya=1" style={{
               fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
               letterSpacing: '0.06em', color: dahila.ink700, textDecoration: 'none',
+              whiteSpace: 'nowrap',
             }}>Ver todo →</Link>
           </div>
 
           <div className="product-grid" style={{
             display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22,
           }}>
-            {readyToShip.map((product) => <ProductCard key={product.id} product={product} discounts={discounts} />)}
+            {enStock.map((product) => <ProductCard key={product.id} product={product} discounts={discounts} />)}
           </div>
         </section>
       )}
@@ -502,9 +515,9 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
         </section>
       )}
 
-      {/* ACCESORIOS */}
+      {/* ACCESORIOS — los que no salieron arriba. */}
       {accesorios.length > 0 && (
-        <section className="home-section" style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
+        <section className="home-section" data-seccion="accesorios" style={{ maxWidth: 1280, margin: '88px auto 0', padding: '0 24px' }}>
           <h2 style={{
             fontFamily: dahila.fontDisplay, fontWeight: 300,
             fontSize: 22, letterSpacing: '0.08em', textTransform: 'uppercase',
@@ -514,8 +527,11 @@ export function HomeClient({ products, newest = [], settings, discounts = [], te
           <div className="product-grid" style={{
             display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22,
           }}>
+            {/* Con discounts, como las otras grillas: una regla por lote
+                (p. ej. accesorios −10 %) dejaba el mismo bolso con dos
+                precios en la misma home (VIS-M3). */}
             {accesorios.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} discounts={discounts} />
             ))}
           </div>
         </section>

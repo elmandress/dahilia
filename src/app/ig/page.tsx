@@ -2,9 +2,15 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getCatalog } from '@/lib/catalog'
-import { getPrimaryPhoto, formatListingPrice, BLUR_DATA_URL, getPrimaryPhotoAlt, isReadyToShip } from '@/lib/types'
+import {
+  getPrimaryPhoto, BLUR_DATA_URL, getPrimaryPhotoAlt, isReadyToShip,
+  getEffectivePrice, getListingSize, getListingPrice, hasPriceRange, resolveDiscountPercent,
+} from '@/lib/types'
+import type { Product, Discount } from '@/lib/types'
 import { Icon } from '@/components/ui/Primitives'
+import { PriceBlock } from '@/components/ui/PriceBlock'
 import { dropHasLaunched } from '@/lib/drop-date'
+import { elegirDestacada } from '@/lib/ig-destacada'
 import { dahila } from '@/components/ui/tokens'
 
 export const revalidate = 300
@@ -32,19 +38,21 @@ export const metadata: Metadata = {
   alternates: { canonical: '/ig' },
 }
 
+/** Precio de lista, final y "desde": lo mismo que la tarjeta de la tienda, con
+ *  el tachado cuando hay descuento (VIS-15). Antes /ig mostraba el precio en
+ *  texto plano y el −15 % del drop no figuraba en ningún lado de la página
+ *  (acá no hay header ni cinta). */
+function Precio({ p, discounts }: { p: Product; discounts: Discount[] }) {
+  return <PriceBlock size="sm" list={getEffectivePrice(p, getListingSize(p))} final={getListingPrice(p, discounts)} from={hasPriceRange(p)} />
+}
+
 export default async function IgLandingPage() {
   // Desde el 12/10/2026 lee el catálogo cacheado como el resto del sitio (antes
   // consultaba la base directo cada 5 min: más egress y sin respaldo si la
   // base se cae). Es la página de la bio: la entrada de la mayoría del tráfico.
   const { products, discounts, settings, collections } = await getCatalog()
   const active = products.filter((p) => p.status === 'active')
-  const newest = [...active].sort((x, y) => (y.created_at ?? '').localeCompare(x.created_at ?? '')).slice(0, 4)
   const readyCount = active.filter(isReadyToShip).length
-  // "Fijar en la bio" (admin → Productos): la prenda del último reel, grande y
-  // primera. Las guías de link-in-bio coinciden: el reel muestra UNA prenda y
-  // la bio tiene que llevar a esa, no a una página genérica.
-  const pinnedSlug = (settings.ig_destacado_slug ?? '').trim()
-  const pinned = pinnedSlug ? active.find((p) => p.slug === pinnedSlug) : undefined
   const giftOn = settings.regalo_enabled !== 'false'
   const waUrl = settings.contact_whatsapp_url?.trim() || 'https://wa.me/59899850073'
 
@@ -61,6 +69,30 @@ export default async function IgLandingPage() {
   // futuro). Misma fecha que el teaser de la home y /vip. La página se
   // regenera cada 5 minutos, así que el cambio llega solo a la hora del drop.
   const dropIsLive = dropHasLaunched(settings.drop_date)
+  // "−15 % en toda la colección" solo si es verdad: todas las prendas activas
+  // del drop tienen el mismo descuento (calculado del catálogo, no escrito a mano).
+  const dropPiezas = dropCol ? active.filter((p) => p.collection_id === dropCol.id) : []
+  const dropPcts = new Set(dropPiezas.map((p) => resolveDiscountPercent(p, discounts)))
+  const dropDescuento = dropPiezas.length > 0 && dropPcts.size === 1 ? [...dropPcts][0] : 0
+
+  // La prenda grande de arriba (CRO-12, lib/ig-destacada): la que Anush fijó
+  // con "Fijar en la bio" (admin → Productos), que es la del último reel. Las
+  // guías de link-in-bio coinciden: el reel muestra UNA prenda y la bio tiene
+  // que llevar a esa. Sin fijada, la primera en stock del drop abierto, con un
+  // rótulo que dice eso y no "La del último reel".
+  const destacada = elegirDestacada({
+    pinnedSlug: settings.ig_destacado_slug,
+    active,
+    dropCollectionId: dropCol?.id,
+    dropName,
+    dropLive: showDrop && dropIsLive,
+  })
+  // Lo nuevo sin la destacada, y siempre 4 si hay: con la destacada adentro
+  // quedaban 3 tarjetas en una grilla de 2.
+  const newest = active
+    .filter((p) => p.id !== destacada?.producto.id)
+    .sort((x, y) => (y.created_at ?? '').localeCompare(x.created_at ?? ''))
+    .slice(0, 4)
 
   const bigLink: React.CSSProperties = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
@@ -74,23 +106,30 @@ export default async function IgLandingPage() {
       {/* Marca compacta — quien llega ya viene del perfil, no hace falta hero */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 26, textAlign: 'center' }}>
         <Image src="/isotype-color.png" alt="" width={52} height={52} loading="eager" style={{ objectFit: 'contain' }} />
-        <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, letterSpacing: '0.18em', color: dahila.ink900 }}>
+        {/* h1 y no span (VIS-15): la página no tenía título principal. Mismo
+            aspecto que antes: la regla global de h1 (globals.css) trae otro
+            interlineado y el corte óptico de los títulos grandes. */}
+        <h1 style={{
+          fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24, letterSpacing: '0.18em', color: dahila.ink900,
+          lineHeight: 1.5, margin: 0, fontVariationSettings: 'normal',
+        }}>
           DAHILA
-        </span>
+        </h1>
         <p style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink700, margin: 0, lineHeight: 1.5 }}>
           Tejido a mano en Uruguay, a tu medida.
         </p>
       </div>
 
-      {pinned && (
+      {destacada && (
         <Link
-          href={`/tienda/${pinned.slug}?utm_source=instagram&utm_medium=bio&utm_campaign=reel`}
+          // utm_campaign según de dónde sale: "reel" solo para la fijada a mano.
+          href={`/tienda/${destacada.producto.slug}?utm_source=instagram&utm_medium=bio&utm_campaign=${destacada.motivo === 'fijada' ? 'reel' : 'drop'}`}
           style={{ display: 'block', textDecoration: 'none', marginBottom: 14, borderRadius: 16, overflow: 'hidden', border: `1px solid ${dahila.border}`, background: '#fff' }}
         >
           <span style={{ position: 'relative', display: 'block', aspectRatio: '4 / 5', background: dahila.cream50 }}>
             <Image
-              src={getPrimaryPhoto(pinned)}
-              alt={getPrimaryPhotoAlt(pinned)}
+              src={getPrimaryPhoto(destacada.producto)}
+              alt={getPrimaryPhotoAlt(destacada.producto)}
               fill
               quality={82}
               sizes="(max-width: 480px) 100vw, 440px"
@@ -104,12 +143,12 @@ export default async function IgLandingPage() {
               position: 'absolute', top: 12, left: 12, padding: '6px 11px', borderRadius: 999,
               background: 'rgba(255,255,255,0.94)', fontFamily: dahila.fontSans, fontSize: 11,
               letterSpacing: '0.16em', textTransform: 'uppercase', color: dahila.ink900,
-            }}>La del último reel</span>
+            }}>{destacada.rotulo}</span>
           </span>
           <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '14px 16px' }}>
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 20, color: dahila.ink900 }}>{pinned.name}</span>
-              <span style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700 }}>{formatListingPrice(pinned, discounts)}</span>
+              <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 20, color: dahila.ink900 }}>{destacada.producto.name}</span>
+              <Precio p={destacada.producto} discounts={discounts} />
             </span>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', borderRadius: 10,
@@ -134,6 +173,9 @@ export default async function IgLandingPage() {
           <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <span style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', opacity: 0.9 }}>{dropIsLive ? 'Ya está online' : 'Próximo drop'}</span>
             <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 17 }}>{dropName}</span>
+            {dropDescuento > 0 && (
+              <span style={{ fontSize: 13, color: '#E9B8C4', marginTop: 2 }}>−{dropDescuento}% en toda la colección</span>
+            )}
           </span>
           <Icon name="caret-right" size={16} color="#fff" />
         </Link>
@@ -151,12 +193,8 @@ export default async function IgLandingPage() {
             Lo nuevo
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
-            {newest.filter((p) => p.slug !== pinned?.slug).map((p) => {
+            {newest.map((p) => {
               const photo = getPrimaryPhoto(p)
-              // Mismo precio que la tarjeta de la tienda y la ficha (antes esta
-              // página mostraba el precio base: el Granny's salía 3.300 acá y
-              // 3.800 en la tienda).
-              const price = formatListingPrice(p, discounts)
               return (
                 <Link key={p.id} href={`/tienda/${p.slug}`} style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ position: 'relative', aspectRatio: '3/4', borderRadius: 12, overflow: 'hidden', background: dahila.cream50, display: 'block' }}>
@@ -172,7 +210,10 @@ export default async function IgLandingPage() {
                     />
                   </span>
                   <span style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 14, color: dahila.ink900, lineHeight: 1.25 }}>{p.name}</span>
-                  <span style={{ fontFamily: dahila.fontSans, fontSize: 12.5, color: dahila.ink700 }}>{price}</span>
+                  {/* Mismo precio que la tarjeta de la tienda y la ficha (antes
+                      esta página mostraba el precio base: el Granny's salía
+                      3.300 acá y 3.800 en la tienda), con su tachado. */}
+                  <Precio p={p} discounts={discounts} />
                 </Link>
               )
             })}

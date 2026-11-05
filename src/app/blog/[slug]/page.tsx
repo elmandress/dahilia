@@ -246,7 +246,9 @@ export default async function ArticlePage({
           <div className="product-grid" style={{
             display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 22,
           }}>
-            {products.map((p) => <ProductCard key={p.id} product={p} />)}
+            {/* Con las reglas de descuento por lote, como en la tienda: sin
+                ellas, la misma prenda podía salir acá a otro precio (VIS-M3). */}
+            {products.map((p) => <ProductCard key={p.id} product={p} discounts={catalog.discounts} />)}
           </div>
         </section>
       )}

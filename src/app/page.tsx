@@ -9,6 +9,9 @@ import { SITE_URL } from '@/lib/env'
 import { getHomeArticles } from '@/content/blog'
 import { withHeroOverride } from '@/content/blog/hero'
 import { resolveReels } from '@/lib/reels'
+import { isReadyToShip } from '@/lib/types'
+import { dropHasLaunched } from '@/lib/drop-date'
+import { armarSeccionesHome, destinoPortada, varianteDropArriba } from '@/lib/home-sections'
 
 export const revalidate = 3600
 
@@ -25,12 +28,13 @@ export default async function Home() {
   if (source === 'snapshot' && catalog.products.length === 0) return <MaintenanceScreen />
 
   const activeProducts = catalog.products.filter((p) => p.status === 'active')
-  const products = activeProducts.slice(0, 12)
-  // Sección "Nuevo": los últimos publicados de verdad (por fecha de alta), no los
-  // primeros del orden manual de la tienda.
-  const newest = [...activeProducts]
-    .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
-    .slice(0, 4)
+  // "Nuevo" (por fecha de alta), "Disponible ahora" y "Accesorios" se arman
+  // acá, sin repetir prendas entre secciones (VIS-06, lib/home-sections): al
+  // cliente viajan como mucho 12, como antes.
+  const secciones = armarSeccionesHome(activeProducts)
+  // Sobre todo el catálogo activo y no sobre lo que viaja: decide si el bloque
+  // del drop ofrece "Ver en stock".
+  const hayEnStock = activeProducts.some(isReadyToShip)
 
   // Testimonios: cacheados junto al catálogo (los usa también la ficha) y
   // tolerantes a DB caída (si falla, queda vacío).
@@ -49,6 +53,15 @@ export default async function Home() {
       .maybeSingle()
     if (dropCol?.published) dropCollectionHref = `/colecciones/${dropCol.slug}`
   }
+
+  // El estado del drop sale del servidor (VIS-05): el HTML decía "Muy pronto"
+  // y "Verlo 24 h antes" con el drop abierto hasta que hidrataba. Con el ISR
+  // de 1 h, en la primera hora después del lanzamiento el HTML puede seguir
+  // diciendo "Próximo drop": el reloj del navegador lo corrige al hidratar.
+  const dropLive = dropHasLaunched(settings.drop_date)
+  // Si la portada ya lleva a la colección del drop, el bloque del drop no la
+  // repite en el celular (VIS-02). Los textos de la portada no se tocan.
+  const dropArriba = varianteDropArriba({ dropLive, heroHref: destinoPortada(settings.hero_cta_href), dropCollectionHref })
 
   // FAQPage schema — Google can render FAQ dropdowns in search results.
   const faqItems = [1, 2, 3, 4, 5]
@@ -119,8 +132,10 @@ export default async function Home() {
         />
       )}
       <HomeClient
-        products={products}
-        newest={newest}
+        secciones={secciones}
+        hayEnStock={hayEnStock}
+        dropLive={dropLive}
+        dropArriba={dropArriba}
         settings={settings}
         discounts={discounts}
         testimonials={testimonials}

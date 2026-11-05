@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect, useRef } from 'react'
-import { dahila, Eyebrow, Field, TextInput, Button, Icon } from '@/components/ui/Primitives'
+import { dahila, Eyebrow, Field, TextInput, TextArea, Button, Icon } from '@/components/ui/Primitives'
 import { submitTejedora } from './actions'
 import { safeAction } from '@/lib/safe-action'
 
@@ -322,19 +322,8 @@ export default function TejedorasClient({ whatsappUrl, porWhatsApp = false }: {
         </Field>
 
         <Field label="Contanos de vos" helper="Qué te gusta tejer, con qué lanas trabajaste, si tejiste por encargo antes.">
-          <textarea
-            rows={5}
-            maxLength={1500}
-            value={message}
-            onChange={(e2) => setMessage(e2.target.value)}
-            style={{
-              fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300, color: dahila.ink900,
-              background: 'transparent', border: 'none',
-              borderBottom: `1px solid ${dahila.borderStrong}`,
-              padding: '10px 0 8px', resize: 'vertical',
-              width: '100%', boxSizing: 'border-box',
-            }}
-          />
+          {/* Con la misma caja que los otros campos (VIS-14, 04/11/2026). */}
+          <TextArea rows={5} maxLength={1500} value={message} onChange={setMessage} />
         </Field>
 
         {error && (

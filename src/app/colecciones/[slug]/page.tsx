@@ -9,19 +9,16 @@ import { getListingPrice, isReadyToShip } from '@/lib/types'
 import { botImageUrl } from '@/lib/media'
 import { ProductCard } from '@/components/ProductCard'
 import { TestimonialsStrip } from '@/components/TestimonialsStrip'
+import { ColeccionDescripcion } from '@/components/ColeccionDescripcion'
 import { getTestimonials } from '@/lib/catalog'
-import { Eyebrow, Breadcrumb, Icon } from '@/components/ui/Primitives'
+import { Eyebrow, Breadcrumb } from '@/components/ui/Primitives'
 import { dahila } from '@/components/ui/tokens'
 import { SITE_URL } from '@/lib/env'
 import { OG_BASE } from '@/lib/og'
 
 export const revalidate = 300
 
-const HOW_TO_BUY = [
-  { icon: 'heart', label: 'Elegís tu pieza' },
-  { icon: 'whatsapp-logo', label: 'La pedís por WhatsApp' },
-  { icon: 'package', label: 'Pagás cuando confirmamos' },
-]
+const HOW_TO_BUY = ['Elegís tu pieza', 'La pedís por WhatsApp', 'Pagás cuando confirmamos']
 
 // Mismo motivo que tienda/[slug]: sin esto, `params` fuerza dinámico en toda
 // la ruta. Colecciones "unlisted" (acceso anticipado VIP) quedan afuera a
@@ -144,7 +141,11 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(collectionJsonLd) }}
       />
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px 80px' }}>
+    {/* coleccion-pagina / coleccion-bloque: aire de 16 px entre bloques en el
+        celular (globals.css, VIS-13). Quien llega del anuncio tiene que ver
+        prendas en el primer pantallazo: la primera foto arrancaba en 606 px
+        de 664 en un iPhone 13. */}
+    <div className="coleccion-pagina" style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px 80px' }}>
       <Breadcrumb items={[
         { label: 'Inicio', href: '/' },
         { label: 'Colecciones', href: '/colecciones' },
@@ -152,7 +153,7 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
       ]} />
 
       {/* Cover / hero band */}
-      <div style={{ position: 'relative', borderRadius: 18, overflow: 'hidden', background: dahila.cream100, marginBottom: 28 }}>
+      <div className="coleccion-bloque" style={{ position: 'relative', borderRadius: 18, overflow: 'hidden', background: dahila.cream100, marginBottom: 28 }}>
         {collection.cover_url ? (
           // 30vh (antes 42vh): con la portada, la descripción y los pasos, la
           // primera prenda quedaba a 1,28 pantallas en un iPhone (auditoría
@@ -178,10 +179,10 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
         )}
       </div>
 
+      {/* Inter 15 y no la itálica de 16 a 20 px, que en el celular ocupaba 4
+          renglones: ahí va en 2, con "Leer más" (VIS-13). */}
       {collection.description && (
-        <p style={{ fontFamily: dahila.fontSerif, fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(16px, 2.4vw, 20px)', lineHeight: 1.6, color: dahila.ink700, maxWidth: 640, margin: '0 0 28px' }}>
-          {collection.description}
-        </p>
+        <ColeccionDescripcion texto={collection.description} className="coleccion-bloque" />
       )}
 
       {/* Cómo se compra, antes de las prendas (02/11/2026). La colección es
@@ -190,13 +191,15 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
           Instagram no sabe que se paga recién al confirmar por WhatsApp — la
           misma promesa que hace el anuncio, repetida donde se decide. */}
       {products.length > 0 && (
-        // Franja corta y no tarjetas: en tarjetas apiladas ocupaba ~180 px del
-        // primer pantallazo del celular, justo antes de las prendas.
-        <ol aria-label="Cómo se compra" style={{ listStyle: 'none', padding: '10px 14px', margin: '0 0 28px', display: 'flex', flexWrap: 'wrap', gap: '6px 18px', background: dahila.cream50, border: `1px solid ${dahila.border}`, borderRadius: 12 }}>
+        // Un renglón de texto de 12 px, sin caja ni íconos (04/11/2026, VIS-13):
+        // la franja con caja ocupaba 63 px del primer pantallazo del celular,
+        // justo antes de las prendas. Cada paso no se corta por la mitad, y el
+        // punto que los separa queda al final del renglón.
+        <ol aria-label="Cómo se compra" className="coleccion-bloque" style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', fontFamily: dahila.fontSans, fontSize: 12, lineHeight: 1.6, color: dahila.ink700 }}>
           {HOW_TO_BUY.map((step, i) => (
-            <li key={step.label} style={{ display: 'flex', gap: 6, alignItems: 'center', fontFamily: dahila.fontSans, fontSize: 12.5, lineHeight: 1.4, color: dahila.ink700 }}>
-              <Icon name={step.icon} size={14} color={dahila.wine600} />
-              <span><strong style={{ fontWeight: 500, color: dahila.ink900 }}>{i + 1}.</strong> {step.label}</span>
+            <li key={step} style={{ display: 'inline' }}>
+              {i > 0 && <span aria-hidden="true">&nbsp;· </span>}
+              <span style={{ whiteSpace: 'nowrap' }}><strong style={{ fontWeight: 500, color: dahila.ink900 }}>{i + 1}.</strong> {step}</span>
             </li>
           ))}
         </ol>

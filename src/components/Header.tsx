@@ -11,12 +11,14 @@ import { useFavorites } from './FavoritesProvider'
 import { useScrollLock } from '@/lib/scroll-lock'
 import { useFocusTrap } from '@/lib/focus-trap'
 import { dahila, Icon } from './ui/Primitives'
-import { formatPrice } from '@/lib/types'
+import { PriceBlock } from './ui/PriceBlock'
 import { waLink, WHATSAPP_DEFAULT } from '@/lib/whatsapp'
+import { esBusquedaDeStock } from '@/lib/search-intent'
 
 // `from`: el precio cambia según el talle y `price` es el más bajo (mismo
-// criterio que la tarjeta de la tienda, ver getListingPrice).
-interface Suggestion { slug: string; name: string; photo: string; price: number; from?: boolean; soldout: boolean }
+// criterio que la tarjeta de la tienda, ver getListingPrice). `list`: el precio
+// de lista de ese talle, para mostrar el tachado cuando hay descuento.
+interface Suggestion { slug: string; name: string; photo: string; price: number; list?: number; from?: boolean; soldout: boolean }
 
 // 7 ítems (antes 8): "Sobre nosotros" salió del header — sigue en el footer.
 // Regla del propio skill dahila-storefront (5-7 links horizontales, Miller's
@@ -211,7 +213,10 @@ export function Header({
     if (searchVal.trim()) {
       const q = searchVal.trim()
       track('search', { q }, { params: { search_term: q } })
-      router.push(`/tienda?q=${encodeURIComponent(q)}`)
+      // "en stock", "ya tejido"… van al filtro de lo que está en stock: la
+      // grilla de /tienda busca palabras y con "en stock" quedaba vacía
+      // aunque las sugerencias mostraran las piezas (CRO-20).
+      router.push(esBusquedaDeStock(q) ? '/tienda?ya=1' : `/tienda?q=${encodeURIComponent(q)}`)
       setShowSearch(false)
       setSearchVal('')
     }
@@ -390,6 +395,17 @@ export function Header({
                         >
                           Pedir «{searchVal.trim()}» a medida
                         </Link>
+                        {/* O llevarse algo que ya está tejido, sin la espera
+                            del encargo (CRO-20). Solo si hay. */}
+                        {readyToShipCount > 0 && (
+                          <Link
+                            href="/tienda?ya=1"
+                            onClick={() => { setShowSearch(false); setSearchVal('') }}
+                            style={{ display: 'flex', alignItems: 'center', minHeight: 44, color: dahila.ink900, textDecoration: 'underline', textUnderlineOffset: 3 }}
+                          >
+                            Ver lo que está en stock ({readyToShipCount})
+                          </Link>
+                        )}
                       </div>
                     ) : (
                       <>
@@ -409,9 +425,10 @@ export function Header({
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 14, color: dahila.ink900, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sug.name}</div>
-                              <div style={{ fontFamily: dahila.fontSans, fontSize: 12, color: sug.soldout ? dahila.ink500 : dahila.ink700 }}>
-                                {sug.soldout ? 'Agotado' : `${sug.from ? 'desde ' : ''}${formatPrice(sug.price)}`}
-                              </div>
+                              {/* El mismo bloque de precio que la tarjeta: con
+                                  descuento, el final en rojo y el de lista
+                                  tachado (VIS-15). */}
+                              <PriceBlock size="sm" list={sug.list ?? sug.price} final={sug.price} from={sug.from} soldOut={sug.soldout} />
                             </div>
                           </Link>
                         ))}

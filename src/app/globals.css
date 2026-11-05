@@ -406,6 +406,97 @@ a {
   .seccion-nuevo { padding-top: 28px !important; }
 }
 
+/* Bloque del drop debajo de la portada, en el celular (VIS-02, 04/11/2026).
+   Una foto de 240 px y seis renglones empujaban la primera prenda a 1,96
+   pantallas (el pedido del 08/10 de poner el drop primero deshizo el arreglo
+   de arriba). Con el drop abierto y la portada llevando ya a su colección, se
+   oculta: la cinta y la portada llevan ahí. Si no, va compacto, sin foto, sin
+   el texto largo y con menos aire. La variante la elige el servidor
+   (lib/home-sections). En escritorio no cambia. */
+@media (max-width: 720px) {
+  .drop-top--ocultar-movil { display: none; }
+  .drop-top--compacto-movil { margin-top: 24px !important; }
+  .drop-top--compacto-movil .home-banner-img,
+  .drop-top--compacto-movil .drop-teaser-texto { display: none; }
+  .drop-top--compacto-movil .drop-teaser-cuerpo { padding: 24px !important; gap: 12px !important; }
+}
+
+/* Colección (VIS-13, 04/11/2026): es donde aterriza el anuncio del drop, y en
+   un iPhone la primera prenda arrancaba en 606 px de 664. En el celular la
+   descripción va en 2 renglones con "Leer más" encima del final del segundo,
+   sin sumar alto (ColeccionDescripcion; el texto entero sigue en el HTML), y
+   en los chicos hay 16 px entre bloques. En escritorio, como siempre. */
+.coleccion-desc-mas { display: none; }
+@media (max-width: 720px) {
+  .coleccion-desc--recortable:not(.is-abierta) {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+  .coleccion-desc-mas {
+    display: inline-flex;
+    align-items: flex-end;
+    margin-top: 4px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--wine-600);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  /* Cerrada: sobre el final del segundo renglón, con un degradé que funde lo
+     recortado. El fondo cubre solo ese renglón (24 px): en táctil el botón
+     mide 44 px de alto (la regla táctil, más abajo) y no tiene que tapar el
+     primero. */
+  .coleccion-desc--recortable:not(.is-abierta) + .coleccion-desc-mas {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    margin-top: 0;
+    padding-left: 40px;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0), #fff 36px);
+    background-repeat: no-repeat;
+    background-position: right bottom;
+    background-size: 100% 24px;
+  }
+}
+@media (max-width: 480px) {
+  .coleccion-pagina { padding-top: 16px !important; }
+  .coleccion-bloque { margin-bottom: 16px !important; }
+}
+
+/* /encargo en el celular (VIS-14, 04/11/2026): "Cómo funciona" en una fila
+   numerada de 12 px, sin los íconos en círculo, para que el formulario
+   arranque en la primera pantalla (el primer campo estaba en 720 px de 664).
+   El texto de cada paso queda para los lectores de pantalla. */
+.process-stepper-num { display: none; }
+@media (max-width: 720px) {
+  .encargo-como-funciona { margin-bottom: 24px !important; }
+  .process-stepper--compacto { padding: 12px 14px !important; }
+  .process-stepper--compacto .process-stepper-titulo { margin-bottom: 6px !important; }
+  .process-stepper--compacto .process-stepper-pasos { flex-direction: row !important; flex-wrap: wrap; gap: 2px 14px !important; }
+  .process-stepper--compacto .process-stepper-icono { display: none !important; }
+  .process-stepper--compacto .process-stepper-texto { padding-top: 0 !important; }
+  .process-stepper--compacto .process-stepper-label { font-size: 12px !important; }
+  .process-stepper--compacto .process-stepper-num { display: inline; }
+  .process-stepper--compacto .process-stepper-cuerpo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+}
+
 /* ============================================================
    Touch targets — iOS HIG recommends min 44px for tap targets.
    Apply to icon buttons in header/admin chrome.
@@ -437,6 +528,35 @@ a {
        (medido en producción, auditoría 04/11/2026). */
     font-size: 16px !important;
   }
+}
+
+/* Campo de formulario con caja (VIS-14, 04/11/2026): TextInput, TextArea y
+   los campos de /regalo. /encargo, /tejedoras y /encargo/estado usaban solo
+   una línea abajo (14 px, liviana) y /regalo una caja: dos estilos en
+   formularios hermanos. 16 px para que iOS no haga zoom. En foco, un borde
+   oscuro de 2 px: con el anillo bordó global por fuera del borde se veían
+   dos. Vive acá y no en línea porque un :focus en línea no existe. */
+.dh-campo {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: #fff;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 400;
+  /* 22 px de renglón: con el padding y el borde, el campo mide justo 48. */
+  line-height: 1.375;
+  color: var(--ink-900);
+  transition: border-color 160ms var(--ease-out-soft), box-shadow 160ms var(--ease-out-soft);
+}
+textarea.dh-campo { line-height: 1.5; }
+.dh-campo::placeholder { color: var(--ink-500); opacity: 1; }
+.dh-campo:focus {
+  outline: none;
+  border-color: var(--ink-900);
+  box-shadow: 0 0 0 1px var(--ink-900);
 }
 
 /* On touch devices there's no hover, so reveal the product-card action
@@ -973,9 +1093,13 @@ a {
 
   /* Las secciones de la home aparecen suaves al entrar en pantalla, con una
      animación atada al scroll del propio navegador (sin JS, sin observers).
-     Donde no está soportado (@supports), se ven igual que siempre. */
+     Donde no está soportado (@supports), se ven igual que siempre.
+     .sin-entrada: lo que puede estar en el primer pantallazo (el bloque del
+     drop debajo de la portada) no se anima. Arrancaba ya dentro de la
+     pantalla y en reposo quedaba al 90 % de opacidad: lavado, y con el
+     rótulo por debajo del contraste mínimo (VIS-04, 04/11/2026). */
   @supports (animation-timeline: view()) {
-    .home-section {
+    .home-section:not(.sin-entrada) {
       animation: section-reveal linear both;
       animation-timeline: view();
       animation-range: entry 0% entry 35%;
