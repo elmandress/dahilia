@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { useCart } from '@/components/CartProvider'
+import { useCart, gaCarrito } from '@/components/CartProvider'
 import { dahila, Eyebrow, Button, Icon } from '@/components/ui/Primitives'
 import {
   getPrimaryPhoto, formatPrice, getEffectivePrice, getFinalPrice, BLUR_DATA_URL,
@@ -51,7 +51,7 @@ const ctaBarra: React.CSSProperties = {
 
 export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProducts = [], discounts: serverDiscounts = [] }: Props) {
   const {
-    items, buyableItems: buyable, unavailableItems, cartTotal: subtotal, addonCandidates,
+    items, buyableItems: buyable, unavailableItems, cartTotal: subtotal, cartCount, addonCandidates,
     removeFromCart, updateQty, addToCart, clearCart, refresh, isLoading, discounts, shippingEstimate, freeShippingThreshold, queueNote,
   } = useCart()
   const [giftNote, setGiftNote] = useState('')
@@ -66,14 +66,22 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
   const [avisoCerrado, setAvisoCerrado] = useState<string | null>(null)
 
   // Al entrar: el carrito fresco (el provider vive en el layout y no lo vuelve
-  // a pedir al navegar; es una consulta por visita) y la vista medida, una vez.
+  // a pedir al navegar; es una consulta por visita) y la vista medida, una vez,
+  // recién con el carrito cargado: así GA4 recibe view_cart con sus productos y
+  // el valor, como desde el cajón (RSAM-3). Al montar todavía no hay nada.
   const entro = useRef(false)
+  const [cargado, setCargado] = useState(false)
   useEffect(() => {
     if (entro.current) return
     entro.current = true
-    void refresh()
-    track('view_cart', { via: 'pagina' })
+    void refresh().finally(() => setCargado(true))
   }, [refresh])
+  const medido = useRef(false)
+  useEffect(() => {
+    if (!cargado || medido.current) return
+    medido.current = true
+    track('view_cart', { via: 'pagina', unidades: cartCount }, gaCarrito({ buyable, subtotal }, discounts))
+  }, [cargado, cartCount, buyable, subtotal, discounts])
 
   // Re-validar un cupón recordado de una visita anterior (silencioso).
   useEffect(() => {

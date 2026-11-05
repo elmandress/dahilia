@@ -12,8 +12,9 @@ import { precargarCajon } from './cart-drawer-carga'
 
 type CartItemWithProduct = CartItem & { product: Product }
 
-/** view_cart para GA4: lo pedible como productos de e-commerce, con su valor. */
-function gaCarrito(
+/** view_cart para GA4: lo pedible como productos de e-commerce, con su valor.
+ *  Lo usan el cajón, "Agregar" y /carrito (CarritoClient). */
+export function gaCarrito(
   resumen: { buyable: Array<Pick<CartItem, 'size' | 'qty'> & { product: Product }>; subtotal: number },
   discounts: Discount[]
 ) {
