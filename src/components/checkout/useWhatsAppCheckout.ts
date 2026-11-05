@@ -20,6 +20,12 @@ export interface SentOrder {
   sig: string
   code: string
   at: number
+  /** Firma de las prendas solas, y el cupón y la nota con que salió: al
+   *  recargar, el cupón ya canjeado puede no volver a validar y la nota no se
+   *  recuerda, y sigue siendo el mismo pedido. */
+  piezas?: string
+  cupon?: string
+  nota?: string
 }
 
 // El mismo contenido da el mismo código durante 24 h (CRO-10): si la clienta
@@ -68,6 +74,50 @@ function sentAt(sig: string): number | null {
   } catch {
     return null
   }
+}
+
+// El último pedido armado en esta pestaña, entero (RSAM-1). Antes vivía solo
+// en el estado del componente: al recargar /carrito, o al ir del cajón a
+// /carrito, el mismo pedido volvía a canjear el cupón (uno de un solo uso
+// avisaba "ya no se puede usar" y lo sacaba), registraba otra vez y se medía
+// como un pedido nuevo. Con esto, el mismo contenido reabre el mismo link.
+const OPEN_KEY = 'dahila_pedido_abierto'
+
+function readOpenRaw(): string | null {
+  try { return sessionStorage.getItem(OPEN_KEY) } catch { return null }
+}
+
+function parseOpen(raw: string | null): SentOrder | null {
+  if (!raw) return null
+  try {
+    const o = JSON.parse(raw) as Partial<SentOrder> | null
+    if (!o || typeof o.sig !== 'string' || typeof o.message !== 'string' || typeof o.at !== 'number') return null
+    if (typeof o.code !== 'string' || !ORDER_CODE_RE.test(o.code)) return null
+    // Solo un link de WhatsApp: es lo único que se reabre.
+    if (typeof o.url !== 'string' || !/^https:\/\/(wa\.me|api\.whatsapp\.com)\//.test(o.url)) return null
+    const texto = (v: unknown) => (typeof v === 'string' ? v : '')
+    return { sig: o.sig, message: o.message, at: o.at, code: o.code, url: o.url, piezas: texto(o.piezas), cupon: texto(o.cupon), nota: texto(o.nota) }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * ¿El pedido guardado es el que está en pantalla? Igual firma, o las mismas
+ * prendas sin nada nuevo: sin cupón (el canjeado puede no volver a validar al
+ * recargar) o sin nota (no se recuerda). Un cupón o una nota distintos son
+ * otro pedido.
+ */
+function mismoPedido(o: SentOrder, sig: string, piezas: string, cupon: string, nota: string): boolean {
+  if (o.sig === sig) return true
+  return !!o.piezas && o.piezas === piezas && (!cupon || cupon === o.cupon) && (!nota || nota === o.nota)
+}
+
+function rememberOpen(order: SentOrder | null) {
+  try {
+    if (order) sessionStorage.setItem(OPEN_KEY, JSON.stringify(order))
+    else sessionStorage.removeItem(OPEN_KEY)
+  } catch { /* storage bloqueado: se recuerda solo en esta vista */ }
 }
 
 /** "un momento", "5 minutos", "2 horas"; null pasadas las 24 h. */
@@ -142,15 +192,25 @@ export function useWhatsAppCheckout({
 
   const note = giftNote.trim()
   const couponCode = coupon?.code ?? null
+  const cuponNorm = (couponCode ?? '').trim().toUpperCase()
   const sig = useMemo(() => cartSignature(buyable, couponCode, note), [buyable, couponCode, note])
-  // El pedido de esta visita sigue vigente mientras el contenido no cambie.
-  const sentOrder = last && last.sig === sig ? last : null
+  const piezas = useMemo(() => cartSignature(buyable, null, ''), [buyable])
+  // El pedido que se acaba de mandar desde esta vista: el aviso con el código.
+  const recienEnviado = last && last.sig === sig ? last : null
+  // El mismo contenido ya salió en esta pestaña (recarga, cajón → /carrito):
+  // el botón lo reabre sin canjear el cupón ni registrar otro (RSAM-1/2).
+  const openRaw = useSyncExternalStore(noSubscribe, readOpenRaw, () => null)
+  const abierto = useMemo(() => parseOpen(openRaw), [openRaw])
+  const sentOrder = recienEnviado
+    ?? (abierto && buyable.length > 0 && mismoPedido(abierto, sig, piezas, cuponNorm, note) ? abierto : null)
 
   // ¿Este mismo contenido ya salió antes (otra visita, o desde el cajón)? Se
   // lee en el cliente: en el servidor y al hidratar el carrito está vacío.
   const enviadoAt = useSyncExternalStore(noSubscribe, () => sentAt(sig), () => null)
   // Solo un texto ("hace 2 horas"): se recalcula en cada render a propósito.
-  const yaEnviadoHace = !sentOrder && buyable.length > 0 && enviadoAt != null ? haceCuanto(enviadoAt) : null
+  // No dice "ya lo mandaste": el sitio sabe que se armó, no si se mandó (NEG-6).
+  const armadoAt = sentOrder?.at ?? enviadoAt
+  const yaEnviadoHace = !recienEnviado && buyable.length > 0 && armadoAt != null ? haceCuanto(armadoAt) : null
 
   const soltar = () => {
     // La traba se suelta un momento después, no al terminar: sin cupón el
@@ -211,7 +271,8 @@ export function useWhatsAppCheckout({
 
     // b) El mismo contenido reusa su código durante 24 h.
     const now = Date.now()
-    const code = readSent(now)[sig]?.code ?? makeOrderCode()
+    const previo = readSent(now)[sig]
+    const code = previo?.code ?? makeOrderCode()
     rememberSent(sig, code, now)
 
     // d) Mensaje y link.
@@ -250,14 +311,24 @@ export function useWhatsAppCheckout({
 
     // f) GA4: begin_checkout con productos y total. Es el "pedido" del sitio:
     // el pago se arregla después por WhatsApp. `desde` separa cajón y /carrito.
-    const gaItems = buyable.map((i) => ({
-      item_id: i.product.slug, item_name: i.product.name, item_variant: i.size,
-      quantity: i.qty, price: getFinalPrice(i.product, i.size, discounts),
-    }))
-    track('order_sent', { items: buyable.length, total, desde }, { name: 'begin_checkout', params: gaCommerce(gaItems, total) })
+    // El mismo pedido de otra visita (mismo PED, que /api/orders ya tiene) no
+    // es un pedido nuevo: se mide aparte y no le llega a GA4 ni a Meta como
+    // otro begin_checkout / InitiateCheckout (RSAM-2).
+    if (previo) {
+      track('order_resent', { items: buyable.length, total, desde })
+    } else {
+      const gaItems = buyable.map((i) => ({
+        item_id: i.product.slug, item_name: i.product.name, item_variant: i.size,
+        quantity: i.qty, price: getFinalPrice(i.product, i.size, discounts),
+      }))
+      track('order_sent', { items: buyable.length, total, desde }, { name: 'begin_checkout', params: gaCommerce(gaItems, total) })
+    }
 
-    // g) El pedido queda a mano para reabrirlo o copiarlo.
-    setLast({ url, message, sig, code, at: now })
+    // g) El pedido queda a mano para reabrirlo o copiarlo, también después de
+    // recargar o de pasar del cajón a /carrito (RSAM-1).
+    const pedido: SentOrder = { url, message, sig, code, at: now, piezas, cupon: cuponNorm, nota: note }
+    rememberOpen(pedido)
+    setLast(pedido)
     setCopied(false)
     abrirWhatsApp(url, pending)
 
@@ -274,6 +345,7 @@ export function useWhatsAppCheckout({
 
   /** Olvida el pedido mandado (después de vaciar el carrito). */
   const clearSent = () => {
+    rememberOpen(null)
     setLast(null)
     setCopied(false)
   }
@@ -300,5 +372,5 @@ export function useWhatsAppCheckout({
     track('order_copy', { items: buyable.length, desde })
   }
 
-  return { checkout, checkingOut, sentOrder, clearSent, copyOrder, copied, yaEnviadoHace }
+  return { checkout, checkingOut, sentOrder, recienEnviado, clearSent, copyOrder, copied, yaEnviadoHace }
 }

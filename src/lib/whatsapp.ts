@@ -46,6 +46,21 @@ export function waLink(base: string | null | undefined, text?: string): string |
   return query ? `${head}?${query}` : head
 }
 
+/**
+ * El link del número sin texto, siempre como 'https://wa.me/<número>' (COR-03).
+ * Es lo que guarda Configuración: varias páginas (encargo, /pedido, /gracias,
+ * tejedoras) todavía le pegan "?text=" a mano al link guardado, y con
+ * 'https://api.whatsapp.com/send?phone=…' quedaban dos '?' y el chat se abría
+ * con el número roto y sin el texto. null si no es un link de WhatsApp.
+ */
+export function waBase(base: string | null | undefined): string | null {
+  const link = waLink(base)
+  if (!link) return null
+  const url = new URL(link)
+  const phone = url.hostname === 'wa.me' ? url.pathname.slice(1) : url.searchParams.get('phone')
+  return phone ? `https://wa.me/${phone}` : null
+}
+
 /** '+598 99 850 073' → '59899850073'; null si no parece un número de teléfono. */
 function soloDigitos(raw: string): string | null {
   const s = decodeURIComponentSafe(raw).trim()

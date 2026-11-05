@@ -2,7 +2,7 @@
 // Correr: npm run test:unit
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { waLink, mensajeVolverATejer, WHATSAPP_DEFAULT } from '@/lib/whatsapp'
+import { waLink, waBase, mensajeVolverATejer, WHATSAPP_DEFAULT } from '@/lib/whatsapp'
 
 const unText = (href) => {
   const u = new URL(href)
@@ -37,6 +37,18 @@ test('api.whatsapp.com/send?phone= conserva phone y suma text una sola vez', () 
 
 test('sin texto, el link queda limpio', () => {
   assert.equal(waLink('wa.me/59899850073/'), 'https://wa.me/59899850073')
+})
+
+// Lo que guarda Configuración (COR-03): siempre wa.me, así un "?text=" pegado
+// a mano en otra página no queda con dos "?".
+test('waBase: wa.me o api.whatsapp.com → https://wa.me/<número>', () => {
+  for (const base of ['wa.me/59899850073', 'https://wa.me/+598 99 850 073/', 'https://api.whatsapp.com/send?phone=59899850073', 'api.whatsapp.com/send?phone=%2B59899850073&text=hola']) {
+    assert.equal(waBase(base), 'https://wa.me/59899850073', base)
+  }
+  const pegado = `${waBase('https://api.whatsapp.com/send?phone=59899850073')}?text=${encodeURIComponent('Hola!')}`
+  assert.equal(new URL(pegado).pathname, '/59899850073')
+  assert.equal(new URL(pegado).searchParams.get('text'), 'Hola!')
+  for (const base of ['https://ejemplo.com', '', null, 'https://api.whatsapp.com/send']) assert.equal(waBase(base), null, String(base))
 })
 
 test('lo que no es WhatsApp da null', () => {

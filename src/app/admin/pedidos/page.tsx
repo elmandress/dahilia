@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatPrice, isUnicoLabel } from '@/lib/types'
+import { formatPrice, isSizeLike, isUnicoLabel } from '@/lib/types'
 import { channelLabel } from '@/lib/attribution'
 import { parseMoneyUYU, saltoDePrecio } from '@/lib/parse-money'
 import { MoneyInput } from '@/components/admin/MoneyInput'
@@ -89,9 +89,12 @@ function sinClave<T>(map: Record<string, T>, key: string): Record<string, T> {
 /** El mensaje para retomar la charla. Lleva el código PED, que en WhatsApp
  *  sirve para encontrar el chat: el primer mensaje de la clienta lo trae. */
 function mensajeSeguimiento(o: OrderRow): string {
+  // "talle M", pero un modelo va solo entre paréntesis: "Pulseras Terra talle
+  // Con caracolas" no se le manda a nadie (NEG-5).
+  const variante = (size: string) => (isSizeLike(size) ? ` talle ${size}` : ` (${size})`)
   const prendas = (Array.isArray(o.items) ? o.items : [])
     .filter((it) => it?.name)
-    .map((it) => `${it.name}${it.size && !isUnicoLabel(it.size) ? ` talle ${it.size}` : ''}${(it.qty ?? 1) > 1 ? ` x${it.qty}` : ''}`)
+    .map((it) => `${it.name}${it.size && !isUnicoLabel(it.size) ? variante(it.size) : ''}${(it.qty ?? 1) > 1 ? ` x${it.qty}` : ''}`)
     .join(', ')
   const pedido = [o.tracking_code, prendas ? `(${prendas})` : ''].filter(Boolean).join(' ')
   return `Hola! ¿Cómo estás? Te escribo por tu pedido${pedido ? ` ${pedido}` : ''}. ¿Pudiste verlo? Si te quedó alguna duda con el envío o el pago, te ayudo 🧶`

@@ -80,10 +80,14 @@ export function buildWhatsAppMessage(
   // El envío va en la pregunta (auditoría 12/09/2026): es la duda que más
   // frena, y así la primera respuesta ya puede traer el costo.
   // Si todo está tejido, preguntar el plazo era una vuelta de chat de más.
+  // Con el envío gratis no se pregunta el costo (NEG-7): el mensaje decía
+  // "Envío gratis" y dos renglones después pedía el costo de envío. Igual se
+  // coordina cómo llega.
   const todoEnStock = pedibles.every((i) => isReadyToShip(i.product))
+  const envio = envioGratis ? 'cómo coordinamos el envío' : 'el costo de envío a mi zona'
   lines.push(todoEnStock
-    ? '¿Me pasás el costo de envío a mi zona y cómo te pago? ¡Gracias!'
-    : '¿Me confirmás el plazo, el costo de envío a mi zona y cómo te pago? ¡Gracias!')
+    ? `¿Me ${envioGratis ? 'decís' : 'pasás'} ${envio} y cómo te pago? ¡Gracias!`
+    : `¿Me confirmás el plazo, ${envio} y cómo te pago? ¡Gracias!`)
   if (trackingCode) {
     // Al final, para no tapar el pedido. Le sirve a Anush para ubicarlo en
     // el admin y a la clienta para seguirlo (12/10/2026).

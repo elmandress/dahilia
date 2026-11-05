@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import { CART_COOKIE } from '@/lib/cart-cookie'
 import { isUuid } from '@/lib/uuid'
+import { TALLE_MAX } from '@/lib/cart-summary'
 
 interface OrderItemInput {
   /** Va dentro del JSON de items, sin columna nueva (CRO-07): el slug cambia
@@ -43,7 +44,9 @@ export async function POST(req: NextRequest) {
         ...(isUuid(i.product_id) ? { product_id: i.product_id } : {}),
         name: String(i.name ?? '').slice(0, 200),
         slug: String(i.slug ?? '').slice(0, 200),
-        size: String(i.size ?? '').slice(0, 32),
+        // El mismo tope que acepta el carrito (COR-02): cortado a 32, un talle
+        // largo quedaba distinto en el admin y en el Purchase de Meta.
+        size: String(i.size ?? '').slice(0, TALLE_MAX),
         qty: Math.max(1, Math.min(20, parseInt(String(i.qty)) || 1)),
         unit_price_uyu: Math.max(0, Number(i.unit_price_uyu) || 0),
       }))

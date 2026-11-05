@@ -41,7 +41,9 @@ const EN_STOCK = [
 const sum = (items) => items.reduce((s, i) => s + getFinalPrice(i.product, i.size, DISCOUNTS) * i.qty, 0)
 
 // Salida de la función VIEJA (CarritoClient.tsx:80-148 en main @ de892e0),
-// sacada con este mismo carrito ANTES de moverla. El texto no puede cambiar.
+// sacada con este mismo carrito ANTES de moverla. El texto no puede cambiar,
+// salvo a propósito: con envío gratis la pregunta final ya no pide el costo
+// de envío (NEG-7, revisión final 05/11/2026).
 const VIEJO = {
   completo: [
     'Hola Anush! Quiero coordinar este pedido:', '',
@@ -50,7 +52,7 @@ const VIEJO = {
     '3. Spring cardigan', '   • Talle: M', '   • Cantidad: 1', '   • Subtotal: UYU 3.150', '   https://dahila.uy/tienda/spring-cardigan', '',
     'Cupón GRACIAS15: −UYU 300', 'Envío gratis (pedido arriba de UYU 4.500)', 'Total: UYU 5.177', '',
     '🎁 Nota de regalo: "Feliz cumple, Lu"', '',
-    '¿Me confirmás el plazo, el costo de envío a mi zona y cómo te pago? ¡Gracias!', '',
+    '¿Me confirmás el plazo, cómo coordinamos el envío y cómo te pago? ¡Gracias!', '',
     'Código de pedido: PED-ABC234 (para seguirlo en dahila.uy/pedido)',
   ].join('\n'),
   enStockSinNada: [
@@ -66,7 +68,7 @@ const VIEJO = {
     '1. Poncho Eté', '   • Talle: M/L', '   • Cantidad: 1', '   • En stock', '   • Precio unitario: UYU 1.607 (antes UYU 1.890)', '   • Subtotal: UYU 1.607', '   https://dahila.uy/tienda/poncho-ete', '',
     '2. Manguitas Tramonto', '   • Cantidad: 1', '   • En stock', '   • Subtotal: UYU 990', '   https://dahila.uy/tienda/manguitas-tramonto', '',
     'Cupón ENVIOGRATIS: envío gratis', 'Total: UYU 2.597', '',
-    '¿Me pasás el costo de envío a mi zona y cómo te pago? ¡Gracias!',
+    '¿Me decís cómo coordinamos el envío y cómo te pago? ¡Gracias!',
   ].join('\n'),
 }
 

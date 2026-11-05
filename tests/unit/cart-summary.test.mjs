@@ -4,6 +4,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { summarizeCart, cartItemIssue, resolverTalle, plazoLinea, motivoNoDisponible } from '@/lib/cart-summary'
+import { salidaSinPedible, salidaSinPedido } from '@/lib/carrito-salida'
 
 const P = (o) => ({ status: 'active', is_custom_only: false, discount_active: false, discount_percent: 0, sizes: [], lead_time_weeks_min: 2, lead_time_weeks_max: 3, collection_id: null, ...o })
 const cart = [
@@ -96,4 +97,40 @@ test('plazoLinea: en stock, se teje al encargar o nada con cola', () => {
   assert.match(encargo.text, /^Se teje al encargar: lista entre el \d+ de \S+ y el \d+ de \S+$/)
   assert.equal(plazoLinea(P({ lead_time_weeks_min: 2, lead_time_weeks_max: 3 }), 'Cola hasta agosto'), null)
   assert.equal(plazoLinea(P({ lead_time_weeks_min: 0, lead_time_weeks_max: 0, is_custom_only: true }), ''), null)
+})
+
+// Sin nada para pedir, la salida depende del motivo (NEG-2): un talle
+// renombrado con la prenda a la venta no es "¿se puede volver a tejer?".
+test('salidaSinPedible: elegir el talle, a medida, próximamente o volver a tejer', () => {
+  const no = (slug, issue) => ({ item: { product: { slug } }, issue })
+  assert.deepEqual(salidaSinPedible([no('chaleco', 'talle-inexistente')]), { tipo: 'elegir-talle', slug: 'chaleco' })
+  assert.deepEqual(salidaSinPedible([no('top-race', 'a-medida'), no('chaleco', 'a-medida')]), { tipo: 'a-medida', slug: 'top-race' })
+  assert.deepEqual(salidaSinPedible([no('poncho-ete', 'drop-oculto')]), { tipo: 'proximamente' })
+  assert.deepEqual(salidaSinPedible([no('spring-cardigan', 'no-activa')]), { tipo: 'volver-a-tejer' })
+  assert.deepEqual(salidaSinPedible([no('top-race', 'talle-agotado')]), { tipo: 'volver-a-tejer' })
+  // Motivos distintos: la salida general.
+  assert.deepEqual(salidaSinPedible([no('chaleco', 'talle-inexistente'), no('spring-cardigan', 'no-activa')]), { tipo: 'volver-a-tejer' })
+  assert.deepEqual(salidaSinPedible([]), { tipo: 'volver-a-tejer' })
+  // Con el carrito del fixture: lo no disponible mezcla motivos.
+  assert.deepEqual(salidaSinPedible(summarizeCart(cart, []).unavailable), { tipo: 'volver-a-tejer' })
+})
+
+test('salidaSinPedido: el texto y el botón de cada salida', () => {
+  const no = (product, issue) => ({ item: { product }, issue })
+  const chaleco = { slug: 'chaleco', name: 'Chaleco', sizes: [{ size: 'S' }, { size: 'M' }] }
+  const pulseras = { slug: 'pulseras-terra', name: 'Pulseras Terra', sizes: [{ size: 'Lisas' }, { size: 'Con lurex' }] }
+  const talle = salidaSinPedido([no(chaleco, 'talle-inexistente')], 'https://wa.me/59899850073')
+  assert.equal(talle.externo, false)
+  assert.equal(talle.href, '/tienda/chaleco')
+  assert.equal(talle.label, 'Elegir el talle de nuevo')
+  assert.doesNotMatch(talle.texto, /volver a tejer|no está disponible/)
+  assert.equal(salidaSinPedido([no(pulseras, 'talle-inexistente')], '').label, 'Elegir el modelo de nuevo')
+  assert.equal(salidaSinPedido([no(chaleco, 'a-medida')], '').href, '/encargo?desde=chaleco')
+  assert.equal(salidaSinPedido([no(chaleco, 'drop-oculto')], '').href, '/vip')
+  const tejer = salidaSinPedido([no(chaleco, 'no-activa')], 'wa.me/59899850073')
+  assert.equal(tejer.externo, true)
+  assert.match(tejer.href, /^https:\/\/wa\.me\/59899850073\?text=/)
+  assert.match(new URL(tejer.href).searchParams.get('text'), /Chaleco.*volver a tejer/)
+  // Un link de Configuración que no es de WhatsApp: el número de Dahila.
+  assert.match(salidaSinPedido([no(chaleco, 'no-activa')], 'https://ejemplo.com').href, /^https:\/\/wa\.me\/59899850073\?/)
 })

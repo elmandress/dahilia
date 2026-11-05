@@ -42,10 +42,10 @@ function consultaDeFicha(size: string | undefined) {
 export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: string }) {
   const pathname = usePathname()
   const [visible, setVisible] = useState(true)
-  // ¿Bajó más de 0,8 pantallas? En la tienda y las colecciones la burbuja
-  // aparece recién ahí (VIS-08, 04/11/2026): al cargar tapaba el corazón de la
-  // primera tarjeta de la derecha en /colecciones/sunset-26, donde aterriza el
-  // anuncio.
+  // ¿Bajó más de 0,8 pantallas? En la home, la tienda y las colecciones la
+  // burbuja aparece recién ahí (VIS-08, 04/11/2026): al cargar tapaba el
+  // corazón de la primera tarjeta de la derecha en /colecciones/sunset-26,
+  // donde aterriza el anuncio.
   const [lejos, setLejos] = useState(false)
   const lastYRef = useRef(0)
 
@@ -88,7 +88,10 @@ export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: str
 
   const href = waLink(waUrl, 'Hola! Estoy en el sitio de Dahila Crochet y tengo una consulta 🧶')!
 
-  const demorada = pathname.startsWith('/tienda') || pathname.startsWith('/colecciones/')
+  // La home también (NEG-4): sin el bloque del drop arriba en el celular,
+  // "Nuevo" sube al primer pantallazo y la burbuja tapaba el corazón de la
+  // segunda prenda.
+  const demorada = pathname === '/' || pathname.startsWith('/tienda') || pathname.startsWith('/colecciones/')
   const mostrar = visible && (!demorada || lejos)
 
   // Dentro de un <aside> con nombre: queda como región propia y no suelto

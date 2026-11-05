@@ -435,16 +435,37 @@ async function ProductPage({ slug }: { slug: string }) {
   const complements = desdeEsta(relatedAll.filter((p) => p.category_id !== product.category_id))
     .sort((a, b) => prefRank(a) - prefRank(b))
   const similar = desdeEsta(relatedAll.filter((p) => p.category_id && p.category_id === product.category_id))
-  // Un lugar fijo para el drop: si esta prenda es de una colección, la tira
-  // arranca con una pieza en stock de la misma colección y de otra categoría,
-  // que son las que se venden ya. Si no hay, el mejor complemento.
-  const delDrop = product.collection_id
-    ? complements.find((p) => p.collection_id === product.collection_id && isReadyToShip(p))
+  // La colección con lugar fijo (NEG-1): la de esta prenda o, si no es de
+  // ninguna, la del drop de Configuración (prendido y publicado). El plan de
+  // SEO-05 pedía ese lugar en todas las fichas, y la rama lo daba solo en las
+  // del drop: en el resto, sus piezas en stock (las que se venden ya) habían
+  // desaparecido de las relacionadas.
+  const dropSlug = settings.drop_enabled !== 'false' ? (settings.drop_collection_slug ?? '').trim() : ''
+  const coleccionActiva = product.collection_id
+    ?? (dropSlug ? catalog.collections.find((c) => c.slug === dropSlug && c.published)?.id : undefined)
+  // "Completá el look · viaja en el mismo envío" tiene que ser cierto: con la
+  // prenda en stock, la tira sugiere solo piezas en stock (la regla del cajón,
+  // CRO-11). Una pieza de invierno a pedido al lado del poncho en stock haría
+  // esperar 1–2 semanas un pedido que sale ya. Si no hay, va una sola o ninguna.
+  const paraLaTira = isReadyToShip(product) ? complements.filter(isReadyToShip) : complements
+  // Un lugar fijo para la colección: la tira arranca con una de sus piezas en
+  // stock de otra categoría. Si no hay, el mejor complemento.
+  const delDrop = coleccionActiva
+    ? paraLaTira.find((p) => p.collection_id === coleccionActiva && isReadyToShip(p))
     : undefined
-  const lookComplements = [...(delDrop ? [delDrop] : []), ...complements.filter((p) => p !== delDrop)].slice(0, 2)
-  // El grid de abajo arma sus 4 con 2 similares + los complementos que
-  // siguen, sin repetir lo que la tira ya mostró.
-  const related = [...similar.slice(0, 2), ...complements.filter((p) => !lookComplements.includes(p)).slice(0, 2)]
+  const lookComplements = [...(delDrop ? [delDrop] : []), ...paraLaTira.filter((p) => p !== delDrop)].slice(0, 2)
+  // En una ficha del drop, el grid arranca con sus hermanas de colección que
+  // la tira no mostró: vuelven "De la colección …" y su link. Los 2 similares
+  // siguen yendo por slug (son los que le aseguran a cada ficha un enlace desde
+  // otra, SEO-04) y los complementos completan hasta 4 sin repetir la tira.
+  const hermanas = product.collection_id
+    ? desdeEsta(relatedAll.filter((p) => p.collection_id === product.collection_id && !lookComplements.includes(p))).slice(0, 2)
+    : []
+  const related = [
+    ...hermanas,
+    ...similar.filter((p) => !hermanas.includes(p)).slice(0, 2),
+    ...complements.filter((p) => !lookComplements.includes(p) && !hermanas.includes(p)).slice(0, Math.max(0, 2 - hermanas.length)),
+  ]
   const yaVista = (p: Product) => related.includes(p) || lookComplements.includes(p)
   const enRonda = desdeEsta(relatedAll)
   for (const p of enRonda) {

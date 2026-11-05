@@ -14,8 +14,18 @@ test('isSizeLike: talles con letras, con barra, números y "Único"', () => {
   }
 })
 
+// Con un solo talle que no se reconocía, toda la prenda pasaba a "Modelo": sin
+// guía de talles, sin "a tu medida" y con g:pattern en el feed (COR-04).
+test('isSizeLike: 2XL, 3XS, XXXS, con guion y rangos de números', () => {
+  for (const t of ['2XL', '3XL', '4xl', '3XS', 'XXXS', 'S-M', 'XS-S', 'L - XL', 'M-L/XL', '36-38', '40/42']) {
+    assert.equal(isSizeLike(t), true, t)
+  }
+  assert.equal(variantLabel(filas('S-M', 'L-XL')), 'Talle')
+  assert.equal(variantLabel(filas('M', 'L', '2XL')), 'Talle')
+})
+
 test('isSizeLike: lo que no es talle', () => {
-  for (const t of ['Lisas', 'Con lurex', 'Con caracolas', 'Rojo', '100', 'XXXXL', 'M/', '', null, undefined]) {
+  for (const t of ['Lisas', 'Con lurex', 'Con caracolas', 'Rojo', '100', 'XXXXL', '6XL', 'M/', 'S-', '-M', '', null, undefined]) {
     assert.equal(isSizeLike(t), false, String(t))
   }
 })

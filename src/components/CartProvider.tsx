@@ -3,13 +3,27 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import type { CartItem, Product, Discount } from '@/lib/types'
-import { getFinalPrice, isUnicoLabel } from '@/lib/types'
+import { getFinalPrice, isUnicoLabel, variantLabel } from '@/lib/types'
 import { track, gaCommerce } from '@/lib/analytics'
 import { summarizeCart, type CartIssue } from '@/lib/cart-summary'
 import { waLink, WHATSAPP_DEFAULT } from '@/lib/whatsapp'
 import { getRestockWhatsAppUrl } from '@/lib/product-selection'
+import { precargarCajon } from './cart-drawer-carga'
 
 type CartItemWithProduct = CartItem & { product: Product }
+
+/** view_cart para GA4: lo pedible como productos de e-commerce, con su valor. */
+function gaCarrito(
+  resumen: { buyable: Array<Pick<CartItem, 'size' | 'qty'> & { product: Product }>; subtotal: number },
+  discounts: Discount[]
+) {
+  return {
+    params: gaCommerce(resumen.buyable.map((i) => ({
+      item_id: i.product.slug, item_name: i.product.name, item_variant: i.size,
+      quantity: i.qty, price: getFinalPrice(i.product, i.size, discounts),
+    })), resumen.subtotal),
+  }
+}
 
 /** Desde dónde se agregó (add_to_cart{source}, CRO-04): para saber qué botón vende. */
 export type AddSource = 'ficha_boton' | 'barra_fija' | 'vista_rapida' | 'tarjeta' | 'look' | 'cajon_addon' | 'carrito_addon'
@@ -241,10 +255,13 @@ export function CartProvider({
   const cartCount = summary.count
   const cartTotal = summary.subtotal
 
+  // view_cart (RSAM-3): para Umami, las unidades; para GA4, el evento
+  // recomendado con sus productos y el valor. Antes GA4 recibía `items` como
+  // un número, que es un parámetro reservado (va una lista de productos).
   const openDrawer = useCallback((via?: unknown) => {
     setDrawerOpen(true)
-    track('view_cart', { via: typeof via === 'string' ? via : 'icono', items: cartCount })
-  }, [cartCount])
+    track('view_cart', { via: typeof via === 'string' ? via : 'icono', unidades: summary.count }, gaCarrito(summary, discounts))
+  }, [summary, discounts])
   const closeDrawer = useCallback(() => setDrawerOpen(false), [])
 
   // Initial load — deferred to idle so the first paint of the home page
@@ -303,6 +320,9 @@ export function CartProvider({
   }, [fetchCart])
 
   const doAdd = useCallback(async (product: Product, size: string, qty: number, opts?: { openDrawer?: boolean; source?: AddSource }) => {
+    // El contenido del cajón baja mientras se guarda (INT-2): cuando el POST
+    // vuelve, ya está y el cajón se abre entero.
+    if (opts?.openDrawer !== false) precargarCajon()
     try {
       const data = await mutate(() => fetch('/api/cart', {
         method: 'POST',
@@ -328,7 +348,8 @@ export function CartProvider({
       // encima sería redundante; el caller lo apaga con { openDrawer: false }.
       if (opts?.openDrawer !== false) {
         setDrawerOpen(true)
-        track('view_cart', { via: 'agregar', items: summarizeCart(data.items || [], discounts).count })
+        const despues = summarizeCart(data.items || [], discounts)
+        track('view_cart', { via: 'agregar', unidades: despues.count }, gaCarrito(despues, discounts))
       }
       return true
     } catch (e) {
@@ -338,16 +359,20 @@ export function CartProvider({
       // Sin talle que elegir, que se agote "el talle" es que se agotó la pieza.
       if (e instanceof CartError && e.status === 409) {
         if (/talle/i.test(e.message) && !isUnicoLabel(size)) {
-          const text = `Hola! Quería "${product.name}" en ${size} pero en la web figura agotado. ¿Lo tenés en otro talle? 🧶`
+          // "Modelo" en Pulseras Terra (NEG-5): "Con caracolas" no es un talle.
+          const rotulo = variantLabel(product.sizes) === 'Modelo' ? 'modelo' : 'talle'
+          const text = `Hola! Quería "${product.name}" en ${size} pero en la web figura agotado. ¿Lo tenés en otro ${rotulo}? 🧶`
           showToast({
-            msg: 'Ese talle se acaba de agotar.',
-            linkText: 'Preguntar por otro talle',
+            msg: `Ese ${rotulo} se acaba de agotar.`,
+            linkText: `Preguntar por otro ${rotulo}`,
             href: waLink(whatsappUrl, text) ?? waLink(WHATSAPP_DEFAULT, text)!,
             source: 'carrito_talle_agotado',
           })
         } else {
+          // El mismo 409 llega por una prenda en borrador, a medida o de un
+          // drop sin lanzar (api/cart): no siempre es que se agotó (NEG-2).
           showToast({
-            msg: 'Esta pieza se acaba de agotar.',
+            msg: 'Esta pieza se agotó o no está a la venta ahora.',
             linkText: 'Avisame si vuelve',
             href: getRestockWhatsAppUrl(product, whatsappUrl),
             source: 'carrito_agotada',

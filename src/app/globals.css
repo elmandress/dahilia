@@ -642,8 +642,9 @@ textarea.dh-campo { line-height: 1.5; }
   scroll-snap-stop: always;
 }
 
-/* "¿No se abrió WhatsApp?" del carrito (CarritoClient): en el celular se fija
-   arriba de la barra de abajo, donde está el dedo que acaba de tocar el botón. */
+/* El aviso del pedido mandado (PedidoEnviado): en el celular se fija arriba de
+   la barra de abajo, donde está el dedo que acaba de tocar el botón. Con tope
+   de alto (NEG-3): en un iPhone SE la tarjeta y la barra tapaban 338 de 568 px. */
 @media (max-width: 720px) {
   .cart-fallback {
     position: fixed;
@@ -651,6 +652,8 @@ textarea.dh-campo { line-height: 1.5; }
     right: 12px;
     bottom: 96px;
     z-index: 46;
+    max-height: 34vh;
+    overflow-y: auto;
     box-shadow: 0 12px 30px -12px rgba(31, 26, 27, 0.35);
   }
 }

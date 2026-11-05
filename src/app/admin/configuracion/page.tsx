@@ -7,7 +7,7 @@ import { notifySiteWideChange } from '@/lib/seo-notify'
 import { useUnsavedWarning } from '@/lib/use-unsaved-warning'
 import { parseDropDateUY, dropDateInputs, dropWhenText } from '@/lib/drop-date'
 import { parseMoneyUYU, parseCount } from '@/lib/parse-money'
-import { waLink, WHATSAPP_DEFAULT } from '@/lib/whatsapp'
+import { waBase, WHATSAPP_DEFAULT } from '@/lib/whatsapp'
 import { cambiosPendientes, conflictos } from '@/lib/settings-diff'
 import { formatPrice } from '@/lib/types'
 import { SITE_URL } from '@/lib/env'
@@ -301,7 +301,9 @@ function valorParaGuardar(key: string, raw: string): { value: string } | { error
     }
     case 'whatsapp': {
       if (!v) return { value: '' }
-      const link = waLink(v)
+      // Siempre como wa.me (COR-03): un api.whatsapp.com/send?phone=… se
+      // guardaba tal cual y las páginas que le pegan "?text=" lo rompían.
+      const link = waBase(v)
       return link ? { value: link } : { error: `«${label}» no es un link de WhatsApp. Escribilo así: ${WHATSAPP_DEFAULT}` }
     }
     case 'ruta':
@@ -358,7 +360,7 @@ function WhatsAppField({ id, value, placeholder, onChange }: {
   onChange: (v: string) => void
 }) {
   const typed = value.trim() !== ''
-  const link = typed ? waLink(value) : null
+  const link = typed ? waBase(value) : null
   const bad = typed && !link
   return (
     <>

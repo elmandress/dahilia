@@ -123,17 +123,24 @@ test('la ficha de un cardigan lleva "saco" en el título', async ({ page }) => {
   await expect(page).toHaveTitle(/saco tejido a mano/i)
 })
 
-// Barra fija de "Agregar" (12/10/2026): no tapa nombre y precio al entrar;
-// aparece recién cuando el botón principal salió de pantalla.
-test('barra fija de la ficha: escondida arriba, visible al pasar el botón', async ({ page }, testInfo) => {
+// Barra fija de "Agregar": desde el 04/11/2026 (de892e0) se ve siempre que el
+// botón principal no está en pantalla, arriba o abajo. En el celular ese botón
+// queda debajo del primer pantallazo, así que la barra ya está al entrar, con
+// el nombre y el precio a la vista; se va mientras el botón principal se ve
+// (no hay dos botones iguales a la vez) y vuelve al pasarlo.
+test('barra fija de la ficha: visible sin el botón a la vista, escondida con el botón en pantalla', async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.includes('celular'), 'la barra existe solo en el celular')
   await page.goto('/tienda/spring-cardigan')
   const bar = page.locator('.pdp-sticky-bar')
-  await expect(bar).not.toHaveClass(/is-visible/)
+  const cta = page.locator('[data-pdp-cta]')
   await expect(page.getByRole('heading', { level: 1 })).toBeInViewport()
-  // Sin talle elegido el botón dice "Elegí tu talle" (04/11/2026): se baja
-  // hasta los talles, que están justo arriba del botón.
-  await page.locator('.pdp-sizes').scrollIntoViewIfNeeded()
+  await expect(cta).not.toBeInViewport()
+  await expect(bar).toHaveClass(/is-visible/)
+  // Con el botón principal a la vista, la barra se esconde.
+  await cta.scrollIntoViewIfNeeded()
+  await expect(cta).toBeInViewport()
+  await expect(bar).not.toHaveClass(/is-visible/)
+  // Pasado el botón, vuelve.
   await page.mouse.wheel(0, 1600)
   await expect(bar).toHaveClass(/is-visible/)
 })

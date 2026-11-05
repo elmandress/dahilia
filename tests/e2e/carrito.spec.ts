@@ -63,6 +63,26 @@ async function espiarAperturas(page: Page) {
 }
 const aperturas = (page: Page) => page.evaluate(() => (window as Window & { __aperturas?: string[] }).__aperturas ?? [])
 
+/**
+ * Como espiarAperturas, pero sin abrir nada: con cupón, el checkout abre una
+ * pestaña en blanco y le da la dirección de WhatsApp cuando contesta el canje.
+ * Acá esa pestaña es de mentira y anota la dirección que recibe.
+ */
+async function aperturasSimuladas(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as Window & { __aperturas?: string[] }
+    w.__aperturas = []
+    window.open = ((url?: string | URL) => {
+      if (url) w.__aperturas!.push(String(url))
+      return {
+        opener: null,
+        close() {},
+        location: { set href(destino: string) { w.__aperturas!.push(destino) } },
+      } as unknown as Window
+    }) as typeof window.open
+  })
+}
+
 test('cajón y /carrito cuentan solo lo pedible: sin la agotada ni el talle que ya no existe', async ({ page, guard }) => {
   const poncho = await producto('poncho-ete')
   const spring = await producto('spring-cardigan')
@@ -94,8 +114,9 @@ test('cajón y /carrito cuentan solo lo pedible: sin la agotada ni el talle que 
   expect(textoCajon).toMatch(/subtotal/i)
   expect(subtotalCajon).toBe(totalCarrito)
   expect(envioCajon.replace(/\.$/, '')).toBe(envioCarrito.replace(/\.$/, ''))
-  // Las dos que no se pueden pedir se ven en gris, con su aviso, sin +/−.
-  expect(textoCajon).toMatch(/ya no está disponible/i)
+  // Las dos que no se pueden pedir se ven en gris, con su aviso, sin +/−. El
+  // motivo es el mismo que en /carrito (NEG-2): la agotada dice "Se agotó".
+  expect(textoCajon).toMatch(/se agotó: no se incluye en el pedido/i)
   expect(textoCajon).toMatch(/ese talle cambió/i)
   await expect(cajon(page).getByRole('button', { name: 'Sumar uno' })).toHaveCount(1)
   expect(guard.pageErrors).toEqual([])
@@ -266,4 +287,82 @@ test('un GET viejo del carrito no borra la prenda que se acaba de agregar', asyn
   await expect(globito(page)).toHaveAttribute('aria-label', 'Abrir carrito (1)')
   await page.waitForTimeout(3000)
   await expect(globito(page)).toHaveAttribute('aria-label', 'Abrir carrito (1)')
+})
+
+// RSAM-1 (revisión final, 05/11/2026): el pedido mandado se recuerda en la
+// pestaña. Antes, al recargar /carrito el mismo pedido volvía a canjear el
+// cupón, y uno de un solo uso decía "ya no se puede usar" y se sacaba. Acá
+// /api/coupon es de mentira: el primer canje vale y el segundo no.
+test('pedido con cupón: al recargar, el botón reabre el mismo pedido sin canjear otra vez', async ({ page, guard }) => {
+  await aperturasSimuladas(page)
+  let canjes = 0
+  await page.route('**/api/coupon', (route) => {
+    const body = JSON.parse(route.request().postData() || '{}') as { redeem?: boolean }
+    if (body.redeem) return route.fulfill({ json: { ok: ++canjes === 1 } })
+    return route.fulfill({ json: { ok: true, coupon: { code: 'PRUEBA10', label: null, kind: 'percent', value: 10, min_subtotal_uyu: null, product_ids: [], category_ids: [] } } })
+  })
+  await page.goto('/tienda/bandana')
+  await page.getByRole('button', { name: /agregar al carrito/i }).first().click()
+  await expect(globito(page)).toHaveAttribute('aria-label', 'Abrir carrito (1)')
+  await page.goto('/carrito')
+  const resumen = page.locator('.cart-summary')
+  await resumen.getByRole('button', { name: /tenés un cupón/i }).click()
+  await resumen.getByLabel('Código de cupón').fill('PRUEBA10')
+  await resumen.getByRole('button', { name: 'Aplicar' }).click()
+  await expect(resumen.getByText(/Cupón PRUEBA10 · −UYU/)).toBeVisible()
+
+  const boton = page.locator('button[aria-label^="Coordinar pedido por WhatsApp"]:visible').first()
+  await boton.click()
+  await expect.poll(async () => (await aperturas(page)).length, { timeout: 5000 }).toBe(1)
+  const [primero] = await aperturas(page)
+  expect(textoWa(primero)).toMatch(/Cupón PRUEBA10: −UYU/)
+  await expect.poll(() => guard.orders.length).toBe(1)
+  expect(canjes).toBe(1)
+
+  await page.reload()
+  await expect(resumen.getByText(/Cupón PRUEBA10 · −UYU/)).toBeVisible()
+  await expect(boton).toContainText(/de nuevo/i)
+  await boton.click()
+  await expect.poll(async () => (await aperturas(page)).length, { timeout: 5000 }).toBe(1)
+  expect((await aperturas(page))[0]).toBe(primero)
+  await page.waitForTimeout(800)
+  expect(canjes).toBe(1)
+  expect(guard.orders.length).toBe(1)
+  await expect(page.getByText(/ya no se puede usar/i)).toHaveCount(0)
+  expect(guard.pageErrors).toEqual([])
+})
+
+// COR-01 (revisión final): con un cupón recordado, /carrito calcula el envío
+// gratis sobre el total con el cupón; el cajón lo calculaba sin él y prometía
+// "✓ Envío gratis" que /carrito negaba un toque después. Ahora no afirma nada
+// y manda a /carrito. /api/coupon es de mentira (15 %).
+test('cajón con un cupón recordado: no promete un envío gratis que /carrito no da', async ({ page }) => {
+  const spring = await producto('spring-cardigan')
+  await page.addInitScript(() => { try { sessionStorage.setItem('dahila_coupon_code', 'PRUEBA15') } catch { /* sin storage */ } })
+  await page.route('**/api/coupon', (route) => route.fulfill({
+    json: { ok: true, coupon: { code: 'PRUEBA15', label: null, kind: 'percent', value: 15, min_subtotal_uyu: null, product_ids: [], category_ids: [] } },
+  }))
+  await carritoFijo(page, [item(1, spring, disponibles(spring)[0], 2)])
+  await page.goto('/tienda')
+  await expect(globito(page)).toHaveAttribute('aria-label', 'Abrir carrito (2)')
+  await globito(page).click()
+  await expect(cajon(page)).toHaveJSProperty('inert', false)
+  expect(await cajon(page).innerText()).not.toMatch(/✓ Envío gratis|Te faltan/)
+  await expect(cajon(page).getByRole('button', { name: /ver carrito y pedir/i })).toBeVisible()
+})
+
+// NEG-2 (revisión final): sin nada para pedir, la salida depende del motivo.
+// Con la prenda a la venta y solo el talle renombrado, la salida es elegirlo
+// de nuevo, no "¿se puede volver a tejer?". Y sin envío, nada de "Sumale un
+// detalle · viaja en el mismo envío".
+test('sin nada para pedir por un talle que cambió: la salida es elegirlo de nuevo', async ({ page, guard }) => {
+  const chaleco = await producto('chaleco')
+  expect(talles(chaleco).some((s) => s.size === 'XL')).toBe(false)
+  await carritoFijo(page, [item(1, chaleco, 'XL')])
+  await page.goto('/carrito')
+  const resumen = page.locator('.cart-summary')
+  await expect(resumen.getByRole('link', { name: /elegir el talle de nuevo/i })).toHaveAttribute('href', `/tienda/${chaleco.slug}`)
+  await expect(page.getByText(/volver a tejer/i)).toHaveCount(0)
+  await expect(page.getByText(/sumale un detalle/i)).toHaveCount(0)
+  expect(guard.pageErrors).toEqual([])
 })

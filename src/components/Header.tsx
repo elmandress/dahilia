@@ -14,6 +14,7 @@ import { dahila, Icon } from './ui/Primitives'
 import { PriceBlock } from './ui/PriceBlock'
 import { waLink, WHATSAPP_DEFAULT } from '@/lib/whatsapp'
 import { esBusquedaDeStock } from '@/lib/search-intent'
+import { precargarCajon } from './cart-drawer-carga'
 
 // `from`: el precio cambia según el talle y `price` es el más bajo (mismo
 // criterio que la tarjeta de la tienda, ver getListingPrice). `list`: el precio
@@ -68,6 +69,28 @@ const socialLink: React.CSSProperties = {
   fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 400, letterSpacing: '0.02em',
 }
 
+/**
+ * Link del header que precarga su página recién con la intención: el mouse
+ * encima, el foco del teclado o el dedo apoyado (INT-2, revisión final
+ * 05/11/2026). Con el prefetch al entrar en pantalla, cada página bajaba el
+ * JS de las siete secciones del menú de escritorio y de favoritos (~30 KB
+ * comprimidos) aunque nadie las fuera a abrir. Es el patrón de la guía de
+ * Next (linking-and-navigating, "Disabling prefetching"):
+ * prefetch={activo ? null : false}.
+ */
+function LinkConIntencion({ onMouseEnter, onFocus, onTouchStart, ...props }: React.ComponentProps<typeof Link>) {
+  const [activo, setActivo] = useState(false)
+  return (
+    <Link
+      {...props}
+      prefetch={activo ? null : false}
+      onMouseEnter={(e) => { setActivo(true); onMouseEnter?.(e) }}
+      onFocus={(e) => { setActivo(true); onFocus?.(e) }}
+      onTouchStart={(e) => { setActivo(true); onTouchStart?.(e) }}
+    />
+  )
+}
+
 export function Header({
   promo,
   showOfertas = true,
@@ -102,6 +125,8 @@ export function Header({
     (showRegalo || it.id !== '/regalo')
   )
   const [open, setOpen] = useState(false)
+  // Los links del menú del celular precargan solo con el menú abierto (INT-2).
+  const siMenu = open ? null : false
   const [showSearch, setShowSearch] = useState(false)
   const [searchVal, setSearchVal] = useState('')
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
@@ -333,7 +358,7 @@ export function Header({
                 )
               }
               return (
-                <Link key={it.id} href={it.id} style={linkStyle}>{it.label}</Link>
+                <LinkConIntencion key={it.id} href={it.id} style={linkStyle}>{it.label}</LinkConIntencion>
               )
             })}
           </nav>
@@ -453,7 +478,9 @@ export function Header({
               </button>
             )}
 
-            <Link
+            {/* Con intención y no al cargar (INT-2): el corazón está en cada
+                página y precargaba /favoritos (~6 KB de JS) en todas. */}
+            <LinkConIntencion
               href="/favoritos"
               style={{ ...iconBtn, position: 'relative', width: 34, height: 34, minWidth: 34, minHeight: 34, color: dahila.ink900, textDecoration: 'none' }}
               aria-label={`Favoritos${showFavBadge ? ` (${favCount})` : ''}`}
@@ -473,10 +500,15 @@ export function Header({
                   }}
                 >{favCount}</span>
               )}
-            </Link>
+            </LinkConIntencion>
 
+            {/* El contenido del cajón baja aparte (INT-2): empieza a bajar
+                con el mouse encima, el foco o el dedo apoyado, antes del clic. */}
             <button
               onClick={openDrawer}
+              onPointerEnter={precargarCajon}
+              onPointerDown={precargarCajon}
+              onFocus={precargarCajon}
               style={{ ...iconBtn, position: 'relative', width: 34, height: 34, minWidth: 34, minHeight: 34 }}
               aria-label={`Abrir carrito${showBadge ? ` (${cartCount})` : ''}`}
             >
@@ -644,13 +676,18 @@ export function Header({
             <Icon name="x" size={20} />
           </button>
         </div>
+        {/* prefetch={siMenu}: el panel cerrado está corrido a la izquierda,
+            pegado a la pantalla, y next/link precarga lo que está a menos de
+            200 px de ella. Así, cada página del celular bajaba el JS de doce
+            secciones con el menú cerrado (INT-2). Abierto, precarga todo lo
+            que se ve, como siempre. */}
         <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 20px 16px', display: 'flex', flexDirection: 'column' }}>
           {navItems.map((it) => {
             const base = it.id.split('?')[0]
             const on = !it.id.includes('?') && pathname === base
             return (
               <div key={it.id} style={{ borderBottom: `1px solid ${dahila.border}` }}>
-                <Link href={it.id} onClick={() => setOpen(false)} style={{
+                <Link href={it.id} prefetch={siMenu} onClick={() => setOpen(false)} style={{
                   textDecoration: 'none',
                   fontFamily: dahila.fontSans, fontSize: 16, fontWeight: it.accent ? 500 : (on ? 500 : 300),
                   color: it.accent ? '#B6314A' : dahila.ink900, textAlign: 'left', padding: '15px 0',
@@ -669,7 +706,7 @@ export function Header({
                         abajo: con 7 medían 35 px, debajo de los 44 del
                         dedo (VIS-12, 04/11/2026). */}
                     {readyToShipCount > 0 && (
-                      <Link href="/tienda?ya=1" onClick={() => setOpen(false)} style={{
+                      <Link href="/tienda?ya=1" prefetch={siMenu} onClick={() => setOpen(false)} style={{
                         textDecoration: 'none',
                         fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 400,
                         color: dahila.ink900, padding: '12px 0 12px 14px',
@@ -680,7 +717,7 @@ export function Header({
                       </Link>
                     )}
                     {megaCategories.map((c) => (
-                      <Link key={c.slug} href={`/tienda/${c.slug}`} onClick={() => setOpen(false)} style={{
+                      <Link key={c.slug} href={`/tienda/${c.slug}`} prefetch={siMenu} onClick={() => setOpen(false)} style={{
                         textDecoration: 'none',
                         fontFamily: dahila.fontSans, fontSize: 14, fontWeight: 300,
                         color: dahila.ink700, padding: '12px 0 12px 14px',
@@ -694,7 +731,7 @@ export function Header({
               </div>
             )
           })}
-          <Link href="/favoritos" onClick={() => setOpen(false)} style={{
+          <Link href="/favoritos" prefetch={siMenu} onClick={() => setOpen(false)} style={{
             textDecoration: 'none',
             fontFamily: dahila.fontSans, fontSize: 16, fontWeight: 300,
             color: dahila.ink900, textAlign: 'left', padding: '15px 0',

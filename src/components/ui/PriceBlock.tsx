@@ -76,12 +76,16 @@ export function PriceBlock({
       }),
       whiteSpace: 'nowrap',
     }}>
+      {/* Quien no ve el tachado oía dos precios sin saber cuál paga (RSAM-5,
+          WCAG 1.3.1): "Con descuento: UYU 1.360, antes UYU 1.600". */}
       <span style={{ whiteSpace: 'nowrap' }}>
+        <span className="sr-only">Con descuento: </span>
         {fromLabel}
         <span style={{ fontFamily: dahila.fontSans, fontSize: s.final, fontWeight: 500, color: SALE }}>
           {formatPrice(final)}
         </span>
       </span>
+      <span className="sr-only">, antes </span>
       <span style={{ fontFamily: dahila.fontSans, fontSize: s.list, color: dahila.ink500, textDecoration: 'line-through' }}>
         {formatPrice(list)}
       </span>
