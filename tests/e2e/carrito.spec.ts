@@ -150,11 +150,15 @@ test('doble toque en "Agregar" con la red lenta: un solo POST y cantidad 1', asy
     return route.fallback()
   })
   await page.goto('/tienda/bandana')
-  const agregar = page.getByRole('button', { name: /agregar al carrito/i }).first()
+  // El botón por su atributo y no por el texto: con el primer toque pasa a
+  // "Agregando…", y buscándolo por "Agregar al carrito" el segundo toque no
+  // llegaba nunca (la prueba pasaba sin ejercitar la traba).
+  const agregar = page.locator('[data-pdp-cta]').first()
   await agregar.click()
-  await page.waitForTimeout(500)
-  // Si el botón ya está trabado (deshabilitado), el segundo toque no hace nada.
-  await agregar.click({ force: true, timeout: 2000 }).catch(() => {})
+  await page.waitForTimeout(300)
+  await expect(agregar).toHaveText(/agregando/i)
+  // Segundo toque sobre el mismo botón, trabado mientras guarda.
+  await agregar.click({ force: true })
   await expect(cajon(page)).toHaveJSProperty('inert', false, { timeout: 8000 })
   await page.waitForTimeout(1500)
   expect(posts).toBe(1)
