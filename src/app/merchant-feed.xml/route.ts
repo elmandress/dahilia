@@ -1,10 +1,14 @@
 import { createClient } from '@/lib/supabase/public'
 import { getSnapshotData } from '@/lib/catalog'
 import { SITE_URL } from '@/lib/env'
-import { getEffectivePrice, getFinalPrice, getPrimaryPhoto, isReadyToShip, isUnicoLabel } from '@/lib/types'
+import {
+  getEffectivePrice, getFinalPrice, getListingSize, getPrimaryPhoto, isReadyToShip, isUnicoLabel, sortSizes, variantLabel,
+} from '@/lib/types'
 import { botImageUrl } from '@/lib/media'
 import { dropVisibility, type Product, type Discount } from '@/lib/types'
 import { localTermFor } from '@/lib/vocabulario'
+import { feedItemId, tieneVariantes, variantUrl } from '@/lib/catalog-ids'
+import { promesaFicha } from '@/lib/seo-copy'
 
 export const revalidate = 3600
 
@@ -76,10 +80,11 @@ function availabilityDate(weeksMax: number): string {
  * `gender` según lo que la prenda realmente es. Google acepta male/female/
  * unisex, y ponerlo mal es peor que no ponerlo: aparece en búsquedas que no
  * corresponden. Los accesorios (bolsos, bandanas, bufandas) no tienen género;
- * el resto del catálogo es moda femenina.
+ * el resto del catálogo es moda femenina. Sin categoría (la Box de regalo)
+ * tampoco se sabe: unisex (SEO-08).
  */
 function genderFor(categoryName: string | undefined): string {
-  return categoryName === 'Accesorios' ? 'unisex' : 'female'
+  return !categoryName || categoryName === 'Accesorios' ? 'unisex' : 'female'
 }
 
 export async function GET() {
@@ -96,7 +101,9 @@ export async function GET() {
       supabase
         .from('products')
         // slug: para la palabra uruguaya del título (lib/vocabulario.ts).
-        .select('*, category:categories(name, slug), collection:collections(*), media:product_media(url, is_primary, type), sizes:product_sizes(size, price_uyu, available)')
+        // sort_order de los talles: el orden de las variantes y el precio de
+        // una prenda sin talle disponible.
+        .select('*, category:categories(name, slug), collection:collections(*), media:product_media(url, is_primary, type), sizes:product_sizes(size, price_uyu, available, sort_order)')
         .in('status', ['active', 'soldout'])
         .order('sort_order', { ascending: true }),
       supabase.from('discounts').select('*').eq('active', true),
@@ -134,32 +141,38 @@ export async function GET() {
         // antes pedía además plazo máximo 0, y la Box de regalo y las Mini
         // bufandas salían "en stock" en la ficha y "a pedido" acá; Merchant
         // Center marca esa diferencia como error de disponibilidad.
+        // 04/11/2026 (SEO-08, bug #22): también agotada cuando todos sus talles
+        // lo están. Antes esa prenda caía en la rama "sin talles" y publicaba
+        // un ítem nuevo, en stock o a pedido, a precio base.
         const enStock = isReadyToShip(p)
-        const availability =
-          p.status === 'soldout' ? 'out_of_stock' : enStock ? 'in_stock' : 'backorder'
-
         const weeksMax = Math.max(p.lead_time_weeks_min, p.lead_time_weeks_max)
-        // La fecha solo corresponde a lo que todavía no existe: Google la
-        // rechaza en un producto marcado en stock.
-        const fechaLinea = availability === 'backorder'
-          ? `\n      <g:availability_date>${availabilityDate(weeksMax)}</g:availability_date>`
-          : ''
+        const disponibilidad = (agotada: boolean) => {
+          const availability =
+            p.status === 'soldout' || agotada ? 'out_of_stock' : enStock ? 'in_stock' : 'backorder'
+          // La fecha solo corresponde a lo que todavía no existe: Google la
+          // rechaza en un producto marcado en stock.
+          const fechaLinea = availability === 'backorder'
+            ? `\n      <g:availability_date>${availabilityDate(weeksMax)}</g:availability_date>`
+            : ''
+          return `      <g:availability>${availability}</g:availability>${fechaLinea}`
+        }
 
-        const desc = cleanDescription(
-          p.description,
-          `${p.name}: tejido a mano a crochet en Montevideo, en tu talle y tus colores.`
-        )
+        // Sin descripción propia, la misma promesa que el title y la tarjeta
+        // de la ficha (SEO-03): "en tu talle y tus colores" iba en todas,
+        // también en las piezas ya tejidas y en las que no tienen talle.
+        const desc = cleanDescription(p.description, `${p.name}. ${promesaFicha(p).linea}`)
 
         // Plazo de producción en días hábiles, desde las semanas de la ficha.
         // En stock: sale ya, aunque la ficha conserve un máximo de semanas viejo.
         const minDays = enStock ? 0 : Math.min(p.lead_time_weeks_min, p.lead_time_weeks_max) * 5
         const maxDays = enStock ? 2 : weeksMax * 5
 
-        // Atributos comunes a todas las variantes de la prenda.
+        // Atributos comunes a todas las variantes de la prenda. El link va por
+        // ítem (el de cada variante abre con su talle elegido) y la canónica
+        // es la ficha a secas, la misma de la página (SEO-01).
         const comunes = `      <g:description>${xmlEscape(desc)}</g:description>
-      <g:link>${xmlEscape(`${SITE_URL}/tienda/${p.slug}`)}</g:link>
+      <g:canonical_link>${xmlEscape(`${SITE_URL}/tienda/${p.slug}`)}</g:canonical_link>
       <g:image_link>${xmlEscape(botImageUrl(SITE_URL, photo))}</g:image_link>
-      <g:availability>${availability}</g:availability>${fechaLinea}
       <g:condition>new</g:condition>
       <g:brand>Dahila Crochet</g:brand>
       <g:identifier_exists>no</g:identifier_exists>
@@ -168,25 +181,35 @@ export async function GET() {
 ${productType ? `      <g:product_type>${xmlEscape(productType)}</g:product_type>\n` : ''}${p.material ? `      <g:material>${xmlEscape(p.material)}</g:material>\n` : ''}      <g:min_handling_time>${minDays}</g:min_handling_time>
       <g:max_handling_time>${maxDays}</g:max_handling_time>`
 
-        const talles = (p.sizes ?? []).filter((s) => s.available !== false)
-
         // Una prenda con talles va como VARIANTES: un <item> por talle, todos
         // unidos por item_group_id. Es la estructura que Google espera para
         // ropa, y de paso cada talle publica SU precio exacto — antes iba uno
         // solo, el más barato, que es justo la discrepancia contra la página
-        // que Merchant Center marca.
-        if (talles.length > 0) {
-          return talles
+        // que Merchant Center marca. Los ids salen de lib/catalog-ids.ts, la
+        // misma regla que el píxel de Meta (TRK-01): "Único" no es un talle,
+        // y la prenda que solo tiene esa fila va por la rama de abajo.
+        if (tieneVariantes(p)) {
+          const filas = sortSizes(p.sizes).filter((s) => !isUnicoLabel(s.size))
+          const disponibles = filas.filter((s) => s.available !== false)
+          // Todos agotados: los mismos ids, cada uno out_of_stock.
+          const agotada = disponibles.length === 0
+          // Modelos y no talles (Pulseras Terra: Lisas, Con lurex, Con
+          // caracolas): g:pattern en vez de g:size, y el título sin "talle".
+          const porModelo = variantLabel(p.sizes) === 'Modelo'
+          return (agotada ? filas : disponibles)
             .map((s) => {
               const price = getFinalPrice(p, s.size, discounts)
               if (!(price > 0)) return ''
               const list = getEffectivePrice(p, s.size)
+              const atributo = porModelo ? 'pattern' : 'size'
               return `    <item>
-      <g:id>${xmlEscape(`${p.slug}-${s.size}`)}</g:id>
+      <g:id>${xmlEscape(feedItemId(p.slug, s.size))}</g:id>
       <g:item_group_id>${xmlEscape(p.slug)}</g:item_group_id>
-      <g:title>${xmlEscape((isUnicoLabel(s.size) ? baseTitle : `${baseTitle} — talle ${s.size}`).slice(0, 150))}</g:title>
-      <g:size>${xmlEscape(s.size)}</g:size>
+      <g:title>${xmlEscape(`${baseTitle} — ${porModelo ? '' : 'talle '}${s.size}`.slice(0, 150))}</g:title>
+      <g:${atributo}>${xmlEscape(s.size)}</g:${atributo}>
+      <g:link>${xmlEscape(variantUrl(SITE_URL, p.slug, s.size))}</g:link>
 ${priceTags(list, price)}
+${disponibilidad(agotada)}
 ${comunes}
     </item>`
             })
@@ -194,14 +217,20 @@ ${comunes}
             .join('\n')
         }
 
-        // Sin talles (accesorios, bolsos): una sola ficha, talle único.
-        const price = getFinalPrice(p, undefined, discounts)
+        // Sin talles (accesorios, bolsos) o solo con la fila "Único": una sola
+        // ficha, con el precio de su fila (el Sweater net tiene el suyo ahí).
+        // Si esa fila está agotada, el ítem también.
+        const filas = sortSizes(p.sizes)
+        const talle = getListingSize(p) ?? filas[0]?.size
+        const price = getFinalPrice(p, talle, discounts)
         if (!(price > 0)) return '' // sin precio no es publicable
-        const list = getEffectivePrice(p, undefined)
+        const list = getEffectivePrice(p, talle)
         return `    <item>
-      <g:id>${xmlEscape(p.slug)}</g:id>
+      <g:id>${xmlEscape(feedItemId(p.slug))}</g:id>
       <g:title>${xmlEscape(baseTitle.slice(0, 150))}</g:title>
+      <g:link>${xmlEscape(variantUrl(SITE_URL, p.slug))}</g:link>
 ${priceTags(list, price)}
+${disponibilidad(filas.length > 0 && filas.every((s) => s.available === false))}
 ${comunes}
     </item>`
       })

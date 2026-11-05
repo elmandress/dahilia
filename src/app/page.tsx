@@ -84,7 +84,6 @@ export default async function Home() {
 
   // LocalBusiness — shows brand panel in Google with location, contact, links.
   const waUrl = settings.contact_whatsapp_url || 'https://wa.me/59899850073'
-  const igUrl = settings.contact_instagram_url || 'https://www.instagram.com/dahila.crochet/'
   const localBusinessJsonLd = {
     '@context': 'https://schema.org',
     '@type': ['LocalBusiness', 'ClothingStore'],
@@ -101,9 +100,11 @@ export default async function Home() {
       addressLocality: 'Montevideo',
       addressCountry: 'UY',
     },
-    // Perfiles oficiales (Configuración → Contacto) + WhatsApp. hasMap ata
+    // Perfiles oficiales (Configuración → Contacto), los mismos del layout.
+    // Sin el link de WhatsApp (SEO-12, 04/11/2026): sameAs es para perfiles
+    // de la marca en otros sitios, y un wa.me no es un perfil. hasMap ata
     // esta ficha al Perfil de Negocio de Google cuando el link está cargado.
-    sameAs: [...new Set([igUrl, ...brandProfileUrls(settings), waUrl])],
+    sameAs: brandProfileUrls(settings),
     ...(googleBusinessUrl(settings) ? { hasMap: googleBusinessUrl(settings) } : {}),
     areaServed: [
       { '@type': 'City', name: 'Montevideo' },

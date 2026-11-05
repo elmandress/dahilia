@@ -158,6 +158,23 @@ export function getCategoryGuides(categorySlug: string, limit = 3): Article[] {
 }
 
 /**
+ * Notas que recomiendan alguna de estas prendas (su relatedProductSlugs), las
+ * que tocan más prendas primero y, entre iguales, en el orden editorial. Para
+ * el pie de una colección (SEO-06, 04/11/2026): las notas del drop enlazaban a
+ * la colección, pero la colección no enlazaba a ninguna nota.
+ */
+export function getArticlesForProducts(slugs: string[], limit = 3): Article[] {
+  const prendas = new Set(slugs)
+  const toques = (a: Article) => (a.relatedProductSlugs ?? []).filter((s) => prendas.has(s)).length
+  return ARTICLES
+    .map((a) => ({ a, n: toques(a) }))
+    .filter((x) => x.n > 0)
+    .sort((x, y) => y.n - x.n)
+    .slice(0, limit)
+    .map((x) => x.a)
+}
+
+/**
  * Notas relacionadas para el pie de un artículo. Usa las declaradas a mano y,
  * si faltan, completa con las del mismo cluster: así una nota nueva nunca
  * queda sin salida hacia el resto del blog (que es donde se pierde el

@@ -6,7 +6,11 @@
 // - /api/cart (POST/PATCH/DELETE), /api/favorites, /api/orders: se simulan en
 //   memoria con productos reales, leídos de Supabase con la clave pública;
 // - /api/resenas: se simula (sin clave de Places en local);
-// - terceros de medición (GA4, Clarity, Umami): se bloquean.
+// - terceros de medición (GA4, Clarity, Umami, Meta): se bloquean;
+// - /api/meta (la API de conversiones de Meta): nunca llega al servidor. El
+//   cuerpo se guarda en guard.metaEvents y se responde 204 (TRK-06,
+//   04/11/2026): una corrida contra un build con el píxel prendido mandaría
+//   eventos de prueba al mismo dataset que optimiza los anuncios.
 //
 // Las lecturas (páginas, /api/search, /api/cart GET vacío) van al servidor real.
 import { test as base, expect, type Page, type Route } from '@playwright/test'
@@ -39,6 +43,9 @@ export async function fetchProduct(by: { id?: string; slug?: string }): Promise<
 export interface Guard {
   /** Cuerpos que el sitio mandó a /api/orders (el registro del pedido). */
   orders: unknown[]
+  /** Cuerpos que el sitio mandó a /api/meta (eventos para la API de
+   *  conversiones), interceptados: { event_name, event_id, custom_data, … }. */
+  metaEvents: unknown[]
   /** Cuántas acciones del servidor intentó mandar la página. */
   serverActions: () => number
   /** Cómo responder a las acciones del servidor en esta prueba. */
@@ -58,6 +65,7 @@ async function installGuard(page: Page): Promise<Guard> {
   let cart: CartItem[] = []
   let waUrl: string | null = null
   const orders: unknown[] = []
+  const metaEvents: unknown[] = []
   const pageErrors: string[] = []
   page.on('pageerror', (e) => pageErrors.push(e.message))
   page.on('popup', async (popup) => { waUrl = waUrl ?? popup.url(); await popup.close().catch(() => {}) })
@@ -76,8 +84,21 @@ async function installGuard(page: Page): Promise<Guard> {
   await ctx.route(/\/_next\/image|supabase\.co\/storage\//, (r) =>
     r.fulfill({ status: 200, contentType: 'image/gif', body: PIXEL, headers: { 'cache-control': 'public, max-age=31536000' } })
   )
-  await ctx.route(/googletagmanager|google-analytics|clarity\.ms|cloud\.umami|\/stats\//, (r) => r.abort())
+  await ctx.route(/googletagmanager|google-analytics|clarity\.ms|cloud\.umami|\/stats\/|connect\.facebook\.net|facebook\.com\/tr/, (r) => r.abort())
   await ctx.route(/wa\.me|api\.whatsapp\.com/, (r) => { waUrl = r.request().url(); return r.fulfill({ body: 'ok' }) })
+  // sendBeacon pasa por fetch: así /api/meta queda a la vista del route de
+  // abajo y su cuerpo se puede leer (un beacon no siempre lo intercepta).
+  await ctx.addInitScript(() => {
+    navigator.sendBeacon = (url: string | URL, data?: BodyInit | null) => {
+      void fetch(url, { method: 'POST', body: data ?? null, keepalive: true }).catch(() => {})
+      return true
+    }
+  })
+  // Nunca llega al servidor (que la reenviaría a Meta): se guarda y listo.
+  await ctx.route('**/api/meta', (r) => {
+    try { metaEvents.push(JSON.parse(r.request().postData() || 'null')) } catch { metaEvents.push(r.request().postData()) }
+    return r.fulfill({ status: 204, body: '' })
+  })
 
   // Acciones del servidor: nunca pasan.
   await ctx.route('**/*', async (route: Route) => {
@@ -131,6 +152,7 @@ async function installGuard(page: Page): Promise<Guard> {
 
   return {
     orders,
+    metaEvents,
     serverActions: () => actions,
     setServerActionMode: (m) => { actionMode = m },
     failCart: (on) => { cartFails = on },

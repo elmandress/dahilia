@@ -1,16 +1,17 @@
 import { jsonLdScript } from '@/lib/json-ld'
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, unstable_rethrow } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/public'
 import type { Collection, Product, Discount, Color } from '@/lib/types'
-import { getListingPrice, isReadyToShip } from '@/lib/types'
+import { getListingPrice } from '@/lib/types'
 import { botImageUrl } from '@/lib/media'
 import { ProductCard } from '@/components/ProductCard'
 import { TestimonialsStrip } from '@/components/TestimonialsStrip'
 import { ColeccionDescripcion } from '@/components/ColeccionDescripcion'
-import { getTestimonials } from '@/lib/catalog'
+import { getCatalog, getTestimonials } from '@/lib/catalog'
+import { getArticlesForProducts } from '@/content/blog'
 import { Eyebrow, Breadcrumb } from '@/components/ui/Primitives'
 import { dahila } from '@/components/ui/tokens'
 import { SITE_URL } from '@/lib/env'
@@ -39,21 +40,50 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const supabase = await createClient()
-  const { data } = await supabase.from('collections').select('name, description, cover_url').eq('slug', slug).eq('published', true).maybeSingle()
+  // select('*') y no columnas sueltas: trae `unlisted` sin exigir que
+  // drops-2026-07.sql esté corrido (mismo criterio que generateStaticParams).
+  const { data } = await supabase.from('collections').select('*').eq('slug', slug).eq('published', true).maybeSingle()
   if (!data) return { title: 'Colección' }
-  const desc = data.description || `Colección ${data.name}: piezas tejidas a crochet, hechas a mano por Dahila Crochet.`
+  const col = data as Collection
+
+  // SEO-06 (04/11/2026): el title era solo el nombre ("Sunset ‘26 | Dahila
+  // Crochet", 27 caracteres): ni "crochet", ni "tejido", ni qué hay adentro.
+  // La descripción, con datos: cuántas piezas y desde cuánto, del catálogo
+  // cacheado (sin otra consulta). Sin "en stock": una colección de pocas
+  // unidades cambia antes de que Google vuelva a pasar. El texto de Anush
+  // sigue en la página.
+  const title = `${col.name}: colección tejida a mano en Uruguay`
+  let datos = ''
+  try {
+    const piezas = (await getCatalog()).products.filter((p) => p.collection_id === col.id)
+    const precios = piezas
+      .filter((p) => p.status === 'active' && !p.is_custom_only)
+      .map((p) => getListingPrice(p))
+      .filter((n) => n > 0)
+    if (piezas.length > 0 && precios.length > 0) {
+      datos = `${piezas.length} ${piezas.length === 1 ? 'pieza tejida' : 'piezas tejidas'} a mano en Montevideo, desde UYU ${Math.min(...precios).toLocaleString('es-UY')}. Envío a todo Uruguay.`
+    }
+  } catch (e) {
+    unstable_rethrow(e)
+  }
+  const desc = datos || col.description || `Colección ${col.name}: piezas tejidas a crochet, hechas a mano por Dahila Crochet.`
   return {
-    title: data.name,
+    title,
     description: desc,
     alternates: { canonical: `/colecciones/${slug}` },
+    // "Solo con link" (acceso anticipado de la lista VIP): la página abre pero
+    // Google no la indexa hasta que se publique, igual que sus fichas.
+    ...(col.unlisted ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       ...OG_BASE,
-      title: `${data.name}, colección tejida a mano`,
+      title,
       description: desc,
       url: `${SITE_URL}/colecciones/${slug}`,
       // Vía botImageUrl: el original de Supabase pesaba 420 KB (WhatsApp suele
       // dejar la vista previa sin foto) y cada link compartido gastaba egress.
-      ...(data.cover_url ? { images: [{ url: botImageUrl(SITE_URL, data.cover_url, 1200), width: 1200, alt: data.name }] } : {}),
+      // Sin alto: la portada puede tener cualquier proporción y el
+      // optimizador la conserva, así que un alto fijo sería inventado.
+      ...(col.cover_url ? { images: [{ url: botImageUrl(SITE_URL, col.cover_url, 1200), width: 1200, alt: col.name }] } : {}),
     },
   }
 }
@@ -98,42 +128,37 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
     name: collection.name,
     description: collection.description || `Colección ${collection.name}, de Dahila Crochet.`,
     url: `${SITE_URL}/colecciones/${collection.slug}`,
-    // Vía botImageUrl (lib/media.ts) — mismo motivo que el ItemList de abajo:
-    // sin esto, Googlebot bajaba la portada original directo de Supabase
-    // Storage en cada rastreo de la colección.
+    // Vía botImageUrl (lib/media.ts): sin esto, Googlebot bajaba la portada
+    // original directo de Supabase Storage en cada rastreo de la colección.
     ...(collection.cover_url ? { image: botImageUrl(SITE_URL, collection.cover_url) } : {}),
+    // Las migas que ya se ven arriba de la página (SEO-06, 04/11/2026), como
+    // en las categorías de la tienda.
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: SITE_URL },
+        { '@type': 'ListItem', position: 2, name: 'Colecciones', item: `${SITE_URL}/colecciones` },
+        { '@type': 'ListItem', position: 3, name: collection.name, item: `${SITE_URL}/colecciones/${collection.slug}` },
+      ],
+    },
+    // Solo la lista de fichas, sin Product ni Offer (SEO-10): Google
+    // recomienda marcar el producto en su ficha y no en las páginas que
+    // listan productos. Era otra fuente de precios que tenía que coincidir.
     mainEntity: products.length > 0 ? {
       '@type': 'ItemList',
       numberOfItems: products.length,
-      itemListElement: products.map((p, i) => {
-        // Mismo precio y disponibilidad que la ficha y la tarjeta (auditoría
-        // 12/09/2026): precio "desde" y "en stock" solo si está ya tejida.
-        const price = getListingPrice(p, discounts)
-        const img = (p.media ?? [])[0]?.url ?? ''
-        return {
-          '@type': 'ListItem',
-          position: i + 1,
-          item: {
-            '@type': 'Product',
-            name: p.name,
-            url: `${SITE_URL}/tienda/${p.slug}`,
-            // Vía botImageUrl: esta ItemList tenía la URL cruda de Supabase
-            // Storage — misma canilla de egress que en /tienda y
-            // /tienda/[categoría] (ver comentarios ahí).
-            ...(img ? { image: botImageUrl(SITE_URL, img) } : {}),
-            offers: {
-              '@type': 'Offer',
-              priceCurrency: 'UYU',
-              price: price,
-              availability: p.status !== 'active'
-                ? 'https://schema.org/OutOfStock'
-                : isReadyToShip(p) ? 'https://schema.org/InStock' : 'https://schema.org/BackOrder',
-            },
-          },
-        }
-      }),
+      itemListElement: products.map((p, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        url: `${SITE_URL}/tienda/${p.slug}`,
+        name: p.name,
+      })),
     } : undefined,
   }
+
+  // Las notas que recomiendan prendas de esta colección (SEO-06): ellas
+  // enlazaban acá, pero la colección no enlazaba a ninguna.
+  const notas = getArticlesForProducts(products.map((p) => p.slug), 3)
 
   return (
     <>
@@ -215,6 +240,30 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
             <ProductCard key={p.id} product={p} discounts={discounts} />
           ))}
         </div>
+      )}
+
+      {/* Cómo usarlas: las notas del blog de estas mismas prendas, debajo de
+          la grilla (SEO-06). Mismo formato que "Antes de elegir" en las
+          categorías de la tienda. */}
+      {notas.length > 0 && (
+        <section aria-labelledby="coleccion-notas" style={{ marginTop: 56 }}>
+          <h2 id="coleccion-notas" style={{
+            fontFamily: dahila.fontDisplay, fontWeight: 300, fontSize: 24,
+            color: dahila.ink900, margin: '0 0 16px',
+          }}>Cómo usarlas</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 16 }}>
+            {notas.map((n) => (
+              <Link key={n.slug} href={`/blog/${n.slug}`} style={{
+                display: 'flex', flexDirection: 'column', gap: 6, textDecoration: 'none',
+                padding: '16px 18px', borderRadius: 12, border: `1px solid ${dahila.border}`, background: '#fff',
+              }}>
+                <span style={{ fontFamily: dahila.fontSans, fontSize: 15, fontWeight: 500, color: dahila.ink900, lineHeight: 1.35 }}>{n.title}</span>
+                <span style={{ fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 300, color: dahila.ink700, lineHeight: 1.55 }}>{n.excerpt}</span>
+                <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.wine600, marginTop: 'auto', paddingTop: 4 }}>Leer la nota →</span>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
     </div>
     {/* Reseñas reales debajo de las prendas: antes, después de la grilla

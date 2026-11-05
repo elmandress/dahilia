@@ -2,9 +2,36 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { track } from '@/lib/analytics'
+import { track, gaCommerce } from '@/lib/analytics'
 import { waLink } from '@/lib/whatsapp'
+import { isUnicoLabel } from '@/lib/types'
 import { dahila } from './ui/tokens'
+
+/**
+ * La prenda de la ficha abierta, para el Contact de Meta y GA4 (TRK-04,
+ * 04/11/2026): antes la consulta desde la burbuja llegaba sin saber de qué
+ * prenda era. Sale de los data-* de .producto-detail (ProductDetailsClient)
+ * y del talle elegido. Sin talle elegido, una prenda con talles va como
+ * grupo, igual que su vista.
+ */
+function consultaDeFicha(size: string | undefined) {
+  const ficha = document.querySelector<HTMLElement>('.producto-detail')
+  const slug = ficha?.dataset.slug
+  if (!ficha || !slug) return undefined
+  const precio = Number(ficha.dataset.precio)
+  const talle = size && !isUnicoLabel(size) ? size : undefined
+  return {
+    params: {
+      ...gaCommerce([{
+        item_id: slug,
+        item_name: ficha.dataset.nombre ?? slug,
+        price: Number.isFinite(precio) ? precio : 0,
+        ...(talle ? { item_variant: talle } : {}),
+      }]),
+      meta_group: ficha.dataset.variantes === 'si' && !talle,
+    },
+  }
+}
 
 /**
  * Floating WhatsApp button — visible on all public pages except /admin and /carrito.
@@ -88,16 +115,16 @@ export function WhatsAppFloat({ enabled, waUrl }: { enabled: boolean; waUrl: str
         // Anush no tiene que preguntarlo. Se arma al tocar, antes de que el
         // navegador siga el link.
         const product = document.querySelector('.producto-detail h1')?.textContent?.trim()
+        // Solo el grupo de talles: el corazón de favoritos también usa
+        // aria-pressed. Ninguno marcado = nadie eligió talle, y no se manda.
+        const sizes = document.querySelector('.pdp-sizes')
+        const size = sizes?.querySelector('button[aria-pressed="true"]')?.textContent?.trim()
         if (product) {
-          // Solo el grupo de talles: el corazón de favoritos también usa
-          // aria-pressed. Ninguno marcado = nadie eligió talle, y no se manda.
-          const sizes = document.querySelector('.pdp-sizes')
-          const size = sizes?.querySelector('button[aria-pressed="true"]')?.textContent?.trim()
           const rotulo = sizes?.getAttribute('data-rotulo') || 'talle'
           const text = `Hola! Estoy mirando ${product}${size ? ` (${rotulo} ${size})` : ''} en la web: ${window.location.origin}${window.location.pathname}\nTengo una consulta 🧶`
           e.currentTarget.href = waLink(waUrl, text) ?? href
         }
-        track('whatsapp_click', { source: product ? 'float_ficha' : 'float' })
+        track('whatsapp_click', { source: product ? 'float_ficha' : 'float' }, product ? consultaDeFicha(size) : undefined)
       }}
       style={{
         position: 'fixed',

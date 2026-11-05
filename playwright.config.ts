@@ -12,6 +12,22 @@ try { process.loadEnvFile('.env.local') } catch { /* sin .env.local: las pruebas
 
 const PORT = Number(process.env.E2E_PORT ?? 3100)
 
+// La suite corre contra el build local (TRK-06, 04/11/2026). Contra dahila.uy
+// el píxel de Meta y el de GA4 están prendidos: una corrida mandaría vistas y
+// carritos de prueba al dataset que optimiza los anuncios, además de bajar
+// fotos de Supabase. Para apuntarla a otro host hay que pedirlo a propósito.
+if (process.env.E2E_BASE_URL && process.env.E2E_ALLOW_PROD !== '1') {
+  let host = ''
+  try { host = new URL(process.env.E2E_BASE_URL).hostname } catch { /* se informa abajo */ }
+  if (host !== 'localhost' && host !== '127.0.0.1') {
+    throw new Error(
+      `E2E_BASE_URL=${process.env.E2E_BASE_URL}: la suite no corre contra producción ni contra otro host que no sea ` +
+      'localhost o 127.0.0.1 (mandaría eventos de prueba a Meta y GA4 y bajaría fotos de Supabase). ' +
+      'Corré `npm run build` y apuntala a http://localhost:3100. Si de verdad hace falta, E2E_ALLOW_PROD=1.',
+    )
+  }
+}
+
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 60_000,

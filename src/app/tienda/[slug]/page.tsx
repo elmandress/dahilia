@@ -4,11 +4,12 @@ import { notFound, permanentRedirect, unstable_rethrow } from 'next/navigation'
 import type { Metadata } from 'next'
 import { dropVisibility, type Product, type Category, type Discount } from '@/lib/types'
 import {
-  getPrimaryPhoto, getFinalPrice, resolveDiscountPercent, getListingPrice, isReadyToShip,
-  hasPriceRange as productHasPriceRange, sortSizes,
+  getPrimaryPhoto, getFinalPrice, getEffectivePrice, resolveDiscountPercent, getListingPrice, getListingSize, isReadyToShip,
+  hasPriceRange as productHasPriceRange, sortSizes, isUnicoLabel, variantLabel,
 } from '@/lib/types'
 import { getCatalog, getProductBySlug, getSnapshotData, getTestimonials } from '@/lib/catalog'
-import { localTermFor } from '@/lib/vocabulario'
+import { promesaFicha } from '@/lib/seo-copy'
+import { tieneVariantes, variantUrl } from '@/lib/catalog-ids'
 import { ProductDetailsClient } from './ProductDetailsClient'
 import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
 import { MaintenanceScreen } from '@/components/MaintenanceScreen'
@@ -227,13 +228,16 @@ export async function generateMetadata({
   // oración, no a los 87 caracteres. En el celular (86% de las impresiones)
   // Google muestra ~120 caracteres: antes se leía "en el pelo, al cuello o…" y
   // el precio y el envío quedaban fuera (bandana: 254 impresiones, 0 clics).
-  // "En tu talle" solo si la prenda tiene talles: una bandana no los tiene.
+  // 04/11/2026 (SEO-03): title y línea de valor salen de promesaFicha. Una
+  // pieza en stock ya no promete "a tu medida" ni "en tus colores", y una de
+  // talle único no promete "en tu talle"; "En stock" va solo acá en la
+  // descripción, que se renueva con el ISR.
   const finalPrice = getListingPrice(product)
   const priceBit = finalPrice > 0
     ? `${productHasPriceRange(product) ? 'Desde ' : ''}UYU ${finalPrice.toLocaleString('es-UY')}. `
     : ''
-  const hasSizes = (product.sizes?.length ?? 0) > 0
-  const valueLine = `Tejido a mano en Montevideo, ${hasSizes ? 'en tu talle y ' : ''}en tus colores. Envío a todo Uruguay.`
+  const promesa = promesaFicha(product)
+  const valueLine = promesa.linea
   const ownDesc = (product.description ?? '').replace(/\s+/g, ' ').trim()
   const firstSentence = ownDesc.split(/(?<=[.!?])\s/)[0] ?? ''
   const ownDescCut = firstSentence.length <= 115
@@ -245,8 +249,8 @@ export async function generateMetadata({
 
   // "Spring cardigan — saco tejido a mano, a tu medida": la palabra con la
   // que se busca en Uruguay, solo si el nombre no la trae (lib/vocabulario.ts).
-  const local = localTermFor(product)
-  const pageTitle = `${product.name} — ${local ? `${local} ` : ''}tejido a mano, a tu medida`
+  // En stock o sin talles reales: "— tejido a mano en Uruguay".
+  const pageTitle = `${product.name} — ${promesa.titulo}`
 
   return {
     title: pageTitle,
@@ -306,45 +310,20 @@ async function CategoryPage({ slug, category }: { slug: string; category: Catego
         { '@type': 'ListItem', position: 3, name: category.name, item: `${SITE_URL}/tienda/${slug}` },
       ],
     },
+    // Solo la lista de fichas, sin Product ni Offer (SEO-10, 04/11/2026). La
+    // guía de fichas de comerciante de Google recomienda marcar el producto en
+    // su ficha y no en las páginas que listan productos: acá eran 15 Product
+    // con precio en /tienda/tops, duplicados de las fichas y otra fuente de
+    // precios que también tenía que coincidir. De paso, son hasta 24 fotos
+    // menos que Googlebot pide por /_next/image en cada rastreo.
     mainEntity: {
       '@type': 'ItemList',
-      itemListElement: categoryProducts.slice(0, 24).map((p, i) => {
-        const photo = getPrimaryPhoto(p)
-        return {
-          '@type': 'ListItem',
-          position: i + 1,
-          item: {
-            '@type': 'Product',
-            name: p.name,
-            url: `${SITE_URL}/tienda/${p.slug}`,
-            // Vía botImageUrl (ver comentario junto a schemaImages más abajo,
-            // y lib/media.ts): esta ItemList de la vista por categoría estaba
-            // con la URL cruda de Supabase Storage — Googlebot la recorre en
-            // cada rastreo de /tienda/[categoría], hasta 24 fotos originales
-            // por categoría, directo del storage. Era una canilla de egress
-            // que el fix de julio no había tapado acá.
-            image: botImageUrl(SITE_URL, photo),
-            offers: {
-              '@type': 'Offer',
-              price: getListingPrice(p, discounts).toFixed(2),
-              priceCurrency: 'UYU',
-              // Mismo criterio que la ficha del producto (ver productJsonLd):
-              // solo InStock si sale ya; lo que se teje a pedido es BackOrder.
-              // Si los dos lugares se contradicen, Merchant Center lo marca.
-              // "Sale ya" = isReadyToShip (mínimo en 0), el mismo criterio que
-              // el filtro "En stock" y el mega-menú: antes el JSON-LD exigía
-              // además máximo en 0, y las 2 piezas en stock salían BackOrder
-              // acá mientras la tienda las ofrecía "sin espera" (12/09/2026).
-              availability:
-                p.status !== 'active'
-                  ? 'https://schema.org/OutOfStock'
-                  : isReadyToShip(p)
-                    ? 'https://schema.org/InStock'
-                    : 'https://schema.org/BackOrder',
-            },
-          },
-        }
-      }),
+      itemListElement: categoryProducts.slice(0, 24).map((p, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        url: `${SITE_URL}/tienda/${p.slug}`,
+        name: p.name,
+      })),
     },
   }
 
@@ -400,9 +379,9 @@ async function ProductPage({ slug }: { slug: string }) {
   const isSnapshot = source === 'snapshot' || catalog.source === 'snapshot'
   const discounts: Discount[] = catalog.discounts
   const settings: Record<string, string> = catalog.settings
-  const relatedAll: Product[] = catalog.products
-    .filter((p) => p.status === 'active' && p.id !== product.id)
-    .slice(0, 24)
+  // Las activas y públicas (el catálogo ya deja afuera los drops sin lanzar y
+  // los "Solo con link"), menos esta.
+  const relatedAll: Product[] = catalog.products.filter((p) => p.status === 'active' && p.id !== product.id)
 
   const getSetting = (k: string): string | undefined => settings[k]
   const sizeGuideNote = getSetting('size_guide_note')
@@ -430,30 +409,55 @@ async function ProductPage({ slug }: { slug: string }) {
   // "Completá el look": otro top al lado de un top compite por la misma venta;
   // un bolso o un accesorio al lado de un top la agranda. Por eso la fila mezcla
   // 2 piezas que COMPLEMENTAN (otra categoría, priorizando los pares que se usan
-  // juntos y la misma colección) + 2 similares para quien busca alternativas.
+  // juntos) + 2 similares para quien busca alternativas.
+  //
+  // 04/11/2026 (SEO-04 y SEO-05): la selección ya no depende del orden de la
+  // tienda. Antes salía de los primeros 24 de sort_order: reordenar la tienda
+  // cambiaba los enlaces de casi todas las fichas sin que su lastmod lo
+  // dijera, todas mostraban las mismas 4 piezas y 24 de 41 fichas no recibían
+  // ni un enlace desde otra. Ahora cada lista va por slug y arranca justo
+  // después de esta ficha: depende solo del catálogo (estable entre
+  // regeneraciones del ISR) y cada prenda es "la siguiente" de otra de su
+  // categoría, así que toda ficha recibe al menos un enlace.
+  const porSlug = (a: Product, b: Product) => (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0)
+  const desdeEsta = (lista: Product[]) => {
+    const orden = [...lista].sort(porSlug)
+    const k = orden.findIndex((p) => p.slug > product.slug)
+    return k <= 0 ? orden : [...orden.slice(k), ...orden.slice(0, k)]
+  }
   const prefs = COMPLEMENT_PREFS[product.category?.slug ?? ''] ?? []
   const prefRank = (p: Product) => {
     const i = prefs.indexOf(p.category?.slug ?? '')
     return i === -1 ? prefs.length : i
   }
-  const complements = relatedAll
-    .filter((p) => p.category_id && p.category_id !== product.category_id)
-    .sort(
-      (a, b) =>
-        Number(!!b.collection_id && b.collection_id === product.collection_id) -
-          Number(!!a.collection_id && a.collection_id === product.collection_id) ||
-        prefRank(a) - prefRank(b)
-    )
-  const similar = relatedAll.filter((p) => p.category_id && p.category_id === product.category_id)
-  // La tira del bloque de compra se lleva los 2 mejores complementos; el grid
-  // de abajo arma sus 4 con similares + los complementos que siguen, sin
-  // repetir lo que la tira ya mostró.
-  const lookComplements = complements.slice(0, 2)
-  const related = [...similar.slice(0, 2), ...complements.slice(2, 4)]
-  for (const p of relatedAll) {
+  // Otra categoría (o sin categoría, como la Box de regalo): por preferencia y,
+  // dentro de cada una, en el orden de arriba (el sort es estable).
+  const complements = desdeEsta(relatedAll.filter((p) => p.category_id !== product.category_id))
+    .sort((a, b) => prefRank(a) - prefRank(b))
+  const similar = desdeEsta(relatedAll.filter((p) => p.category_id && p.category_id === product.category_id))
+  // Un lugar fijo para el drop: si esta prenda es de una colección, la tira
+  // arranca con una pieza en stock de la misma colección y de otra categoría,
+  // que son las que se venden ya. Si no hay, el mejor complemento.
+  const delDrop = product.collection_id
+    ? complements.find((p) => p.collection_id === product.collection_id && isReadyToShip(p))
+    : undefined
+  const lookComplements = [...(delDrop ? [delDrop] : []), ...complements.filter((p) => p !== delDrop)].slice(0, 2)
+  // El grid de abajo arma sus 4 con 2 similares + los complementos que
+  // siguen, sin repetir lo que la tira ya mostró.
+  const related = [...similar.slice(0, 2), ...complements.filter((p) => !lookComplements.includes(p)).slice(0, 2)]
+  const yaVista = (p: Product) => related.includes(p) || lookComplements.includes(p)
+  const enRonda = desdeEsta(relatedAll)
+  for (const p of enRonda) {
     if (related.length >= 4) break
-    if (!related.some((r) => r.id === p.id) && !lookComplements.some((c) => c.id === p.id)) related.push(p)
+    if (!yaVista(p)) related.push(p)
   }
+  // Una prenda sola en su categoría (hoy, la Box de regalo, que no tiene) no
+  // es "la siguiente similar" de nadie: la ficha anterior por slug le deja el
+  // último lugar del grid.
+  const siguiente = enRonda[0]
+  const solaEnSuCategoria = (p: Product) =>
+    !p.category_id || !relatedAll.some((q) => q.id !== p.id && q.category_id === p.category_id)
+  if (siguiente && solaEnSuCategoria(siguiente) && !yaVista(siguiente)) related[Math.min(related.length, 3)] = siguiente
 
   // Prueba social en la ficha (19/09/2026): quien llega desde un link de
   // Instagram entra directo acá y nunca ve los testimonios de la home. Va uno
@@ -471,22 +475,29 @@ async function ProductPage({ slug }: { slug: string }) {
     .filter((m) => m.type === 'image')
     .map((m) => botImageUrl(SITE_URL, m.url))
   const schemaImages = galleryImages.length > 0 ? galleryImages : [botImageUrl(SITE_URL, photo)]
-  const finalPrice = getFinalPrice(product, undefined, discounts)
 
-  // Rango real de precios cuando la pieza cuesta distinto según el talle (8 de
-  // 34 productos hoy). Google exige que el precio del schema coincida con el
-  // que ve la clienta en la página; publicar un solo `price` cuando al elegir
-  // un talle aparece otro es la clase de discrepancia que deja el producto
-  // fuera de las fichas gratuitas. Con varios precios se usa AggregateOffer
-  // (low/high), que es lo que schema.org define para exactamente este caso.
-  const sizePrices = (product.sizes ?? [])
-    .filter((s) => s.available !== false)
-    .map((s) => getFinalPrice(product, s.size, discounts))
-    .filter((n) => n > 0)
-  const allPrices = sizePrices.length > 0 ? sizePrices : (finalPrice > 0 ? [finalPrice] : [])
-  const lowPrice = allPrices.length > 0 ? Math.min(...allPrices) : finalPrice
-  const highPrice = allPrices.length > 0 ? Math.max(...allPrices) : finalPrice
-  const hasPriceRange = lowPrice !== highPrice
+  // Precio de una oferta: el final, y con descuento también el de lista como
+  // StrikethroughPrice (SEO-09, 04/11/2026). Es lo que pide la guía de fichas
+  // de comerciante para mostrar el tachado: el de lista con ese priceType y el
+  // activo sin priceType. Antes la ficha decía solo el final mientras el feed
+  // mandaba los dos, y Google solo muestra el tachado si la página lo sostiene.
+  const precioOferta = (talle: string | undefined) => {
+    const final = getFinalPrice(product, talle, discounts)
+    const lista = getEffectivePrice(product, talle)
+    return {
+      price: final.toFixed(2),
+      ...(final < lista
+        ? {
+            priceSpecification: {
+              '@type': 'UnitPriceSpecification',
+              priceType: 'https://schema.org/StrikethroughPrice',
+              price: lista.toFixed(2),
+              priceCurrency: 'UYU',
+            },
+          }
+        : {}),
+    }
+  }
 
   // Price validity one year out — keeps Google Merchant / rich-results parsing
   // happy without asserting a promo end date the owner didn't set. This is a
@@ -561,38 +572,52 @@ async function ProductPage({ slug }: { slug: string }) {
     ...(product.material ? { material: product.material } : {}),
   }
 
-  // Precio distinto según el talle → ProductGroup, un Product por talle
-  // (17/09/2026). Antes era un AggregateOffer (low/high): los fragmentos de
-  // producto lo aceptan, pero las fichas de comerciantes NO ("merchant listings
-  // require an Offer", documentación de Google). Spring, Amour y Granny's, las
-  // fichas más vistas, quedaban afuera de la caja con precio y disponibilidad
-  // (confirmado con la inspección de URLs de Search Console el 17/09).
+  // Prenda con talles → ProductGroup, un Product por talle (17/09/2026). Antes
+  // era un AggregateOffer (low/high): los fragmentos de producto lo aceptan,
+  // pero las fichas de comerciantes NO ("merchant listings require an Offer",
+  // documentación de Google). Spring, Amour y Granny's, las fichas más vistas,
+  // quedaban afuera de la caja con precio y disponibilidad (confirmado con la
+  // inspección de URLs de Search Console el 17/09).
   // Para sitios de una sola página, Google pide que cada variante se pueda
   // abrir ya elegida desde su propia URL: eso es el ?talle= que lee
-  // lib/product-selection.ts. La canónica sigue siendo la ficha sin talle.
+  // lib/product-selection.ts, el mismo link que manda el feed para esa
+  // variante (variantUrl). La canónica sigue siendo la ficha sin talle.
+  // 04/11/2026 (TRK-01, SEO-08): grupo siempre que la prenda tenga talles
+  // (tieneVariantes, la misma regla que el item_group_id del feed), no solo
+  // cuando el precio cambia: así cada talle publica su disponibilidad. Las
+  // Pulseras Terra varían por modelo (Lisas, Con lurex, Con caracolas), no
+  // por talle: van con pattern.
+  const porModelo = variantLabel(product.sizes) === 'Modelo'
   const variantes = sortSizes(product.sizes ?? [])
+    .filter((s) => !isUnicoLabel(s.size))
     .map((s) => ({ size: s.size, available: s.available !== false, price: getFinalPrice(product, s.size, discounts) }))
     .filter((v) => v.price > 0)
+  // Sin variantes: el precio del talle disponible más barato (el de la
+  // tarjeta) o, si no queda ninguno, el de su fila; y agotada si tiene filas y
+  // ninguna está disponible (antes salía InStock o BackOrder).
+  const filas = sortSizes(product.sizes ?? [])
+  const talleSuelto = getListingSize(product) ?? filas[0]?.size
+  const sueltoAgotado = filas.length > 0 && filas.every((s) => s.available === false)
 
-  const productJsonLd = hasPriceRange && variantes.length > 1
+  const productJsonLd = tieneVariantes(product) && variantes.length > 0
     ? {
         '@context': 'https://schema.org',
         '@type': 'ProductGroup',
         ...productCommon,
         url: productUrl,
         productGroupID: product.id,
-        variesBy: ['https://schema.org/size'],
+        variesBy: [porModelo ? 'https://schema.org/pattern' : 'https://schema.org/size'],
         hasVariant: variantes.map((v) => ({
           '@type': 'Product',
-          name: `${product.name}, talle ${v.size}`,
+          name: porModelo ? `${product.name}, ${v.size}` : `${product.name}, talle ${v.size}`,
           sku: `${product.id}-${v.size}`,
           image: schemaImages[0],
-          size: v.size,
+          ...(porModelo ? { pattern: v.size } : { size: v.size }),
           brand,
           offers: {
             '@type': 'Offer',
-            url: `${productUrl}?talle=${encodeURIComponent(v.size)}`,
-            price: v.price.toFixed(2),
+            url: variantUrl(SITE_URL, product.slug, v.size),
+            ...precioOferta(v.size),
             availability: availabilityFor(v.available),
             ...offerCommon,
           },
@@ -612,10 +637,10 @@ async function ProductPage({ slug }: { slug: string }) {
         offers: {
           '@type': 'Offer',
           url: productUrl,
-          // lowPrice (no el base): con un solo talle disponible, el precio real
-          // es el de ese talle.
-          price: lowPrice.toFixed(2),
-          availability: availabilityFor(),
+          // El precio de su fila (no el base): el Sweater net tiene su precio
+          // en la fila "Único". Es el mismo que publica el feed.
+          ...precioOferta(talleSuelto),
+          availability: availabilityFor(!sueltoAgotado),
           ...offerCommon,
         },
       }

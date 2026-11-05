@@ -21,6 +21,8 @@ import {
   getListingSize, hasPriceRange,
 } from '@/lib/types'
 import { useSizeSelection, getRestockWhatsAppUrl } from '@/lib/product-selection'
+import { tieneVariantes } from '@/lib/catalog-ids'
+import { promesaFicha } from '@/lib/seo-copy'
 import { waLink, WHATSAPP_DEFAULT } from '@/lib/whatsapp'
 import { PriceBlock } from '@/components/ui/PriceBlock'
 import { dahila, Button, Eyebrow, Icon, Breadcrumb } from '@/components/ui/Primitives'
@@ -140,14 +142,22 @@ export function ProductDetailsClient({
   const [avisoTalle, setAvisoTalle] = useState(false)
   const sizesRef = useRef<HTMLDivElement>(null)
 
+  // ¿Va como grupo de variantes en el feed? (lib/catalog-ids.ts). Decide si
+  // Meta recibe la prenda como product_group (el item_group_id del feed) o
+  // como product (TRK-01).
+  const variantes = tieneVariantes(product)
+
   useEffect(() => {
     // GA4: view_item con precio y producto (informes de e-commerce).
     track('product_view', { product: product.slug }, {
       name: 'view_item',
-      params: gaCommerce([{
-        item_id: product.slug, item_name: product.name, price: getListingPrice(product),
-        item_category: product.category?.slug,
-      }]),
+      params: {
+        ...gaCommerce([{
+          item_id: product.slug, item_name: product.name, price: getListingPrice(product),
+          item_category: product.category?.slug,
+        }]),
+        meta_group: tieneVariantes(product),
+      },
     })
   }, [product])
 
@@ -212,6 +222,21 @@ export function ProductDetailsClient({
   // Con el precio adentro: durante una caída el panel tampoco anda, así que el
   // chat tiene que bastarse solo.
   const textoPedido = () => `Hola! Quiero pedir ${product.name}${conTalle}, ${precioDesde ? 'desde ' : ''}${formatPrice(finalPrice)}: ${window.location.origin}/tienda/${product.slug}`
+  // Lo que reciben GA4 y Meta de una consulta por WhatsApp desde la ficha
+  // (TRK-04, 04/11/2026): la prenda, el precio que se ve y el talle si
+  // alguien lo eligió. Antes el Contact llegaba vacío. Sin talle elegido, una
+  // prenda con talles va como grupo, igual que su vista.
+  const talleConsulta = elegido && !talleUnico ? elegido : undefined
+  const gaConsulta = () => ({
+    params: {
+      ...gaCommerce([{
+        item_id: product.slug, item_name: product.name, price: finalPrice,
+        ...(talleConsulta ? { item_variant: talleConsulta } : {}),
+        item_category: product.category?.slug,
+      }]),
+      meta_group: variantes && !talleConsulta,
+    },
+  })
 
   const handleAdd = async (source: AddSource) => {
     if (!sizeAvailable || addingRef.current) return
@@ -284,10 +309,19 @@ export function ProductDetailsClient({
           <ProductGallery images={galleryImages} productName={product.name} slug={product.slug} />
         </div>
 
-        {/* Detail */}
-        <div className="producto-detail" style={{
-          position: 'sticky', top: 90, display: 'flex', flexDirection: 'column', gap: 20,
-        }}>
+        {/* Detail. Los data-* son para la burbuja de WhatsApp (WhatsAppFloat):
+            con ellos su Contact dice qué prenda, a qué precio y si va como
+            grupo (TRK-04). */}
+        <div
+          className="producto-detail"
+          data-slug={product.slug}
+          data-nombre={product.name}
+          data-precio={finalPrice}
+          data-variantes={variantes ? 'si' : 'no'}
+          style={{
+            position: 'sticky', top: 90, display: 'flex', flexDirection: 'column', gap: 20,
+          }}
+        >
           <div>
             {/* Un dato útil arriba del nombre (VIS-17): antes decía "Hecho a
                 mano" en todas las prendas. */}
@@ -510,7 +544,7 @@ export function ProductDetailsClient({
                 rel="noopener noreferrer"
                 onClick={(e) => {
                   e.currentTarget.href = waConTexto(textoPedido())
-                  track('whatsapp_click', { source: 'pdp_solo_consulta', product: product.slug })
+                  track('whatsapp_click', { source: 'pdp_solo_consulta', product: product.slug }, gaConsulta())
                 }}
                 style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
@@ -635,7 +669,7 @@ export function ProductDetailsClient({
               rel="noopener noreferrer"
               onClick={(e) => {
                 e.currentTarget.href = waConTexto(textoConsulta())
-                track('whatsapp_click', { source: 'pdp_pregunta', product: product.slug })
+                track('whatsapp_click', { source: 'pdp_pregunta', product: product.slug }, gaConsulta())
               }}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 7, alignSelf: 'flex-start',
@@ -800,11 +834,17 @@ export function ProductDetailsClient({
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-            <FavoriteButton productId={product.id} variant="inline" />
+            <FavoriteButton
+              productId={product.id}
+              variant="inline"
+              product={{ slug: product.slug, name: product.name, price: getListingPrice(product, discounts), category: product.category?.slug, variantes }}
+            />
             <ShareButton title={`${product.name} — Dahila Crochet`} text={`Mirá esta prenda de Dahila: ${product.name}`} itemId={product.slug} />
+            {/* La misma promesa que el title de la ficha (SEO-03): "a tu
+                medida" iba en todas, también en las piezas ya tejidas. */}
             <PinterestButton
               imageUrl={getPrimaryPhoto(product)}
-              description={`${product.name} — tejido a mano, a tu medida | Dahila Crochet`}
+              description={`${product.name} — ${promesaFicha(product).titulo} | Dahila Crochet`}
             />
           </div>
 
@@ -920,7 +960,7 @@ export function ProductDetailsClient({
               rel="noopener noreferrer"
               onClick={(e) => {
                 e.currentTarget.href = waConTexto(textoPedido())
-                track('whatsapp_click', { source: 'pdp_barra_solo_consulta', product: product.slug })
+                track('whatsapp_click', { source: 'pdp_barra_solo_consulta', product: product.slug }, gaConsulta())
               }}
               style={{
                 flex: 1,
@@ -946,7 +986,7 @@ export function ProductDetailsClient({
                 aria-label="Preguntar por WhatsApp"
                 onClick={(e) => {
                   e.currentTarget.href = waConTexto(textoConsulta())
-                  track('whatsapp_click', { source: 'pdp_barra', product: product.slug })
+                  track('whatsapp_click', { source: 'pdp_barra', product: product.slug }, gaConsulta())
                 }}
                 style={{
                   flex: '0 0 auto', width: 44, height: 44, boxSizing: 'border-box',

@@ -1,9 +1,31 @@
 import { createClient } from '@/lib/supabase/public'
 import { getSnapshotData } from '@/lib/catalog'
 import { SITE_URL } from '@/lib/env'
-import { formatPrice, getFinalPrice } from '@/lib/types'
+import { formatListingPrice, isReadyToShip } from '@/lib/types'
 import { getAllArticles } from '@/content/blog'
 import { dropVisibility, type Product, type Discount } from '@/lib/types'
+
+/** Una línea del catálogo: nombre, link, precio y descripción. El precio es
+ *  el de la tarjeta de la tienda, con "desde" si cambia según el talle
+ *  (SEO-07, 04/11/2026): antes era el precio base, que en 4 prendas no es el
+ *  de ningún talle (Pulseras Terra decía 300 y la tienda "desde 280"). */
+function productLine(p: Product, discounts: Discount[]): string {
+  const desc = p.description ? ` — ${p.description.replace(/\s+/g, ' ').trim()}` : ''
+  return `- [${p.name}](${SITE_URL}/tienda/${p.slug}): ${formatListingPrice(p, discounts)}${desc}`
+}
+
+/** El plazo de las piezas a pedido, sacado del catálogo: antes decía "2–6
+ *  semanas" fijo y la ficha más lenta tarda 3. Sin piezas a pedido, nada. */
+function plazoLine(products: Product[]): string {
+  const aPedido = products.filter((p) => !isReadyToShip(p))
+  const minimos = aPedido.map((p) => Math.min(p.lead_time_weeks_min, p.lead_time_weeks_max)).filter((n) => n > 0)
+  const maximos = aPedido.map((p) => Math.max(p.lead_time_weeks_min, p.lead_time_weeks_max)).filter((n) => n > 0)
+  if (maximos.length === 0) return ''
+  const lo = minimos.length > 0 ? Math.min(...minimos) : Math.min(...maximos)
+  const hi = Math.max(...maximos)
+  // La ficha manda: con lista de espera, dice esa fecha en vez del plazo.
+  return `\n- Las piezas a pedido se tejen en ${lo === hi ? `${hi}` : `${lo} a ${hi}`} semanas según el modelo (cada ficha dice el plazo del momento).`
+}
 
 export const revalidate = 3600
 
@@ -14,6 +36,7 @@ export const revalidate = 3600
 // what LLMs extract well for AEO/GEO citation.
 export async function GET() {
   let productLines = ''
+  let plazo = ''
   let faqBlock = ''
 
   // Las notas viven en el repo, no en la base: se listan siempre, incluso si
@@ -27,7 +50,9 @@ export async function GET() {
     const [{ data: prods }, { data: disc }, { data: settingRows }] = await Promise.all([
       supabase
         .from('products')
-        .select('slug, name, description, base_price_uyu, discount_active, discount_percent, collection_id, collection:collections(*), sizes:product_sizes(price_uyu)')
+        // Talles con su disponibilidad (el precio "desde"), plazos, categoría
+        // (los descuentos por categoría) y si se hace solo a pedido.
+        .select('slug, name, description, status, base_price_uyu, discount_active, discount_percent, is_custom_only, lead_time_weeks_min, lead_time_weeks_max, category_id, collection_id, collection:collections(*), sizes:product_sizes(size, price_uyu, available, sort_order)')
         .eq('status', 'active')
         .order('sort_order', { ascending: true }),
       supabase.from('discounts').select('*').eq('active', true),
@@ -42,14 +67,9 @@ export async function GET() {
     ])
 
     const discounts = (disc ?? []) as Discount[]
-    productLines = ((prods ?? []) as unknown as Product[])
-      .filter((p) => dropVisibility(p) === 'public')
-      .map((p) => {
-        const price = formatPrice(getFinalPrice(p, undefined, discounts))
-        const desc = p.description ? ` — ${p.description.replace(/\s+/g, ' ').trim()}` : ''
-        return `- [${p.name}](${SITE_URL}/tienda/${p.slug}): ${price}${desc}`
-      })
-      .join('\n')
+    const publicos = ((prods ?? []) as unknown as Product[]).filter((p) => dropVisibility(p) === 'public')
+    productLines = publicos.map((p) => productLine(p, discounts)).join('\n')
+    plazo = plazoLine(publicos)
 
     const settings = (settingRows ?? []).reduce<Record<string, string>>(
       (acc, r) => ({ ...acc, [r.key as string]: String(r.value ?? '') }),
@@ -69,14 +89,9 @@ export async function GET() {
     // sitio (auditoría 03/09/2026).
     console.error('llms.txt fetch failed, usando snapshot', e)
     const snap = getSnapshotData()
-    productLines = snap.products
-      .filter((p) => p.status === 'active')
-      .map((p) => {
-        const price = formatPrice(getFinalPrice(p, undefined, snap.discounts))
-        const desc = p.description ? ` — ${p.description.replace(/\s+/g, ' ').trim()}` : ''
-        return `- [${p.name}](${SITE_URL}/tienda/${p.slug}): ${price}${desc}`
-      })
-      .join('\n')
+    const activos = snap.products.filter((p) => p.status === 'active')
+    productLines = activos.map((p) => productLine(p, snap.discounts)).join('\n')
+    plazo = plazoLine(activos)
     const faqs = [1, 2, 3, 4, 5]
       .map((n) => ({ q: snap.settings[`faq_${n}_q`], a: snap.settings[`faq_${n}_a`] }))
       .filter((f) => f.q?.trim() && f.a?.trim())
@@ -87,14 +102,13 @@ export async function GET() {
 
   const body = `# Dahila Crochet
 
-> Prendas tejidas a crochet, hechas a mano y a medida, desde Montevideo, Uruguay.
+> Prendas tejidas a crochet, hechas a mano, en stock o a pedido, desde Montevideo, Uruguay.
 > Ropa y accesorios tejidos a mano (slow fashion): tops, cardigans, bolsos, accesorios y sets.
 > Envíos a todo Uruguay. Los pedidos y encargos a medida se coordinan por WhatsApp.
 
 ## Cómo comprar
 - Elegís la prenda en la tienda y coordinás stock, envío y pago por WhatsApp.
-- También podés pedir una prenda **a medida** (tu talle y colores) desde /encargo.
-- Las piezas a medida se tejen en 2–6 semanas según el modelo.
+- También podés pedir una prenda **a medida** (tu talle y colores) desde /encargo.${plazo}
 
 ## Páginas principales
 - [Tienda](${SITE_URL}/tienda): catálogo completo de prendas disponibles.
@@ -117,7 +131,7 @@ ${faqBlock}
 - Ubicación: Montevideo, Uruguay
 - Instagram: https://www.instagram.com/dahila.crochet/
 - WhatsApp: https://wa.me/59899850073
-- Atributos: hecho a mano · a medida · lana y algodón natural · envío a todo Uruguay
+- Atributos: hecho a mano · a medida · algodón, trapillo, lana y otros hilados · envío a todo Uruguay
 `
 
   return new Response(body, {

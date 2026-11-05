@@ -33,6 +33,36 @@ function xmlEscape(value: string): string {
 // debajo del límite de Google (1.000).
 const MAX_IMAGES_PER_URL = 10
 
+/**
+ * El updated_at más nuevo entre fechas sueltas (ISO), como Date; sin ninguna
+ * fecha válida, undefined. Para el lastmod de categorías y colecciones.
+ */
+function masNueva(fechas: Array<string | null | undefined>): Date | undefined {
+  const ms = fechas.map((f) => (f ? Date.parse(f) : NaN)).filter((n) => Number.isFinite(n))
+  return ms.length > 0 ? new Date(Math.max(...ms)) : undefined
+}
+
+/**
+ * lastmod de cada categoría = el updated_at más nuevo de sus prendas visibles
+ * (SEO-04, 04/11/2026). La tabla categories no tiene updated_at, y lo que
+ * cambia una categoría es lo que tiene adentro. Con el trigger de
+ * database/lastmod-honesto-2026-11.sql, reordenar la tienda ya no mueve esas
+ * fechas: así Google las puede creer.
+ */
+function lastmodPorCategoria(prendas: Array<{ category_id?: string | null; updated_at?: string | null }>): Map<string, Date> {
+  const porCategoria = new Map<string, string[]>()
+  for (const p of prendas) {
+    if (!p.category_id || !p.updated_at) continue
+    porCategoria.set(p.category_id, [...(porCategoria.get(p.category_id) ?? []), p.updated_at])
+  }
+  const out = new Map<string, Date>()
+  for (const [id, fechas] of porCategoria) {
+    const d = masNueva(fechas)
+    if (d) out.set(id, d)
+  }
+  return out
+}
+
 function productImages(media: { url: string; is_primary: boolean; type: string }[] = []): string[] {
   const photos = media.filter((m) => m.type === 'image')
   const ordered = [...photos.filter((m) => m.is_primary), ...photos.filter((m) => !m.is_primary)]
@@ -118,12 +148,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const [productsRes, categoriesRes, collectionsRes, discountsRes] = await Promise.all([
       supabase
         .from('products')
-        .select('slug, updated_at, status, discount_active, discount_percent, collection_id, collection:collections(*), media:product_media(url, is_primary, type)')
+        // category_id y collection_id: el lastmod de cada categoría y colección.
+        .select('slug, updated_at, status, discount_active, discount_percent, category_id, collection_id, collection:collections(*), media:product_media(url, is_primary, type)')
         .in('status', ['active', 'soldout'])
         .order('sort_order', { ascending: true }),
       supabase
         .from('categories')
-        .select('slug')
+        .select('id, slug')
         .order('sort_order', { ascending: true }),
       // select('*') a propósito: filtrar `unlisted` acá exigiría que la columna
       // exista (drops-2026-07.sql); traer todo y filtrar en JS tolera una DB
@@ -153,6 +184,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       status: string
       discount_active?: boolean
       discount_percent?: number
+      category_id?: string | null
+      collection_id?: string | null
       media?: { url: string; is_primary: boolean; type: string }[]
     }>
 
@@ -162,13 +195,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // `updated_at`, columna que `categories` nunca tuvo (ver database/schema.sql)
     // — Postgrest devolvía error, `categoriesRes.data` quedaba `null`, y como
     // nada chequeaba `categoriesRes.error`, el sitemap se armaba igual pero sin
-    // categorías, en silencio. Sin `updated_at` en la tabla no hay lastmod real
-    // que declarar acá (mismo criterio que las rutas estáticas arriba).
-    const categoryRoutes: MetadataRoute.Sitemap = (categoriesRes.data ?? []).map((c) => ({
-      url: xmlEscape(`${SITE_URL}/tienda/${c.slug}`),
-      changeFrequency: 'weekly' as const,
-      priority: 0.85,
-    }))
+    // categorías, en silencio. El lastmod sale de sus prendas visibles.
+    const lastmodCategoria = lastmodPorCategoria(productsData)
+    const categoryRoutes: MetadataRoute.Sitemap = ((categoriesRes.data ?? []) as Array<{ id: string; slug: string }>).map((c) => {
+      const lastmod = lastmodCategoria.get(c.id)
+      return {
+        url: xmlEscape(`${SITE_URL}/tienda/${c.slug}`),
+        ...(lastmod ? { lastModified: lastmod } : {}),
+        changeFrequency: 'weekly' as const,
+        priority: 0.85,
+      }
+    })
 
     // Product pages — include primary image for Google image search.
     const productRoutes: MetadataRoute.Sitemap = productsData.map((p) => {
@@ -189,18 +226,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Collection / lookbook pages. Las "solo con link" (unlisted, acceso
     // anticipado VIP) no se publicitan a Google.
     const collectionsData = (collectionsRes.data ?? []) as Array<{
+      id: string
       slug: string
       updated_at: string | null
       unlisted?: boolean
     }>
+    // lastmod = lo más nuevo entre la colección y sus prendas (SEO-04/06):
+    // sunset-26 decía 27/10 aunque sus prendas cambiaron el 04/11.
     const collectionRoutes: MetadataRoute.Sitemap = collectionsData
       .filter((c) => !c.unlisted)
-      .map((c) => ({
-        url: xmlEscape(`${SITE_URL}/colecciones/${c.slug}`),
-        ...(c.updated_at ? { lastModified: new Date(c.updated_at) } : {}),
-        changeFrequency: 'weekly' as const,
-        priority: 0.75,
-      }))
+      .map((c) => {
+        const lastmod = masNueva([c.updated_at, ...productsData.filter((p) => p.collection_id === c.id).map((p) => p.updated_at)])
+        return {
+          url: xmlEscape(`${SITE_URL}/colecciones/${c.slug}`),
+          ...(lastmod ? { lastModified: lastmod } : {}),
+          changeFrequency: 'weekly' as const,
+          priority: 0.75,
+        }
+      })
 
     // Hub pages that would otherwise be empty/thin — only advertise them to
     // Google when there is real content behind them.
@@ -235,11 +278,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // hacía (auditoría 03/09/2026). No incluye colecciones: el snapshot no las
     // guarda, igual que antes de este fix.
     const snap = getSnapshotData()
-    const categoryRoutes: MetadataRoute.Sitemap = snap.categories.map((c) => ({
-      url: xmlEscape(`${SITE_URL}/tienda/${c.slug}`),
-      changeFrequency: 'weekly' as const,
-      priority: 0.85,
-    }))
+    const lastmodCategoria = lastmodPorCategoria(snap.products)
+    const categoryRoutes: MetadataRoute.Sitemap = snap.categories.map((c) => {
+      const lastmod = lastmodCategoria.get(c.id)
+      return {
+        url: xmlEscape(`${SITE_URL}/tienda/${c.slug}`),
+        ...(lastmod ? { lastModified: lastmod } : {}),
+        changeFrequency: 'weekly' as const,
+        priority: 0.85,
+      }
+    })
     const productRoutes: MetadataRoute.Sitemap = snap.products.map((p) => {
       const images = productImages(p.media ?? [])
       return {

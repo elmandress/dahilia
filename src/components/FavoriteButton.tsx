@@ -2,8 +2,20 @@
 
 import { useState } from 'react'
 import { useFavorites } from './FavoritesProvider'
-import { track } from '@/lib/analytics'
+import { track, gaCommerce } from '@/lib/analytics'
 import { dahila, Icon } from './ui/Primitives'
+
+/** Lo que la medición necesita de la prenda guardada. */
+export interface FavoriteProduct {
+  slug: string
+  name: string
+  /** El precio que se ve (el de la tarjeta). */
+  price: number
+  /** Slug de la categoría, como en el resto de los eventos de GA4. */
+  category?: string
+  /** Va como grupo de variantes en el feed (tieneVariantes). */
+  variantes?: boolean
+}
 
 /**
  * Heart toggle for saving a piece to the wishlist. Two looks:
@@ -15,11 +27,14 @@ export function FavoriteButton({
   productId,
   variant = 'overlay',
   size,
+  product,
 }: {
   productId: string
   variant?: 'overlay' | 'inline'
   /** Tamaño del ícono: 18 en la ficha, 16 sobre la foto de la tarjeta. */
   size?: number
+  /** La prenda, para que GA4 y Meta sepan cuál se guardó (TRK-04). */
+  product?: FavoriteProduct
 }) {
   const { isFavorite, toggle, hasMounted } = useFavorites()
   const active = hasMounted && isFavorite(productId)
@@ -34,8 +49,22 @@ export function FavoriteButton({
     e.preventDefault()
     setTouched(true)
     // Guardar (no quitar) es una señal de interés: GA4 y Meta la reciben con
-    // su nombre estándar (add_to_wishlist → AddToWishlist).
-    if (!active) track('wishlist_add', { product: productId }, { name: 'add_to_wishlist' })
+    // su nombre estándar (add_to_wishlist → AddToWishlist). Con la prenda
+    // (TRK-04, 04/11/2026): antes AddToWishlist llegaba a Meta sin
+    // content_ids, y GA4 deja afuera de e-commerce un add_to_wishlist sin items.
+    if (!active) {
+      track('wishlist_add', { product: productId }, {
+        name: 'add_to_wishlist',
+        ...(product
+          ? {
+              params: {
+                ...gaCommerce([{ item_id: product.slug, item_name: product.name, price: product.price, item_category: product.category }]),
+                meta_group: product.variantes === true,
+              },
+            }
+          : {}),
+      })
+    }
     void toggle(productId)
   }
 

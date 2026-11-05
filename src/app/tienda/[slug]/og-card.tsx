@@ -1,9 +1,10 @@
 import { ImageResponse } from 'next/og'
 import { createClient } from '@/lib/supabase/server'
-import { getFinalPrice, getEffectivePrice, getListingSize, hasPriceRange } from '@/lib/types'
 import type { Product } from '@/lib/types'
 import { SITE_URL } from '@/lib/env'
 import { botImageUrl } from '@/lib/media'
+import { getCatalog } from '@/lib/catalog'
+import { datosTarjetaOG } from '@/lib/seo-copy'
 
 export const OG_SIZE = { width: 1200, height: 630 }
 
@@ -18,18 +19,33 @@ export const OG_SIZE = { width: 1200, height: 630 }
 // ~915 KB a ~10× menos, y WhatsApp descarta imágenes OG pesadas o lentas.
 export async function renderProductOgCard(slug: string): Promise<ImageResponse> {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('products')
-    .select('name, description, base_price_uyu, discount_percent, discount_active, media:product_media(url, is_primary), sizes:product_sizes(size, price_uyu, available, sort_order)')
-    .eq('slug', slug)
-    .maybeSingle()
+  const [{ data }, { discounts }] = await Promise.all([
+    supabase
+      .from('products')
+      // status, plazos y talles: para la promesa del pie (lib/seo-copy.ts);
+      // category_id: para los descuentos por categoría; la colección, para no
+      // mostrar un drop que todavía no se lanzó. collection(*) y no columnas
+      // sueltas, como el catálogo: tolera una base sin drops-2026-07.sql.
+      .select('name, description, status, is_custom_only, lead_time_weeks_min, lead_time_weeks_max, category_id, collection_id, base_price_uyu, discount_percent, discount_active, collection:collections(*), media:product_media(url, is_primary), sizes:product_sizes(size, price_uyu, available, sort_order)')
+      .eq('slug', slug)
+      .maybeSingle(),
+    // Los descuentos de lote salen del catálogo, que ya está cacheado.
+    getCatalog(),
+  ])
 
-  const product = data as (Product & { media?: { url: string; is_primary: boolean }[] }) | null
+  // Qué se muestra de la prenda, o null (SEO-13, 04/11/2026): sin prenda, con
+  // un drop sin lanzar o en borrador va la tarjeta genérica de la marca, sin
+  // nombre, precio ni foto. Antes esta ruta los mostraba a quien adivinara el
+  // slug de un drop oculto, y el precio iba sin los descuentos por categoría.
+  const fila = data as (Product & { media?: { url: string; is_primary: boolean }[] }) | null
+  const datos = datosTarjetaOG(fila, discounts)
+  const product = datos ? fila : null
 
   // El mismo slug también puede ser una categoría (ruta compartida
   // /tienda/[slug]) — sin este fallback, compartir un link de categoría
-  // generaba una tarjeta genérica sin foto ni nombre.
-  const category = product
+  // generaba una tarjeta genérica sin foto ni nombre. Una prenda escondida no
+  // tiene categoría con su slug, así que cae a la tarjeta de la marca.
+  const category = fila
     ? null
     : (
         await supabase
@@ -39,7 +55,7 @@ export async function renderProductOgCard(slug: string): Promise<ImageResponse> 
           .maybeSingle()
       ).data as { name: string; description: string | null } | null
 
-  const name = product?.name ?? category?.name ?? 'Dahila Crochet'
+  const name = datos?.nombre ?? category?.name ?? 'Dahila Crochet'
   const rawDesc =
     (product?.description ?? category?.description ?? 'Tejido a mano, hecho en Uruguay.').replace(/\s+/g, ' ').trim()
   // Corte en el último espacio (no a mitad de palabra) + elipsis cuando sigue.
@@ -54,16 +70,19 @@ export async function renderProductOgCard(slug: string): Promise<ImageResponse> 
     null
   const photo = rawPhoto ? botImageUrl(SITE_URL, rawPhoto, 640) : null
 
-  // Precio final (descuento por producto incluido) + precio de lista tachado
+  // Precio final (descuentos por prenda y de lote) + precio de lista tachado
   // cuando hay rebaja — la tarjeta cuenta la oferta sin abrir el link.
   // Mismo precio "desde" que la tarjeta de la tienda (talle disponible más
   // barato), no el precio base: si no, la tarjeta que viaja por WhatsApp decía
   // un número y la ficha otro.
-  const listingSize = product ? getListingSize(product) : undefined
-  const listPrice = product ? getEffectivePrice(product, listingSize) : 0
-  const finalPrice = product ? getFinalPrice(product, listingSize) : 0
-  const priceFrom = product ? hasPriceRange(product) : false
+  const listPrice = datos?.lista ?? 0
+  const finalPrice = datos?.final ?? 0
+  const priceFrom = datos?.desde ?? false
   const hasDiscount = finalPrice > 0 && finalPrice < listPrice
+  // El pie promete solo lo que la prenda cumple (SEO-03): "A tu talle y en tus
+  // colores" iba fijo, también en bolsos y en piezas ya tejidas. La tarjeta de
+  // la marca o de una categoría dice lo que vale para todo.
+  const pie = datos?.pie ?? 'Tejido a mano en Uruguay'
 
   return new ImageResponse(
     (
@@ -188,7 +207,7 @@ export async function renderProductOgCard(slug: string): Promise<ImageResponse> 
               paddingTop: 24,
             }}
           >
-            {'Tejido a mano en Uruguay · A tu talle y en tus colores'}
+            {pie}
           </div>
         </div>
       </div>

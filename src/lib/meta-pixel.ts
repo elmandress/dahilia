@@ -15,6 +15,7 @@
 // traduciendo el nombre de GA4 al estándar de Meta. Un botón nuevo que ya mide
 // en GA4 queda medido en Meta sin tocar nada.
 import type { GaItem } from './analytics'
+import { feedItemId } from './catalog-ids'
 
 export const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID
 
@@ -39,18 +40,45 @@ const GA_TO_META: Record<string, string> = {
   whatsapp_click: 'Contact',
 }
 
+/** Las cookies de Meta duran 90 días, como las que crea fbevents.js. */
+const FB_COOKIE_MAX_AGE = 90 * 24 * 60 * 60
+
+function readCookie(name: string): string | null {
+  const m = new RegExp(`(?:^|; )${name}=([^;]*)`).exec(document.cookie)
+  return m ? m[1] : null
+}
+
 /**
  * _fbc a mano cuando se llega con ?fbclid= (formato documentado por Meta:
  * fb.1.<ms>.<fbclid>). fbevents.js lo crea solo, pero carga con lazyOnload y
  * lo bloquean los ad-blockers; sin esta cookie la API de conversiones no puede
- * atar la venta al clic del anuncio.
+ * atar la venta al clic del anuncio. Si ya había una de otro clic, se
+ * reescribe (TRK-03, 04/11/2026): antes se conservaba la vieja y, con
+ * fbevents bloqueado, el clic en un anuncio nuevo quedaba atado al anterior.
  */
 function captureFbclid(): void {
   try {
     const fbclid = new URLSearchParams(window.location.search).get('fbclid')
-    if (!fbclid || document.cookie.includes('_fbc=')) return
-    const maxAge = 90 * 24 * 60 * 60
-    document.cookie = `_fbc=fb.1.${Date.now()}.${fbclid}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`
+    if (!fbclid) return
+    // Todo lo que sigue a "fb.1.<ms>." es el fbclid que guardó.
+    const guardado = readCookie('_fbc')?.split('.').slice(3).join('.')
+    if (guardado === fbclid) return
+    document.cookie = `_fbc=fb.1.${Date.now()}.${fbclid}; path=/; max-age=${FB_COOKIE_MAX_AGE}; SameSite=Lax; Secure`
+  } catch { /* cookies bloqueadas: el píxel lo intenta igual */ }
+}
+
+/**
+ * _fbp antes del primer evento, con el formato de Meta (fb.1.<ms>.<10
+ * dígitos>). Solo lo creaba fbevents.js, que carga con lazyOnload: la vista
+ * de la ficha sale por la API de conversiones apenas hidrata, y la primera
+ * vista de quien llega de un anuncio iba sin fbp (TRK-03). Cuando fbevents.js
+ * carga, reusa esta cookie en vez de crear otra.
+ */
+function ensureFbp(): void {
+  try {
+    if (readCookie('_fbp')) return
+    const azar = String(Math.floor(Math.random() * 1e10)).padStart(10, '0')
+    document.cookie = `_fbp=fb.1.${Date.now()}.${azar}; path=/; max-age=${FB_COOKIE_MAX_AGE}; SameSite=Lax; Secure`
   } catch { /* cookies bloqueadas: el píxel lo intenta igual */ }
 }
 
@@ -59,6 +87,7 @@ export function ensureFbq(): boolean {
   if (typeof window === 'undefined' || !META_PIXEL_ID) return false
   if (!window.fbq) {
     captureFbclid()
+    ensureFbp()
     const n: Fbq = function (...args: unknown[]) {
       if (n.callMethod) n.callMethod(...args)
       else n.queue!.push(args)
@@ -85,22 +114,30 @@ function newEventId(): string {
 
 /**
  * El id de la prenda en el catálogo (merchant-feed.xml): slug-talle si tiene
- * talles, solo el slug si no. Las prendas sin talles viajan en el carrito con
- * el talle 'Único', que en el feed no existe.
+ * talles, solo el slug si no, y también con "Único" o "Talle único" (TRK-01:
+ * antes comparaba contra el literal 'Único' y el Sweater net no coincidía).
+ * Es la misma regla del feed: vive en lib/catalog-ids.ts. Este nombre queda
+ * para lo que ya lo importa (el Purchase de meta-compra).
  */
-export function metaContentId(slug: string, size?: string | null): string {
-  return size && size !== 'Único' ? `${slug}-${size}` : slug
-}
+export { feedItemId as metaContentId } from './catalog-ids'
 
-/** Los mismos datos para el píxel y para la API de conversiones. */
-function metaData(event: string, params?: Record<string, unknown>): Record<string, unknown> {
+/**
+ * Los mismos datos para el píxel y para la API de conversiones. Exportada
+ * para las pruebas unitarias.
+ *
+ * `params.meta_group === true` (lo pone quien mide, con tieneVariantes): el
+ * evento va a nivel prenda, content_type product_group con el slug, que en el
+ * feed es el item_group_id. Es la vista de una prenda con talles, o una
+ * consulta sin talle elegido. Todo lo demás va a nivel ítem: product con el
+ * id del feed (feedItemId). Antes toda vista salía como product_group, también
+ * la de las 15 prendas sin talles, que en el feed son ítems sueltos.
+ */
+export function metaData(event: string, params?: Record<string, unknown>): Record<string, unknown> {
   const items = Array.isArray(params?.items) ? params.items as GaItem[] : []
   const data: Record<string, unknown> = {}
   if (items.length > 0) {
-    // ViewContent va a nivel prenda (product_group = item_group_id del feed);
-    // carrito y pedido, a nivel talle: el id del feed es slug-talle.
-    const group = event === 'ViewContent'
-    const ids = items.map((i) => (group ? i.item_id : metaContentId(i.item_id, i.item_variant)))
+    const group = params?.meta_group === true
+    const ids = items.map((i) => (group ? i.item_id : feedItemId(i.item_id, i.item_variant)))
     data.content_ids = ids
     data.content_type = group ? 'product_group' : 'product'
     data.contents = items.map((i, k) => ({ id: ids[k], quantity: i.quantity ?? 1, item_price: i.price }))

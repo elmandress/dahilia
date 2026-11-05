@@ -22,7 +22,7 @@
 //
 // Solo lee. Nunca escribe nada en Analytics.
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import { createPrivateKey, sign as cryptoSign } from 'node:crypto'
 import path from 'node:path'
 
@@ -33,6 +33,24 @@ const DATA_API = 'https://analyticsdata.googleapis.com/v1beta'
 const ADMIN_API = 'https://analyticsadmin.googleapis.com/v1beta'
 const OUT_DIR = 'research/mediciones'
 const DAY = 864e5
+
+// Ciudades con centros de datos de Meta (CRO-15, 04/11/2026). Con la campaña
+// paga, GA4 cuenta como "usuarios" a los robots de Meta que revisan cada
+// anuncio: el 02-03/11 fueron 19 de 119 (Prineville 8, Fort Worth 5, Luleå 4,
+// Altoona 2). Inflan el embudo y bajan el costo por vista de prenda, así que
+// la campaña se mide con el embudo de Uruguay. GA4 escribe "Lulea" sin tilde.
+const CIUDADES_META = [
+  'Prineville', 'Fort Worth', 'Luleå', 'Lulea', 'Altoona', 'Forest City', 'Clonee', 'Odense',
+  'Los Lunas', 'New Albany', 'Papillion', 'Henrico', 'Eagle Mountain',
+]
+// Los pasos del embudo, con el evento de GA4 que los marca.
+const EMBUDO = [
+  ['Vieron una prenda', 'view_item'],
+  ['Agregaron al carrito', 'add_to_cart'],
+  ['Mandaron el pedido', 'begin_checkout'],
+]
+const SOLO_URUGUAY = { filter: { fieldName: 'country', stringFilter: { matchType: 'EXACT', value: 'Uruguay' } } }
+const DEL_EMBUDO = { filter: { fieldName: 'eventName', inListFilter: { values: EMBUDO.map(([, e]) => e) } } }
 
 const args = {}
 for (const a of process.argv.slice(2)) {
@@ -139,16 +157,31 @@ async function main() {
 
   const pedir = (body) => api(token, `${DATA_API}/${propiedad}:runReport`, { dateRanges: rango, ...body }, email)
 
-  const [totales, canales, paginas, eventos, ciudades] = await Promise.all([
+  const [totales, canales, paginas, eventos, ciudades, uruguay, embudoTotal, embudoUruguay, ciudadesMeta] = await Promise.all([
     pedir({ metrics: [{ name: 'activeUsers' }, { name: 'sessions' }, { name: 'screenPageViews' }, { name: 'keyEvents' }] }),
     pedir({ dimensions: [{ name: 'sessionDefaultChannelGroup' }], metrics: [{ name: 'sessions' }, { name: 'activeUsers' }, { name: 'keyEvents' }], limit: 12 }),
     pedir({ dimensions: [{ name: 'pagePath' }], metrics: [{ name: 'screenPageViews' }, { name: 'activeUsers' }], limit: 20, orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }] }),
     pedir({ dimensions: [{ name: 'eventName' }], metrics: [{ name: 'eventCount' }], limit: 20, orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }] }),
     pedir({ dimensions: [{ name: 'city' }], metrics: [{ name: 'activeUsers' }], limit: 8, orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }] }),
+    // Embudo: usuarios de Uruguay, y usuarios por paso, en total y de Uruguay.
+    pedir({ metrics: [{ name: 'activeUsers' }], dimensionFilter: SOLO_URUGUAY }),
+    pedir({ dimensions: [{ name: 'eventName' }], metrics: [{ name: 'activeUsers' }], dimensionFilter: DEL_EMBUDO }),
+    pedir({ dimensions: [{ name: 'eventName' }], metrics: [{ name: 'activeUsers' }], dimensionFilter: { andGroup: { expressions: [DEL_EMBUDO, SOLO_URUGUAY] } } }),
+    pedir({ dimensions: [{ name: 'city' }], metrics: [{ name: 'activeUsers' }], dimensionFilter: { filter: { fieldName: 'city', inListFilter: { values: CIUDADES_META } } }, limit: 20, orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }] }),
   ])
 
   const t = totales.rows?.[0]?.metricValues ?? []
   const hoy = fmt(new Date())
+
+  // Uruguay + resto = total, por construcción: el resto es la diferencia.
+  const usuarios = Number(t[0]?.value ?? 0)
+  const usuariosUy = Number(uruguay.rows?.[0]?.metricValues?.[0]?.value ?? 0)
+  const porEvento = (res) => Object.fromEntries((res?.rows ?? []).map((f) => [f.dimensionValues?.[0]?.value, Number(f.metricValues?.[0]?.value ?? 0)]))
+  const pasosTotal = porEvento(embudoTotal)
+  const pasosUy = porEvento(embudoUruguay)
+  const meta = (ciudadesMeta.rows ?? []).map((f) => [f.dimensionValues?.[0]?.value ?? '', Number(f.metricValues?.[0]?.value ?? 0)])
+  const usuariosMeta = meta.reduce((s, [, n]) => s + n, 0)
+  const pctMeta = usuarios > 0 ? `${Math.round((usuariosMeta / usuarios) * 100)} %` : '—'
   const L = [
     `# Google Analytics — ${hoy}`, '',
     `Propiedad \`${nombre || propiedad}\`. Período: ${fmt(desde)} a ${fmt(hasta)} (${dias} días).`, '',
@@ -158,14 +191,35 @@ async function main() {
     ...tabla(paginas, 'Páginas más vistas', ['Página', 'Vistas', 'Usuarios']),
     ...tabla(eventos, 'Eventos', ['Evento', 'Veces']),
     ...tabla(ciudades, 'Ciudades', ['Ciudad', 'Usuarios']),
+    '', '## Embudo solo Uruguay', '',
+    'Para medir la campaña y el costo por vista de prenda, la columna que vale es Uruguay: el resto incluye a los robots de Meta que revisan cada anuncio. Usuarios únicos por paso.', '',
+    '| Paso | Total | Uruguay | Resto |', '|---|---|---|---|',
+    `| Usuarios | ${int(usuarios)} | ${int(usuariosUy)} | ${int(usuarios - usuariosUy)} |`,
+    ...EMBUDO.map(([rotulo, ev]) => {
+      const total = pasosTotal[ev] ?? 0
+      const uy = pasosUy[ev] ?? 0
+      return `| ${rotulo} (\`${ev}\`) | ${int(total)} | ${int(uy)} | ${int(total - uy)} |`
+    }),
+    '', `**Usuarios desde centros de datos de Meta:** ${int(usuariosMeta)} de ${int(usuarios)} (${pctMeta})${meta.length ? `: ${meta.map(([c, n]) => `${cell(c)} ${int(n)}`).join(', ')}` : ''}. Son robots que revisan los anuncios, no clientas: sacalos de la cuenta para medir la campaña.`,
     '', '_Generado con `npm run ga`. Solo lectura._', '',
   ]
 
   mkdirSync(OUT_DIR, { recursive: true })
   const file = path.join(OUT_DIR, `ga-${hoy}.md`)
   writeFileSync(file, L.join('\n'))
+
+  // Historial de GA, una fila por día (si se corre dos veces el mismo día, la
+  // segunda reemplaza a la primera, como el de Search Console). Va en su
+  // propio archivo: historial.csv lo reescribe seo-report con sus columnas.
+  const csv = path.join(OUT_DIR, 'historial-ga.csv')
+  const header = 'fecha,desde,hasta,usuarios,usuarios_uruguay,usuarios_centros_meta'
+  const previas = existsSync(csv) ? readFileSync(csv, 'utf8').split(/\r?\n/).filter((l) => l && l !== header && !l.startsWith(`${hoy},`)) : []
+  const fila = [hoy, fmt(desde), fmt(hasta), usuarios, usuariosUy, usuariosMeta].join(',')
+  writeFileSync(csv, [header, ...previas, fila].join('\n') + '\n')
+
   console.log(`   Usuarios: ${int(t[0]?.value)} · Sesiones: ${int(t[1]?.value)} · Eventos clave: ${int(t[3]?.value)}`)
-  console.log(`\n✅  Informe: ${file}`)
+  console.log(`   Uruguay: ${int(usuariosUy)} · Centros de datos de Meta: ${int(usuariosMeta)} (${pctMeta})`)
+  console.log(`\n✅  Informe: ${file}\n   Historial: ${csv}`)
 }
 
 main().catch((err) => {

@@ -8,6 +8,7 @@ import {
   getEffectivePrice, getFinalPrice, resolveDiscountPercent, getPrimaryPhoto, getScarcity, BLUR_DATA_URL,
   getPrimaryPhotoAlt, getListingSize, hasPriceRange, isReadyToShip, variantLabel,
 } from '@/lib/types'
+import { tieneVariantes } from '@/lib/catalog-ids'
 import { useCart } from './CartProvider'
 import { FavoriteButton } from './FavoriteButton'
 import { dahila, Badge } from './ui/Primitives'
@@ -154,7 +155,12 @@ export function ProductCard({
           position: 'absolute', top: 4, right: 4,
           display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2,
         }}>
-          <FavoriteButton productId={product.id} />
+          {/* Con la prenda: el AddToWishlist de Meta y el add_to_wishlist de
+              GA4 dicen cuál se guardó, al precio de esta tarjeta (TRK-04). */}
+          <FavoriteButton
+            productId={product.id}
+            product={{ slug: product.slug, name: product.name, price: finalPrice, category: product.category?.slug, variantes: tieneVariantes(product) }}
+          />
           {scarcity?.level === 'last' && product.status !== 'soldout' && (
             <span style={{
               display: 'inline-flex', alignItems: 'center', marginRight: 6,
