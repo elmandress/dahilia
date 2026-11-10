@@ -66,6 +66,24 @@ export function dropWhenText(d: Date): string {
   return `el ${get('weekday').toLowerCase()} ${get('day')} de ${get('month').toLowerCase()} a las ${get('hour')}:${get('minute')}`
 }
 
+/**
+ * "hasta el sáb 7/11": cuándo termina un descuento, en hora de Montevideo, para
+ * ponerlo al lado del precio tachado. null si la fecha no se puede leer: sin
+ * fecha no se muestra nada (nunca se inventa una).
+ */
+export function descuentoHastaTexto(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return null
+  const parts = new Intl.DateTimeFormat('es-UY', {
+    timeZone: 'America/Montevideo', weekday: 'long', day: 'numeric', month: 'numeric',
+  }).formatToParts(d)
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
+  const dia = get('weekday').toLowerCase().slice(0, 3)
+  if (!dia || !get('day') || !get('month')) return null
+  return `hasta el ${dia} ${get('day')}/${get('month')}`
+}
+
 /** "28 de octubre", para textos cortos (/vip). */
 export function dropDayText(d: Date): string {
   return new Intl.DateTimeFormat('es-UY', { timeZone: 'America/Montevideo', day: 'numeric', month: 'long' }).format(d).toLowerCase()

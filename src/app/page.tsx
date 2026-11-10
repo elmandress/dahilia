@@ -31,7 +31,6 @@ export default async function Home() {
   // "Nuevo" (por fecha de alta), "Disponible ahora" y "Accesorios" se arman
   // acá, sin repetir prendas entre secciones (VIS-06, lib/home-sections): al
   // cliente viajan como mucho 12, como antes.
-  const secciones = armarSeccionesHome(activeProducts)
   // Sobre todo el catálogo activo y no sobre lo que viaja: decide si el bloque
   // del drop ofrece "Ver en stock".
   const hayEnStock = activeProducts.some(isReadyToShip)
@@ -44,14 +43,18 @@ export default async function Home() {
   // cuando esa colección está realmente publicada — el teaser nunca puede
   // filtrar una página que todavía da 404.
   let dropCollectionHref: string | null = null
+  let dropCollectionId: string | null = null
   const dropSlug = (settings.drop_collection_slug ?? '').trim()
   if (settings.drop_enabled !== 'false' && dropSlug) {
     const { data: dropCol } = await supabase
       .from('collections')
-      .select('slug, published')
+      .select('id, slug, published')
       .eq('slug', dropSlug)
       .maybeSingle()
-    if (dropCol?.published) dropCollectionHref = `/colecciones/${dropCol.slug}`
+    if (dropCol?.published) {
+      dropCollectionHref = `/colecciones/${dropCol.slug}`
+      dropCollectionId = dropCol.id
+    }
   }
 
   // El estado del drop sale del servidor (VIS-05): el HTML decía "Muy pronto"
@@ -59,6 +62,8 @@ export default async function Home() {
   // de 1 h, en la primera hora después del lanzamiento el HTML puede seguir
   // diciendo "Próximo drop": el reloj del navegador lo corrige al hidratar.
   const dropLive = dropHasLaunched(settings.drop_date)
+  // Con el drop abierto, la primera sección son sus piezas (lib/home-sections).
+  const secciones = armarSeccionesHome(activeProducts, { dropColeccionId: dropLive ? dropCollectionId : null })
   // Si la portada ya lleva a la colección del drop, el bloque del drop no la
   // repite en el celular (VIS-02). Los textos de la portada no se tocan.
   const dropArriba = varianteDropArriba({ dropLive, heroHref: destinoPortada(settings.hero_cta_href), dropCollectionHref })

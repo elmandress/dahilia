@@ -18,6 +18,8 @@ export interface SeccionesHome {
   enStock: Product[]
   /** Accesorios que no salieron arriba. */
   accesorios: Product[]
+  /** La primera sección son las piezas del drop abierto, no "Nuevo". */
+  nuevoEsDrop?: boolean
 }
 
 /** Una fila de 4 en escritorio, dos de 2 en el celular. */
@@ -25,7 +27,13 @@ const POR_SECCION = 4
 /** Una sección con una sola tarjeta se ve como un descuido: no se muestra. */
 const MINIMO = 2
 
-export function armarSeccionesHome(productos: Product[]): SeccionesHome {
+/**
+ * `dropColeccionId`: con el drop abierto, la primera sección son sus piezas
+ * (05/11/2026, pedido de Mati: con el bloque del drop oculto en el celular,
+ * "Nuevo" mezclaba otras prendas y el drop casi no se veía). Si la colección
+ * no tiene piezas activas, vuelve a ser "Nuevo" por fecha.
+ */
+export function armarSeccionesHome(productos: Product[], { dropColeccionId = null }: { dropColeccionId?: string | null } = {}): SeccionesHome {
   const activos = productos.filter((p) => p.status === 'active')
   const usadas = new Set<string>()
   const tomar = (lista: Product[], minimo = MINIMO): Product[] => {
@@ -39,10 +47,12 @@ export function armarSeccionesHome(productos: Product[]): SeccionesHome {
   const porFecha = [...activos].sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
   // "Nuevo" sí va con una sola prenda: vacía, la home diría "No hay piezas en
   // la tienda por ahora" teniendo una.
-  const nuevo = tomar(porFecha, 1)
+  const delDrop = dropColeccionId ? activos.filter((p) => p.collection_id === dropColeccionId) : []
+  const nuevoEsDrop = delDrop.length > 0
+  const nuevo = tomar(nuevoEsDrop ? delDrop : porFecha, 1)
   const enStock = tomar(activos.filter(isReadyToShip))
   const accesorios = tomar(activos.filter((p) => p.category?.slug === 'accesorios'))
-  return { nuevo, enStock, accesorios }
+  return { nuevo, enStock, accesorios, nuevoEsDrop }
 }
 
 /**

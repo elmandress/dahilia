@@ -257,6 +257,30 @@ export function resolveDiscountPercent(product: Product, batch?: Discount[]): nu
   return Math.min(90, Math.max(0, pct));
 }
 
+/**
+ * Cuándo termina el descuento que se está aplicando, o null. Solo cuenta si el
+ * que gana es uno de la tabla `discounts` y tiene `ends_at`: el descuento propio
+ * de la prenda no tiene fecha de fin, así que no se muestra ninguna.
+ */
+export function resolveDiscountEndsAt(product: Product, batch?: Discount[]): string | null {
+  const own = product.discount_active ? (product.discount_percent || 0) : 0;
+  if (!batch || batch.length === 0) return null;
+  const now = Date.now();
+  let best: Discount | null = null;
+  for (const d of batch) {
+    if (!d.active) continue;
+    if (d.starts_at && new Date(d.starts_at).getTime() > now) continue;
+    if (d.ends_at && new Date(d.ends_at).getTime() < now) continue;
+    const applies =
+      d.scope === 'all' ||
+      (d.scope === 'category' && d.category_id && d.category_id === product.category_id);
+    if (!applies || !(d.percent > 0)) continue;
+    if (!best || d.percent > best.percent) best = d;
+  }
+  if (!best || best.percent <= own) return null;
+  return best.ends_at ?? null;
+}
+
 // Final price a customer pays: list price minus the resolved discount.
 export function getFinalPrice(product: Product, sizeLabel?: string, batch?: Discount[]): number {
   const list = getEffectivePrice(product, sizeLabel);

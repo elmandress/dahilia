@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { ImagenConRespaldo } from './ui/ImagenConRespaldo'
 import type { Product, Discount } from '@/lib/types'
 import {
-  getEffectivePrice, getFinalPrice, resolveDiscountPercent, getPrimaryPhoto, getScarcity, BLUR_DATA_URL,
+  getEffectivePrice, getFinalPrice, resolveDiscountPercent, resolveDiscountEndsAt, getPrimaryPhoto, getScarcity, BLUR_DATA_URL,
   getPrimaryPhotoAlt, getListingSize, hasPriceRange, isReadyToShip, variantLabel,
 } from '@/lib/types'
 import { tieneVariantes } from '@/lib/catalog-ids'
@@ -13,6 +13,7 @@ import { useCart } from './CartProvider'
 import { FavoriteButton } from './FavoriteButton'
 import { dahila, Badge } from './ui/Primitives'
 import { PriceBlock } from './ui/PriceBlock'
+import { descuentoHastaTexto } from '@/lib/drop-date'
 
 export function ProductCard({
   product,
@@ -43,6 +44,7 @@ export function ProductCard({
   const finalPrice = getFinalPrice(product, listingSize, discounts)
   const priceFrom = hasPriceRange(product)
   const hasDiscount = discountPct > 0 && listPrice > 0
+  const hastaTexto = hasDiscount ? descuentoHastaTexto(resolveDiscountEndsAt(product, discounts)) : null
   const purchasable = product.status !== 'soldout' && !product.is_custom_only
   const scarcity = getScarcity(product)
   const readyNow = isReadyToShip(product)
@@ -213,6 +215,11 @@ export function ProductCard({
         }}>{product.name}</span>
         <PriceBlock list={listPrice} final={finalPrice} size="sm" align="responsive" from={priceFrom} />
       </div>
+      {hastaTexto && product.status !== 'soldout' && (
+        <span style={{ display: 'block', padding: '0 2px', marginTop: -2, fontFamily: dahila.fontSans, fontSize: 11, color: dahila.ink500 }}>
+          {hastaTexto}
+        </span>
+      )}
 
       {/* Colour swatches + lead time in one row */}
       <div className="card-meta" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px', marginTop: -2, gap: 8 }}>

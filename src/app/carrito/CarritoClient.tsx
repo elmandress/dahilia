@@ -284,8 +284,8 @@ export default function CarritoClient({ whatsappUrl, whatsappLabel, featuredProd
             }}>Algunas piezas que te pueden gustar</p>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: 20,
+              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+              gap: 16,
             }}>
               {featuredProducts.slice(0, 4).map((p) => {
                 const photo = getPrimaryPhoto(p)

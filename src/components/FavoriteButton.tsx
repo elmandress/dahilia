@@ -76,9 +76,12 @@ export function FavoriteButton({
         aria-label={label}
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 8,
-          background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 0',
-          fontFamily: dahila.fontSans, fontSize: 13, fontWeight: 400,
-          color: active ? '#B6314A' : dahila.ink700,
+          // Mismo molde que Compartir y Pinterest: antes era texto suelto
+          // al lado de dos píldoras con borde y la fila se leía desprolija.
+          background: 'transparent', border: `1px solid ${dahila.borderStrong}`, borderRadius: 999,
+          cursor: 'pointer', padding: '7px 14px',
+          fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
+          color: active ? '#B6314A' : dahila.ink900,
           transition: `color 140ms ${dahila.ease}`,
         }}
       >

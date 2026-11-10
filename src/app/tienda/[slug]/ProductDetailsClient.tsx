@@ -15,8 +15,9 @@ import { ShareButton } from '@/components/ShareButton'
 import { PinterestButton } from '@/components/PinterestButton'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import type { Product, Discount } from '@/lib/types'
+import { descuentoHastaTexto } from '@/lib/drop-date'
 import {
-  getEffectivePrice, getFinalPrice, getPrimaryPhoto, getScarcity, formatPrice, BLUR_DATA_URL, productPhotoAlt, productKindLabel, getPrimaryPhotoAlt,
+  getEffectivePrice, getFinalPrice, resolveDiscountEndsAt, getPrimaryPhoto, getScarcity, formatPrice, BLUR_DATA_URL, productPhotoAlt, productKindLabel, getPrimaryPhotoAlt,
   isReadyToShip, sortSizes, isTalleUnico, getListingPrice, formatListingPrice, leadTimeMessage, variantLabel,
   getListingSize, hasPriceRange,
 } from '@/lib/types'
@@ -175,6 +176,7 @@ export function ProductDetailsClient({
   const tallePrecio = precioDesde ? getListingSize(product) : talle
   const listPrice = getEffectivePrice(product, tallePrecio)
   const hasDiscount = discountPercent > 0 && listPrice > 0
+  const hastaTexto = hasDiscount ? descuentoHastaTexto(resolveDiscountEndsAt(product, discounts)) : null
   // Antes recalculaba el descuento a mano en vez de usar getFinalPrice (ya
   // centralizada y usada más abajo en este mismo archivo, línea 349) — dan el
   // mismo resultado hoy porque la página padre calcula discountPercent con la
@@ -332,6 +334,9 @@ export function ProductDetailsClient({
             }}>{product.name}</h1>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
               <PriceBlock list={listPrice} final={finalPrice} size="md" soldOut={isSoldOut} from={precioDesde} />
+              {hastaTexto && !isSoldOut && (
+                <span style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500 }}>{hastaTexto}</span>
+              )}
             </div>
 
             {/* Honest scarcity — only shown when there's something true to say. */}
@@ -644,7 +649,7 @@ export function ProductDetailsClient({
           )}
 
           {/* Trust strip — pegado al CTA, donde muere la ansiedad de compra */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px 12px' }}>
             {trust.map(({ icon, text }) => (
               <span key={text} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -761,7 +766,7 @@ export function ProductDetailsClient({
               display: 'flex', flexDirection: 'column', gap: 10,
             }}>
               <span style={{
-                fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.22em',
+                fontFamily: dahila.fontSans, fontSize: 11, letterSpacing: '0.1em',
                 textTransform: 'uppercase', color: dahila.ink500,
               }}>
                 Completá el look · viaja en el mismo envío
@@ -833,7 +838,7 @@ export function ProductDetailsClient({
             </div>
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <FavoriteButton
               productId={product.id}
               variant="inline"

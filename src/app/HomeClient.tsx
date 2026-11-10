@@ -314,12 +314,12 @@ export function HomeClient({ secciones, hayEnStock = false, dropLive = false, dr
             fontFamily: dahila.fontDisplay, fontWeight: 300,
             fontSize: 22, letterSpacing: '0.08em', textTransform: 'uppercase',
             color: dahila.ink900, margin: 0,
-          }}>Nuevo</h2>
-          <Link href="/tienda" style={{
+          }}>{secciones.nuevoEsDrop ? (val(settings, 'drop_name', '').trim() || 'El drop') : 'Nuevo'}</h2>
+          <Link href={secciones.nuevoEsDrop && dropCollectionHref ? dropCollectionHref : '/tienda'} style={{
             fontFamily: dahila.fontSans, fontSize: 12, fontWeight: 400,
             letterSpacing: '0.06em', color: dahila.ink700, textDecoration: 'none',
             whiteSpace: 'nowrap',
-          }}>Ver toda la colección →</Link>
+          }}>{secciones.nuevoEsDrop && dropCollectionHref ? 'Ver el drop →' : 'Ver toda la colección →'}</Link>
         </div>
 
         {/* Cuánto tarda, antes de elegir (auditoría 12/09/2026): con cola

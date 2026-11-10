@@ -918,6 +918,10 @@ textarea.dh-campo { line-height: 1.5; }
   /* gap vive en el div interno (JSX, width: max-content) — este contenedor
      ya no es flex (ahora solo hace scroll), un "gap" acá no tendría efecto. */
   .tienda-toolbar-cats { padding: 2px 24px 8px 24px; scroll-padding-left: 24px; }
+  /* El riel de categorías del inicio es un <nav> con su propio padding de 24px:
+     sin esto, el padding del riel se sumaba y el primer chip arrancaba en 48px,
+     desalineado con el título y las tarjetas (24px). */
+  nav[aria-label="Categorías"] > .tienda-toolbar-cats { margin: 0 -24px; }
   /* Actions row: search takes remaining space */
   .tienda-toolbar-actions {
     flex-wrap: nowrap !important;

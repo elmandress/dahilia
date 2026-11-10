@@ -345,7 +345,10 @@ export function CartDrawerContenido() {
                   <span style={{ fontFamily: dahila.fontSans, fontSize: 13, color: dahila.ink700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Subtotal</span>
                   <span style={{ fontFamily: dahila.fontDisplay, fontSize: 22, color: dahila.ink900 }}>{formatPrice(cartTotal)}</span>
                 </div>
-                {shippingEstimate.trim() && (
+                {/* Con el aviso del pedido a la vista, el envío y "Te faltan…"
+                    ya no aportan: en un iPhone SE de 4" la lista quedaba en
+                    67 px, menos de una fila (NEG-3, 05/11/2026). */}
+                {!avisoVisible && shippingEstimate.trim() && (
                   <p style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink700, margin: 0 }}>
                     <Icon name="truck" size={14} color={dahila.ink500} /> {shippingEstimate}
                   </p>
@@ -355,7 +358,7 @@ export function CartDrawerContenido() {
                     gratis. Con un cupón recordado no se afirma nada (COR-01):
                     /carrito calcula el umbral sobre el total con el cupón, y el
                     cajón prometía un envío gratis que allá faltaba. */}
-                {freeShippingThreshold > 0 && (
+                {!avisoVisible && freeShippingThreshold > 0 && (
                   cuponRecordado ? (
                     <p style={{ fontFamily: dahila.fontSans, fontSize: 12, color: dahila.ink500, margin: 0 }}>
                       Con tu cupón, el total y el envío se calculan en el carrito.

@@ -94,3 +94,17 @@ test('el bloque del drop se oculta en el celular solo si ya abrió y la portada 
   assert.equal(mismaRuta('/', '/'), true)
   assert.equal(mismaRuta('/tienda', null), false)
 })
+
+test('con el drop abierto, la primera sección son sus piezas y no se repiten abajo', () => {
+  const DROP = ['bolso-margot-butter', 'bolso-margot-cherry', 'poncho-ete', 'manguitas-tramonto']
+  const conColeccion = REAL.map((p) => ({ ...p, collection_id: DROP.includes(p.slug) ? 'col-sunset' : null }))
+  const s = armarSeccionesHome(conColeccion, { dropColeccionId: 'col-sunset' })
+  assert.equal(s.nuevoEsDrop, true)
+  assert.deepEqual(slugs(s.nuevo), DROP)
+  const todas = [...s.nuevo, ...s.enStock, ...s.accesorios].map((p) => p.id)
+  assert.equal(new Set(todas).size, todas.length)
+  // Una colección sin piezas activas vuelve a "Nuevo" por fecha.
+  const sinPiezas = armarSeccionesHome(conColeccion, { dropColeccionId: 'otra' })
+  assert.equal(sinPiezas.nuevoEsDrop, false)
+  assert.equal(sinPiezas.nuevo[0].slug, 'pulseras-terra')
+})

@@ -473,7 +473,12 @@ export function CartProvider({
           zIndex: 131,
           display: 'inline-flex', alignItems: 'center', gap: 8,
           background: '#7a1e2f', color: '#fff',
-          padding: '11px 16px', borderRadius: 999,
+          // width: max-content — con left:50% el ancho "natural" era la mitad de la
+          // pantalla y el aviso de dos líneas quedaba como una pastilla angosta
+          // de 4 renglones (visto en iPhone 13). Radio de 18 y no 999: con texto
+          // en varias líneas el óvalo se come las puntas.
+          width: 'max-content',
+          padding: '12px 18px', borderRadius: 18,
           fontFamily: 'var(--font-sans), sans-serif', fontSize: 13,
           boxShadow: '0 12px 30px -12px rgba(31,26,27,0.5)',
           opacity: addError ? 1 : 0,
@@ -494,7 +499,7 @@ export function CartProvider({
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => track('whatsapp_click', { source: toast.source })}
-            style={{ color: '#fff', textDecoration: 'underline', textUnderlineOffset: 3, fontWeight: 500, padding: '2px 0' }}
+            style={{ color: '#fff', textDecoration: 'underline', textUnderlineOffset: 3, fontWeight: 500, padding: '8px 4px' }}
           >
             {toast.linkText}
           </a>

@@ -218,13 +218,13 @@ export default async function ColeccionPage({ params }: { params: Promise<{ slug
       {products.length > 0 && (
         // Un renglón de texto de 12 px, sin caja ni íconos (04/11/2026, VIS-13):
         // la franja con caja ocupaba 63 px del primer pantallazo del celular,
-        // justo antes de las prendas. Cada paso no se corta por la mitad, y el
-        // punto que los separa queda al final del renglón.
-        <ol aria-label="Cómo se compra" className="coleccion-bloque" style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', fontFamily: dahila.fontSans, fontSize: 12, lineHeight: 1.6, color: dahila.ink700 }}>
+        // justo antes de las prendas. Cada paso no se corta por la mitad y se
+        // separan por espacio (los números ya ordenan): con "·" el punto
+        // quedaba colgado al final del renglón en el celular.
+        <ol aria-label="Cómo se compra" className="coleccion-bloque" style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexWrap: 'wrap', gap: '2px 18px', fontFamily: dahila.fontSans, fontSize: 12, lineHeight: 1.6, color: dahila.ink700 }}>
           {HOW_TO_BUY.map((step, i) => (
-            <li key={step} style={{ display: 'inline' }}>
-              {i > 0 && <span aria-hidden="true">&nbsp;· </span>}
-              <span style={{ whiteSpace: 'nowrap' }}><strong style={{ fontWeight: 500, color: dahila.ink900 }}>{i + 1}.</strong> {step}</span>
+            <li key={step} style={{ whiteSpace: 'nowrap' }}>
+              <strong style={{ fontWeight: 500, color: dahila.ink900 }}>{i + 1}.</strong> {step}
             </li>
           ))}
         </ol>
