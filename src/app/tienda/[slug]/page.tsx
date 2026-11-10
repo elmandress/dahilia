@@ -23,6 +23,7 @@ import { slugRedirectTarget } from '@/lib/slug'
 import { getCategoryGuides } from '@/content/blog'
 import type { Testimonial } from '@/components/TestimonialsStrip'
 import { resolveReels } from '@/lib/reels'
+import { lineaEnvio } from '@/lib/envio'
 
 export const revalidate = 3600
 
@@ -386,7 +387,7 @@ async function ProductPage({ slug }: { slug: string }) {
   const getSetting = (k: string): string | undefined => settings[k]
   const sizeGuideNote = getSetting('size_guide_note')
   const whatsappUrl = getSetting('contact_whatsapp_url') || 'https://wa.me/59899850073'
-  const shippingEstimate = getSetting('shipping_estimate')
+  const shippingEstimate = lineaEnvio(settings) ?? getSetting('shipping_estimate')
   // Aviso de lista de espera (misma semántica que el layout: ON salvo 'false').
   const queueNote = getSetting('queue_note_enabled') !== 'false' ? (getSetting('queue_note_text') ?? '').trim() : ''
   const trustItems = [

@@ -126,7 +126,10 @@ export default async function IgLandingPage() {
           href={`/tienda/${destacada.producto.slug}?utm_source=instagram&utm_medium=bio&utm_campaign=${destacada.motivo === 'fijada' ? 'reel' : 'drop'}`}
           style={{ display: 'block', textDecoration: 'none', marginBottom: 14, borderRadius: 16, overflow: 'hidden', border: `1px solid ${dahila.border}`, background: '#fff' }}
         >
-          <span style={{ position: 'relative', display: 'block', aspectRatio: '4 / 5', background: dahila.cream50 }}>
+          {/* Cuadrada y no 4:5 (10/11/2026): en el celular la foto alta dejaba
+              el nombre y el precio fuera de la primera pantalla, y /ig es por
+              donde más entra la gente desde Instagram. */}
+          <span style={{ position: 'relative', display: 'block', aspectRatio: '1 / 1', background: dahila.cream50 }}>
             <Image
               src={getPrimaryPhoto(destacada.producto)}
               alt={getPrimaryPhotoAlt(destacada.producto)}

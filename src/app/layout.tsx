@@ -21,6 +21,7 @@ import { getCatalog } from '@/lib/catalog'
 import { isReadyToShip, getListingPrice } from '@/lib/types'
 import { ADDON_MAX_UYU } from '@/lib/addons'
 import { parseMoneyUYU } from '@/lib/parse-money'
+import { lineaEnvio } from '@/lib/envio'
 import './globals.css'
 
 export const viewport: Viewport = {
@@ -214,7 +215,8 @@ export default async function RootLayout({
     const col = c as { published?: boolean; unlisted?: boolean; coming_soon?: boolean }
     return (col.published && !col.unlisted) || (!col.published && col.coming_soon)
   })
-  const shippingEstimate = settings.shipping_estimate ?? ''
+  // Con montos cargados en Configuración, la línea se arma con ellos (lib/envio).
+  const shippingEstimate = lineaEnvio(settings) ?? settings.shipping_estimate ?? ''
   // Umbral de envío gratis (UYU). Vacío o no numérico = apagado. Lo fija la
   // dueña en Configuración; carrito y drawer muestran cuánto falta para llegar.
   // Con el parser de los montos (QA-14): "$ 1.600" y "1.600" son 1600; con
