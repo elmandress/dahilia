@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
-import Image from 'next/image'
+import Image from '@/components/ui/Foto'
 import Link from 'next/link'
 import { dahila, Eyebrow, Icon } from './ui/Primitives'
 import { BLUR_DATA_URL } from '@/lib/types'

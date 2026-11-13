@@ -1,7 +1,7 @@
 import { jsonLdScript } from '@/lib/json-ld'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Image from 'next/image'
+import Image from '@/components/ui/Foto'
 import { getAllArticles, getUsedClusters, getClusterArticles } from '@/content/blog'
 import { CLUSTER_LABEL, CLUSTER_INTRO, type Article } from '@/content/blog/types'
 import { readingMinutes } from '@/content/blog/toc'

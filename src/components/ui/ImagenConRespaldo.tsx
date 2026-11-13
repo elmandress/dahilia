@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Image, { type ImageProps } from 'next/image'
+import Image, { type ImageProps } from '@/components/ui/Foto'
 import { fotoRespaldo } from '@/lib/fotos-respaldo'
 
 

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/fotos.mjs --build",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -12,6 +13,7 @@
     "sitemaps": "node scripts/sitemaps-submit.mjs",
     "indexnow": "node scripts/indexnow-submit.mjs",
     "ga": "node scripts/ga-report.mjs",
+    "fotos": "node scripts/fotos.mjs",
     "respaldo-fotos": "node scripts/respaldo-fotos.mjs",
     "test:e2e": "playwright test",
     "test:e2e:setup": "playwright install chromium",

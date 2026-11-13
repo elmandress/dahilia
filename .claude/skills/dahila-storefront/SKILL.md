@@ -31,6 +31,9 @@ warm, calm, boutique, not corporate. Spanish (es-UY), sentence-case headings.
   instead of hand-rolling. Icons are Phosphor via CDN, kebab-case names.
 
 ## Images (Next 16 — IMPORTANT)
+- Import `Image` from `@/components/ui/Foto`, never from `next/image` (outside
+  /admin). It serves Supabase Storage photos from `/media` on our own domain;
+  a direct `next/image` puts that photo back on Supabase egress (3 outages).
 - `priority` is DEPRECATED in Next 16. For the LCP image use
   `fetchPriority="high" loading="eager"`. Everything else lazy-loads by default.
 - Always pass `sizes`. Use `placeholder="blur" blurDataURL={BLUR_DATA_URL}`

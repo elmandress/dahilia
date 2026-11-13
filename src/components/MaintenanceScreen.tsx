@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import Image from '@/components/ui/Foto'
 import { Icon } from '@/components/ui/Primitives'
 // Componente de servidor: los tokens de ./tokens, nunca de Primitives.
 import { dahila } from '@/components/ui/tokens'

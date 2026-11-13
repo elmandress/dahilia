@@ -8,6 +8,16 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+# ── Fotos de la tienda (13/11/2026) ───────────────────────────
+# public/media son copias de las fotos del storage (scripts/fotos.mjs). Cada
+# ruta lleva un sufijo aleatorio y no se pisa nunca, así que el navegador puede
+# guardarlas un año. Lo que no está en public/media lo sirve la ruta
+# src/app/media/[...path]/route.ts con sus propios headers.
+[[headers]]
+  for = "/media/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 # ── Migración a dahila.uy ─────────────────────────────────────
 # Dominio verificado con SSL activo (confirmado 09/07/2026). Redirige TODO el
 # tráfico del subdominio netlify.app al dominio propio con 301 (preserva el

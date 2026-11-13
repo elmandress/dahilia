@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import Image from '@/components/ui/Foto'
 import { dahila } from './ui/Primitives'
 import { BLUR_DATA_URL, productPhotoAlt } from '@/lib/types'
 import { recordRecentlyViewed, type RecentItem } from '@/lib/recentlyViewed'

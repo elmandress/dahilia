@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Image from 'next/image'
+import Image from '@/components/ui/Foto'
 import { getCatalog } from '@/lib/catalog'
 import {
   getPrimaryPhoto, BLUR_DATA_URL, getPrimaryPhotoAlt, isReadyToShip,

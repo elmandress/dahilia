@@ -84,6 +84,13 @@ const nextConfig: NextConfig = {
     // por un año. Mismo valor que STORAGE_CACHE_SECONDS en lib/media.ts.
     // Seguro por construcción: los objetos son inmutables (sufijo aleatorio +
     // upsert:false), así que nunca hay que invalidar una URL ya cacheada.
+    // OJO (13/11/2026): en Netlify esto NO se aplica. /_next/image lo atiende
+    // el Image CDN de Netlify, no el optimizador de Next, y responde
+    // `max-age=0, must-revalidate` igual. Por eso no alcanzó: el 12/11 el
+    // proyecto volvió a quedar restringido. El blindaje real es otro: las fotos
+    // ya no se piden a supabase.co sino a /media del propio sitio (lib/media.ts,
+    // "Fotos servidas desde el propio sitio"). Queda por si se corre fuera de
+    // Netlify.
     // Esto es la causa más probable del reventón de Cached Egress de jul/2026:
     // 8 deviceSizes × 5 imageSizes × 2 formatos por foto, cada variante
     // re-descargando el original completo de Supabase cada vez que el caché

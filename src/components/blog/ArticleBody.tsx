@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import Image from 'next/image'
+import Image from '@/components/ui/Foto'
 import type { Block } from '@/content/blog/types'
 import { dahila } from '@/components/ui/tokens'
 import { BLUR_DATA_URL } from '@/lib/types'
