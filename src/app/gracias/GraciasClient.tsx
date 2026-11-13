@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
+import Image from '@/components/ui/Foto'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { dahila, Eyebrow, Button, Icon, Badge } from '@/components/ui/Primitives'

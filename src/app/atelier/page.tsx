@@ -1,6 +1,6 @@
 import { jsonLdScript } from '@/lib/json-ld'
 import type { Metadata } from 'next'
-import Image from 'next/image'
+import Image from '@/components/ui/Foto'
 import { ImagenConRespaldo } from '@/components/ui/ImagenConRespaldo'
 import { createClient } from '@/lib/supabase/public'
 import { Eyebrow } from '@/components/ui/Primitives'

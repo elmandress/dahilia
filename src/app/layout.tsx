@@ -14,7 +14,7 @@ import { ClarityScript } from '@/components/ClarityScript'
 import { GoogleAnalyticsScript } from '@/components/GoogleAnalyticsScript'
 import { MetaPixelScript } from '@/components/MetaPixelScript'
 import { AttributionCapture } from '@/components/AttributionCapture'
-import { SITE_URL, SUPABASE_STORAGE_ORIGIN } from '@/lib/env'
+import { SITE_URL } from '@/lib/env'
 import { OG_BASE, OG_DEFAULT_IMAGE } from '@/lib/og'
 import { brandProfileUrls } from '@/lib/profiles'
 import { getCatalog } from '@/lib/catalog'
@@ -291,7 +291,6 @@ export default async function RootLayout({
             precio en el admin. No caduca: si se saca, hay que re-reclamar. */}
         <meta name="p:domain_verify" content="cfc7470c4dc04012bdc53503424844d7" />
         <link rel="manifest" href="/site.webmanifest" />
-        <link rel="preconnect" href={SUPABASE_STORAGE_ORIGIN} />
       </head>
       <body>
         <a href="#contenido" className="skip-link">Saltar al contenido</a>

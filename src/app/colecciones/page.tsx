@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Image from 'next/image'
+import Image from '@/components/ui/Foto'
 import { createClient } from '@/lib/supabase/public'
 import type { Collection } from '@/lib/types'
 import { Eyebrow } from '@/components/ui/Primitives'

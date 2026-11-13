@@ -11,7 +11,6 @@ import { getCatalog, getProductBySlug, getSnapshotData, getTestimonials } from '
 import { promesaFicha } from '@/lib/seo-copy'
 import { tieneVariantes, variantUrl } from '@/lib/catalog-ids'
 import { ProductDetailsClient } from './ProductDetailsClient'
-import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
 import { MaintenanceScreen } from '@/components/MaintenanceScreen'
 import { getEncargosCuposState } from '@/components/EncargosDisponibles'
 import { TiendaClient } from '../TiendaClient'
@@ -334,7 +333,6 @@ async function CategoryPage({ slug, category }: { slug: string; category: Catego
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(collectionPageJsonLd) }}
       />
-      {source === 'snapshot' && <CatalogReadOnlyBanner />}
       <TiendaClient
         conFotoPrimero={source === 'snapshot'}
         key={`cat:${slug}`}
@@ -689,7 +687,6 @@ async function ProductPage({ slug }: { slug: string }) {
     <div style={{ paddingBottom: '4rem' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(productJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbJsonLd) }} />
-      {isSnapshot && <CatalogReadOnlyBanner waUrl={whatsappUrl} />}
 
       <ProductDetailsClient
         product={product}
@@ -722,7 +719,6 @@ async function ProductPage({ slug }: { slug: string }) {
         clientPhotos={testimonios.filter((t) => t.product_id === product.id && t.photo_url?.trim())}
         // Con la base caída el carrito no puede guardar nada: la ficha toma el
         // pedido por WhatsApp en vez de fallar al tocar "Agregar".
-        soloConsulta={isSnapshot}
       />
     </div>
   )

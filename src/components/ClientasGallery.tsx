@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import Image from '@/components/ui/Foto'
 import Link from 'next/link'
 import { dahila } from './ui/tokens'
 import { Icon } from './ui/Primitives'

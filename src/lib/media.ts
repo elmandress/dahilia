@@ -76,16 +76,53 @@ export async function prepareImageForUpload(file: File): Promise<{ blob: Blob; e
   }
 }
 
+// ── Fotos servidas desde el propio sitio (13/11/2026) ────────
+// El 12/11/2026 el proyecto volvió a quedar restringido por Cached Egress,
+// con todo lo de arriba ya hecho. Medido en Netlify: 56 % de los pedidos de
+// fotos no estaban en su caché, y cada uno bajaba el ORIGINAL de Supabase
+// (40–70 descargas por visitante). El gasto crecía con las visitas.
+//
+// Ahora ninguna foto de la tienda apunta a supabase.co: `fotoLocal` cambia la
+// URL del storage por /media/<misma ruta>, que sirve el propio sitio:
+//   1. el archivo de public/media, si está (scripts/fotos.mjs lo trae en cada
+//      build y se puede commitear como respaldo): no toca Supabase nunca;
+//   2. si no, src/app/media/[...path]/route.ts lo baja UNA vez de Supabase y
+//      lo deja en el caché duradero de Netlify.
+// Así Supabase entrega cada foto una vez, sin importar cuánta gente entre.
+// El admin sigue mostrando la URL del storage (son pocas vistas, y es la
+// fuente de verdad).
+
+const STORAGE_PUBLICO = /^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/media\/([A-Za-z0-9][A-Za-z0-9._\-/]*)$/i
+
+/** Extensiones que sirve /media. Sin SVG: puede llevar scripts. */
+export const EXT_FOTO = /\.(jpe?g|png|webp|gif|avif)$/i
+
+/** Prefijo público de las fotos servidas por el sitio. */
+export const RUTA_FOTOS = '/media/'
+
 /**
- * URL de una foto del storage servida a través del optimizador del sitio
- * (`/_next/image`, cacheado por el CDN de Netlify). Para lo que consumen los
- * BOTS — JSON-LD, sitemap, tarjeta OG — esto corta el egress de Supabase:
- * Googlebot-Image y los crawlers de WhatsApp/Meta descargan desde dahila.uy
- * una versión de ~100 KB en vez del original de varios MB desde supabase.co.
+ * La ruta propia (/media/...) de una foto del storage de Supabase. Cualquier
+ * otra URL (fotos de /public, externas, videos, rutas raras) vuelve intacta.
+ */
+export function fotoLocal(url: string): string {
+  const m = STORAGE_PUBLICO.exec(url)
+  if (!m || !EXT_FOTO.test(m[1]) || m[1].includes('..') || m[1].includes('//')) return url
+  return `${RUTA_FOTOS}${m[1]}`
+}
+
+/**
+ * URL de una foto servida a través del optimizador del sitio (`/_next/image`,
+ * el Image CDN de Netlify). Es lo que consumen los BOTS — JSON-LD, sitemap,
+ * tarjeta OG, feed de Merchant —: Googlebot-Image y los crawlers de
+ * WhatsApp/Meta descargan desde dahila.uy una versión de ~100 KB. Las fotos
+ * del storage salen de /media (ver arriba), así que tampoco acá se toca
+ * supabase.co.
  * `w` debe existir en images.deviceSizes y `q` en images.qualities
  * (next.config.ts) o Next responde 400.
  */
 export function botImageUrl(siteUrl: string, rawUrl: string, w: 640 | 1200 = 1200, q: 82 | 90 = 82): string {
+  const local = fotoLocal(rawUrl)
+  if (local !== rawUrl) return `${siteUrl}/_next/image?url=${encodeURIComponent(local)}&w=${w}&q=${q}`
   if (!rawUrl.startsWith('http')) return `${siteUrl}${rawUrl}`
   return `${siteUrl}/_next/image?url=${encodeURIComponent(rawUrl)}&w=${w}&q=${q}`
 }

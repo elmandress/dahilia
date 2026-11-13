@@ -59,6 +59,24 @@ Reglas:
 - No encadenar builds "por las dudas": cada build tira a la basura el caché de
   imágenes. Compilar una vez al final.
 
+## Las fotos no salen de Supabase (blindaje del 13/11/2026)
+
+El 12/11/2026 la cuota se agotó por tercera vez, ya con las reglas de arriba:
+cada foto que Netlify no tenía en caché bajaba el original de Supabase (40–70
+descargas por visitante). Desde el 13/11 la tienda pide las fotos a
+`/media/<ruta del storage>` del propio sitio:
+
+- `src/components/ui/Foto.tsx` es el `next/image` de la tienda. **Nunca
+  importar `next/image` directo fuera del admin**: `npm run test:unit` falla
+  (tests/unit/fotos-locales.test.mjs).
+- Para URLs que van a bots (OG, JSON-LD, sitemap, feed): `botImageUrl`.
+- `public/media` son las copias. `npm run build` las trae solo dentro de
+  Netlify (desde el sitio publicado, no desde Supabase). Lo que falte lo sirve
+  `src/app/media/[...path]/route.ts`, una descarga por foto y por deploy.
+- **Antes de cada deploy**: `npm run fotos` y commitear `public/media`. Es el
+  respaldo de las fotos fuera de Supabase; el 12/11 no existía y no hubo de
+  dónde recuperarlas.
+
 ## Antes de cada deploy: el respaldo del catálogo
 
 Con la base caída (la cuota de Supabase, un error), la tienda muestra

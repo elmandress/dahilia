@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
+import Image from '@/components/ui/Foto'
 import { usePathname } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { dahila } from './ui/Primitives'

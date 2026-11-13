@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import Image from '@/components/ui/Foto'
 import { ImagenConRespaldo } from '@/components/ui/ImagenConRespaldo'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCart } from './CartProvider'

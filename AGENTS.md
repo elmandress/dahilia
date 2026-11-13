@@ -12,6 +12,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - **Qué es**: tienda e-commerce de Dahila Crochet (Next.js 16 + React 19 + Supabase + Netlify). Checkout por WhatsApp; no hay tabla de pedidos. Dominio canónico: `https://dahila.uy` (`SITE_URL` en `src/lib/env.ts` — TODAS las URLs absolutas derivan de ahí).
 - **DB**: los cambios de base se entregan como SQL idempotente en `database/` y se corren en el SQL Editor de Supabase. El proyecto Supabase visible por MCP es OTRO proyecto — no usarlo para la tienda.
+- **Fotos**: viven en Supabase Storage pero la tienda las pide a `/media/…` del propio sitio (`src/components/ui/Foto.tsx`, `fotoLocal` en `src/lib/media.ts`). Nunca `next/image` directo ni URLs de `supabase.co` en la tienda: agotan la cuota gratis y tiran TODO el proyecto (402). `npm run fotos` trae las copias a `public/media`.
 - **Precios**: nunca inventar precios. La tabla aprobada vive en `src/app/admin/estrategia/data.ts` (`PRICE_TABLE`) y en `ESTRATEGIA-DEFINITIVA.md`.
 - **Marca**: la persona es **Anush**; la marca es **Dahila** (con i). Las prendas de la red de tejedoras llevan la etiqueta DAHILA, nunca el nombre de la tejedora. Voz: es-UY (voseo), cálida, sin jerga corporativa.
 - **Conocimiento del negocio**: vive en `/admin/estrategia` (`data.ts`), no en documentos nuevos. Los `.md` de la raíz son informes archivados de consultoría.

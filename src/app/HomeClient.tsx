@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
+import Image from '@/components/ui/Foto'
 import { ImagenConRespaldo } from '@/components/ui/ImagenConRespaldo'
 import { ProductCard } from '@/components/ProductCard'
 import { DropTeaser } from '@/components/DropTeaser'
