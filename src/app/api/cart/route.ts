@@ -8,6 +8,11 @@ import { CART_COOKIE } from '@/lib/cart-cookie'
 import { isUuid } from '@/lib/uuid'
 import { dropVisibility } from '@/lib/types'
 import { resolverTalle, TALLE_MAX } from '@/lib/cart-summary'
+import { getCatalog } from '@/lib/catalog'
+import {
+  CART_LOCAL_COOKIE, leerCarritoLocal, escribirCarritoLocal, agregarLocal, cambiarLocal, armarItemsLocales,
+  type LineaLocal,
+} from '@/lib/cart-local'
 
 /**
  * El carrito de un visitante anónimo NO se puede scopear con RLS: no hay
@@ -67,14 +72,75 @@ async function loadItems(cartId: string) {
   return data ?? []
 }
 
+// ── Carrito sin base (13/11/2026) ────────────────────────────────────
+// Si la base falla, el carrito sigue andando desde una cookie: ver
+// lib/cart-local.ts. Cada handler prueba primero la base y, si lanza, hace lo
+// mismo sobre la cookie. Lo que NO es una caída (validaciones, prenda agotada,
+// límite de pedidos) responde antes y no pasa por acá.
+
+async function leerLocal(): Promise<LineaLocal[]> {
+  return leerCarritoLocal((await cookies()).get(CART_LOCAL_COOKIE)?.value)
+}
+
+/** La respuesta de siempre ({ cartId, items }), armada con la cookie y el
+ *  catálogo de respaldo. `local: true` es solo informativo. */
+async function respuestaLocal(cartId: string, setCookie: boolean, lineas: LineaLocal[]) {
+  const { products } = await getCatalog()
+  const res = NextResponse.json({ cartId, items: armarItemsLocales(lineas, products, cartId), local: true })
+  res.cookies.set(CART_LOCAL_COOKIE, escribirCarritoLocal(lineas), {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: CART_COOKIE_MAX_AGE,
+    path: '/',
+  })
+  return applyCartCookie(res, cartId, setCookie)
+}
+
+/** La base volvió: lo que se armó durante la caída pasa a cart_items. Se puede
+ *  repetir sin duplicar (deja la cantidad mayor, no suma). Una prenda que ya
+ *  no existe se saltea. */
+async function pasarLocalALaBase(cartId: string, lineas: LineaLocal[]) {
+  const supabase = await getDb()
+  for (const l of lineas) {
+    const { data: existing, error } = await supabase
+      .from('cart_items')
+      .select('id, qty')
+      .eq('cart_id', cartId)
+      .eq('product_id', l.productId)
+      .eq('size', l.size)
+      .maybeSingle()
+    if (error) throw error
+    if (existing) {
+      if (existing.qty < l.qty) {
+        await supabase.from('cart_items').update({ qty: l.qty }).eq('id', existing.id).eq('cart_id', cartId)
+      }
+    } else {
+      await supabase.from('cart_items').insert({ cart_id: cartId, product_id: l.productId, size: l.size, qty: l.qty })
+    }
+  }
+}
+
 export async function GET() {
+  const { cartId, setCookie } = await getOrCreateCartId()
+  const locales = await leerLocal()
   try {
-    const { cartId, setCookie } = await getOrCreateCartId()
-    const items = await loadItems(cartId)
-    return applyCartCookie(NextResponse.json({ cartId, items }), cartId, setCookie)
+    let items = await loadItems(cartId)
+    if (locales.length > 0) {
+      await pasarLocalALaBase(cartId, locales)
+      items = await loadItems(cartId)
+    }
+    const res = applyCartCookie(NextResponse.json({ cartId, items }), cartId, setCookie)
+    if (locales.length > 0) res.cookies.delete(CART_LOCAL_COOKIE)
+    return res
   } catch (e) {
-    console.error('GET /api/cart', e)
-    return NextResponse.json({ error: 'No se pudo cargar el carrito.' }, { status: 500 })
+    console.error('GET /api/cart: la base no respondió, sigue el carrito local', e)
+    try {
+      return await respuestaLocal(cartId, setCookie, locales)
+    } catch (e2) {
+      console.error('GET /api/cart', e2)
+      return NextResponse.json({ error: 'No se pudo cargar el carrito.' }, { status: 500 })
+    }
   }
 }
 
@@ -110,6 +176,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { cartId, setCookie } = await getOrCreateCartId()
+    try {
     const supabase = await getDb()
 
     // Confirm product exists and is purchasable
@@ -170,6 +237,15 @@ export async function POST(req: NextRequest) {
 
     const items = await loadItems(cartId)
     return applyCartCookie(NextResponse.json({ cartId, items }), cartId, setCookie)
+    } catch (e) {
+      // La base no respondió: la prenda se guarda en el carrito local, con las
+      // mismas reglas, contra el catálogo de respaldo.
+      console.error('POST /api/cart: la base no respondió, sigue el carrito local', e)
+      const { products } = await getCatalog()
+      const r = agregarLocal(await leerLocal(), products, { productId, size, qty, nuevoId: randomUUID() })
+      if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status })
+      return await respuestaLocal(cartId, setCookie, r.lineas)
+    }
   } catch (e) {
     console.error('POST /api/cart', e)
     return NextResponse.json({ error: 'No se pudo agregar al carrito.' }, { status: 500 })
@@ -203,6 +279,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const { cartId, setCookie } = await getOrCreateCartId()
+    try {
     const supabase = await getDb()
 
     if (qty === 0) {
@@ -223,6 +300,10 @@ export async function PATCH(req: NextRequest) {
 
     const items = await loadItems(cartId)
     return applyCartCookie(NextResponse.json({ cartId, items }), cartId, setCookie)
+    } catch (e) {
+      console.error('PATCH /api/cart: la base no respondió, sigue el carrito local', e)
+      return await respuestaLocal(cartId, setCookie, cambiarLocal(await leerLocal(), itemId, qty))
+    }
   } catch (e) {
     console.error('PATCH /api/cart', e)
     return NextResponse.json({ error: 'No se pudo actualizar.' }, { status: 500 })
@@ -241,6 +322,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Solicitud inválida.' }, { status: 400 })
     }
     const { cartId, setCookie } = await getOrCreateCartId()
+    try {
     const supabase = await getDb()
 
     const { error } = await supabase
@@ -252,6 +334,10 @@ export async function DELETE(req: NextRequest) {
 
     const items = await loadItems(cartId)
     return applyCartCookie(NextResponse.json({ cartId, items }), cartId, setCookie)
+    } catch (e) {
+      console.error('DELETE /api/cart: la base no respondió, sigue el carrito local', e)
+      return await respuestaLocal(cartId, setCookie, cambiarLocal(await leerLocal(), itemId, 0))
+    }
   } catch (e) {
     console.error('DELETE /api/cart', e)
     return NextResponse.json({ error: 'No se pudo eliminar.' }, { status: 500 })

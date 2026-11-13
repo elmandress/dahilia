@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/public'
 import { brandProfileUrls, googleBusinessUrl } from '@/lib/profiles'
 import { getCatalog, getTestimonials } from '@/lib/catalog'
 import { HomeClient } from './HomeClient'
-import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
 import { MaintenanceScreen } from '@/components/MaintenanceScreen'
 import { SITE_URL } from '@/lib/env'
 import { getHomeArticles } from '@/content/blog'
@@ -88,7 +87,6 @@ export default async function Home() {
   // Google retiró en noviembre de 2024 — auditoría 12/09/2026.)
 
   // LocalBusiness — shows brand panel in Google with location, contact, links.
-  const waUrl = settings.contact_whatsapp_url || 'https://wa.me/59899850073'
   const localBusinessJsonLd = {
     '@context': 'https://schema.org',
     '@type': ['LocalBusiness', 'ClothingStore'],
@@ -126,7 +124,6 @@ export default async function Home() {
 
   return (
     <>
-      {source === 'snapshot' && <CatalogReadOnlyBanner waUrl={waUrl} />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(localBusinessJsonLd) }}

@@ -6,7 +6,6 @@ import { getPrimaryPhoto, getListingPrice, isReadyToShip } from '@/lib/types'
 import { botImageUrl } from '@/lib/media'
 import { SITE_URL } from '@/lib/env'
 import { TiendaClient } from '../TiendaClient'
-import { CatalogReadOnlyBanner } from '@/components/CatalogReadOnlyBanner'
 import { MaintenanceScreen } from '@/components/MaintenanceScreen'
 import { OG_BASE } from '@/lib/og'
 
@@ -134,7 +133,6 @@ export default async function TiendaPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(collectionJsonLd) }}
       />
-    {source === 'snapshot' && <CatalogReadOnlyBanner />}
     <TiendaClient
       conFotoPrimero={source === 'snapshot'}
       key={`${categoryFilter}|${searchQuery}|${colorParam}|${sizeParam}|${maxParam}|${sortParam}|${onlyOffers}|${hideOutOfStock}|${onlyReadyToShip}`}
