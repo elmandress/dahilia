@@ -1,324 +1,133 @@
 {
-  "generatedAt": "2026-11-04T22:53:31.274Z",
+  "generatedAt": "2026-11-12T21:46:00.000Z",
   "products": [
     {
-      "id": "3698dbb7-a936-4bc1-a386-d68ad5f46e47",
-      "slug": "bolso-margot-butter",
-      "name": "Bolso Margot Butter",
-      "description": "Tejido 100% a mano, pensado para acompañarte de la ciudad a la playa sin perder el estilo \nCombina colores en tendencia con flecos que le aportan movimiento y personalidad \nCon asa ajustable para que lo uses de la forma que más te guste",
+      "id": "3c089543-d3e2-41ae-b1da-77a7a1ee9e4e",
+      "slug": "cinturon-nudo-noche",
+      "name": "Cinturón Nudo combinado",
+      "description": "Tejido a crochet a mano, Cinturón Nudo combinado es de esas compras chicas que terminás usando más que ninguna. Se teje a mano cuando la encargás. No hay dos iguales — es lo que tiene lo hecho a mano. Envío a todo Uruguay.",
       "category_id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
       "badge": null,
       "status": "active",
-      "base_price_uyu": 1600,
+      "base_price_uyu": 550,
       "sort_order": 0,
       "lead_time_weeks_min": 0,
       "lead_time_weeks_max": 3,
-      "material": "Trapillo premium",
+      "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
-      "created_at": "2026-10-24T20:55:47.611506+00:00",
-      "updated_at": "2026-11-04T16:10:57.86909+00:00",
+      "created_at": "2026-11-12T01:22:07.116943+00:00",
+      "updated_at": "2026-11-12T18:18:37.502213+00:00",
       "discount_percent": 0,
       "discount_active": false,
-      "collection_id": "28776d6a-7e2b-4ad4-8b93-7c5540f016f2",
-      "knit_hours": 4,
+      "collection_id": null,
+      "knit_hours": null,
       "category": {
         "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-        "name": "Accesorios",
         "slug": "accesorios",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
         "sort_order": 3,
-        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
-          "id": "64431131-20f8-4e9e-8e07-4a56033fb29e",
-          "alt": "Bolso Margot Butter de trapillo tejido a mano, amarillo con flecos",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-kd8p.jpeg",
+          "id": "bfc19de4-42c3-45c6-aef7-c83761ff9273",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/cinturon-dahila-crochet-lhnm.jpg",
           "type": "image",
           "position": 0,
-          "created_at": "2026-11-03T14:39:25.339923+00:00",
+          "created_at": "2026-11-12T18:18:37.917449+00:00",
           "is_primary": true,
-          "product_id": "3698dbb7-a936-4bc1-a386-d68ad5f46e47"
+          "product_id": "3c089543-d3e2-41ae-b1da-77a7a1ee9e4e"
         },
         {
-          "id": "b6ae55ef-3e21-4ce1-9af1-376515ffbd19",
-          "alt": "Bolso Margot Butter de trapillo tejido a mano, amarillo con flecos",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-wnoy.jpeg",
+          "id": "c972d32a-742b-4528-9a47-3a75c76d1769",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/cinturon-dahila-crochet-1fxr.jpg",
           "type": "image",
           "position": 1,
-          "created_at": "2026-11-03T14:39:25.339923+00:00",
+          "created_at": "2026-11-12T18:18:37.917449+00:00",
           "is_primary": false,
-          "product_id": "3698dbb7-a936-4bc1-a386-d68ad5f46e47"
+          "product_id": "3c089543-d3e2-41ae-b1da-77a7a1ee9e4e"
         },
         {
-          "id": "1b65ab48-e919-47c2-b5e7-a4631e7a900c",
-          "alt": "Bolso Margot Butter de trapillo tejido a mano, amarillo con flecos",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-g1ll.jpg",
+          "id": "1de8cbd5-b624-42df-a3d0-764f73aeb269",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/cinturon-dahila-crochet-91zj.jpg",
           "type": "image",
           "position": 2,
-          "created_at": "2026-11-03T14:39:25.339923+00:00",
+          "created_at": "2026-11-12T18:18:37.917449+00:00",
           "is_primary": false,
-          "product_id": "3698dbb7-a936-4bc1-a386-d68ad5f46e47"
+          "product_id": "3c089543-d3e2-41ae-b1da-77a7a1ee9e4e"
         }
       ],
       "sizes": [],
-      "colors": [],
-      "collection_name": "Sunset ‘26"
+      "colors": []
     },
     {
-      "id": "7ba6ed79-b391-4a04-94ed-56e073669d3b",
-      "slug": "bolso-margot-cherry",
-      "name": "Bolso Margot cherry",
-      "description": "Inspirado en los colores más intensos del atardecer, tejido 100% a mano  en trapillo premium.\nEs el accesorio ideal para darle un golpe de color a cualquier look neutro de verano, con espacio y resistencia de sobra para usar tanto en la calle como en la arena",
+      "id": "21a6974d-41e7-4e95-9184-37927c991d84",
+      "slug": "cinturon-nudo-dia",
+      "name": "Cinturón Nudo crudo",
+      "description": "Cinturón Nudo crudo se teje a crochet, a mano, especialmente para vos. Se teje a mano cuando la encargás. Como toda pieza tejida a mano, no existe otra igual. Envío a todo Uruguay.",
       "category_id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
       "badge": null,
       "status": "active",
-      "base_price_uyu": 1600,
+      "base_price_uyu": 550,
       "sort_order": 1,
       "lead_time_weeks_min": 0,
       "lead_time_weeks_max": 3,
-      "material": "Trapillo premium",
+      "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
-      "created_at": "2026-10-24T20:58:56.792086+00:00",
-      "updated_at": "2026-11-04T16:10:57.86909+00:00",
+      "created_at": "2026-11-12T01:23:02.976508+00:00",
+      "updated_at": "2026-11-12T18:18:05.069617+00:00",
       "discount_percent": 0,
       "discount_active": false,
-      "collection_id": "28776d6a-7e2b-4ad4-8b93-7c5540f016f2",
-      "knit_hours": 4,
+      "collection_id": null,
+      "knit_hours": null,
       "category": {
         "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-        "name": "Accesorios",
         "slug": "accesorios",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
         "sort_order": 3,
-        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
-          "id": "37e397e2-91d1-4930-adf7-a192ee89bd67",
-          "alt": "Bolso Margot Cherry de trapillo tejido a mano, rojo con flecos",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/bolso-margot-cherry-dahila-crochet-8q9z.jpeg",
+          "id": "4867e7c6-395b-47ad-b7fc-3be307b5aa9b",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/cinturon-nudo-dia-dahila-crochet-8mqt.jpg",
           "type": "image",
           "position": 0,
-          "created_at": "2026-11-03T14:39:41.886749+00:00",
+          "created_at": "2026-11-12T18:18:05.51453+00:00",
           "is_primary": true,
-          "product_id": "7ba6ed79-b391-4a04-94ed-56e073669d3b"
+          "product_id": "21a6974d-41e7-4e95-9184-37927c991d84"
         },
         {
-          "id": "27514bc1-ef73-46a6-8267-ec5a2030792e",
-          "alt": "Bolso Margot Cherry de trapillo tejido a mano, rojo con flecos",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/bolso-margot-cherry-dahila-crochet-bnpo.jpeg",
+          "id": "9a17cffc-d24f-4df3-8342-399771439dfc",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/cinturon-nudo-dia-dahila-crochet-4sel.jpg",
           "type": "image",
           "position": 1,
-          "created_at": "2026-11-03T14:39:41.886749+00:00",
+          "created_at": "2026-11-12T18:18:05.51453+00:00",
           "is_primary": false,
-          "product_id": "7ba6ed79-b391-4a04-94ed-56e073669d3b"
+          "product_id": "21a6974d-41e7-4e95-9184-37927c991d84"
         },
         {
-          "id": "2207c5ea-0f9a-4006-8555-9b86e73d3104",
-          "alt": "Bolso Margot Cherry de trapillo tejido a mano, rojo con flecos",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/bolso-margot-cherry-dahila-crochet-2riz.jpg",
+          "id": "dcd7a22c-d1b6-4de4-ace8-04b54480e2c3",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/cinturon-nudo-dia-dahila-crochet-9kow.jpg",
           "type": "image",
           "position": 2,
-          "created_at": "2026-11-03T14:39:41.886749+00:00",
+          "created_at": "2026-11-12T18:18:05.51453+00:00",
           "is_primary": false,
-          "product_id": "7ba6ed79-b391-4a04-94ed-56e073669d3b"
+          "product_id": "21a6974d-41e7-4e95-9184-37927c991d84"
         }
       ],
       "sizes": [],
-      "colors": [],
-      "collection_name": "Sunset ‘26"
-    },
-    {
-      "id": "2a2cab56-4ac8-469b-8702-807232f44212",
-      "slug": "poncho-ete",
-      "name": "Poncho Été",
-      "description": "El poncho definitivo para las tarde en la playa y las noches de verano. Tejido 100% a mano, liviano, fresco y brillante",
-      "category_id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-      "badge": null,
-      "status": "active",
-      "base_price_uyu": 1890,
-      "sort_order": 2,
-      "lead_time_weeks_min": 0,
-      "lead_time_weeks_max": 3,
-      "material": "Algodón 100%",
-      "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
-      "is_custom_only": false,
-      "created_at": "2026-10-24T13:45:12.221391+00:00",
-      "updated_at": "2026-11-04T16:10:58.107476+00:00",
-      "discount_percent": 0,
-      "discount_active": false,
-      "collection_id": "28776d6a-7e2b-4ad4-8b93-7c5540f016f2",
-      "knit_hours": null,
-      "category": {
-        "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
-        "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
-        "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
-      },
-      "media": [
-        {
-          "id": "e8ff002b-c286-4915-9637-b1c2b5dc67ab",
-          "alt": "Poncho Été tejido a crochet, color crudo con flecos",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/poncho-ete-dahila-crochet-tily.jpg",
-          "type": "image",
-          "position": 0,
-          "created_at": "2026-11-03T14:40:00.142357+00:00",
-          "is_primary": true,
-          "product_id": "2a2cab56-4ac8-469b-8702-807232f44212"
-        },
-        {
-          "id": "e3a36556-bad0-4e74-b6ca-bb8912fb25b1",
-          "alt": "Poncho Été tejido a crochet, color crudo con flecos",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/poncho-ete-dahila-crochet-echh.jpg",
-          "type": "image",
-          "position": 1,
-          "created_at": "2026-11-03T14:40:00.142357+00:00",
-          "is_primary": false,
-          "product_id": "2a2cab56-4ac8-469b-8702-807232f44212"
-        },
-        {
-          "id": "31f655fd-5b0a-4d60-9942-e7d47fe98b49",
-          "alt": "Poncho Été tejido a crochet, color crudo con flecos",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/poncho-ete-dahila-crochet-ubza.jpg",
-          "type": "image",
-          "position": 2,
-          "created_at": "2026-11-03T14:40:00.142357+00:00",
-          "is_primary": false,
-          "product_id": "2a2cab56-4ac8-469b-8702-807232f44212"
-        },
-        {
-          "id": "e81322b9-2cd7-48bb-b709-f81b68c54f34",
-          "alt": "Poncho Été tejido a crochet, color crudo con flecos",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/poncho-ete-dahila-crochet-1r0v.jpeg",
-          "type": "image",
-          "position": 3,
-          "created_at": "2026-11-03T14:40:00.142357+00:00",
-          "is_primary": false,
-          "product_id": "2a2cab56-4ac8-469b-8702-807232f44212"
-        }
-      ],
-      "sizes": [
-        {
-          "id": "7d2c7e98-0862-4aa2-b2f7-2ffad43cb700",
-          "size": "XS/S",
-          "available": true,
-          "price_uyu": null,
-          "stock_qty": null,
-          "product_id": "2a2cab56-4ac8-469b-8702-807232f44212",
-          "sort_order": 0
-        },
-        {
-          "id": "9c1bf3b4-4829-4f3f-be2b-21d646ef34c0",
-          "size": "M/L",
-          "available": true,
-          "price_uyu": null,
-          "stock_qty": null,
-          "product_id": "2a2cab56-4ac8-469b-8702-807232f44212",
-          "sort_order": 1
-        }
-      ],
-      "colors": [],
-      "collection_name": "Sunset ‘26"
-    },
-    {
-      "id": "3824050d-1748-4856-986e-8fec81510134",
-      "slug": "manguitas-tramonto",
-      "name": "Manguitas Tramonto",
-      "description": "La pieza protagonista para levantar cualquier outfit básico. Tejidas 100% a mano con una trama suelta, liviana y con caída, combinando los tonos vibrantes de cuando cae el sol",
-      "category_id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-      "badge": null,
-      "status": "active",
-      "base_price_uyu": 2600,
-      "sort_order": 3,
-      "lead_time_weeks_min": 0,
-      "lead_time_weeks_max": 3,
-      "material": "Algodón 100%",
-      "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
-      "is_custom_only": false,
-      "created_at": "2026-10-24T13:14:04.883269+00:00",
-      "updated_at": "2026-11-04T03:20:01.236294+00:00",
-      "discount_percent": 0,
-      "discount_active": false,
-      "collection_id": "28776d6a-7e2b-4ad4-8b93-7c5540f016f2",
-      "knit_hours": 8,
-      "category": {
-        "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
-        "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
-        "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
-      },
-      "media": [
-        {
-          "id": "da59926e-d6eb-4d19-8a06-07105ecee077",
-          "alt": "Manguitas Tramonto tejidas a crochet, en rayas rosa, naranja y crema",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-lzu3.jpg",
-          "type": "image",
-          "position": 0,
-          "created_at": "2026-11-03T14:40:14.36939+00:00",
-          "is_primary": true,
-          "product_id": "3824050d-1748-4856-986e-8fec81510134"
-        },
-        {
-          "id": "7915e3a8-154d-4cd9-93cf-33e31ebfec65",
-          "alt": "Manguitas Tramonto tejidas a crochet, en rayas rosa, naranja y crema",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-u9dh.jpg",
-          "type": "image",
-          "position": 1,
-          "created_at": "2026-11-03T14:40:14.36939+00:00",
-          "is_primary": false,
-          "product_id": "3824050d-1748-4856-986e-8fec81510134"
-        },
-        {
-          "id": "9a3fe2c8-fbde-4947-991e-5cd4e9a367b5",
-          "alt": "Manguitas Tramonto tejidas a crochet, en rayas rosa, naranja y crema",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-7zob.jpg",
-          "type": "image",
-          "position": 2,
-          "created_at": "2026-11-03T14:40:14.36939+00:00",
-          "is_primary": false,
-          "product_id": "3824050d-1748-4856-986e-8fec81510134"
-        },
-        {
-          "id": "1f185075-33a2-4527-aa7b-cee777d1e79b",
-          "alt": "Manguitas Tramonto tejidas a crochet, en rayas rosa, naranja y crema",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-v8e2.jpg",
-          "type": "image",
-          "position": 3,
-          "created_at": "2026-11-03T14:40:14.36939+00:00",
-          "is_primary": false,
-          "product_id": "3824050d-1748-4856-986e-8fec81510134"
-        },
-        {
-          "id": "e8811477-f3c3-4400-b8bc-1cc53b184e06",
-          "alt": "Manguitas Tramonto tejidas a crochet, en rayas rosa, naranja y crema",
-          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-z1yl.jpg",
-          "type": "image",
-          "position": 4,
-          "created_at": "2026-11-03T14:40:14.36939+00:00",
-          "is_primary": false,
-          "product_id": "3824050d-1748-4856-986e-8fec81510134"
-        }
-      ],
-      "sizes": [
-        {
-          "id": "12da0b0a-7830-41f6-96d1-0b15ddded875",
-          "size": "Talle único",
-          "available": true,
-          "price_uyu": null,
-          "stock_qty": null,
-          "product_id": "3824050d-1748-4856-986e-8fec81510134",
-          "sort_order": 0
-        }
-      ],
-      "colors": [],
-      "collection_name": "Sunset ‘26"
+      "colors": []
     },
     {
       "id": "98359b55-c444-49ee-9604-390ff3fd29af",
@@ -329,25 +138,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 300,
-      "sort_order": 4,
+      "sort_order": 2,
       "lead_time_weeks_min": 0,
       "lead_time_weeks_max": 3,
       "material": "Algodón 100%",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-11-03T17:36:58.255682+00:00",
-      "updated_at": "2026-11-03T17:37:12.863004+00:00",
+      "updated_at": "2026-11-12T18:17:27.818215+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-        "name": "Accesorios",
         "slug": "accesorios",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
         "sort_order": 3,
-        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -423,6 +232,419 @@
       "colors": []
     },
     {
+      "id": "b47a29c2-35f6-4185-8237-8640de2660d3",
+      "slug": "chockers",
+      "name": "Chockers",
+      "description": "Chockers es la manera más fácil de sumar tejido a mano a tu día a día — o de regalarlo. Se teje a mano cuando la encargás. Como toda pieza tejida a mano, no existe otra igual. Envío a todo Uruguay.",
+      "category_id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
+      "badge": null,
+      "status": "active",
+      "base_price_uyu": 170,
+      "sort_order": 3,
+      "lead_time_weeks_min": 0,
+      "lead_time_weeks_max": 3,
+      "material": "Algodón",
+      "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
+      "is_custom_only": false,
+      "created_at": "2026-11-12T01:04:49.960537+00:00",
+      "updated_at": "2026-11-12T18:17:27.77412+00:00",
+      "discount_percent": 0,
+      "discount_active": false,
+      "collection_id": null,
+      "knit_hours": null,
+      "category": {
+        "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
+        "slug": "accesorios",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
+        "sort_order": 3,
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
+      },
+      "media": [
+        {
+          "id": "4f40d3e4-6f05-4690-bc79-aedb249054b3",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/chockers-dahila-crochet-pcw4.jpg",
+          "type": "image",
+          "position": 0,
+          "created_at": "2026-11-12T01:04:50.344644+00:00",
+          "is_primary": true,
+          "product_id": "b47a29c2-35f6-4185-8237-8640de2660d3"
+        },
+        {
+          "id": "2a88e4a5-0a85-46e9-a8bc-5d3d9091dcdc",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/chockers-dahila-crochet-sb67.jpg",
+          "type": "image",
+          "position": 1,
+          "created_at": "2026-11-12T01:04:50.344644+00:00",
+          "is_primary": false,
+          "product_id": "b47a29c2-35f6-4185-8237-8640de2660d3"
+        },
+        {
+          "id": "d1f98dd8-8d54-4a2b-9c7f-6122778513b8",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/chockers-dahila-crochet-4m5t.jpg",
+          "type": "image",
+          "position": 2,
+          "created_at": "2026-11-12T01:04:50.344644+00:00",
+          "is_primary": false,
+          "product_id": "b47a29c2-35f6-4185-8237-8640de2660d3"
+        },
+        {
+          "id": "81973921-322c-4f44-b4f4-c46f99df823d",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/chockers-dahila-crochet-qvzq.jpg",
+          "type": "image",
+          "position": 3,
+          "created_at": "2026-11-12T01:04:50.344644+00:00",
+          "is_primary": false,
+          "product_id": "b47a29c2-35f6-4185-8237-8640de2660d3"
+        },
+        {
+          "id": "a9313287-c317-491e-bd0f-676744d2ece6",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/chockers-dahila-crochet-6ldj.jpg",
+          "type": "image",
+          "position": 4,
+          "created_at": "2026-11-12T01:04:50.344644+00:00",
+          "is_primary": false,
+          "product_id": "b47a29c2-35f6-4185-8237-8640de2660d3"
+        },
+        {
+          "id": "ecab4dec-c998-450a-98e5-8ec4729edbbe",
+          "alt": null,
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/chockers-dahila-crochet-a2bc.jpg",
+          "type": "image",
+          "position": 5,
+          "created_at": "2026-11-12T01:04:50.344644+00:00",
+          "is_primary": false,
+          "product_id": "b47a29c2-35f6-4185-8237-8640de2660d3"
+        }
+      ],
+      "sizes": [],
+      "colors": []
+    },
+    {
+      "id": "3698dbb7-a936-4bc1-a386-d68ad5f46e47",
+      "slug": "bolso-margot-butter",
+      "name": "Bolso Margot Butter",
+      "description": "Tejido 100% a mano, pensado para acompañarte de la ciudad a la playa sin perder el estilo \nCombina colores en tendencia con flecos que le aportan movimiento y personalidad \nCon asa ajustable para que lo uses de la forma que más te guste",
+      "category_id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
+      "badge": null,
+      "status": "active",
+      "base_price_uyu": 1600,
+      "sort_order": 4,
+      "lead_time_weeks_min": 0,
+      "lead_time_weeks_max": 3,
+      "material": "Trapillo premium",
+      "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
+      "is_custom_only": false,
+      "created_at": "2026-10-24T20:55:47.611506+00:00",
+      "updated_at": "2026-11-12T18:17:27.77862+00:00",
+      "discount_percent": 0,
+      "discount_active": false,
+      "collection_id": "28776d6a-7e2b-4ad4-8b93-7c5540f016f2",
+      "knit_hours": 4,
+      "category": {
+        "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
+        "slug": "accesorios",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
+        "sort_order": 3,
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
+      },
+      "media": [
+        {
+          "id": "e0f2b823-834f-4a84-9dd8-b51ee16fbf19",
+          "alt": "Bolso Margot Butter de trapillo tejido a mano, amarillo con flecos",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-kd8p.jpeg",
+          "type": "image",
+          "position": 0,
+          "created_at": "2026-11-07T14:37:49.706252+00:00",
+          "is_primary": true,
+          "product_id": "3698dbb7-a936-4bc1-a386-d68ad5f46e47"
+        },
+        {
+          "id": "8d57e122-180b-4a0c-9334-3c5410209472",
+          "alt": "Bolso Margot Butter de trapillo tejido a mano, amarillo con flecos",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-wnoy.jpeg",
+          "type": "image",
+          "position": 1,
+          "created_at": "2026-11-07T14:37:49.706252+00:00",
+          "is_primary": false,
+          "product_id": "3698dbb7-a936-4bc1-a386-d68ad5f46e47"
+        },
+        {
+          "id": "914e627d-3044-4384-8b6d-a908833ab240",
+          "alt": "Bolso Margot Butter de trapillo tejido a mano, amarillo con flecos",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-g1ll.jpg",
+          "type": "image",
+          "position": 2,
+          "created_at": "2026-11-07T14:37:49.706252+00:00",
+          "is_primary": false,
+          "product_id": "3698dbb7-a936-4bc1-a386-d68ad5f46e47"
+        }
+      ],
+      "sizes": [],
+      "colors": [],
+      "collection_name": "Sunset ‘26"
+    },
+    {
+      "id": "7ba6ed79-b391-4a04-94ed-56e073669d3b",
+      "slug": "bolso-margot-cherry",
+      "name": "Bolso Margot cherry",
+      "description": "Inspirado en los colores más intensos del atardecer, tejido 100% a mano  en trapillo premium.\nEs el accesorio ideal para darle un golpe de color a cualquier look neutro de verano, con espacio y resistencia de sobra para usar tanto en la calle como en la arena",
+      "category_id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
+      "badge": null,
+      "status": "active",
+      "base_price_uyu": 1600,
+      "sort_order": 5,
+      "lead_time_weeks_min": 0,
+      "lead_time_weeks_max": 3,
+      "material": "Trapillo premium",
+      "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
+      "is_custom_only": false,
+      "created_at": "2026-10-24T20:58:56.792086+00:00",
+      "updated_at": "2026-11-12T18:17:27.77506+00:00",
+      "discount_percent": 0,
+      "discount_active": false,
+      "collection_id": "28776d6a-7e2b-4ad4-8b93-7c5540f016f2",
+      "knit_hours": 4,
+      "category": {
+        "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
+        "slug": "accesorios",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
+        "sort_order": 3,
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
+      },
+      "media": [
+        {
+          "id": "cde4c3b4-dc9b-47cf-a887-b87de4bb1399",
+          "alt": "Bolso Margot Cherry de trapillo tejido a mano, rojo con flecos",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/bolso-margot-cherry-dahila-crochet-8q9z.jpeg",
+          "type": "image",
+          "position": 0,
+          "created_at": "2026-11-07T14:38:04.02472+00:00",
+          "is_primary": true,
+          "product_id": "7ba6ed79-b391-4a04-94ed-56e073669d3b"
+        },
+        {
+          "id": "8c19d7ce-8b7e-4715-8050-e8a691ba8f9f",
+          "alt": "Bolso Margot Cherry de trapillo tejido a mano, rojo con flecos",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/bolso-margot-cherry-dahila-crochet-bnpo.jpeg",
+          "type": "image",
+          "position": 1,
+          "created_at": "2026-11-07T14:38:04.02472+00:00",
+          "is_primary": false,
+          "product_id": "7ba6ed79-b391-4a04-94ed-56e073669d3b"
+        },
+        {
+          "id": "8e09f310-6a45-4127-b8e2-1ac9471a76a4",
+          "alt": "Bolso Margot Cherry de trapillo tejido a mano, rojo con flecos",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/bolso-margot-cherry-dahila-crochet-2riz.jpg",
+          "type": "image",
+          "position": 2,
+          "created_at": "2026-11-07T14:38:04.02472+00:00",
+          "is_primary": false,
+          "product_id": "7ba6ed79-b391-4a04-94ed-56e073669d3b"
+        }
+      ],
+      "sizes": [],
+      "colors": [],
+      "collection_name": "Sunset ‘26"
+    },
+    {
+      "id": "2a2cab56-4ac8-469b-8702-807232f44212",
+      "slug": "poncho-ete",
+      "name": "Poncho Été",
+      "description": "El poncho definitivo para las tarde en la playa y las noches de verano. Tejido 100% a mano, liviano, fresco y brillante",
+      "category_id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
+      "badge": null,
+      "status": "active",
+      "base_price_uyu": 1700,
+      "sort_order": 6,
+      "lead_time_weeks_min": 0,
+      "lead_time_weeks_max": 3,
+      "material": "Algodón 100%",
+      "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
+      "is_custom_only": false,
+      "created_at": "2026-10-24T13:45:12.221391+00:00",
+      "updated_at": "2026-11-12T18:17:27.449715+00:00",
+      "discount_percent": 0,
+      "discount_active": false,
+      "collection_id": "28776d6a-7e2b-4ad4-8b93-7c5540f016f2",
+      "knit_hours": null,
+      "category": {
+        "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
+        "slug": "tops",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
+        "sort_order": 2,
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
+      },
+      "media": [
+        {
+          "id": "d23b4462-7d0c-4816-bffd-424a60eeead9",
+          "alt": "Poncho Été tejido a crochet, color crudo con flecos",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/poncho-ete-dahila-crochet-tily.jpg",
+          "type": "image",
+          "position": 0,
+          "created_at": "2026-11-07T14:59:06.682308+00:00",
+          "is_primary": true,
+          "product_id": "2a2cab56-4ac8-469b-8702-807232f44212"
+        },
+        {
+          "id": "49a52190-88b1-4493-9dd8-0cc4976020fa",
+          "alt": "Poncho Été tejido a crochet, color crudo con flecos",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/poncho-ete-dahila-crochet-echh.jpg",
+          "type": "image",
+          "position": 1,
+          "created_at": "2026-11-07T14:59:06.682308+00:00",
+          "is_primary": false,
+          "product_id": "2a2cab56-4ac8-469b-8702-807232f44212"
+        },
+        {
+          "id": "44320fe0-5d34-482f-a347-23617c166dce",
+          "alt": "Poncho Été tejido a crochet, color crudo con flecos",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/poncho-ete-dahila-crochet-ubza.jpg",
+          "type": "image",
+          "position": 2,
+          "created_at": "2026-11-07T14:59:06.682308+00:00",
+          "is_primary": false,
+          "product_id": "2a2cab56-4ac8-469b-8702-807232f44212"
+        },
+        {
+          "id": "16b548a3-4761-470c-9721-0aa88af6657d",
+          "alt": "Poncho Été tejido a crochet, color crudo con flecos",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/poncho-ete-dahila-crochet-1r0v.jpeg",
+          "type": "image",
+          "position": 3,
+          "created_at": "2026-11-07T14:59:06.682308+00:00",
+          "is_primary": false,
+          "product_id": "2a2cab56-4ac8-469b-8702-807232f44212"
+        }
+      ],
+      "sizes": [
+        {
+          "id": "50faa2d2-b6ce-42b7-bb8c-b14d25763480",
+          "size": "XS/S",
+          "available": true,
+          "price_uyu": 1700,
+          "stock_qty": null,
+          "product_id": "2a2cab56-4ac8-469b-8702-807232f44212",
+          "sort_order": 0
+        },
+        {
+          "id": "4cc8f855-08ea-4c54-856b-1af1b38d2ee2",
+          "size": "M/L",
+          "available": true,
+          "price_uyu": 1700,
+          "stock_qty": null,
+          "product_id": "2a2cab56-4ac8-469b-8702-807232f44212",
+          "sort_order": 1
+        }
+      ],
+      "colors": [],
+      "collection_name": "Sunset ‘26"
+    },
+    {
+      "id": "3824050d-1748-4856-986e-8fec81510134",
+      "slug": "manguitas-tramonto",
+      "name": "Manguitas Tramonto",
+      "description": "La pieza protagonista para levantar cualquier outfit básico. Tejidas 100% a mano con una trama suelta, liviana y con caída, combinando los tonos vibrantes de cuando cae el sol",
+      "category_id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
+      "badge": null,
+      "status": "active",
+      "base_price_uyu": 2500,
+      "sort_order": 7,
+      "lead_time_weeks_min": 0,
+      "lead_time_weeks_max": 3,
+      "material": "Algodón 100%",
+      "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
+      "is_custom_only": false,
+      "created_at": "2026-10-24T13:14:04.883269+00:00",
+      "updated_at": "2026-11-12T18:17:27.783266+00:00",
+      "discount_percent": 0,
+      "discount_active": false,
+      "collection_id": "28776d6a-7e2b-4ad4-8b93-7c5540f016f2",
+      "knit_hours": 8,
+      "category": {
+        "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
+        "slug": "tops",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
+        "sort_order": 2,
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
+      },
+      "media": [
+        {
+          "id": "b1c3077c-bfaf-4bad-8809-55badcf45783",
+          "alt": "Manguitas Tramonto tejidas a crochet, en rayas rosa, naranja y crema",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-lzu3.jpg",
+          "type": "image",
+          "position": 0,
+          "created_at": "2026-11-08T01:04:38.814069+00:00",
+          "is_primary": true,
+          "product_id": "3824050d-1748-4856-986e-8fec81510134"
+        },
+        {
+          "id": "09ae4b46-cfd7-46de-ab92-72ef937d97ab",
+          "alt": "Manguitas Tramonto tejidas a crochet, en rayas rosa, naranja y crema",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-u9dh.jpg",
+          "type": "image",
+          "position": 1,
+          "created_at": "2026-11-08T01:04:38.814069+00:00",
+          "is_primary": false,
+          "product_id": "3824050d-1748-4856-986e-8fec81510134"
+        },
+        {
+          "id": "6d37177e-5f7b-40fd-a1fa-e3c976289b85",
+          "alt": "Manguitas Tramonto tejidas a crochet, en rayas rosa, naranja y crema",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-7zob.jpg",
+          "type": "image",
+          "position": 2,
+          "created_at": "2026-11-08T01:04:38.814069+00:00",
+          "is_primary": false,
+          "product_id": "3824050d-1748-4856-986e-8fec81510134"
+        },
+        {
+          "id": "f621dee8-ea8b-40c7-9ef0-d3a94dbfca9d",
+          "alt": "Manguitas Tramonto tejidas a crochet, en rayas rosa, naranja y crema",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-v8e2.jpg",
+          "type": "image",
+          "position": 3,
+          "created_at": "2026-11-08T01:04:38.814069+00:00",
+          "is_primary": false,
+          "product_id": "3824050d-1748-4856-986e-8fec81510134"
+        },
+        {
+          "id": "7252eda0-378d-471b-afce-a624142372d1",
+          "alt": "Manguitas Tramonto tejidas a crochet, en rayas rosa, naranja y crema",
+          "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/producto-dahila-crochet-z1yl.jpg",
+          "type": "image",
+          "position": 4,
+          "created_at": "2026-11-08T01:04:38.814069+00:00",
+          "is_primary": false,
+          "product_id": "3824050d-1748-4856-986e-8fec81510134"
+        }
+      ],
+      "sizes": [
+        {
+          "id": "9b7157ed-f3bb-42dd-aae6-9066b4aa96af",
+          "size": "Talle único",
+          "available": true,
+          "price_uyu": null,
+          "stock_qty": null,
+          "product_id": "3824050d-1748-4856-986e-8fec81510134",
+          "sort_order": 0
+        }
+      ],
+      "colors": [],
+      "collection_name": "Sunset ‘26"
+    },
+    {
       "id": "62212a5d-64cf-40d7-b52b-e709ddce6eba",
       "slug": "top-margarita",
       "name": "Top margarita",
@@ -431,25 +653,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 2600,
-      "sort_order": 5,
+      "sort_order": 8,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón 100%",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-10-15T17:17:18.39686+00:00",
-      "updated_at": "2026-11-03T17:37:12.864712+00:00",
+      "updated_at": "2026-11-12T18:17:27.790288+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
         "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
         "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -523,25 +745,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 2600,
-      "sort_order": 6,
+      "sort_order": 9,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón 100%",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-10-12T21:45:18.020235+00:00",
-      "updated_at": "2026-11-03T17:37:04.373655+00:00",
+      "updated_at": "2026-11-12T18:17:27.763791+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": 8,
       "category": {
         "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
         "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
         "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -615,25 +837,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1899,
-      "sort_order": 7,
+      "sort_order": 10,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón rústico",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-10-21T22:13:57.115993+00:00",
-      "updated_at": "2026-11-03T17:37:04.465386+00:00",
+      "updated_at": "2026-11-12T18:17:27.768384+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "02e8a569-619e-4417-b748-956bd835aff4",
-        "name": "Sweaters",
         "slug": "sweaters",
-        "created_at": "2026-09-03T21:50:54.823161+00:00",
+        "name": "Sweaters",
+        "description": "Sweaters y buzos tejidos a mano en lana y mezclas con lana: las piezas más abrigadas del taller, para el invierno de verdad. Se tejen a pedido, en tu talle y en el color que elijas.",
         "sort_order": 5,
-        "description": "Sweaters y buzos tejidos a mano en lana y mezclas con lana: las piezas más abrigadas del taller, para el invierno de verdad. Se tejen a pedido, en tu talle y en el color que elijas."
+        "created_at": "2026-09-03T21:50:54.823161+00:00"
       },
       "media": [
         {
@@ -699,25 +921,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 2300,
-      "sort_order": 8,
+      "sort_order": 11,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-10-09T22:59:22.000865+00:00",
-      "updated_at": "2026-11-03T17:37:04.45471+00:00",
+      "updated_at": "2026-11-12T18:17:27.759677+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
         "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
         "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -791,25 +1013,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 2940,
-      "sort_order": 9,
+      "sort_order": 12,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Acrílico antipilling",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-08-03T21:05:09.093632+00:00",
-      "updated_at": "2026-11-03T17:37:04.053007+00:00",
+      "updated_at": "2026-11-12T18:17:27.500502+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": 16,
       "category": {
         "id": "c2876878-3dfd-4dd8-9ecc-0eac800db711",
-        "name": "Cardigans",
         "slug": "cardigans",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Cardigans",
+        "description": "Cardigans —o sacos, como les decimos acá— de crochet tejidos a mano, de corto y 3/4 a oversize. En algodón para entretiempo y aire acondicionado, o en hilados más abrigados para el frío. Al tejerse a pedido, elegís color y talle: en un cardigan, además, el talle perdona más que en cualquier otra prenda.",
         "sort_order": 1,
-        "description": "Cardigans —o sacos, como les decimos acá— de crochet tejidos a mano, de corto y 3/4 a oversize. En algodón para entretiempo y aire acondicionado, o en hilados más abrigados para el frío. Al tejerse a pedido, elegís color y talle: en un cardigan, además, el talle perdona más que en cualquier otra prenda."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -903,25 +1125,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 3250,
-      "sort_order": 10,
+      "sort_order": 13,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón rústico",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:44:37.740143+00:00",
-      "updated_at": "2026-11-03T17:37:04.457027+00:00",
+      "updated_at": "2026-11-12T18:17:27.782092+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": 14,
       "category": {
         "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
         "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
         "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -995,25 +1217,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 3230,
-      "sort_order": 11,
+      "sort_order": 14,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Acrílico antipilling",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-08-18T22:13:23.090307+00:00",
-      "updated_at": "2026-11-03T17:37:03.812808+00:00",
+      "updated_at": "2026-11-12T18:17:27.44958+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "c2876878-3dfd-4dd8-9ecc-0eac800db711",
-        "name": "Cardigans",
         "slug": "cardigans",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Cardigans",
+        "description": "Cardigans —o sacos, como les decimos acá— de crochet tejidos a mano, de corto y 3/4 a oversize. En algodón para entretiempo y aire acondicionado, o en hilados más abrigados para el frío. Al tejerse a pedido, elegís color y talle: en un cardigan, además, el talle perdona más que en cualquier otra prenda.",
         "sort_order": 1,
-        "description": "Cardigans —o sacos, como les decimos acá— de crochet tejidos a mano, de corto y 3/4 a oversize. En algodón para entretiempo y aire acondicionado, o en hilados más abrigados para el frío. Al tejerse a pedido, elegís color y talle: en un cardigan, además, el talle perdona más que en cualquier otra prenda."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -1078,25 +1300,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 380,
-      "sort_order": 12,
+      "sort_order": 15,
       "lead_time_weeks_min": 0,
       "lead_time_weeks_max": 2,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:20:02.638329+00:00",
-      "updated_at": "2026-11-03T17:37:04.400734+00:00",
+      "updated_at": "2026-11-12T18:17:27.488518+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-        "name": "Accesorios",
         "slug": "accesorios",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
         "sort_order": 3,
-        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -1132,25 +1354,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 720,
-      "sort_order": 13,
+      "sort_order": 16,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:39:50.953134+00:00",
-      "updated_at": "2026-11-03T17:37:04.050536+00:00",
+      "updated_at": "2026-11-12T18:17:27.778743+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-        "name": "Accesorios",
         "slug": "accesorios",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
         "sort_order": 3,
-        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -1196,25 +1418,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 2060,
-      "sort_order": 14,
+      "sort_order": 17,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
       "material": "Lana acrílica",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-07-13T14:35:05.176886+00:00",
-      "updated_at": "2026-11-03T17:37:04.414486+00:00",
+      "updated_at": "2026-11-12T18:17:27.453956+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "02e8a569-619e-4417-b748-956bd835aff4",
-        "name": "Sweaters",
         "slug": "sweaters",
-        "created_at": "2026-09-03T21:50:54.823161+00:00",
+        "name": "Sweaters",
+        "description": "Sweaters y buzos tejidos a mano en lana y mezclas con lana: las piezas más abrigadas del taller, para el invierno de verdad. Se tejen a pedido, en tu talle y en el color que elijas.",
         "sort_order": 5,
-        "description": "Sweaters y buzos tejidos a mano en lana y mezclas con lana: las piezas más abrigadas del taller, para el invierno de verdad. Se tejen a pedido, en tu talle y en el color que elijas."
+        "created_at": "2026-09-03T21:50:54.823161+00:00"
       },
       "media": [
         {
@@ -1259,15 +1481,6 @@
           "sort_order": 0
         },
         {
-          "id": "3aa9df71-392a-494e-9804-8a6f6f6d1944",
-          "size": "L",
-          "available": true,
-          "price_uyu": 2270,
-          "stock_qty": null,
-          "product_id": "36379e02-073b-46ae-8e07-62eae0b3d137",
-          "sort_order": 2
-        },
-        {
           "id": "0a1f586e-65f2-4d17-a237-203157997582",
           "size": "M",
           "available": true,
@@ -1275,6 +1488,15 @@
           "stock_qty": null,
           "product_id": "36379e02-073b-46ae-8e07-62eae0b3d137",
           "sort_order": 1
+        },
+        {
+          "id": "3aa9df71-392a-494e-9804-8a6f6f6d1944",
+          "size": "L",
+          "available": true,
+          "price_uyu": 2270,
+          "stock_qty": null,
+          "product_id": "36379e02-073b-46ae-8e07-62eae0b3d137",
+          "sort_order": 2
         }
       ],
       "colors": []
@@ -1288,25 +1510,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1250,
-      "sort_order": 16,
+      "sort_order": 19,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:57:40.764851+00:00",
-      "updated_at": "2026-11-03T17:37:04.504937+00:00",
+      "updated_at": "2026-11-12T18:17:27.880394+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
         "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
         "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -1380,25 +1602,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 3470,
-      "sort_order": 17,
+      "sort_order": 20,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-08-26T18:07:16.349644+00:00",
-      "updated_at": "2026-11-03T17:37:04.420234+00:00",
+      "updated_at": "2026-11-12T18:17:27.90374+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "c2876878-3dfd-4dd8-9ecc-0eac800db711",
-        "name": "Cardigans",
         "slug": "cardigans",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Cardigans",
+        "description": "Cardigans —o sacos, como les decimos acá— de crochet tejidos a mano, de corto y 3/4 a oversize. En algodón para entretiempo y aire acondicionado, o en hilados más abrigados para el frío. Al tejerse a pedido, elegís color y talle: en un cardigan, además, el talle perdona más que en cualquier otra prenda.",
         "sort_order": 1,
-        "description": "Cardigans —o sacos, como les decimos acá— de crochet tejidos a mano, de corto y 3/4 a oversize. En algodón para entretiempo y aire acondicionado, o en hilados más abrigados para el frío. Al tejerse a pedido, elegís color y talle: en un cardigan, además, el talle perdona más que en cualquier otra prenda."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -1434,15 +1656,6 @@
       ],
       "sizes": [
         {
-          "id": "2e33f584-bb85-49cc-bb2a-8d84248b46a4",
-          "size": "M/L",
-          "available": true,
-          "price_uyu": 3990,
-          "stock_qty": null,
-          "product_id": "c972f39d-954e-44aa-a349-3435eaa81740",
-          "sort_order": 1
-        },
-        {
           "id": "22b4b5c3-ef81-45c4-a82f-f8b1959fe366",
           "size": "S",
           "available": true,
@@ -1450,6 +1663,15 @@
           "stock_qty": null,
           "product_id": "c972f39d-954e-44aa-a349-3435eaa81740",
           "sort_order": 0
+        },
+        {
+          "id": "2e33f584-bb85-49cc-bb2a-8d84248b46a4",
+          "size": "M/L",
+          "available": true,
+          "price_uyu": 3990,
+          "stock_qty": null,
+          "product_id": "c972f39d-954e-44aa-a349-3435eaa81740",
+          "sort_order": 1
         }
       ],
       "colors": []
@@ -1463,25 +1685,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1470,
-      "sort_order": 18,
+      "sort_order": 21,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:24:51.834802+00:00",
-      "updated_at": "2026-11-03T17:37:04.494417+00:00",
+      "updated_at": "2026-11-12T18:17:27.824266+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
         "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
         "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -1555,25 +1777,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1980,
-      "sort_order": 19,
+      "sort_order": 22,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón con lurex",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:52:36.484846+00:00",
-      "updated_at": "2026-11-03T17:37:04.454018+00:00",
+      "updated_at": "2026-11-12T18:17:27.851364+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "c2876878-3dfd-4dd8-9ecc-0eac800db711",
-        "name": "Cardigans",
         "slug": "cardigans",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Cardigans",
+        "description": "Cardigans —o sacos, como les decimos acá— de crochet tejidos a mano, de corto y 3/4 a oversize. En algodón para entretiempo y aire acondicionado, o en hilados más abrigados para el frío. Al tejerse a pedido, elegís color y talle: en un cardigan, además, el talle perdona más que en cualquier otra prenda.",
         "sort_order": 1,
-        "description": "Cardigans —o sacos, como les decimos acá— de crochet tejidos a mano, de corto y 3/4 a oversize. En algodón para entretiempo y aire acondicionado, o en hilados más abrigados para el frío. Al tejerse a pedido, elegís color y talle: en un cardigan, además, el talle perdona más que en cualquier otra prenda."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -1647,25 +1869,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1470,
-      "sort_order": 20,
+      "sort_order": 23,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-03T22:06:18.544083+00:00",
-      "updated_at": "2026-11-03T17:37:04.491781+00:00",
+      "updated_at": "2026-11-12T18:17:27.855068+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
         "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
         "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -1739,25 +1961,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1100,
-      "sort_order": 21,
+      "sort_order": 24,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-03T22:10:24.38197+00:00",
-      "updated_at": "2026-11-03T17:37:04.520283+00:00",
+      "updated_at": "2026-11-12T18:17:27.876363+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-        "name": "Accesorios",
         "slug": "accesorios",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
         "sort_order": 3,
-        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -1783,25 +2005,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 2520,
-      "sort_order": 22,
+      "sort_order": 25,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:37:30.009853+00:00",
-      "updated_at": "2026-11-03T17:37:04.437255+00:00",
+      "updated_at": "2026-11-12T18:17:27.90124+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "e463a213-522d-4e55-ba54-3827c4c2aa84",
-        "name": "Sets",
         "slug": "sets",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Sets",
+        "description": "Sets de crochet tejidos a mano: dos o tres piezas hechas del mismo hilado y el mismo punto, para que combinen de verdad y no solo \"parecido\". De playa en algodón, de salida en hilado con brillo, o de abrigo en lana. Cada pieza se puede tejer en su propio talle.",
         "sort_order": 4,
-        "description": "Sets de crochet tejidos a mano: dos o tres piezas hechas del mismo hilado y el mismo punto, para que combinen de verdad y no solo \"parecido\". De playa en algodón, de salida en hilado con brillo, o de abrigo en lana. Cada pieza se puede tejer en su propio talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -1865,25 +2087,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 2100,
-      "sort_order": 23,
+      "sort_order": 26,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón con lurex",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:33:44.321154+00:00",
-      "updated_at": "2026-11-03T17:37:04.454568+00:00",
+      "updated_at": "2026-11-12T18:17:27.891967+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "e463a213-522d-4e55-ba54-3827c4c2aa84",
-        "name": "Sets",
         "slug": "sets",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Sets",
+        "description": "Sets de crochet tejidos a mano: dos o tres piezas hechas del mismo hilado y el mismo punto, para que combinen de verdad y no solo \"parecido\". De playa en algodón, de salida en hilado con brillo, o de abrigo en lana. Cada pieza se puede tejer en su propio talle.",
         "sort_order": 4,
-        "description": "Sets de crochet tejidos a mano: dos o tres piezas hechas del mismo hilado y el mismo punto, para que combinen de verdad y no solo \"parecido\". De playa en algodón, de salida en hilado con brillo, o de abrigo en lana. Cada pieza se puede tejer en su propio talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -1936,83 +2158,83 @@
       "category_id": "02e8a569-619e-4417-b748-956bd835aff4",
       "badge": null,
       "status": "active",
-      "base_price_uyu": 2900,
-      "sort_order": 24,
+      "base_price_uyu": 3200,
+      "sort_order": 27,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Lana 50% natural y 50% acrílica",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-09-03T21:50:35.080209+00:00",
-      "updated_at": "2026-11-03T17:37:04.403554+00:00",
+      "updated_at": "2026-11-12T18:17:27.880528+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "02e8a569-619e-4417-b748-956bd835aff4",
-        "name": "Sweaters",
         "slug": "sweaters",
-        "created_at": "2026-09-03T21:50:54.823161+00:00",
+        "name": "Sweaters",
+        "description": "Sweaters y buzos tejidos a mano en lana y mezclas con lana: las piezas más abrigadas del taller, para el invierno de verdad. Se tejen a pedido, en tu talle y en el color que elijas.",
         "sort_order": 5,
-        "description": "Sweaters y buzos tejidos a mano en lana y mezclas con lana: las piezas más abrigadas del taller, para el invierno de verdad. Se tejen a pedido, en tu talle y en el color que elijas."
+        "created_at": "2026-09-03T21:50:54.823161+00:00"
       },
       "media": [
         {
-          "id": "8c4b2909-05dc-494a-9e69-0dc899b2a7ad",
+          "id": "e3ae8152-6199-4421-8361-cb5a669bbbd2",
           "alt": null,
           "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/sweater-cherry-dahila-crochet-03sz.jpg",
           "type": "image",
           "position": 0,
-          "created_at": "2026-09-03T21:51:55.313122+00:00",
+          "created_at": "2026-11-09T13:12:49.292302+00:00",
           "is_primary": true,
           "product_id": "da34f723-ebf0-4045-ae68-7a1d614a3423"
         },
         {
-          "id": "a08755eb-2264-4ff1-8130-21001a480d6b",
+          "id": "07365600-9b68-46aa-8674-aaedcb2e26d0",
           "alt": null,
           "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/sweater-cherry-dahila-crochet-qkv8.jpg",
           "type": "image",
           "position": 1,
-          "created_at": "2026-09-03T21:51:55.313122+00:00",
+          "created_at": "2026-11-09T13:12:49.292302+00:00",
           "is_primary": false,
           "product_id": "da34f723-ebf0-4045-ae68-7a1d614a3423"
         },
         {
-          "id": "111617c9-ac81-4b11-b8d4-b8066fb10d27",
+          "id": "ab874f1a-75b5-473e-aa3e-92d1da81dc60",
           "alt": null,
           "url": "https://nuihzsytxolftcaggbbk.supabase.co/storage/v1/object/public/media/products/sweater-cherry-dahila-crochet-7qjj.jpg",
           "type": "image",
           "position": 2,
-          "created_at": "2026-09-03T21:51:55.313122+00:00",
+          "created_at": "2026-11-09T13:12:49.292302+00:00",
           "is_primary": false,
           "product_id": "da34f723-ebf0-4045-ae68-7a1d614a3423"
         }
       ],
       "sizes": [
         {
-          "id": "ad3080b2-406b-4aa4-88e7-10f14125c56a",
+          "id": "5658a770-d618-4c13-b089-0378a109d35c",
           "size": "S",
           "available": true,
-          "price_uyu": 2690,
+          "price_uyu": 3200,
           "stock_qty": null,
           "product_id": "da34f723-ebf0-4045-ae68-7a1d614a3423",
           "sort_order": 0
         },
         {
-          "id": "29eae906-3609-4fe2-811b-ddf8f462f1fe",
+          "id": "01dc5ae0-60f4-4649-81ca-dcd322ede80e",
           "size": "M",
           "available": true,
-          "price_uyu": 2900,
+          "price_uyu": 3200,
           "stock_qty": null,
           "product_id": "da34f723-ebf0-4045-ae68-7a1d614a3423",
           "sort_order": 1
         },
         {
-          "id": "638abd33-0b2e-4fc8-9d3e-9a09a775a3f0",
+          "id": "c24fb157-5bd2-403f-9a03-c47cad8e5f7d",
           "size": "L",
           "available": true,
-          "price_uyu": 3110,
+          "price_uyu": 3200,
           "stock_qty": null,
           "product_id": "da34f723-ebf0-4045-ae68-7a1d614a3423",
           "sort_order": 2
@@ -2029,14 +2251,14 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 680,
-      "sort_order": 25,
+      "sort_order": 28,
       "lead_time_weeks_min": 0,
       "lead_time_weeks_max": 2,
       "material": "Trapillo reciclado",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:55:47.185838+00:00",
-      "updated_at": "2026-11-03T17:37:04.482442+00:00",
+      "updated_at": "2026-11-12T18:17:27.909605+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
@@ -2106,25 +2328,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 760,
-      "sort_order": 27,
+      "sort_order": 30,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:01:40.522004+00:00",
-      "updated_at": "2026-11-03T17:37:04.514734+00:00",
+      "updated_at": "2026-11-12T18:17:27.82914+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-        "name": "Accesorios",
         "slug": "accesorios",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
         "sort_order": 3,
-        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -2170,25 +2392,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 2150,
-      "sort_order": 28,
+      "sort_order": 31,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:18:28.857781+00:00",
-      "updated_at": "2026-11-03T17:37:04.50118+00:00",
+      "updated_at": "2026-11-12T18:17:27.846718+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
         "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
         "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -2262,25 +2484,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1160,
-      "sort_order": 29,
+      "sort_order": 32,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
       "material": "Hilo acrílico",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-03T22:01:44.866126+00:00",
-      "updated_at": "2026-11-03T17:37:04.400952+00:00",
+      "updated_at": "2026-11-12T18:17:27.865677+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
         "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
         "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -2354,25 +2576,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1050,
-      "sort_order": 30,
+      "sort_order": 33,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:29:41.549398+00:00",
-      "updated_at": "2026-11-03T17:37:04.491239+00:00",
+      "updated_at": "2026-11-12T18:17:27.891942+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
         "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
         "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -2446,25 +2668,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1040,
-      "sort_order": 31,
+      "sort_order": 34,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
       "material": "Hilo acrílico",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-03T21:51:38.578418+00:00",
-      "updated_at": "2026-11-03T17:37:04.449906+00:00",
+      "updated_at": "2026-11-12T18:17:27.819513+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
         "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
         "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -2538,25 +2760,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1350,
-      "sort_order": 32,
+      "sort_order": 35,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T17:55:37.184617+00:00",
-      "updated_at": "2026-11-03T17:37:04.379759+00:00",
+      "updated_at": "2026-11-12T18:17:27.834657+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
         "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
         "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -2630,25 +2852,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 680,
-      "sort_order": 34,
+      "sort_order": 37,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-03T22:08:29.622136+00:00",
-      "updated_at": "2026-11-03T17:37:04.370873+00:00",
+      "updated_at": "2026-11-12T18:17:27.841466+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-        "name": "Accesorios",
         "slug": "accesorios",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
         "sort_order": 3,
-        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -2694,25 +2916,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1460,
-      "sort_order": 35,
+      "sort_order": 38,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
       "material": "Trapillo reciclado",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:50:35.092372+00:00",
-      "updated_at": "2026-11-03T17:37:04.353496+00:00",
+      "updated_at": "2026-11-12T18:17:27.828685+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-        "name": "Accesorios",
         "slug": "accesorios",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
         "sort_order": 3,
-        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -2758,25 +2980,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1030,
-      "sort_order": 36,
+      "sort_order": 39,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
       "material": "Lana",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:59:02.485417+00:00",
-      "updated_at": "2026-11-03T17:37:04.475208+00:00",
+      "updated_at": "2026-11-12T18:17:27.828856+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "e463a213-522d-4e55-ba54-3827c4c2aa84",
-        "name": "Sets",
         "slug": "sets",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Sets",
+        "description": "Sets de crochet tejidos a mano: dos o tres piezas hechas del mismo hilado y el mismo punto, para que combinen de verdad y no solo \"parecido\". De playa en algodón, de salida en hilado con brillo, o de abrigo en lana. Cada pieza se puede tejer en su propio talle.",
         "sort_order": 4,
-        "description": "Sets de crochet tejidos a mano: dos o tres piezas hechas del mismo hilado y el mismo punto, para que combinen de verdad y no solo \"parecido\". De playa en algodón, de salida en hilado con brillo, o de abrigo en lana. Cada pieza se puede tejer en su propio talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -2812,25 +3034,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1040,
-      "sort_order": 37,
+      "sort_order": 40,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Trapillo reciclado",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:35:40.510918+00:00",
-      "updated_at": "2026-11-03T17:37:04.500823+00:00",
+      "updated_at": "2026-11-12T18:17:27.858218+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-        "name": "Accesorios",
         "slug": "accesorios",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
         "sort_order": 3,
-        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -2866,25 +3088,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 620,
-      "sort_order": 38,
+      "sort_order": 41,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Lana",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:47:56.808285+00:00",
-      "updated_at": "2026-11-03T17:37:04.462604+00:00",
+      "updated_at": "2026-11-12T18:17:27.863499+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-        "name": "Accesorios",
         "slug": "accesorios",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
         "sort_order": 3,
-        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -2930,25 +3152,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1040,
-      "sort_order": 39,
+      "sort_order": 42,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
       "material": "Trapillo reciclado",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:43:04.530416+00:00",
-      "updated_at": "2026-11-03T17:37:04.476568+00:00",
+      "updated_at": "2026-11-12T18:17:27.875708+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-        "name": "Accesorios",
         "slug": "accesorios",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
         "sort_order": 3,
-        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -2994,25 +3216,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1050,
-      "sort_order": 40,
+      "sort_order": 43,
       "lead_time_weeks_min": 1,
       "lead_time_weeks_max": 2,
       "material": "Chenille",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:54:16.945527+00:00",
-      "updated_at": "2026-11-03T17:37:04.345637+00:00",
+      "updated_at": "2026-11-12T18:17:27.900296+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "4f3b6ae4-2343-4ae4-a3ed-0ad29bdf9933",
-        "name": "Accesorios",
         "slug": "accesorios",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Accesorios",
+        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle.",
         "sort_order": 3,
-        "description": "Accesorios tejidos a mano: bolsos en trapillo reciclado y algodón, bufandas, bandanas y calentadores. Son las piezas de plazo más corto del taller y las más fáciles de regalar, porque no dependen del talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -3048,25 +3270,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1560,
-      "sort_order": 41,
+      "sort_order": 44,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:46:44.808269+00:00",
-      "updated_at": "2026-11-03T17:37:04.286843+00:00",
+      "updated_at": "2026-11-12T18:17:27.848628+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "6f67a34e-1e73-4b62-85bf-04ad0e94efa7",
-        "name": "Tops",
         "slug": "tops",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Tops",
+        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas.",
         "sort_order": 2,
-        "description": "Tops y musculosas de crochet y de hilo, tejidos a mano en Montevideo, la mayoría en algodón: frescos, con caída y en punto abierto para el verano uruguayo. Se tejen después de tu pedido, así que elegís talle y color — y si estás entre dos talles, se ajusta a tus medidas."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -3112,25 +3334,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1560,
-      "sort_order": 42,
+      "sort_order": 45,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-06T18:49:26.29325+00:00",
-      "updated_at": "2026-11-03T17:37:04.514817+00:00",
+      "updated_at": "2026-11-12T18:17:27.886476+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "c2876878-3dfd-4dd8-9ecc-0eac800db711",
-        "name": "Cardigans",
         "slug": "cardigans",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Cardigans",
+        "description": "Cardigans —o sacos, como les decimos acá— de crochet tejidos a mano, de corto y 3/4 a oversize. En algodón para entretiempo y aire acondicionado, o en hilados más abrigados para el frío. Al tejerse a pedido, elegís color y talle: en un cardigan, además, el talle perdona más que en cualquier otra prenda.",
         "sort_order": 1,
-        "description": "Cardigans —o sacos, como les decimos acá— de crochet tejidos a mano, de corto y 3/4 a oversize. En algodón para entretiempo y aire acondicionado, o en hilados más abrigados para el frío. Al tejerse a pedido, elegís color y talle: en un cardigan, además, el talle perdona más que en cualquier otra prenda."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -3175,15 +3397,6 @@
           "sort_order": 0
         },
         {
-          "id": "0b8cec66-d33c-48cb-a1b6-586f005d3049",
-          "size": "L",
-          "available": true,
-          "price_uyu": 1770,
-          "stock_qty": null,
-          "product_id": "b137ab7b-ff05-4add-9617-f23b31210aec",
-          "sort_order": 2
-        },
-        {
           "id": "d353cce2-374c-48cf-bb79-82997640b80b",
           "size": "M",
           "available": true,
@@ -3191,6 +3404,15 @@
           "stock_qty": null,
           "product_id": "b137ab7b-ff05-4add-9617-f23b31210aec",
           "sort_order": 1
+        },
+        {
+          "id": "0b8cec66-d33c-48cb-a1b6-586f005d3049",
+          "size": "L",
+          "available": true,
+          "price_uyu": 1770,
+          "stock_qty": null,
+          "product_id": "b137ab7b-ff05-4add-9617-f23b31210aec",
+          "sort_order": 2
         }
       ],
       "colors": []
@@ -3204,25 +3426,25 @@
       "badge": null,
       "status": "active",
       "base_price_uyu": 1210,
-      "sort_order": 43,
+      "sort_order": 46,
       "lead_time_weeks_min": 2,
       "lead_time_weeks_max": 3,
       "material": "Algodón con lurex",
       "care_instructions": "Lavá a mano con agua fría y jabón neutro, sin frotar ni retorcer. Enjuagá con agua a la misma temperatura: el cambio brusco es lo que apelmaza la fibra.\r\nPara secar: apoyala en horizontal sobre una toalla, a la sombra. Nunca colgada — el peso del agua la estira. Nada de secarropas.\r\nSi la guardás mucho tiempo, sacala del placard cada tanto para que la fibra respire.",
       "is_custom_only": false,
       "created_at": "2026-06-12T20:33:56.113716+00:00",
-      "updated_at": "2026-11-03T17:37:04.518809+00:00",
+      "updated_at": "2026-11-12T18:17:27.898493+00:00",
       "discount_percent": 0,
       "discount_active": false,
       "collection_id": null,
       "knit_hours": null,
       "category": {
         "id": "e463a213-522d-4e55-ba54-3827c4c2aa84",
-        "name": "Sets",
         "slug": "sets",
-        "created_at": "2026-06-01T13:40:27.765116+00:00",
+        "name": "Sets",
+        "description": "Sets de crochet tejidos a mano: dos o tres piezas hechas del mismo hilado y el mismo punto, para que combinen de verdad y no solo \"parecido\". De playa en algodón, de salida en hilado con brillo, o de abrigo en lana. Cada pieza se puede tejer en su propio talle.",
         "sort_order": 4,
-        "description": "Sets de crochet tejidos a mano: dos o tres piezas hechas del mismo hilado y el mismo punto, para que combinen de verdad y no solo \"parecido\". De playa en algodón, de salida en hilado con brillo, o de abrigo en lana. Cada pieza se puede tejer en su propio talle."
+        "created_at": "2026-06-01T13:40:27.765116+00:00"
       },
       "media": [
         {
@@ -3258,15 +3480,6 @@
       ],
       "sizes": [
         {
-          "id": "a17fbe32-eac3-47fd-8faa-bd7c35b263f1",
-          "size": "L",
-          "available": true,
-          "price_uyu": 1520,
-          "stock_qty": null,
-          "product_id": "5862dee8-668f-4247-9a9d-6bdaa36e5468",
-          "sort_order": 2
-        },
-        {
           "id": "13d0b595-2dd5-4036-8c2d-fcf8ab9c37a2",
           "size": "S",
           "available": true,
@@ -3283,6 +3496,15 @@
           "stock_qty": null,
           "product_id": "5862dee8-668f-4247-9a9d-6bdaa36e5468",
           "sort_order": 1
+        },
+        {
+          "id": "a17fbe32-eac3-47fd-8faa-bd7c35b263f1",
+          "size": "L",
+          "available": true,
+          "price_uyu": 1520,
+          "stock_qty": null,
+          "product_id": "5862dee8-668f-4247-9a9d-6bdaa36e5468",
+          "sort_order": 2
         }
       ],
       "colors": []

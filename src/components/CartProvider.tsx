@@ -9,6 +9,7 @@ import { summarizeCart, type CartIssue } from '@/lib/cart-summary'
 import { waLink, WHATSAPP_DEFAULT } from '@/lib/whatsapp'
 import { getRestockWhatsAppUrl } from '@/lib/product-selection'
 import { precargarCajon } from './cart-drawer-carga'
+import { agregarOffline, cambiarOffline, anotarPendiente, leerPendientes, planDeSync, type Pendiente } from '@/lib/cart-offline'
 
 type CartItemWithProduct = CartItem & { product: Product }
 
@@ -99,6 +100,31 @@ function loadSnapshot(): CartItemWithProduct[] {
 }
 
 type CartResponse = { items: CartItemWithProduct[] }
+
+// Cambios hechos mientras /api/cart no contestaba (lib/cart-offline.ts): se
+// le mandan cuando vuelve.
+const PENDIENTES_KEY = 'dahila_cart_pendientes'
+
+function loadPendientes(): Pendiente[] {
+  try { return leerPendientes(localStorage.getItem(PENDIENTES_KEY)) } catch { return [] }
+}
+
+function savePendientes(p: Pendiente[]) {
+  try {
+    if (p.length === 0) localStorage.removeItem(PENDIENTES_KEY)
+    else localStorage.setItem(PENDIENTES_KEY, JSON.stringify(p))
+  } catch { /* sin storage: el carrito sigue en memoria hasta recargar */ }
+}
+
+/** ¿Falló el servidor (o la red), y no el pedido? Un 4xx es una respuesta:
+ *  prenda agotada, límite de intentos, datos mal. */
+function esCaida(e: unknown): boolean {
+  return !(e instanceof CartError) || e.status >= 500
+}
+
+function nuevoId(): string {
+  try { return crypto.randomUUID() } catch { return `offline-${Date.now()}-${Math.random().toString(36).slice(2)}` }
+}
 
 /** Error de /api/cart con el status y el motivo que mandó la ruta (QA-M3). */
 class CartError extends Error {
@@ -201,11 +227,38 @@ export function CartProvider({
     saveSnapshot(next)
   }, [])
 
+  // Lo que se hizo sin servidor queda en pantalla, guardado y anotado.
+  const aplicarOffline = useCallback((r: { items: CartItemWithProduct[]; pendiente: Pendiente }) => {
+    mutationEpoch.current += 1
+    applyItems(r.items)
+    savePendientes(anotarPendiente(loadPendientes(), r.pendiente))
+  }, [applyItems])
+  const itemsRef = useRef(items)
+  useEffect(() => { itemsRef.current = items }, [items])
+
   const fetchCart = useCallback(async () => {
     const epoch = mutationEpoch.current
     try {
       const res = await fetch('/api/cart', { credentials: 'include' })
-      const data = await jsonOrThrow(res)
+      let data = await jsonOrThrow(res)
+      // El servidor volvió y hay cambios hechos sin él: se le mandan antes de
+      // mostrar lo suyo. Si falla a mitad, lanza: queda la copia del navegador
+      // y los pendientes para el próximo intento.
+      const pendientes = loadPendientes()
+      if (pendientes.length > 0) {
+        for (const paso of planDeSync(pendientes, data.items || [])) {
+          const r = await fetch('/api/cart', {
+            method: paso.tipo === 'agregar' ? 'POST' : 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(paso.tipo === 'agregar' ? { productId: paso.productId, size: paso.size, qty: paso.qty } : { itemId: paso.itemId, qty: paso.qty }),
+          })
+          // Un 4xx (se agotó mientras tanto) no traba el resto: esa línea se pierde.
+          if (r.status >= 500) throw new CartError('sync', r.status)
+          if (r.ok) data = await r.json()
+        }
+        savePendientes([])
+      }
       if (epoch !== mutationEpoch.current || inflight.current > 0) {
         needsSync.current = true
         return
@@ -324,6 +377,17 @@ export function CartProvider({
     // El contenido del cajón baja mientras se guarda (INT-2): cuando el POST
     // vuelve, ya está y el cajón se abre entero.
     if (opts?.openDrawer !== false) precargarCajon()
+    // Con cambios todavía sin mandar, este también va por el navegador y se
+    // mandan todos juntos: mezclar los dos caminos pisaba líneas.
+    if (loadPendientes().length > 0) {
+      const r = agregarOffline(itemsRef.current, product, size, qty, nuevoId(), new Date().toISOString())
+      if (r) {
+        aplicarOffline(r)
+        if (opts?.openDrawer !== false) setDrawerOpen(true)
+        void fetchCart()
+        return true
+      }
+    }
     try {
       const data = await mutate(() => fetch('/api/cart', {
         method: 'POST',
@@ -382,11 +446,19 @@ export function CartProvider({
           router.refresh()
         }
       } else {
+        // El servidor no contestó: la prenda queda en el carrito del navegador
+        // y se le manda cuando vuelva (lib/cart-offline.ts).
+        const r = esCaida(e) ? agregarOffline(itemsRef.current, product, size, qty, nuevoId(), new Date().toISOString()) : null
+        if (r) {
+          aplicarOffline(r)
+          if (opts?.openDrawer !== false) setDrawerOpen(true)
+          return true
+        }
         showError('No se pudo agregar al carrito. Intentá de nuevo.')
       }
       return false
     }
-  }, [mutate, discounts, showToast, showError, whatsappUrl, router])
+  }, [mutate, discounts, showToast, showError, whatsappUrl, router, aplicarOffline, fetchCart])
 
   // Un segundo toque mientras el primero guarda no suma otra unidad de una
   // pieza única (CRO-21): un pedido igual en curso devuelve la MISMA promesa.
@@ -404,6 +476,10 @@ export function CartProvider({
 
   const updateQty = useCallback(async (itemId: string, qty: number) => {
     if (qty < 0) return
+    if (loadPendientes().length > 0) {
+      const r = cambiarOffline(itemsRef.current, itemId, qty)
+      if (r) { aplicarOffline(r); void fetchCart(); return }
+    }
     try {
       await mutate(() => fetch('/api/cart', {
         method: 'PATCH',
@@ -413,9 +489,11 @@ export function CartProvider({
       }))
     } catch (e) {
       console.error('updateQty failed', e)
-      showError('No se pudo actualizar la cantidad. Revisá tu conexión.')
+      const r = esCaida(e) ? cambiarOffline(itemsRef.current, itemId, qty) : null
+      if (r) aplicarOffline(r)
+      else showError('No se pudo actualizar la cantidad. Revisá tu conexión.')
     }
-  }, [mutate, showError])
+  }, [mutate, showError, aplicarOffline, fetchCart])
 
   const deleteItem = useCallback((itemId: string) => mutate(() => fetch(`/api/cart?itemId=${encodeURIComponent(itemId)}`, {
     method: 'DELETE',
@@ -423,13 +501,19 @@ export function CartProvider({
   })), [mutate])
 
   const removeFromCart = useCallback(async (itemId: string) => {
+    if (loadPendientes().length > 0) {
+      const r = cambiarOffline(itemsRef.current, itemId, 0)
+      if (r) { aplicarOffline(r); void fetchCart(); return }
+    }
     try {
       await deleteItem(itemId)
     } catch (e) {
       console.error('removeFromCart failed', e)
-      showError('No se pudo eliminar la pieza. Revisá tu conexión.')
+      const r = esCaida(e) ? cambiarOffline(itemsRef.current, itemId, 0) : null
+      if (r) aplicarOffline(r)
+      else showError('No se pudo eliminar la pieza. Revisá tu conexión.')
     }
-  }, [deleteItem, showError])
+  }, [deleteItem, showError, aplicarOffline, fetchCart])
 
   // "Vaciar el carrito" después de mandar el pedido: una pieza por vez (la
   // ruta borra de a un ítem) y al final se relee, para quedar igual que la base.
@@ -440,13 +524,15 @@ export function CartProvider({
         await deleteItem(item.id)
       } catch (e) {
         console.error('clearCart failed', e)
-        ok = false
+        const r = esCaida(e) ? cambiarOffline(itemsRef.current, item.id, 0) : null
+        if (r) aplicarOffline(r)
+        else ok = false
       }
     }
     await fetchCart()
     if (!ok) showError('No se pudo vaciar el carrito. Revisá tu conexión.')
     return ok
-  }, [items, deleteItem, fetchCart, showError])
+  }, [items, deleteItem, fetchCart, showError, aplicarOffline])
 
   const value = useMemo(() => ({
     items, buyableItems: summary.buyable, unavailableItems: summary.unavailable, cartCount, cartTotal,
